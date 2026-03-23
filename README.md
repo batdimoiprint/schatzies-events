@@ -1,73 +1,105 @@
-# React + TypeScript + Vite
+# Schatzies Events Client and Resource Management System
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A client and management system for Schatzies to manage communication with their clients and manage event resources.
 
-Currently, two official plugins are available:
+## Tech Stack
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+- **Frontend:** React with TypeScript
+- **Backend:** Express.js
+- **Database:** DynamoDB (NoSQL)
 
-## React Compiler
+## Hosted on AWS
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+- AWS Lambda (Express)
+- S3 Bucket
+- DynamoDB
+- API Gateway
+- GitHub Actions (CI/CD)
+- AWS Lambda (Express)
+- S3 Bucket
+- DynamoDB
+- API Gateway
+- GitHub Actions (CI/CD)
 
-## Expanding the ESLint configuration
+## Getting Started
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+### Prerequisites
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+- Node.js (v22+)
+- pnpm
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+### Installation
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+# Install dependencies
+pnpm install
+
+# Start development server
+pnpm dev
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+The app will be available at `http://localhost:5173`
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+## Available Scripts
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+- `pnpm dev` - Start development server with HMR
+- `pnpm build` - Build for production
+- `pnpm lint` - Run ESLint on the codebase
+- `pnpm format` - Format code with Prettier
+- `pnpm format:check` - Check if code is formatted correctly
+- `pnpm preview` - Preview production build
+
+## Contributing
+
+### Branching
+
+Create branches following this naming convention:
+
+- Feature: `feature/feature-name`
+- Bug fix: `bugfix/bug-name`
+- Hotfix: `hotfix/issue-name`
+
+```bash
+git checkout -b feature/your-feature-name
 ```
+
+### Code Formatting & Commits
+
+Before committing, ensure your code is properly formatted:
+
+```bash
+# Format your code
+pnpm format
+
+# Stage your changes
+git add .
+
+# Commit with a clear message
+git commit -m "type(scope): description"
+```
+
+Commit types:
+- `feat:` New feature
+- `fix:` Bug fix
+- `refactor:` Code refactoring
+- `style:` Formatting/styling changes
+- `docs:` Documentation updates
+- `chore:` Build and dependency updates
+
+### Submitting Pull Requests
+
+1. Push your branch to the repository
+2. Open a Pull Request from your branch to `main`
+3. Fill out the PR template with:
+	- Clear description of changes
+	- Link to related issues
+	- Screenshots (if applicable)
+4. Request reviewers
+5. Address feedback and update your PR
+6. Once approved, merge to `main`
+
+Ensure:
+- Code passes linting: `pnpm lint`
+- Code is properly formatted: `pnpm format:check`
+- All tests pass (if applicable)
+- No merge conflicts
