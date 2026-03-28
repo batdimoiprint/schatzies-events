@@ -1,4 +1,3 @@
-import { useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { useAuth } from '@/hooks/useAuth';
@@ -24,14 +23,8 @@ export function LoginPage() {
     },
   });
 
-  const { login, isLoading, error, isAuthenticated } = useAuth();
+  const { login, isLoading, error } = useAuth();
   const navigate = useNavigate();
-
-  useEffect(() => {
-    if (isAuthenticated) {
-      navigate('/dashboard', { replace: true });
-    }
-  }, [isAuthenticated, navigate]);
 
   const onSubmit = async (values: LoginFormValues) => {
     const success = await login(values.email, values.password);
@@ -78,7 +71,9 @@ export function LoginPage() {
 
             {error && (
               <p className="rounded-md border border-red-100 bg-red-50 px-3 py-2 text-sm text-red-700">
-                {error}
+                {error.includes('429') 
+                  ? 'Too many authentication attempts. Please try again after an hour.' 
+                  : error}
               </p>
             )}
 

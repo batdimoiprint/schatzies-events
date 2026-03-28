@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import type { ReactNode } from 'react';
-import { authAPI } from '@/api/auth';
+import { login, verifyToken } from '@/api/auth';
 import { AuthContext } from './AuthContext';
 import type { User } from '@/types/auth';
 
@@ -9,10 +9,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const verifyToken = async () => {
+  const checkToken = async () => {
     try {
       setError(null);
-      const verifiedUser = await authAPI.verifyToken();
+      const verifiedUser = await verifyToken();
       setUser(verifiedUser ?? null);
     } catch (err) {
       console.error('Token verification failed:', err);
@@ -21,14 +21,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const login = async (email: string, password: string): Promise<boolean> => {
+  const handleLogin = async (email: string, password: string): Promise<boolean> => {
     setIsLoading(true);
     setError(null);
 
     try {
-      const status = await authAPI.login(email, password);
+      const status = await login(email, password);
       if (status === 200) {
-        await verifyToken();
+        await checkToken();
         return true;
       }
       return false;
@@ -56,7 +56,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const initializeSession = async () => {
       try {
-        await verifyToken();
+        await checkToken();
       } finally {
         setIsLoading(false);
       }
@@ -70,7 +70,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     isAuthenticated: !!user,
     isLoading,
     error,
-    login,
+    login: handleLogin,
     setAuthenticatedUser: (nextUser: User | null) => {
       setError(null);
       setUser(nextUser);
@@ -78,7 +78,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     verifyToken: async () => {
       setIsLoading(true);
       try {
-        await verifyToken();
+        await checkToken();
       } finally {
         setIsLoading(false);
       }
