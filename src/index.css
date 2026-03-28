@@ -2,6 +2,8 @@
 @import 'tw-animate-css';
 @import '@fontsource-variable/montserrat';
 @import '@fontsource-variable/playfair-display';
+@import url('https://fonts.googleapis.com/css2?family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Source+Sans+Pro:wght@400;600;700;900&display=swap');
 
 @custom-variant dark (&:is(.dark *));
 
@@ -18,8 +20,8 @@
 
   --popover-foreground: oklch(0.145 0.008 326);
 
-  /* Brand palette: #e783b5 → #c2649b → #915ba4 → #501f5a → #271539 */
-  --primary: oklch(0.53 0.19 340); /* #c2649b deeper hot pink */
+  /* Brand palette: #FF0066 → #700F81 */
+  --primary: oklch(0.65 0.28 0); /* #FF0066 */
 
   --primary-foreground: oklch(1 0 0);
 
@@ -137,9 +139,9 @@
 }
 
 @theme inline {
-  --font-sans: 'Montserrat Variable', sans-serif;
+  --font-sans: 'Source Sans Pro', 'Montserrat Variable', sans-serif;
 
-  --font-heading: 'Playfair Display Variable', serif;
+  --font-heading: 'Libre Baskerville', serif;
 
   --color-sidebar-ring: var(--sidebar-ring);
 

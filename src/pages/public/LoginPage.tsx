@@ -44,7 +44,7 @@ export function LoginPage() {
     <section className="mx-auto flex w-full max-w-md flex-1 items-center px-4 py-12">
       <Card className="w-full">
         <CardHeader>
-          <CardTitle className='text-2xl'>Login</CardTitle>
+          <CardTitle className="text-2xl">Login</CardTitle>
           <CardDescription>Use your email and password to continue.</CardDescription>
         </CardHeader>
 
