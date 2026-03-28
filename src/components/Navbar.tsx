@@ -19,11 +19,7 @@ export function Navbar() {
       <div className="flex w-full items-center px-12 py-4 lg:px-20">
         {/* Logo — far LEFT */}
         <Link to="/" className="shrink-0">
-          <img
-            src={logoImagePath}
-            alt="Schatzies Events logo"
-            className="h-[140px] w-auto"
-          />
+          <img src={logoImagePath} alt="Schatzies Events logo" className="h-[140px] w-auto" />
         </Link>
 
         {/* Spacer pushes nav+button to the right */}
@@ -59,7 +55,7 @@ export function Navbar() {
         {/* LOGIN button — far RIGHT */}
         <Button
           asChild
-          className="hidden h-[52px] min-w-[140px] shrink-0 rounded-3xl bg-gradient-to-b from-[#e61f83] via-[#9b2d8a] to-[#501f5a] px-10 text-[1.05rem] font-bold tracking-wide uppercase shadow-[0_8px_22px_rgba(39,21,57,0.4)] hover:brightness-110 lg:inline-flex"
+          className="hidden h-[52px] min-w-[140px] shrink-0 rounded-3xl bg-gradient-to-b from-[#FF589C] to-[#700F81] px-10 text-[1.05rem] font-bold tracking-wide uppercase shadow-[0_8px_22px_rgba(39,21,57,0.4)] hover:brightness-110 lg:inline-flex"
         >
           <Link to="/login">Login</Link>
         </Button>

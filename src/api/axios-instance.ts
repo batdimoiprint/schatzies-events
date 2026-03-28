@@ -10,7 +10,6 @@ interface RetryableRequestConfig extends InternalAxiosRequestConfig {
 let refreshRequest: Promise<unknown> | null = null;
 const REFRESH_PATH = '/auth/refresh-token';
 
-
 const axiosInstance = axios.create({
   baseURL: API_BASE_URL,
   withCredentials: true, // Enable HTTP-only cookie sending
@@ -40,8 +39,6 @@ axiosInstance.interceptors.response.use(
     ) {
       return Promise.reject(error);
     }
-
-
 
     originalRequest._retry = true;
 
