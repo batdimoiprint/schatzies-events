@@ -18,9 +18,10 @@
 
   --popover-foreground: oklch(0.145 0.008 326);
 
-  --primary: oklch(0.518 0.253 323.949);
+  /* Brand palette: #e783b5 → #c2649b → #915ba4 → #501f5a → #271539 */
+  --primary: oklch(0.53 0.19 340); /* #c2649b deeper hot pink */
 
-  --primary-foreground: oklch(0.977 0.017 320.058);
+  --primary-foreground: oklch(1 0 0);
 
   --secondary: oklch(0.967 0.001 286.375);
 
@@ -227,4 +228,31 @@
   html {
     @apply font-sans;
   }
+}
+
+/* Marquee animations for the gallery section */
+@keyframes marquee {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-100%);
+  }
+}
+
+@keyframes marquee-reverse {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(0);
+  }
+}
+
+.animate-marquee {
+  animation: marquee 60s linear infinite;
+}
+
+.animate-marquee-reverse {
+  animation: marquee-reverse 60s linear infinite;
 }
