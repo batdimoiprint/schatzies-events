@@ -1,16 +1,12 @@
-import {  Outlet } from 'react-router-dom';
-
+import { Outlet } from 'react-router-dom';
+import { Navbar } from '@/components/Navbar';
 
 export function PublicLayout() {
   return (
-    <div className="flex flex-col min-h-screen">
-      {/* Header Component */}
-      <header className="bg-white shadow">
-        
-      </header>
+    <div className="min-h-screen bg-[#f5f4f7] text-foreground">
+      <Navbar />
 
-      {/* Main content area with outlet for child routes */}
-      <main className="flex-1">
+      <main>
         <Outlet />
       </main>
     </div>
