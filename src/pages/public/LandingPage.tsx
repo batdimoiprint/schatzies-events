@@ -2,22 +2,22 @@
 
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { useNavigate } from 'react-router-dom';
+import { useState } from 'react';
+import { InquiryForm } from '@/components/InquiryForm';
+import { ChatWidget } from '@/components/ChatWidget';
 
-// Replace these paths with your own event photos when ready.
-// Place image files in public/Pictures/ and reference them as '/Pictures/filename.jpg'.
-const photos = {
-  hero1: '/Pictures/hero-1.jpg',
-  hero2: '/Pictures/hero-1.jpg',
-  hero3: '/Pictures/hero-1.jpg',
-  hero4: '/Pictures/hero-1.jpg',
-  hero5: '/Pictures/hero-1.jpg',
-  hero6: '/Pictures/hero-1.jpg',
-  hero7: '/Pictures/hero-1.jpg',
-  hero8: '/Pictures/hero-1.jpg',
-  hero9: '/Pictures/hero-1.jpg',
-  hero10: '/Pictures/hero-1.jpg',
-};
+// Uniform grid — all cards the same size. Replace srcs with real photos when ready.
+const bentoGallery = [
+  { src: '/Pictures/hero-1.jpg', alt: 'Event table setup' },
+  { src: '/Pictures/hero-1.jpg', alt: 'Grand ballroom celebration' },
+  { src: '/Pictures/hero-1.jpg', alt: 'Floral arch decor' },
+  { src: '/Pictures/hero-1.jpg', alt: 'Wedding reception detail' },
+  { src: '/Pictures/hero-1.jpg', alt: 'Debut stage setup' },
+  { src: '/Pictures/hero-1.jpg', alt: 'Venue chandelier' },
+  { src: '/Pictures/hero-1.jpg', alt: 'Event centerpiece' },
+  { src: '/Pictures/hero-1.jpg', alt: 'Dining setup' },
+  { src: '/Pictures/hero-1.jpg', alt: 'Reception detail' },
+];
 
 // Section 2 — gallery images (place in public/Pictures/)
 const galleryRow1 = [
@@ -40,150 +40,90 @@ const serviceImages = {
   debutAlt: '/Pictures/service-debut-2.jpg',
 };
 
-/*
-  Collage cards positioned & rotated to match the Figma design.
-  Row 1 (top):      2 cards, faded
-  Row 2 (upper-mid): 3 cards, center one is the hero (full opacity)
-  Row 3 (lower-mid): 3 cards, mixed opacity
-  Row 4 (bottom):    2 cards, faded
-*/
-const collageCards = [
-  // ── Row 1 — top ──
-  {
-    src: photos.hero1,
-    alt: 'Event table setup',
-    className: 'left-[5%] top-[1%] h-[11rem] w-[24rem] -rotate-[12deg] opacity-50',
-  },
-  {
-    src: photos.hero2,
-    alt: 'Pastel event decor',
-    className: 'right-[0%] top-[0%] h-[10rem] w-[19rem] -rotate-[12deg] opacity-30',
-  },
-
-  // ── Row 2 — upper middle (hero row) ──
-  {
-    src: photos.hero3,
-    alt: 'Wedding table close-up',
-    className: 'left-[-3%] top-[18%] h-[13rem] w-[22rem] -rotate-[12deg] opacity-55',
-  },
-  {
-    src: photos.hero4,
-    alt: 'Grand ballroom celebration',
-    className:
-      'left-[26%] top-[17%] h-[16rem] w-[26rem] -rotate-[12deg] opacity-100 shadow-[0_20px_32px_rgba(0,0,0,0.25)] z-10',
-  },
-  {
-    src: photos.hero5,
-    alt: 'Floral reception setup',
-    className: 'right-[-2%] top-[15%] h-[12rem] w-[18rem] -rotate-[10deg] opacity-40',
-  },
-
-  // ── Row 3 — lower middle ──
-  {
-    src: photos.hero6,
-    alt: 'Elegant hall setup',
-    className: 'left-[0%] bottom-[18%] h-[13rem] w-[24rem] -rotate-[11deg] opacity-60',
-  },
-  {
-    src: photos.hero7,
-    alt: 'Debut entrance moment',
-    className: 'left-[30%] bottom-[16%] h-[13rem] w-[23rem] -rotate-[11deg] opacity-65',
-  },
-  {
-    src: photos.hero8,
-    alt: 'Venue grand view',
-    className: 'right-[-1%] bottom-[18%] h-[12rem] w-[20rem] -rotate-[11deg] opacity-35',
-  },
-
-  // ── Row 4 — bottom ──
-  {
-    src: photos.hero9,
-    alt: 'Guest dining setup',
-    className: 'left-[10%] bottom-[1%] h-[11rem] w-[22rem] -rotate-[11deg] opacity-35',
-  },
-  {
-    src: photos.hero10,
-    alt: 'Venue side detail',
-    className: 'right-[3%] bottom-[3%] h-[10rem] w-[17rem] -rotate-[11deg] opacity-30',
-  },
-];
-
 export function LandingPage() {
-  const navigate = useNavigate();
+  const [inquiryOpen, setInquiryOpen] = useState(false);
 
   const handleInquire = () => {
-    // Navigate to event packages page or open inquiry form
-    navigate('/event-packages');
+    setInquiryOpen(true);
   };
 
   return (
     <>
-      <section className="relative min-h-[calc(100vh-100px)] overflow-hidden">
+      <section className="relative min-h-[calc(100vh-100px)]">
         <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_28%_70%,rgba(255,255,255,0.92),transparent_30%),radial-gradient(circle_at_75%_25%,rgba(230,31,131,0.08),transparent_38%),radial-gradient(circle_at_70%_72%,rgba(80,31,90,0.09),transparent_40%)]" />
 
-        <div className="grid min-h-[calc(100vh-100px)] w-full items-center lg:grid-cols-[42%_58%]">
+        <div className="grid min-h-[calc(100vh-100px)] w-full items-start pt-8 sm:pt-12 lg:grid-cols-[42%_58%] lg:pt-16">
           {/* ── Left: text content ── */}
-          <article className="relative z-10 px-12 py-10 lg:px-20 lg:py-0">
+          <article className="relative z-10 px-5 py-6 sm:px-8 sm:py-10 md:px-12 lg:px-20 lg:py-0">
             <h2 className="font-heading font-semibold leading-[0.9] tracking-tight">
-              <span className="block text-[clamp(3.5rem,6vw,5.5rem)] font-semibold text-[#3d2052]">
+              <span className="block text-[clamp(1.8rem,5vw,4.5rem)] font-semibold text-[#3d2052]">
                 Welcome to
               </span>
-              <span className="mt-1 block text-[clamp(7rem,12vw,11rem)] bg-gradient-to-r from-[#FF0066] to-[#700F81] bg-clip-text text-transparent">
+              <span className="mt-1 block text-[clamp(3.2rem,10vw,9rem)] bg-gradient-to-r from-[#FF0066] to-[#700F81] bg-clip-text text-transparent">
                 Schatzies
               </span>
-              <span className="block text-[clamp(7rem,12vw,11rem)] bg-gradient-to-r from-[#FF0066] to-[#700F81] bg-clip-text text-transparent">
+              <span className="block text-[clamp(3.2rem,10vw,9rem)] bg-gradient-to-r from-[#FF0066] to-[#700F81] bg-clip-text text-transparent">
                 Events!
               </span>
             </h2>
 
-            <p className="mt-5 text-[clamp(1.5rem,2.2vw,2rem)] font-semibold leading-tight text-[#3d2052]">
+            <p className="mt-3 text-[clamp(1rem,1.9vw,1.7rem)] font-semibold leading-tight text-[#3d2052] sm:mt-5">
               Your <span className="font-bold text-[#FF0066] uppercase">most trusted</span> team!
             </p>
 
-            <p className="mt-2 max-w-[30rem] text-[clamp(1.1rem,1.8vw,1.5rem)] font-sans leading-[1.55] text-[#6b4d80]">
+            <p className="mt-2 max-w-[30rem] text-[clamp(0.9rem,1.5vw,1.3rem)] font-sans leading-[1.55] text-[#6b4d80]">
               Premium wedding and debut planning for those who want to be a guest at their own
               celebration. We handle the stress; you handle the memories.
             </p>
 
             <Button
               onClick={handleInquire}
-              className="mt-7 h-[100px] rounded-3xl bg-gradient-to-b from-[#FF0066] to-[#700F81] px-16 text-[2rem] font-bold uppercase tracking-wide shadow-[0_12px_28px_rgba(39,21,57,0.5)] hover:brightness-110"
+              className="mt-4 h-11 rounded-2xl bg-gradient-to-b from-[#FF0066] to-[#700F81] px-8 text-base font-bold uppercase tracking-wide shadow-[0_12px_28px_rgba(39,21,57,0.5)] hover:brightness-110 sm:h-14 sm:px-10 sm:text-lg"
             >
               Inquire
             </Button>
           </article>
 
-          {/* ── Right: photo collage (desktop) ── */}
-          <div className="relative hidden min-h-[calc(100vh-100px)] lg:block">
-            {collageCards.map((card, index) => (
-              <Card
-                key={`${card.alt}-${index}`}
-                className={`absolute overflow-hidden rounded-3xl border-0 bg-white/20 p-0 ring-0 ${card.className}`}
-              >
-                <div
-                  className="h-full w-full bg-cover bg-center"
-                  style={{ backgroundImage: `url(${card.src})` }}
-                  role="img"
-                  aria-label={card.alt}
-                />
-              </Card>
-            ))}
+          {/* ── Right: tilted uniform grid gallery (desktop) ── */}
+          <div
+            className="relative hidden h-[calc(100vh-100px)] lg:block"
+            style={{
+              maskImage:
+                'radial-gradient(ellipse 70% 60% at 50% 50%, black 30%, rgba(0,0,0,0.6) 55%, transparent 80%)',
+              WebkitMaskImage:
+                'radial-gradient(ellipse 70% 60% at 50% 50%, black 30%, rgba(0,0,0,0.6) 55%, transparent 80%)',
+              overflow: 'visible',
+            }}
+          >
+            {/* Tilted + scaled — overflow:visible lets cards bleed past section edges */}
+            <div
+              className="absolute inset-0 -rotate-[15deg] scale-125"
+              style={{ overflow: 'visible' }}
+            >
+              {/* Uniform 3×3 grid — all cards the same size */}
+              <div className="grid h-full w-full grid-cols-3 grid-rows-3 gap-4 p-6">
+                {bentoGallery.map((item, i) => (
+                  <div
+                    key={i}
+                    className="overflow-hidden rounded-3xl bg-white p-[6px] shadow-[0_20px_40px_rgba(0,0,0,0.2)]"
+                  >
+                    <img
+                      src={item.src}
+                      alt={item.alt}
+                      className="h-full w-full rounded-2xl object-cover"
+                    />
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
 
-          {/* ── Mobile: simplified grid ── */}
-          <div className="grid grid-cols-2 gap-4 py-3 lg:hidden">
-            {collageCards.slice(0, 6).map((card) => (
-              <Card
-                key={card.alt}
-                className="overflow-hidden rounded-2xl border-0 bg-white/60 p-0 ring-0"
-              >
-                <div
-                  className="h-36 w-full bg-cover bg-center"
-                  style={{ backgroundImage: `url(${card.src})` }}
-                  role="img"
-                  aria-label={card.alt}
-                />
-              </Card>
+          {/* ── Mobile: simplified bento grid ── */}
+          <div className="grid grid-cols-2 gap-3 px-4 py-3 sm:gap-4 sm:px-6 lg:hidden">
+            {bentoGallery.slice(0, 4).map((item, i) => (
+              <div key={i} className="overflow-hidden rounded-xl shadow-md sm:rounded-2xl">
+                <img src={item.src} alt={item.alt} className="h-28 w-full object-cover sm:h-36" />
+              </div>
             ))}
           </div>
         </div>
@@ -193,6 +133,12 @@ export function LandingPage() {
       <ServicesSection />
       <TestimonialsSection />
       <Footer />
+
+      {/* ── Chat Widget ── */}
+      <ChatWidget />
+
+      {/* ── Inquiry Form Modal ── */}
+      {inquiryOpen && <InquiryForm onClose={() => setInquiryOpen(false)} />}
     </>
   );
 }
@@ -206,9 +152,9 @@ function SpotlightSection() {
   const row2Loop = [...galleryRow2, ...galleryRow2];
 
   return (
-    <section className="overflow-hidden bg-white py-16 lg:py-24">
+    <section className="overflow-hidden bg-white py-10 sm:py-16 lg:py-24">
       {/* Heading */}
-      <h2 className="mx-auto max-w-[52rem] px-6 text-center font-heading text-[clamp(2.4rem,5vw,4rem)] leading-[1.1] font-bold tracking-tight text-[#1a1225]">
+      <h2 className="mx-auto max-w-[52rem] px-5 text-center font-heading text-[clamp(1.6rem,5vw,4rem)] leading-[1.1] font-bold tracking-tight text-[#1a1225] sm:px-6">
         Step Into the <span className="text-[#e61f83]">Spotlight</span>,
         <br />
         We'll Handle the <span className="text-[#e61f83]">Stage</span>.
@@ -226,7 +172,7 @@ function SpotlightSection() {
           {row1Loop.map((img, i) => (
             <div
               key={`r1-${i}`}
-              className="h-[20rem] w-[30rem] shrink-0 overflow-hidden rounded-2xl bg-[#f0eaf4] transition-all duration-300"
+              className="h-[12rem] w-[18rem] shrink-0 overflow-hidden rounded-2xl bg-[#f0eaf4] transition-all duration-300 sm:h-[16rem] sm:w-[24rem] lg:h-[20rem] lg:w-[30rem]"
             >
               <div
                 className="h-full w-full bg-cover bg-center transition-transform duration-700 group-hover:scale-110"
@@ -244,7 +190,7 @@ function SpotlightSection() {
           {row1Loop.map((img, i) => (
             <div
               key={`r1d-${i}`}
-              className="h-[20rem] w-[30rem] shrink-0 overflow-hidden rounded-2xl bg-[#f0eaf4] transition-all duration-300"
+              className="h-[12rem] w-[18rem] shrink-0 overflow-hidden rounded-2xl bg-[#f0eaf4] transition-all duration-300 sm:h-[16rem] sm:w-[24rem] lg:h-[20rem] lg:w-[30rem]"
             >
               <div
                 className="h-full w-full bg-cover bg-center transition-transform duration-700 group-hover:scale-110"
@@ -269,7 +215,7 @@ function SpotlightSection() {
           {row2Loop.map((img, i) => (
             <div
               key={`r2-${i}`}
-              className="h-[20rem] w-[30rem] shrink-0 overflow-hidden rounded-2xl bg-[#f0eaf4] transition-all duration-300"
+              className="h-[12rem] w-[18rem] shrink-0 overflow-hidden rounded-2xl bg-[#f0eaf4] transition-all duration-300 sm:h-[16rem] sm:w-[24rem] lg:h-[20rem] lg:w-[30rem]"
             >
               <div
                 className="h-full w-full bg-cover bg-center transition-transform duration-700 group-hover:scale-110"
@@ -287,7 +233,7 @@ function SpotlightSection() {
           {row2Loop.map((img, i) => (
             <div
               key={`r2d-${i}`}
-              className="h-[20rem] w-[30rem] shrink-0 overflow-hidden rounded-2xl bg-[#f0eaf4] transition-all duration-300"
+              className="h-[12rem] w-[18rem] shrink-0 overflow-hidden rounded-2xl bg-[#f0eaf4] transition-all duration-300 sm:h-[16rem] sm:w-[24rem] lg:h-[20rem] lg:w-[30rem]"
             >
               <div
                 className="h-full w-full bg-cover bg-center transition-transform duration-700 group-hover:scale-110"
@@ -301,8 +247,8 @@ function SpotlightSection() {
       </div>
 
       {/* Bottom quote */}
-      <div className="mx-auto mt-14 max-w-[56rem] px-8 text-center lg:px-16">
-        <p className="font-sans text-[clamp(1.3rem,2vw,1.6rem)] font-normal leading-[1.8] text-[#3d2052]">
+      <div className="mx-auto mt-8 max-w-[56rem] px-5 text-center sm:mt-14 sm:px-8 lg:px-16">
+        <p className="font-sans text-[clamp(0.95rem,2vw,1.6rem)] font-normal leading-[1.8] text-[#3d2052]">
           Your milestone is a masterpiece in the making. While you focus on making memories and
           greeting your guests, our team ensures every light, sound, and moment is executed to
           perfection.
@@ -317,23 +263,23 @@ function SpotlightSection() {
    ───────────────────────────────────────── */
 function ServicesSection() {
   return (
-    <section className="bg-[#fdf2f6] py-20 lg:py-32">
-      <div className="space-y-12">
+    <section className="bg-[#fdf2f6] px-4 py-12 sm:px-6 sm:py-20 lg:px-0 lg:py-32">
+      <div className="space-y-8 sm:space-y-12">
         {/* Block 1 — Text left, Image right - Full width */}
-        <div className="grid items-stretch overflow-hidden rounded-3xl bg-[#fbedf3] lg:grid-cols-2">
-          <div className="flex flex-col justify-center px-10 py-14 lg:px-16 lg:py-20">
-            <h3 className="font-heading text-[clamp(3rem,6vw,5rem)] leading-[1.08] font-bold text-[#1a1225]">
+        <div className="grid items-stretch overflow-hidden rounded-2xl bg-[#fbedf3] sm:rounded-3xl lg:grid-cols-2">
+          <div className="flex flex-col justify-center px-5 py-8 sm:px-10 sm:py-14 lg:px-16 lg:py-20">
+            <h3 className="font-heading text-[clamp(1.8rem,6vw,5rem)] leading-[1.08] font-bold text-[#1a1225]">
               A <span className="text-[#e61f83]">Love Story</span> Told in
               <br />
               Every Detail
             </h3>
-            <p className="mt-7 font-sans text-[clamp(1.2rem,2vw,1.6rem)] leading-[1.7] text-[#3d2052]">
+            <p className="mt-4 font-sans text-[clamp(1rem,2vw,1.6rem)] leading-[1.7] text-[#3d2052] sm:mt-7">
               We don&rsquo;t just plan weddings; we protect your peace. From intimate vows to grand
               ballrooms, we ensure the only thing you focus on is the person at the end of the
               aisle.
             </p>
           </div>
-          <div className="min-h-[36rem] lg:min-h-[42rem]">
+          <div className="min-h-[16rem] sm:min-h-[24rem] lg:min-h-[42rem]">
             <div
               className="h-full w-full bg-cover bg-center"
               style={{ backgroundImage: `url(${serviceImages.wedding})` }}
@@ -344,8 +290,8 @@ function ServicesSection() {
         </div>
 
         {/* Block 2 — Image left, Text right - Full width */}
-        <div className="grid items-stretch overflow-hidden rounded-3xl bg-[#fbedf3] lg:grid-cols-2">
-          <div className="relative min-h-[36rem] lg:min-h-[42rem]">
+        <div className="grid items-stretch overflow-hidden rounded-2xl bg-[#fbedf3] sm:rounded-3xl lg:grid-cols-2">
+          <div className="relative min-h-[16rem] sm:min-h-[24rem] lg:min-h-[42rem]">
             <div
               className="absolute inset-0 bg-cover bg-center"
               style={{ backgroundImage: `url(${serviceImages.debut})` }}
@@ -359,13 +305,13 @@ function ServicesSection() {
               aria-label="Debut celebration detail"
             />
           </div>
-          <div className="flex flex-col justify-center px-10 py-14 lg:px-16 lg:py-20">
-            <h3 className="font-heading text-[clamp(3rem,6vw,5rem)] leading-[1.08] font-bold text-[#1a1225]">
+          <div className="flex flex-col justify-center px-5 py-8 sm:px-10 sm:py-14 lg:px-16 lg:py-20">
+            <h3 className="font-heading text-[clamp(1.8rem,6vw,5rem)] leading-[1.08] font-bold text-[#1a1225]">
               <span className="text-[#e61f83]">Your 18th:</span> More Than a
               <br />
               Birthday, It&rsquo;s a <span className="text-[#e61f83]">Milestone</span>
             </h3>
-            <p className="mt-7 font-sans text-[clamp(1.2rem,2vw,1.6rem)] leading-[1.7] text-[#3d2052]">
+            <p className="mt-4 font-sans text-[clamp(1rem,2vw,1.6rem)] leading-[1.7] text-[#3d2052] sm:mt-7">
               Eighteen years in the making, designed in a single night. We transform your milestone
               into a cinematic celebration that captures exactly who you are and who you&rsquo;re
               becoming.
@@ -400,9 +346,9 @@ const testimonials = [
 
 function TestimonialsSection() {
   return (
-    <section className="bg-gradient-to-b from-[#fce4ef] to-[#f8d0e3] py-20 lg:py-28">
+    <section className="bg-gradient-to-b from-[#fce4ef] to-[#f8d0e3] py-12 sm:py-20 lg:py-28">
       {/* Heading */}
-      <div className="mx-auto max-w-[52rem] px-6 text-center">
+      <div className="mx-auto max-w-[52rem] px-5 text-center sm:px-6">
         <h2 className="font-heading text-[clamp(2.4rem,5vw,4rem)] leading-[1.1] font-bold tracking-tight text-[#1a1225]">
           The Schatzies <span className="text-[#e61f83]">Experience</span>.
         </h2>
@@ -413,11 +359,11 @@ function TestimonialsSection() {
       </div>
 
       {/* Testimonial cards — 2×2 grid */}
-      <div className="mx-auto mt-14 grid max-w-[72rem] gap-8 px-6 sm:grid-cols-2 lg:px-12">
+      <div className="mx-auto mt-8 grid max-w-[72rem] gap-5 px-5 sm:mt-14 sm:grid-cols-2 sm:gap-8 sm:px-6 lg:px-12">
         {testimonials.map((t) => (
           <Card
             key={t.name}
-            className="relative rounded-2xl border-0 bg-white/80 px-8 py-8 shadow-sm backdrop-blur-sm"
+            className="relative rounded-2xl border-0 bg-white/80 px-5 py-5 shadow-sm backdrop-blur-sm sm:px-8 sm:py-8"
           >
             {/* Quote mark */}
             <span className="absolute right-6 top-5 font-heading text-[3rem] leading-none text-[#c2649b]">
@@ -448,15 +394,38 @@ function TestimonialsSection() {
    Footer
    ───────────────────────────────────────── */
 function Footer() {
+  const scrollToTop = () => window.scrollTo({ top: 0, behavior: 'smooth' });
+
   return (
-    <footer className="bg-gradient-to-b from-[#f8d0e3] to-[#f5c3d9] py-12">
+    <footer className="relative bg-gradient-to-b from-[#f8d0e3] to-[#f5c3d9] py-8 sm:py-12">
       <div className="flex flex-col items-center gap-4">
         <img
           src="/Pictures/business-logo.png"
           alt="Schatzies Events logo"
-          className="h-[100px] w-auto"
+          className="h-16 w-auto sm:h-[100px]"
         />
       </div>
+
+      {/* Scroll-to-top button */}
+      <button
+        onClick={scrollToTop}
+        aria-label="Scroll to top"
+        className="absolute bottom-6 right-6 flex h-12 w-12 items-center justify-center rounded-full bg-pink-100/80 text-gray-500 shadow-md transition-all hover:bg-pink-200 hover:text-gray-700 hover:shadow-lg active:scale-95 sm:bottom-8 sm:right-8 sm:h-15 sm:w-15"
+      >
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2.5"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          className="h-6 w-6 sm:h-8 sm:w-8"
+          aria-hidden="true"
+        >
+          <polyline points="18 15 12 9 6 15" />
+        </svg>
+      </button>
     </footer>
   );
 }

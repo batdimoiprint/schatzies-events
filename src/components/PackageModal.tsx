@@ -33,9 +33,16 @@ interface PackageModalProps {
   activeIndex: number;
   onClose: () => void;
   onNavigate: (index: number) => void;
+  onInquire?: () => void;
 }
 
-export function PackageModal({ packages, activeIndex, onClose, onNavigate }: PackageModalProps) {
+export function PackageModal({
+  packages,
+  activeIndex,
+  onClose,
+  onNavigate,
+  onInquire,
+}: PackageModalProps) {
   const pkg = packages[activeIndex];
   const { modal } = pkg;
   const many = Math.max(...modal.categories.map((c) => c.items.length)) >= 4;
@@ -46,25 +53,27 @@ export function PackageModal({ packages, activeIndex, onClose, onNavigate }: Pac
       <div className="fixed inset-0 z-50 bg-black/50" onClick={onClose} />
 
       {/* Dialog */}
-      <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4">
         <div
-          className="relative flex w-full max-w-[1200px] flex-col rounded-3xl bg-white p-10 shadow-2xl"
+          className="relative flex max-h-[90vh] w-full max-w-[1200px] flex-col overflow-y-auto rounded-2xl bg-white p-5 shadow-2xl sm:rounded-3xl sm:p-10"
           onClick={(e) => e.stopPropagation()}
         >
           {/* Close button */}
           <button
             onClick={onClose}
             aria-label="Close"
-            className="absolute right-6 top-6 flex h-12 w-12 items-center justify-center rounded-full text-gray-500 transition hover:bg-gray-100 hover:text-gray-800"
+            className="absolute right-3 top-3 flex h-10 w-10 items-center justify-center rounded-full text-gray-500 transition hover:bg-gray-100 hover:text-gray-800 sm:right-6 sm:top-6 sm:h-12 sm:w-12"
           >
-            <X className="h-7 w-7" />
+            <X className="h-5 w-5 sm:h-7 sm:w-7" />
           </button>
 
           {/* Title */}
-          <h2 className="text-[1.8rem] font-bold text-[#3d2052]">{pkg.name} Inclusion</h2>
+          <h2 className="pr-10 text-[1.2rem] font-bold text-[#3d2052] sm:pr-0 sm:text-[1.8rem]">
+            {pkg.name} Inclusion
+          </h2>
 
           {/* 2×2 inclusion grid */}
-          <div className="mt-5 grid flex-1 grid-cols-2 gap-4">
+          <div className="mt-4 grid flex-1 grid-cols-1 gap-3 sm:mt-5 sm:grid-cols-2 sm:gap-4">
             {modal.categories.map((cat) => {
               const Icon = iconMap[cat.iconName];
               return (
@@ -115,23 +124,27 @@ export function PackageModal({ packages, activeIndex, onClose, onNavigate }: Pac
           </div>
 
           {/* Note */}
-          <p className="mt-5 text-[0.88rem] leading-relaxed text-[#555]">
+          <p className="mt-4 text-[0.82rem] leading-relaxed text-[#555] sm:mt-5 sm:text-[0.88rem]">
             <span className="font-bold text-[#1a1a1a]">NOTE: </span>
             {modal.note}
           </p>
 
           {/* Footer row */}
-          <div className="mt-6 flex items-center">
-            <div className="flex-1" />
+          <div className="mt-4 flex flex-col items-center gap-4 sm:mt-6 sm:flex-row">
+            <div className="hidden flex-1 sm:block" />
 
             <Button
               variant="outline"
-              className="h-[50px] px-14 rounded-xl border-2 border-[#e61f83] bg-transparent text-[#e61f83] text-[1.05rem] font-bold hover:bg-[#fff0f6] hover:text-[#e61f83]"
+              onClick={() => {
+                onClose();
+                onInquire?.();
+              }}
+              className="h-11 w-full rounded-xl border-2 border-[#e61f83] bg-transparent px-10 text-[#e61f83] text-[0.95rem] font-bold hover:bg-[#fff0f6] hover:text-[#e61f83] sm:h-[50px] sm:w-auto sm:px-14 sm:text-[1.05rem]"
             >
               Inquire
             </Button>
 
-            <div className="flex flex-1 items-center justify-end gap-3">
+            <div className="flex w-full items-center justify-center gap-3 sm:w-auto sm:flex-1 sm:justify-end">
               <button
                 onClick={() => onNavigate(activeIndex - 1)}
                 disabled={activeIndex === 0}
