@@ -166,7 +166,7 @@ export default function ServicesPage() {
     <div>
       {/* ── Section 1: Hero ── */}
       <section
-        className="relative -mt-[173px] flex min-h-screen flex-col overflow-hidden bg-cover bg-center bg-no-repeat"
+        className="relative -mt-[88px] flex min-h-[70vh] flex-col overflow-hidden bg-cover bg-center bg-no-repeat sm:-mt-[110px] md:min-h-screen lg:-mt-[173px]"
         style={{ backgroundImage: `url(${heroImage})` }}
       >
         {/* Gradient overlay from #FF589C to #FD78AD */}
@@ -179,12 +179,12 @@ export default function ServicesPage() {
         <div className="absolute inset-0 bg-black/20" />
 
         {/* Spacer that matches navbar height so content sits below it visually */}
-        <div className="h-[173px] shrink-0" />
+        <div className="h-[88px] shrink-0 sm:h-[110px] lg:h-[173px]" />
 
         {/* Centered content */}
-        <div className="relative z-10 flex flex-1 flex-col items-center justify-center px-6 pb-[173px] text-center">
+        <div className="relative z-10 flex flex-1 flex-col items-center justify-center px-4 pb-16 text-center sm:px-6 sm:pb-[173px]">
           <h1
-            className="font-heading text-[clamp(4rem,10vw,8rem)] font-bold leading-tight bg-gradient-to-r text-transparent bg-clip-text"
+            className="font-heading text-[clamp(2rem,10vw,8rem)] font-bold leading-tight bg-gradient-to-r text-transparent bg-clip-text"
             style={{
               backgroundImage: 'linear-gradient(to right, #FF0066 0%, #FF0066 46%, #4A1053 100%)',
             }}
@@ -194,45 +194,45 @@ export default function ServicesPage() {
             Starts Here
           </h1>
 
-          <p className="mt-8 max-w-[50rem] text-[clamp(1.2rem,2.2vw,1.8rem)] leading-[1.75] font-sans text-white drop-shadow-lg">
+          <p className="mt-4 max-w-[50rem] text-[clamp(0.95rem,2.2vw,1.8rem)] leading-[1.75] font-sans text-white drop-shadow-lg sm:mt-8">
             From planning to execution, we offer everything you need to bring your dream event to
             life.
           </p>
         </div>
       </section>
       {/* ── Section 2: Services Offered ── */}
-      <section className="bg-white pt-24 lg:pt-32">
+      <section className="bg-white pt-14 sm:pt-24 lg:pt-32">
         {/* Heading */}
-        <div className="px-6 text-center">
+        <div className="px-4 text-center sm:px-6">
           <h2
-            className="font-heading text-[clamp(3.5rem,8vw,6rem)] font-bold leading-[1.1] tracking-tight bg-gradient-to-r text-transparent bg-clip-text"
+            className="font-heading text-[clamp(2rem,8vw,6rem)] font-bold leading-[1.1] tracking-tight bg-gradient-to-r text-transparent bg-clip-text"
             style={{
               backgroundImage: 'linear-gradient(to right, #FF0066 0%, #FF0066 46%, #4A1053 100%)',
             }}
           >
             Services Offered
           </h2>
-          <p className="mx-auto mt-6 max-w-[52rem] text-[clamp(1.2rem,2vw,1.6rem)] leading-[1.7] font-sans text-[#4A1053]">
+          <p className="mx-auto mt-4 max-w-[52rem] text-[clamp(0.95rem,2vw,1.6rem)] leading-[1.7] font-sans text-[#4A1053] sm:mt-6">
             Schatzies Events offers complete event packages that include all the essential services
             for weddings and debut celebrations.
           </p>
         </div>
 
         {/* Service rows — full-bleed backgrounds, centred inner content */}
-        <div className="mt-20 w-full">
+        <div className="mt-10 w-full sm:mt-20">
           {/* ── Row 1 (LEFT): icon LEFT · text RIGHT ── */}
-          <div className="w-full bg-[#fdf2f6] py-24 lg:py-32">
-            <div className="mx-auto flex max-w-[1100px] flex-row items-center gap-20 px-10">
+          <div className="w-full bg-[#fdf2f6] py-12 sm:py-24 lg:py-32">
+            <div className="mx-auto flex max-w-[1100px] flex-col items-center gap-6 px-5 sm:flex-row sm:gap-20 sm:px-10">
               <div className="shrink-0 transform transition-transform duration-300 hover:scale-110">
-                <div className="h-[90px] w-[90px] text-[#FF0066]">
+                <div className="h-16 w-16 text-[#FF0066] sm:h-[90px] sm:w-[90px]">
                   <CalendarIcon />
                 </div>
               </div>
-              <div className="text-left">
-                <h3 className="text-[clamp(2rem,3vw,2.5rem)] font-bold text-[#FF0066]">
+              <div className="text-center sm:text-left">
+                <h3 className="text-[clamp(1.3rem,3vw,2.5rem)] font-bold text-[#FF0066]">
                   Event Planning and Coordination
                 </h3>
-                <p className="mt-4 text-[clamp(1.1rem,1.8vw,1.5rem)] leading-[1.7] text-[#4A1053] max-w-[600px]">
+                <p className="mt-3 text-[clamp(0.95rem,1.8vw,1.5rem)] leading-[1.7] text-[#4A1053] max-w-[600px] sm:mt-4">
                   Assistance in organizing and managing your event from preparation to the actual
                   day.
                 </p>
@@ -244,18 +244,18 @@ export default function ServicesPage() {
           <div className="h-[2px] w-full bg-gradient-to-r from-transparent via-[#FF0066]/50 to-transparent" />
 
           {/* ── Row 2 (RIGHT): text LEFT · icon RIGHT ── */}
-          <div className="w-full bg-white py-24 lg:py-32">
-            <div className="mx-auto flex max-w-[1100px] flex-row items-center gap-20 px-10">
-              <div className="text-left flex-1">
-                <h3 className="text-[clamp(2rem,3vw,2.5rem)] font-bold text-[#FF0066]">
+          <div className="w-full bg-white py-12 sm:py-24 lg:py-32">
+            <div className="mx-auto flex max-w-[900px] flex-col-reverse items-center gap-6 px-5 sm:flex-row sm:gap-20 sm:px-10">
+              <div className="text-center flex-1 sm:pl-16 sm:text-left">
+                <h3 className="text-[clamp(1.3rem,3vw,2.5rem)] font-bold text-[#FF0066]">
                   Elegant Venue Setup and Styling
                 </h3>
-                <p className="mt-4 text-[clamp(1.1rem,1.8vw,1.5rem)] leading-[1.7] text-[#4A1053] max-w-[600px]">
+                <p className="mt-3 text-[clamp(0.95rem,1.8vw,1.5rem)] leading-[1.7] text-[#4A1053] max-w-[600px] sm:mt-4">
                   Beautiful decorations and designs tailored to match your event's theme and style.
                 </p>
               </div>
               <div className="shrink-0 transform transition-transform duration-300 hover:scale-110">
-                <div className="h-[90px] w-[90px] text-[#FF0066]">
+                <div className="h-16 w-16 text-[#FF0066] sm:h-[90px] sm:w-[90px]">
                   <VenueIcon />
                 </div>
               </div>
@@ -266,18 +266,18 @@ export default function ServicesPage() {
           <div className="h-[2px] w-full bg-gradient-to-r from-transparent via-[#FF0066]/50 to-transparent" />
 
           {/* ── Row 3 (LEFT): icon LEFT · text RIGHT ── */}
-          <div className="w-full bg-[#fdf2f6] py-24 lg:py-32">
-            <div className="mx-auto flex max-w-[1100px] flex-row items-center gap-20 px-10">
+          <div className="w-full bg-[#fdf2f6] py-12 sm:py-24 lg:py-32">
+            <div className="mx-auto flex max-w-[1100px] flex-col items-center gap-6 px-5 sm:flex-row sm:gap-20 sm:px-10">
               <div className="shrink-0 transform transition-transform duration-300 hover:scale-110">
-                <div className="h-[90px] w-[90px] text-[#FF0066]">
+                <div className="h-16 w-16 text-[#FF0066] sm:h-[90px] sm:w-[90px]">
                   <CateringIcon />
                 </div>
               </div>
-              <div className="text-left">
-                <h3 className="text-[clamp(2rem,3vw,2.5rem)] font-bold text-[#FF0066]">
+              <div className="text-center sm:text-left">
+                <h3 className="text-[clamp(1.3rem,3vw,2.5rem)] font-bold text-[#FF0066]">
                   Buffet Catering
                 </h3>
-                <p className="mt-4 text-[clamp(1.1rem,1.8vw,1.5rem)] leading-[1.7] text-[#4A1053] max-w-[600px]">
+                <p className="mt-3 text-[clamp(0.95rem,1.8vw,1.5rem)] leading-[1.7] text-[#4A1053] max-w-[600px] sm:mt-4">
                   Food prepared and served for guests to enjoy during the event.
                 </p>
               </div>
@@ -287,23 +287,23 @@ export default function ServicesPage() {
       </section>
 
       {/* ── Section 3: More Services + Logo Footer ── */}
-      <section className="bg-gradient-to-b from-white via-[#fce4ef] to-[#f9b8d4] pb-28 lg:pb-36">
+      <section className="bg-gradient-to-b from-white via-[#fce4ef] to-[#f9b8d4] pb-16 sm:pb-28 lg:pb-36">
         {/* Service rows — alternating left/right pattern */}
         <div className="w-full">
           {/* ── Row 1 (RIGHT): text LEFT · icon RIGHT ── */}
-          <div className="w-full py-24 lg:py-32">
-            <div className="mx-auto flex max-w-[1100px] flex-row items-center gap-20 px-10">
-              <div className="text-left flex-1">
-                <h3 className="text-[clamp(2rem,3vw,2.5rem)] font-bold text-[#FF0066]">
+          <div className="w-full py-12 sm:py-24 lg:py-32">
+            <div className="mx-auto flex max-w-[900px] flex-col-reverse items-center gap-6 px-5 sm:flex-row sm:gap-20 sm:px-10">
+              <div className="text-center flex-1 sm:pl-16 sm:text-left">
+                <h3 className="text-[clamp(1.3rem,3vw,2.5rem)] font-bold text-[#FF0066]">
                   Photo and Video Coverage
                 </h3>
-                <p className="mt-4 text-[clamp(1.1rem,1.8vw,1.5rem)] leading-[1.7] text-[#4A1053] max-w-[600px]">
+                <p className="mt-3 text-[clamp(0.95rem,1.8vw,1.5rem)] leading-[1.7] text-[#4A1053] max-w-[600px] sm:mt-4">
                   Professional coverage that beautifully captures every special moment of your
                   event.
                 </p>
               </div>
               <div className="shrink-0 transform transition-transform duration-300 hover:scale-110">
-                <div className="h-[90px] w-[90px] text-[#FF0066]">
+                <div className="h-16 w-16 text-[#FF0066] sm:h-[90px] sm:w-[90px]">
                   <CameraIcon />
                 </div>
               </div>
@@ -314,18 +314,18 @@ export default function ServicesPage() {
           <div className="h-[2px] w-full bg-gradient-to-r from-transparent via-[#FF0066]/50 to-transparent" />
 
           {/* ── Row 2 (LEFT): icon LEFT · text RIGHT ── */}
-          <div className="w-full py-24 lg:py-32">
-            <div className="mx-auto flex max-w-[1100px] flex-row items-center gap-20 px-10">
+          <div className="w-full py-12 sm:py-24 lg:py-32">
+            <div className="mx-auto flex max-w-[1100px] flex-col items-center gap-6 px-5 sm:flex-row sm:gap-20 sm:px-10">
               <div className="shrink-0 transform transition-transform duration-300 hover:scale-110">
-                <div className="h-[90px] w-[90px] text-[#FF0066]">
+                <div className="h-16 w-16 text-[#FF0066] sm:h-[90px] sm:w-[90px]">
                   <CeilingIcon />
                 </div>
               </div>
-              <div className="text-left">
-                <h3 className="text-[clamp(2rem,3vw,2.5rem)] font-bold text-[#FF0066]">
+              <div className="text-center sm:text-left">
+                <h3 className="text-[clamp(1.3rem,3vw,2.5rem)] font-bold text-[#FF0066]">
                   Ceiling Treatment and Venue Design
                 </h3>
-                <p className="mt-4 text-[clamp(1.1rem,1.8vw,1.5rem)] leading-[1.7] text-[#4A1053] max-w-[600px]">
+                <p className="mt-3 text-[clamp(0.95rem,1.8vw,1.5rem)] leading-[1.7] text-[#4A1053] max-w-[600px] sm:mt-4">
                   Decorative ceiling setups that enhance the beauty and overall style of your venue.
                 </p>
               </div>
@@ -336,19 +336,19 @@ export default function ServicesPage() {
           <div className="h-[2px] w-full bg-gradient-to-r from-transparent via-[#FF0066]/50 to-transparent" />
 
           {/* ── Row 3 (RIGHT): text LEFT · icon RIGHT ── */}
-          <div className="w-full py-24 lg:py-32">
-            <div className="mx-auto flex max-w-[1100px] flex-row items-center gap-20 px-10">
-              <div className="text-left flex-1">
-                <h3 className="text-[clamp(2rem,3vw,2.5rem)] font-bold text-[#FF0066]">
+          <div className="w-full py-12 sm:py-24 lg:py-32">
+            <div className="mx-auto flex max-w-[900px] flex-col-reverse items-center gap-6 px-5 sm:flex-row sm:gap-20 sm:px-10">
+              <div className="text-center flex-1 sm:pl-16 sm:text-left">
+                <h3 className="text-[clamp(1.3rem,3vw,2.5rem)] font-bold text-[#FF0066]">
                   Full Event Coordination
                 </h3>
-                <p className="mt-4 text-[clamp(1.1rem,1.8vw,1.5rem)] leading-[1.7] text-[#4A1053] max-w-[600px]">
+                <p className="mt-3 text-[clamp(0.95rem,1.8vw,1.5rem)] leading-[1.7] text-[#4A1053] max-w-[600px] sm:mt-4">
                   A dedicated team that manages the program flow and ensures your event runs
                   smoothly from start to finish.
                 </p>
               </div>
               <div className="shrink-0 transform transition-transform duration-300 hover:scale-110">
-                <div className="h-[90px] w-[90px] text-[#FF0066]">
+                <div className="h-16 w-16 text-[#FF0066] sm:h-[90px] sm:w-[90px]">
                   <CoordinationIcon />
                 </div>
               </div>
@@ -357,11 +357,11 @@ export default function ServicesPage() {
         </div>
 
         {/* Logo footer - larger */}
-        <div className="mt-16 flex justify-center">
+        <div className="mt-10 flex justify-center sm:mt-16">
           <img
             src="/Pictures/business-logo.png"
             alt="Schatzies Events logo"
-            className="h-[140px] w-auto transition-transform duration-300 hover:scale-105"
+            className="h-20 w-auto transition-transform duration-300 hover:scale-105 sm:h-[100px] lg:h-[140px]"
           />
         </div>
       </section>

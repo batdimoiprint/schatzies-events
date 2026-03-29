@@ -8,7 +8,7 @@ export default function AboutUsPage() {
     <div>
       {/* ── Section 1: Hero ── */}
       <section
-        className="relative -mt-[173px] flex min-h-screen flex-col overflow-hidden bg-cover bg-center bg-no-repeat"
+        className="relative -mt-[88px] flex min-h-[70vh] flex-col overflow-hidden bg-cover bg-center bg-no-repeat sm:-mt-[110px] md:min-h-screen lg:-mt-[173px]"
         style={{ backgroundImage: `url(${heroImage})` }}
       >
         {/* Gradient overlay from bottom - #FF589C 0% to #FD78AD 58% */}
@@ -21,12 +21,12 @@ export default function AboutUsPage() {
         <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent" />
 
         {/* Spacer that matches navbar height so content sits below it visually */}
-        <div className="h-[173px] shrink-0" />
+        <div className="h-[88px] shrink-0 sm:h-[110px] lg:h-[173px]" />
 
         {/* Centered content */}
-        <div className="relative z-10 flex flex-1 flex-col items-center justify-center px-6 pb-[173px] text-center">
+        <div className="relative z-10 flex flex-1 flex-col items-center justify-center px-4 pb-16 text-center sm:px-6 sm:pb-[173px]">
           <h1
-            className="font-heading text-[clamp(4rem,10vw,8rem)] font-bold leading-tight bg-gradient-to-r text-transparent bg-clip-text"
+            className="font-heading text-[clamp(2rem,10vw,8rem)] font-bold leading-tight bg-gradient-to-r text-transparent bg-clip-text"
             style={{
               backgroundImage: 'linear-gradient(to right, #FF0066 0%, #FF0066 46%, #4A1053 100%)',
             }}
@@ -36,23 +36,23 @@ export default function AboutUsPage() {
             Dreams into Milestones.
           </h1>
 
-          <p className="mt-8 max-w-[50rem] text-[clamp(1.2rem,2.2vw,1.8rem)] leading-[1.75] font-sans text-black/80 drop-shadow-lg">
+          <p className="mt-4 max-w-[50rem] text-[clamp(0.95rem,2.2vw,1.8rem)] leading-[1.75] font-sans text-black/80 drop-shadow-lg sm:mt-8">
             At Schatzies Events PH, we believe you should be a guest at your own celebration. Since
             2011, we&rsquo;ve been the trusted partner for families and couples across the
             Philippines and beyond.
           </p>
 
-          <Button className="mt-10 h-[80px] rounded-3xl bg-gradient-to-b from-[#FF0066] to-[#700F81] px-12 text-[1.5rem] font-bold uppercase tracking-wide shadow-[0_12px_28px_rgba(39,21,57,0.5)] hover:brightness-110">
+          <Button className="mt-6 h-12 rounded-3xl bg-gradient-to-b from-[#FF0066] to-[#700F81] px-8 text-[1rem] font-bold uppercase tracking-wide shadow-[0_12px_28px_rgba(39,21,57,0.5)] hover:brightness-110 sm:mt-10 sm:h-[80px] sm:px-12 sm:text-[1.5rem]">
             Inquire
           </Button>
         </div>
       </section>
 
       {/* ── Section 2: Stats Card + About Us Split ── */}
-      <section className="bg-white px-6 py-20 lg:px-20 lg:py-28">
+      <section className="bg-white px-4 py-12 sm:px-6 sm:py-20 lg:px-20 lg:py-28">
         {/* Stats Card */}
-        <div className="mx-auto max-w-[90rem] rounded-3xl bg-[#fce4ef] px-12 py-12 shadow-[0_4px_24px_rgba(230,31,131,0.10)]">
-          <div className="flex flex-col gap-10 sm:flex-row sm:justify-around sm:gap-0">
+        <div className="mx-auto max-w-[90rem] rounded-3xl bg-[#fce4ef] px-6 py-8 shadow-[0_4px_24px_rgba(230,31,131,0.10)] sm:px-12 sm:py-12">
+          <div className="grid grid-cols-2 gap-8 sm:flex sm:flex-row sm:justify-around sm:gap-0">
             <div className="flex flex-col items-center text-center">
               <span className="font-heading text-[clamp(3rem,6vw,4rem)] font-bold text-[#FF0066]">
                 15
@@ -121,14 +121,14 @@ export default function AboutUsPage() {
       </section>
 
       {/* ── Section 3: Why Choose Schatzies ── */}
-      <section className="bg-[#fff0f5] px-6 py-28 lg:px-20 lg:py-36">
+      <section className="bg-[#fff0f5] px-4 py-14 sm:px-6 sm:py-28 lg:px-20 lg:py-36">
         <div className="mx-auto max-w-[90rem]">
           {/* Heading block - maximized spacing */}
           <div className="text-center">
-            <h2 className="font-heading text-[clamp(3rem,7vw,4.5rem)] font-bold text-[#FF0066]">
+            <h2 className="font-heading text-[clamp(2rem,7vw,4.5rem)] font-bold text-[#FF0066]">
               Why Choose Schatzies?
             </h2>
-            <p className="mt-6 mx-auto max-w-[70rem] text-[clamp(1.2rem,2rem,1.7rem)] leading-[1.8] font-sans text-[#4A1053]">
+            <p className="mt-4 mx-auto max-w-[70rem] text-[clamp(0.95rem,2rem,1.7rem)] leading-[1.8] font-sans text-[#4A1053] sm:mt-6">
               With over 15 years of expertise, we turn complex logistics into seamless celebrations.
               As your reliable on-the-ground partner, we handle the details so you can simply stay
               in the moment.
@@ -136,7 +136,7 @@ export default function AboutUsPage() {
           </div>
 
           {/* Feature grid — 4 columns with maximized spacing */}
-          <div className="mt-24 grid grid-cols-1 gap-x-16 gap-y-20 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="mt-12 grid grid-cols-1 gap-x-10 gap-y-12 sm:mt-24 sm:grid-cols-2 sm:gap-x-16 sm:gap-y-20 lg:grid-cols-4">
             {/* SVG gradient defs shared */}
             <svg width="0" height="0" className="absolute">
               <defs>
@@ -149,8 +149,12 @@ export default function AboutUsPage() {
 
             {/* Card 1 — 15+ Years of Expertise */}
             <div className="flex flex-col items-center text-center transition-all duration-300 hover:-translate-y-3">
-              <div className="flex h-[180px] w-[180px] items-center justify-center rounded-3xl bg-white shadow-xl transition-all duration-300 hover:shadow-2xl">
-                <svg viewBox="0 0 64 64" className="h-[100px] w-[100px]" fill="none">
+              <div className="flex h-24 w-24 items-center justify-center rounded-2xl bg-white shadow-xl transition-all duration-300 hover:shadow-2xl sm:h-[140px] sm:w-[140px] sm:rounded-3xl lg:h-[180px] lg:w-[180px]">
+                <svg
+                  viewBox="0 0 64 64"
+                  className="h-14 w-14 sm:h-[80px] sm:w-[80px] lg:h-[100px] lg:w-[100px]"
+                  fill="none"
+                >
                   <circle cx="32" cy="40" r="18" fill="url(#wcsGrad)" />
                   <circle cx="32" cy="40" r="14" fill="white" opacity="0.18" />
                   <path
@@ -159,10 +163,10 @@ export default function AboutUsPage() {
                   />
                 </svg>
               </div>
-              <h3 className="mt-8 text-[1.5rem] font-bold text-[#FF0066]">
+              <h3 className="mt-4 text-[1.15rem] font-bold text-[#FF0066] sm:mt-8 sm:text-[1.5rem]">
                 15+ Years of Expertise
               </h3>
-              <p className="mt-4 text-[1.1rem] leading-[1.7] text-justify font-sans text-[#4A1053] max-w-[280px]">
+              <p className="mt-2 text-[0.95rem] leading-[1.7] text-justify font-sans text-[#4A1053] max-w-[280px] sm:mt-4 sm:text-[1.1rem]">
                 A decade and a half of helping many clients turn special occasions into perfectly
                 managed, memorable events.
               </p>
@@ -170,8 +174,12 @@ export default function AboutUsPage() {
 
             {/* Card 2 — The Overseas Choice */}
             <div className="flex flex-col items-center text-center transition-all duration-300 hover:-translate-y-3">
-              <div className="flex h-[180px] w-[180px] items-center justify-center rounded-3xl bg-white shadow-xl transition-all duration-300 hover:shadow-2xl">
-                <svg viewBox="0 0 64 64" className="h-[100px] w-[100px]" fill="none">
+              <div className="flex h-24 w-24 items-center justify-center rounded-2xl bg-white shadow-xl transition-all duration-300 hover:shadow-2xl sm:h-[140px] sm:w-[140px] sm:rounded-3xl lg:h-[180px] lg:w-[180px]">
+                <svg
+                  viewBox="0 0 64 64"
+                  className="h-14 w-14 sm:h-[80px] sm:w-[80px] lg:h-[100px] lg:w-[100px]"
+                  fill="none"
+                >
                   <circle cx="32" cy="32" r="24" fill="url(#wcsGrad)" />
                   <ellipse
                     cx="32"
@@ -187,8 +195,10 @@ export default function AboutUsPage() {
                   <path d="M11 44 Q32 38 53 44" stroke="white" strokeWidth="1.4" fill="none" />
                 </svg>
               </div>
-              <h3 className="mt-8 text-[1.5rem] font-bold text-[#FF0066]">The Overseas Choice</h3>
-              <p className="mt-4 text-[1.1rem] leading-[1.7] text-justify font-sans text-[#4A1053] max-w-[280px]">
+              <h3 className="mt-4 text-[1.15rem] font-bold text-[#FF0066] sm:mt-8 sm:text-[1.5rem]">
+                The Overseas Choice
+              </h3>
+              <p className="mt-2 text-[0.95rem] leading-[1.7] text-justify font-sans text-[#4A1053] max-w-[280px] sm:mt-4 sm:text-[1.1rem]">
                 A trusted partner for overseas brides and busy couples who need a reliable team to
                 take over the preparations and coordination.
               </p>
@@ -196,8 +206,12 @@ export default function AboutUsPage() {
 
             {/* Card 3 — All-Inclusive Ease */}
             <div className="flex flex-col items-center text-center transition-all duration-300 hover:-translate-y-3">
-              <div className="flex h-[180px] w-[180px] items-center justify-center rounded-3xl bg-white shadow-xl transition-all duration-300 hover:shadow-2xl">
-                <svg viewBox="0 0 64 64" className="h-[100px] w-[100px]" fill="none">
+              <div className="flex h-24 w-24 items-center justify-center rounded-2xl bg-white shadow-xl transition-all duration-300 hover:shadow-2xl sm:h-[140px] sm:w-[140px] sm:rounded-3xl lg:h-[180px] lg:w-[180px]">
+                <svg
+                  viewBox="0 0 64 64"
+                  className="h-14 w-14 sm:h-[80px] sm:w-[80px] lg:h-[100px] lg:w-[100px]"
+                  fill="none"
+                >
                   <circle cx="14" cy="20" r="7" fill="url(#wcsGrad)" opacity="0.75" />
                   <path d="M4 44c0-7 4.5-12 10-12s10 5 10 12" fill="url(#wcsGrad)" opacity="0.75" />
                   <circle cx="50" cy="20" r="7" fill="url(#wcsGrad)" opacity="0.75" />
@@ -210,8 +224,10 @@ export default function AboutUsPage() {
                   <path d="M18 46c0-8 6.3-14 14-14s14 6 14 14" fill="url(#wcsGrad)" />
                 </svg>
               </div>
-              <h3 className="mt-8 text-[1.5rem] font-bold text-[#FF0066]">All-Inclusive Ease</h3>
-              <p className="mt-4 text-[1.1rem] leading-[1.7] text-justify font-sans text-[#4A1053] max-w-[280px]">
+              <h3 className="mt-4 text-[1.15rem] font-bold text-[#FF0066] sm:mt-8 sm:text-[1.5rem]">
+                All-Inclusive Ease
+              </h3>
+              <p className="mt-2 text-[0.95rem] leading-[1.7] text-justify font-sans text-[#4A1053] max-w-[280px] sm:mt-4 sm:text-[1.1rem]">
                 Complete event packages that handle everything&mdash;from elegant venue styling and
                 buffet catering to professional photo and video coverage.
               </p>
@@ -219,8 +235,12 @@ export default function AboutUsPage() {
 
             {/* Card 4 — Budget-Friendly Luxury */}
             <div className="flex flex-col items-center text-center transition-all duration-300 hover:-translate-y-3">
-              <div className="flex h-[180px] w-[180px] items-center justify-center rounded-3xl bg-white shadow-xl transition-all duration-300 hover:shadow-2xl">
-                <svg viewBox="0 0 64 64" className="h-[100px] w-[100px]" fill="none">
+              <div className="flex h-24 w-24 items-center justify-center rounded-2xl bg-white shadow-xl transition-all duration-300 hover:shadow-2xl sm:h-[140px] sm:w-[140px] sm:rounded-3xl lg:h-[180px] lg:w-[180px]">
+                <svg
+                  viewBox="0 0 64 64"
+                  className="h-14 w-14 sm:h-[80px] sm:w-[80px] lg:h-[100px] lg:w-[100px]"
+                  fill="none"
+                >
                   <circle cx="32" cy="32" r="24" fill="url(#wcsGrad)" />
                   <circle cx="32" cy="32" r="17" fill="white" opacity="0.18" />
                   <rect x="30" y="14" width="4" height="36" rx="2" fill="white" />
@@ -233,10 +253,10 @@ export default function AboutUsPage() {
                   />
                 </svg>
               </div>
-              <h3 className="mt-8 text-[1.5rem] font-bold text-[#FF0066]">
+              <h3 className="mt-4 text-[1.15rem] font-bold text-[#FF0066] sm:mt-8 sm:text-[1.5rem]">
                 Budget-Friendly Luxury
               </h3>
-              <p className="mt-4 text-[1.1rem] leading-[1.7] text-justify font-sans text-[#4A1053] max-w-[280px]">
+              <p className="mt-2 text-[0.95rem] leading-[1.7] text-justify font-sans text-[#4A1053] max-w-[280px] sm:mt-4 sm:text-[1.1rem]">
                 Expertly managing the details so you can focus on the moment. We specialize in
                 all-inclusive event solutions that are both affordable and adaptable.
               </p>
@@ -246,12 +266,12 @@ export default function AboutUsPage() {
       </section>
 
       {/* ── Logo Footer ── */}
-      <section className="border-t border-[#e8e8e8] bg-white py-16">
-        <div className="relative mx-auto flex max-w-[90rem] items-center justify-center px-6 lg:px-20">
+      <section className="border-t border-[#e8e8e8] bg-white py-10 sm:py-16">
+        <div className="relative mx-auto flex max-w-[90rem] items-center justify-center px-4 sm:px-6 lg:px-20">
           <img
             src="/Pictures/business-logo.png"
             alt="Schatzies Events logo"
-            className="h-[160px] w-auto transition-transform duration-300 hover:scale-105"
+            className="h-20 w-auto transition-transform duration-300 hover:scale-105 sm:h-[100px] lg:h-[160px]"
           />
           {/* Scroll-to-top arrow — right aligned */}
           <button

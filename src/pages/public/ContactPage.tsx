@@ -6,7 +6,7 @@ export default function ContactPage() {
     <div>
       {/* ── Hero Section ── */}
       <section
-        className="relative -mt-[173px] flex min-h-screen flex-col overflow-hidden bg-cover bg-center bg-no-repeat"
+        className="relative -mt-[88px] flex min-h-[70vh] flex-col overflow-hidden bg-cover bg-center bg-no-repeat sm:-mt-[110px] md:min-h-screen lg:-mt-[173px]"
         style={{ backgroundImage: `url(${heroImage})` }}
       >
         {/* Gradient overlay from bottom - #FF589C 0% to #FD78AD 58% */}
@@ -18,19 +18,19 @@ export default function ContactPage() {
         <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent" />
 
         {/* Spacer that matches navbar height */}
-        <div className="h-[173px] shrink-0" />
+        <div className="h-[88px] shrink-0 sm:h-[110px] lg:h-[173px]" />
 
         {/* Centered hero text */}
-        <div className="relative z-10 flex flex-1 flex-col items-center justify-center px-6 pb-[173px] text-center">
+        <div className="relative z-10 flex flex-1 flex-col items-center justify-center px-4 pb-16 text-center sm:px-6 sm:pb-[173px]">
           <h1
-            className="font-heading text-[clamp(4rem,10vw,8rem)] font-bold leading-tight bg-gradient-to-r text-transparent bg-clip-text"
+            className="font-heading text-[clamp(2rem,10vw,8rem)] font-bold leading-tight bg-gradient-to-r text-transparent bg-clip-text"
             style={{
               backgroundImage: 'linear-gradient(to right, #FF0066 0%, #FF0066 46%, #4A1053 100%)',
             }}
           >
             Contact Us
           </h1>
-          <p className="mt-8 max-w-[50rem] text-[clamp(1.2rem,2.2vw,1.8rem)] leading-[1.75] font-sans text-black drop-shadow-lg">
+          <p className="mt-4 max-w-[50rem] text-[clamp(0.95rem,2.2vw,1.8rem)] leading-[1.75] font-sans text-black drop-shadow-lg sm:mt-8">
             Whether you have an event type in mind or just want to explore the possibilities, our
             team is ready to listen.
           </p>
@@ -38,12 +38,12 @@ export default function ContactPage() {
       </section>
 
       {/* ── Bottom gradient section with overlapping cards ── */}
-      <section className="bg-gradient-to-b from-white via-[#fce4ef] to-[#f9b8d4] pb-28 lg:pb-36">
+      <section className="bg-gradient-to-b from-white via-[#fce4ef] to-[#f9b8d4] pb-16 sm:pb-28 lg:pb-36">
         {/* Cards container — negative top margin pulls into hero */}
-        <div className="relative z-10 mx-auto -mt-40 flex max-w-[90rem] flex-col gap-10 px-6 md:flex-row lg:px-20">
+        <div className="relative z-10 mx-auto -mt-20 flex max-w-[90rem] flex-col gap-6 px-4 sm:-mt-40 sm:gap-10 sm:px-6 md:flex-row lg:px-20">
           {/* Business Location card */}
-          <div className="w-full rounded-3xl bg-white p-12 shadow-xl transition-all duration-300 hover:shadow-2xl md:w-1/2">
-            <h2 className="text-center font-heading text-[clamp(2rem,3vw,2.5rem)] font-bold text-[#FF0066]">
+          <div className="w-full rounded-2xl bg-white p-6 shadow-xl transition-all duration-300 hover:shadow-2xl sm:rounded-3xl sm:p-12 md:w-1/2">
+            <h2 className="text-center font-heading text-[clamp(1.4rem,3vw,2.5rem)] font-bold text-[#FF0066]">
               Business Location
             </h2>
             <p className="mx-auto mt-4 max-w-[28rem] text-center text-[clamp(1rem,1.5vw,1.2rem)] leading-[1.7] font-sans text-[#4A1053]">
@@ -51,11 +51,11 @@ export default function ContactPage() {
               comfortable consultation.
             </p>
 
-            <div className="mt-12 flex flex-col gap-8">
+            <div className="mt-8 flex flex-col gap-6 sm:mt-12 sm:gap-8">
               {/* QC Branch */}
-              <div className="flex items-center gap-6">
-                <div className="flex h-[70px] w-[70px] shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-[#FF0066]/10 to-[#4A1053]/10">
-                  <svg viewBox="0 0 24 24" className="h-10 w-10" fill="none">
+              <div className="flex items-center gap-4 sm:gap-6">
+                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-[#FF0066]/10 to-[#4A1053]/10 sm:h-[70px] sm:w-[70px]">
+                  <svg viewBox="0 0 24 24" className="h-7 w-7 sm:h-10 sm:w-10" fill="none">
                     <defs>
                       <linearGradient id="pinGrad1" x1="0" y1="0" x2="0" y2="1">
                         <stop offset="0%" stopColor="#FF0066" />
@@ -70,15 +70,19 @@ export default function ContactPage() {
                   </svg>
                 </div>
                 <div>
-                  <p className="text-[1.3rem] font-bold text-[#FF0066]">Quezon City Branch</p>
-                  <p className="mt-1 text-[1rem] text-[#4A1053]">123 QC Avenue, Quezon City</p>
+                  <p className="text-[1rem] font-bold text-[#FF0066] sm:text-[1.3rem]">
+                    Quezon City Branch
+                  </p>
+                  <p className="mt-1 text-[0.875rem] text-[#4A1053] sm:text-[1rem]">
+                    123 QC Avenue, Quezon City
+                  </p>
                 </div>
               </div>
 
               {/* Tagaytay Branch */}
-              <div className="flex items-center gap-6">
-                <div className="flex h-[70px] w-[70px] shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-[#FF0066]/10 to-[#4A1053]/10">
-                  <svg viewBox="0 0 24 24" className="h-10 w-10" fill="none">
+              <div className="flex items-center gap-4 sm:gap-6">
+                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-[#FF0066]/10 to-[#4A1053]/10 sm:h-[70px] sm:w-[70px]">
+                  <svg viewBox="0 0 24 24" className="h-7 w-7 sm:h-10 sm:w-10" fill="none">
                     <path
                       d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"
                       fill="url(#pinGrad1)"
@@ -87,8 +91,10 @@ export default function ContactPage() {
                   </svg>
                 </div>
                 <div>
-                  <p className="text-[1.3rem] font-bold text-[#FF0066]">Tagaytay Branch</p>
-                  <p className="mt-1 text-[1rem] text-[#4A1053]">
+                  <p className="text-[1rem] font-bold text-[#FF0066] sm:text-[1.3rem]">
+                    Tagaytay Branch
+                  </p>
+                  <p className="mt-1 text-[0.875rem] text-[#4A1053] sm:text-[1rem]">
                     456 Tagaytay Ridge, Tagaytay City
                   </p>
                 </div>
@@ -97,8 +103,8 @@ export default function ContactPage() {
           </div>
 
           {/* Contact Information card */}
-          <div className="w-full rounded-3xl bg-white p-12 shadow-xl transition-all duration-300 hover:shadow-2xl md:w-1/2">
-            <h2 className="text-center font-heading text-[clamp(2rem,3vw,2.5rem)] font-bold text-[#FF0066]">
+          <div className="w-full rounded-2xl bg-white p-6 shadow-xl transition-all duration-300 hover:shadow-2xl sm:rounded-3xl sm:p-12 md:w-1/2">
+            <h2 className="text-center font-heading text-[clamp(1.4rem,3vw,2.5rem)] font-bold text-[#FF0066]">
               Contact Information
             </h2>
             <p className="mx-auto mt-4 max-w-[28rem] text-center text-[clamp(1rem,1.5vw,1.2rem)] leading-[1.7] font-sans text-[#4A1053]">
@@ -106,11 +112,11 @@ export default function ContactPage() {
               event.
             </p>
 
-            <div className="mt-12 flex flex-col gap-8">
+            <div className="mt-8 flex flex-col gap-6 sm:mt-12 sm:gap-8">
               {/* Phone Numbers */}
-              <div className="flex items-center gap-6">
-                <div className="flex h-[70px] w-[70px] shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-[#FF0066]/10 to-[#4A1053]/10">
-                  <svg viewBox="0 0 24 24" className="h-10 w-10" fill="none">
+              <div className="flex items-center gap-4 sm:gap-6">
+                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-[#FF0066]/10 to-[#4A1053]/10 sm:h-[70px] sm:w-[70px]">
+                  <svg viewBox="0 0 24 24" className="h-7 w-7 sm:h-10 sm:w-10" fill="none">
                     <defs>
                       <linearGradient id="phoneGrad" x1="0" y1="0" x2="0" y2="1">
                         <stop offset="0%" stopColor="#FF0066" />
@@ -124,16 +130,20 @@ export default function ContactPage() {
                   </svg>
                 </div>
                 <div>
-                  <p className="text-[1.3rem] font-bold text-[#FF0066]">Phone Numbers</p>
-                  <p className="mt-1 text-[1rem] text-[#4A1053]">0933 380 7868</p>
-                  <p className="text-[1rem] text-[#4A1053]">0917 502 3538</p>
+                  <p className="text-[1rem] font-bold text-[#FF0066] sm:text-[1.3rem]">
+                    Phone Numbers
+                  </p>
+                  <p className="mt-1 text-[0.875rem] text-[#4A1053] sm:text-[1rem]">
+                    0933 380 7868
+                  </p>
+                  <p className="text-[0.875rem] text-[#4A1053] sm:text-[1rem]">0917 502 3538</p>
                 </div>
               </div>
 
               {/* Email */}
-              <div className="flex items-center gap-6">
-                <div className="flex h-[70px] w-[70px] shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-[#FF0066]/10 to-[#4A1053]/10">
-                  <svg viewBox="0 0 24 24" className="h-10 w-10" fill="none">
+              <div className="flex items-center gap-4 sm:gap-6">
+                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-[#FF0066]/10 to-[#4A1053]/10 sm:h-[70px] sm:w-[70px]">
+                  <svg viewBox="0 0 24 24" className="h-7 w-7 sm:h-10 sm:w-10" fill="none">
                     <defs>
                       <linearGradient id="emailGrad" x1="0" y1="0" x2="0" y2="1">
                         <stop offset="0%" stopColor="#FF0066" />
@@ -145,15 +155,17 @@ export default function ContactPage() {
                   </svg>
                 </div>
                 <div>
-                  <p className="text-[1.3rem] font-bold text-[#FF0066]">Email</p>
-                  <p className="mt-1 text-[1rem] text-[#4A1053]">info@schatziesevents.com</p>
+                  <p className="text-[1rem] font-bold text-[#FF0066] sm:text-[1.3rem]">Email</p>
+                  <p className="mt-1 text-[0.875rem] text-[#4A1053] sm:text-[1rem]">
+                    info@schatziesevents.com
+                  </p>
                 </div>
               </div>
 
               {/* Facebook */}
-              <div className="flex items-center gap-6">
-                <div className="flex h-[70px] w-[70px] shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-[#FF0066]/10 to-[#4A1053]/10">
-                  <svg viewBox="0 0 24 24" className="h-10 w-10" fill="none">
+              <div className="flex items-center gap-4 sm:gap-6">
+                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-[#FF0066]/10 to-[#4A1053]/10 sm:h-[70px] sm:w-[70px]">
+                  <svg viewBox="0 0 24 24" className="h-7 w-7 sm:h-10 sm:w-10" fill="none">
                     <defs>
                       <linearGradient id="fbGrad" x1="0" y1="0" x2="0" y2="1">
                         <stop offset="0%" stopColor="#FF0066" />
@@ -168,8 +180,10 @@ export default function ContactPage() {
                   </svg>
                 </div>
                 <div>
-                  <p className="text-[1.3rem] font-bold text-[#FF0066]">Facebook</p>
-                  <p className="mt-1 text-[1rem] text-[#4A1053]">@schatziesevents</p>
+                  <p className="text-[1rem] font-bold text-[#FF0066] sm:text-[1.3rem]">Facebook</p>
+                  <p className="mt-1 text-[0.875rem] text-[#4A1053] sm:text-[1rem]">
+                    @schatziesevents
+                  </p>
                 </div>
               </div>
             </div>
@@ -177,11 +191,11 @@ export default function ContactPage() {
         </div>
 
         {/* Logo Footer - larger */}
-        <div className="mt-20 flex justify-center">
+        <div className="mt-10 flex justify-center sm:mt-20">
           <img
             src="/Pictures/business-logo.png"
             alt="Schatzies Events logo"
-            className="h-[140px] w-auto transition-transform duration-300 hover:scale-105"
+            className="h-20 w-auto transition-transform duration-300 hover:scale-105 sm:h-[100px] lg:h-[140px]"
           />
         </div>
       </section>
