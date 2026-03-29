@@ -61,9 +61,7 @@ export function PackageModal({ packages, activeIndex, onClose, onNavigate }: Pac
           </button>
 
           {/* Title */}
-          <h2 className="text-[1.8rem] font-bold text-[#3d2052]">
-            {pkg.name} Inclusion
-          </h2>
+          <h2 className="text-[1.8rem] font-bold text-[#3d2052]">{pkg.name} Inclusion</h2>
 
           {/* 2×2 inclusion grid */}
           <div className="mt-5 grid flex-1 grid-cols-2 gap-4">
@@ -73,20 +71,40 @@ export function PackageModal({ packages, activeIndex, onClose, onNavigate }: Pac
                 <div key={cat.title} className={`rounded-2xl bg-[#ede0f5] ${many ? 'p-4' : 'p-6'}`}>
                   <div className={`flex items-center gap-2 ${many ? 'mb-2' : 'mb-3'}`}>
                     <Icon className={`text-[#c2649b] ${many ? 'h-5 w-5' : 'h-7 w-7'}`} />
-                    <span className={`font-bold text-[#3d1a5e] ${many ? 'text-[0.95rem]' : 'text-[1.08rem]'}`}>{cat.title}</span>
+                    <span
+                      className={`font-bold text-[#3d1a5e] ${many ? 'text-[0.95rem]' : 'text-[1.08rem]'}`}
+                    >
+                      {cat.title}
+                    </span>
                   </div>
                   <ul className={many ? 'space-y-1.5' : 'space-y-2.5'}>
                     {cat.items.map((item) => {
                       const isHighlight = typeof item === 'object';
                       const text = typeof item === 'object' ? item.text : item;
                       return (
-                        <li key={text} className={`flex items-center gap-2 ${many ? 'text-[0.85rem]' : 'text-[0.97rem]'}`}>
+                        <li
+                          key={text}
+                          className={`flex items-center gap-2 ${many ? 'text-[0.85rem]' : 'text-[0.97rem]'}`}
+                        >
                           <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[#e61f83]">
-                            <svg viewBox="0 0 10 10" className="h-3 w-3 fill-none stroke-white stroke-[2]">
-                              <polyline points="1.5,5 4,7.5 8.5,2.5" strokeLinecap="round" strokeLinejoin="round" />
+                            <svg
+                              viewBox="0 0 10 10"
+                              className="h-3 w-3 fill-none stroke-white stroke-[2]"
+                            >
+                              <polyline
+                                points="1.5,5 4,7.5 8.5,2.5"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                              />
                             </svg>
                           </span>
-                          <span className={isHighlight ? 'font-semibold text-[#e61f83]' : 'text-[#2d1a3d]'}>{text}</span>
+                          <span
+                            className={
+                              isHighlight ? 'font-semibold text-[#e61f83]' : 'text-[#2d1a3d]'
+                            }
+                          >
+                            {text}
+                          </span>
                         </li>
                       );
                     })}

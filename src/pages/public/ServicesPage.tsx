@@ -35,8 +35,16 @@ function VenueIcon() {
         </linearGradient>
       </defs>
       {/* Back card (rotated) */}
-      <rect x="6" y="14" width="40" height="46" rx="6" fill="url(#venueGrad)" opacity="0.45"
-        transform="rotate(-18 26 37)" />
+      <rect
+        x="6"
+        y="14"
+        width="40"
+        height="46"
+        rx="6"
+        fill="url(#venueGrad)"
+        opacity="0.45"
+        transform="rotate(-18 26 37)"
+      />
       {/* Front card */}
       <rect x="18" y="8" width="40" height="48" rx="6" fill="url(#venueGrad)" />
       {/* Card dot */}
@@ -161,186 +169,201 @@ export default function ServicesPage() {
         className="relative -mt-[173px] flex min-h-screen flex-col overflow-hidden bg-cover bg-center bg-no-repeat"
         style={{ backgroundImage: `url(${heroImage})` }}
       >
-        {/* Subtle dark overlay so background photo shows through */}
-        <div className="absolute inset-0 bg-black/30" />
+        {/* Gradient overlay from #FF589C to #FD78AD */}
+        <div className="absolute inset-0 bg-gradient-to-br from-[#FF589C]/80 via-[#FD78AD]/60 to-transparent" />
+
+        {/* Additional white overlay for brightness */}
+        <div className="absolute inset-0 bg-white/20" />
+
+        {/* Subtle dark overlay for text readability */}
+        <div className="absolute inset-0 bg-black/20" />
 
         {/* Spacer that matches navbar height so content sits below it visually */}
         <div className="h-[173px] shrink-0" />
 
         {/* Centered content */}
         <div className="relative z-10 flex flex-1 flex-col items-center justify-center px-6 pb-[173px] text-center">
-          <h1 className="font-heading text-[clamp(2.8rem,6vw,5.5rem)] font-bold italic leading-tight text-[#e61f83]">
+          <h1
+            className="font-heading text-[clamp(4rem,10vw,8rem)] font-bold leading-tight bg-gradient-to-r text-transparent bg-clip-text"
+            style={{
+              backgroundImage: 'linear-gradient(to right, #FF0066 0%, #FF0066 46%, #4A1053 100%)',
+            }}
+          >
             Your Perfect Event
             <br />
             Starts Here
           </h1>
 
-          <p className="mt-6 whitespace-nowrap text-[clamp(0.95rem,1.3vw,1.15rem)] leading-[1.75] text-white">
-            From planning to execution, we offer everything you need to bring your dream event to life.
+          <p className="mt-8 max-w-[50rem] text-[clamp(1.2rem,2.2vw,1.8rem)] leading-[1.75] font-sans text-white drop-shadow-lg">
+            From planning to execution, we offer everything you need to bring your dream event to
+            life.
           </p>
         </div>
       </section>
-
       {/* ── Section 2: Services Offered ── */}
-      <section className="bg-white pt-10 lg:pt-12">
+      <section className="bg-white pt-24 lg:pt-32">
         {/* Heading */}
         <div className="px-6 text-center">
-          <h2 className="font-heading text-[clamp(2.4rem,5vw,4rem)] font-bold italic leading-[1.1] tracking-tight text-[#e61f83]">
+          <h2
+            className="font-heading text-[clamp(3.5rem,8vw,6rem)] font-bold leading-[1.1] tracking-tight bg-gradient-to-r text-transparent bg-clip-text"
+            style={{
+              backgroundImage: 'linear-gradient(to right, #FF0066 0%, #FF0066 46%, #4A1053 100%)',
+            }}
+          >
             Services Offered
           </h2>
-          <p className="mx-auto mt-4 max-w-[38rem] text-[clamp(0.9rem,1.3vw,1.05rem)] leading-[1.7] text-[#3d2052]">
-            Schatzies Events offers complete event packages that include all the
-            essential services for weddings and debut celebrations.
+          <p className="mx-auto mt-6 max-w-[52rem] text-[clamp(1.2rem,2vw,1.6rem)] leading-[1.7] font-sans text-[#4A1053]">
+            Schatzies Events offers complete event packages that include all the essential services
+            for weddings and debut celebrations.
           </p>
         </div>
 
         {/* Service rows — full-bleed backgrounds, centred inner content */}
-        <div className="mt-12 w-full">
-
-          {/* ── Row 1 (odd): icon LEFT · text RIGHT ── */}
-          <div className="w-full bg-[#fdf2f6] py-12">
-            <div className="mx-auto flex max-w-[800px] flex-row items-center gap-12 px-10">
-              <div className="shrink-0">
-                <CalendarIcon />
+        <div className="mt-20 w-full">
+          {/* ── Row 1 (LEFT): icon LEFT · text RIGHT ── */}
+          <div className="w-full bg-[#fdf2f6] py-24 lg:py-32">
+            <div className="mx-auto flex max-w-[1100px] flex-row items-center gap-20 px-10">
+              <div className="shrink-0 transform transition-transform duration-300 hover:scale-110">
+                <div className="h-[90px] w-[90px] text-[#FF0066]">
+                  <CalendarIcon />
+                </div>
               </div>
               <div className="text-left">
-                <h3 className="text-[clamp(1.2rem,2vw,1.5rem)] font-bold text-[#e61f83]">
+                <h3 className="text-[clamp(2rem,3vw,2.5rem)] font-bold text-[#FF0066]">
                   Event Planning and Coordination
                 </h3>
-                <p className="mt-2 text-[clamp(0.95rem,1.3vw,1.1rem)] leading-[1.7] text-[#3d2052]">
-                  Assistance in organizing and managing your
-                  <br />event from preparation to the actual day.
+                <p className="mt-4 text-[clamp(1.1rem,1.8vw,1.5rem)] leading-[1.7] text-[#4A1053] max-w-[600px]">
+                  Assistance in organizing and managing your event from preparation to the actual
+                  day.
                 </p>
               </div>
             </div>
           </div>
 
-          {/* Divider */}
-          <div className="h-[6px] w-full bg-gradient-to-r from-transparent via-[#e61f83]/25 to-transparent" />
+          {/* Divider with brand colors */}
+          <div className="h-[2px] w-full bg-gradient-to-r from-transparent via-[#FF0066]/50 to-transparent" />
 
-          {/* ── Row 2 (even): text LEFT · icon RIGHT — shifted right ── */}
-          <div className="w-full bg-white py-12">
-            <div className="mx-auto flex max-w-[1000px] flex-row items-center gap-12 px-10">
-              <div className="flex-1" />
-              <div className="text-right">
-                <h3 className="text-[clamp(1.2rem,2vw,1.5rem)] font-bold text-[#e61f83]">
+          {/* ── Row 2 (RIGHT): text LEFT · icon RIGHT ── */}
+          <div className="w-full bg-white py-24 lg:py-32">
+            <div className="mx-auto flex max-w-[1100px] flex-row items-center gap-20 px-10">
+              <div className="text-left flex-1">
+                <h3 className="text-[clamp(2rem,3vw,2.5rem)] font-bold text-[#FF0066]">
                   Elegant Venue Setup and Styling
                 </h3>
-                <p className="mt-2 text-[clamp(0.95rem,1.3vw,1.1rem)] leading-[1.7] text-[#3d2052]">
-                  Beautiful decorations and designs tailored to
-                  <br />match your event&rsquo;s theme and style.
+                <p className="mt-4 text-[clamp(1.1rem,1.8vw,1.5rem)] leading-[1.7] text-[#4A1053] max-w-[600px]">
+                  Beautiful decorations and designs tailored to match your event's theme and style.
                 </p>
               </div>
-              <div className="shrink-0">
-                <VenueIcon />
+              <div className="shrink-0 transform transition-transform duration-300 hover:scale-110">
+                <div className="h-[90px] w-[90px] text-[#FF0066]">
+                  <VenueIcon />
+                </div>
               </div>
             </div>
           </div>
 
           {/* Divider */}
-          <div className="h-[6px] w-full bg-gradient-to-r from-transparent via-[#e61f83]/25 to-transparent" />
+          <div className="h-[2px] w-full bg-gradient-to-r from-transparent via-[#FF0066]/50 to-transparent" />
 
-          {/* ── Row 3 (odd): icon LEFT · text RIGHT ── */}
-          <div className="w-full bg-[#fdf2f6] py-12">
-            <div className="mx-auto flex max-w-[800px] flex-row items-center gap-12 px-10">
-              <div className="shrink-0">
-                <CateringIcon />
+          {/* ── Row 3 (LEFT): icon LEFT · text RIGHT ── */}
+          <div className="w-full bg-[#fdf2f6] py-24 lg:py-32">
+            <div className="mx-auto flex max-w-[1100px] flex-row items-center gap-20 px-10">
+              <div className="shrink-0 transform transition-transform duration-300 hover:scale-110">
+                <div className="h-[90px] w-[90px] text-[#FF0066]">
+                  <CateringIcon />
+                </div>
               </div>
               <div className="text-left">
-                <h3 className="text-[clamp(1.2rem,2vw,1.5rem)] font-bold text-[#e61f83]">
+                <h3 className="text-[clamp(2rem,3vw,2.5rem)] font-bold text-[#FF0066]">
                   Buffet Catering
                 </h3>
-                <p className="mt-2 text-[clamp(0.95rem,1.3vw,1.1rem)] leading-[1.7] text-[#3d2052]">
-                  Food prepared and served for guests to enjoy
-                  <br />during the event.
+                <p className="mt-4 text-[clamp(1.1rem,1.8vw,1.5rem)] leading-[1.7] text-[#4A1053] max-w-[600px]">
+                  Food prepared and served for guests to enjoy during the event.
                 </p>
               </div>
             </div>
           </div>
-
         </div>
       </section>
 
       {/* ── Section 3: More Services + Logo Footer ── */}
-      <section className="bg-gradient-to-b from-white via-[#fce4ef] to-[#f9b8d4] pb-20 lg:pb-28">
-
-        {/* Service rows — same zigzag layout */}
+      <section className="bg-gradient-to-b from-white via-[#fce4ef] to-[#f9b8d4] pb-28 lg:pb-36">
+        {/* Service rows — alternating left/right pattern */}
         <div className="w-full">
-
-          {/* ── Row 1 (even): text LEFT · icon RIGHT ── */}
-          <div className="w-full py-12">
-            <div className="mx-auto flex max-w-[1000px] flex-row items-center gap-12 px-10">
-              <div className="flex-1" />
-              <div className="text-right">
-                <h3 className="text-[clamp(1.2rem,2vw,1.5rem)] font-bold text-[#e61f83]">
+          {/* ── Row 1 (RIGHT): text LEFT · icon RIGHT ── */}
+          <div className="w-full py-24 lg:py-32">
+            <div className="mx-auto flex max-w-[1100px] flex-row items-center gap-20 px-10">
+              <div className="text-left flex-1">
+                <h3 className="text-[clamp(2rem,3vw,2.5rem)] font-bold text-[#FF0066]">
                   Photo and Video Coverage
                 </h3>
-                <p className="mt-2 text-[clamp(0.95rem,1.3vw,1.1rem)] leading-[1.7] text-[#3d2052]">
-                  Professional coverage that beautifully captures
-                  <br />every special moment of your event.
+                <p className="mt-4 text-[clamp(1.1rem,1.8vw,1.5rem)] leading-[1.7] text-[#4A1053] max-w-[600px]">
+                  Professional coverage that beautifully captures every special moment of your
+                  event.
                 </p>
               </div>
-              <div className="shrink-0">
-                <CameraIcon />
+              <div className="shrink-0 transform transition-transform duration-300 hover:scale-110">
+                <div className="h-[90px] w-[90px] text-[#FF0066]">
+                  <CameraIcon />
+                </div>
               </div>
             </div>
           </div>
 
-          {/* Divider */}
-          <div className="h-[6px] w-full bg-gradient-to-r from-transparent via-[#e61f83]/25 to-transparent" />
+          {/* Divider with brand colors */}
+          <div className="h-[2px] w-full bg-gradient-to-r from-transparent via-[#FF0066]/50 to-transparent" />
 
-          {/* ── Row 2 (odd): icon LEFT · text RIGHT ── */}
-          <div className="w-full py-12">
-            <div className="mx-auto flex max-w-[800px] flex-row items-center gap-12 px-10">
-              <div className="shrink-0">
-                <CeilingIcon />
+          {/* ── Row 2 (LEFT): icon LEFT · text RIGHT ── */}
+          <div className="w-full py-24 lg:py-32">
+            <div className="mx-auto flex max-w-[1100px] flex-row items-center gap-20 px-10">
+              <div className="shrink-0 transform transition-transform duration-300 hover:scale-110">
+                <div className="h-[90px] w-[90px] text-[#FF0066]">
+                  <CeilingIcon />
+                </div>
               </div>
               <div className="text-left">
-                <h3 className="text-[clamp(1.2rem,2vw,1.5rem)] font-bold text-[#e61f83]">
+                <h3 className="text-[clamp(2rem,3vw,2.5rem)] font-bold text-[#FF0066]">
                   Ceiling Treatment and Venue Design
                 </h3>
-                <p className="mt-2 text-[clamp(0.95rem,1.3vw,1.1rem)] leading-[1.7] text-[#3d2052]">
-                  Decorative ceiling setups that enhance the
-                  <br />beauty and overall style of your venue.
+                <p className="mt-4 text-[clamp(1.1rem,1.8vw,1.5rem)] leading-[1.7] text-[#4A1053] max-w-[600px]">
+                  Decorative ceiling setups that enhance the beauty and overall style of your venue.
                 </p>
               </div>
             </div>
           </div>
 
           {/* Divider */}
-          <div className="h-[6px] w-full bg-gradient-to-r from-transparent via-[#e61f83]/25 to-transparent" />
+          <div className="h-[2px] w-full bg-gradient-to-r from-transparent via-[#FF0066]/50 to-transparent" />
 
-          {/* ── Row 3 (even): text LEFT · icon RIGHT ── */}
-          <div className="w-full py-12">
-            <div className="mx-auto flex max-w-[1000px] flex-row items-center gap-12 px-10">
-              <div className="flex-1" />
-              <div className="text-right">
-                <h3 className="text-[clamp(1.2rem,2vw,1.5rem)] font-bold text-[#e61f83]">
+          {/* ── Row 3 (RIGHT): text LEFT · icon RIGHT ── */}
+          <div className="w-full py-24 lg:py-32">
+            <div className="mx-auto flex max-w-[1100px] flex-row items-center gap-20 px-10">
+              <div className="text-left flex-1">
+                <h3 className="text-[clamp(2rem,3vw,2.5rem)] font-bold text-[#FF0066]">
                   Full Event Coordination
                 </h3>
-                <p className="mt-2 text-[clamp(0.95rem,1.3vw,1.1rem)] leading-[1.7] text-[#3d2052]">
-                  A dedicated team that manages the program flow
-                  <br />and ensures your event runs smoothly from start
-                  <br />to finish.
+                <p className="mt-4 text-[clamp(1.1rem,1.8vw,1.5rem)] leading-[1.7] text-[#4A1053] max-w-[600px]">
+                  A dedicated team that manages the program flow and ensures your event runs
+                  smoothly from start to finish.
                 </p>
               </div>
-              <div className="shrink-0">
-                <CoordinationIcon />
+              <div className="shrink-0 transform transition-transform duration-300 hover:scale-110">
+                <div className="h-[90px] w-[90px] text-[#FF0066]">
+                  <CoordinationIcon />
+                </div>
               </div>
             </div>
           </div>
-
         </div>
 
-        {/* Logo footer */}
-        <div className="mt-10 flex justify-center">
+        {/* Logo footer - larger */}
+        <div className="mt-16 flex justify-center">
           <img
             src="/Pictures/business-logo.png"
             alt="Schatzies Events logo"
-            className="h-[110px] w-auto"
+            className="h-[140px] w-auto transition-transform duration-300 hover:scale-105"
           />
         </div>
-
       </section>
     </div>
   );
