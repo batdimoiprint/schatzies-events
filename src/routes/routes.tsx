@@ -11,6 +11,10 @@ import DashboardPage from '@/pages/dashboard/DashboardPage';
 
 const router = createBrowserRouter([
   {
+    path: 'login',
+    Component: LoginPage,
+  },
+  {
     path: '/',
     Component: PublicLayout,
     children: [
@@ -33,10 +37,6 @@ const router = createBrowserRouter([
       {
         path: 'contact',
         Component: ContactPage,
-      },
-      {
-        path: 'login',
-        Component: LoginPage,
       },
     ],
   },

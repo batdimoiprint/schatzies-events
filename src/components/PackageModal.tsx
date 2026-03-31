@@ -139,11 +139,10 @@ export function PackageModal({
                 onClose();
                 onInquire?.();
               }}
-              className="h-11 w-full rounded-xl border-2 border-[#e61f83] bg-transparent px-10 text-[#e61f83] text-[0.95rem] font-bold hover:bg-[#fff0f6] hover:text-[#e61f83] sm:h-[50px] sm:w-auto sm:px-14 sm:text-[1.05rem]"
+              className="h-11 w-full rounded-full border-2 border-[#e61f83] bg-transparent px-10 text-[#e61f83] text-[0.95rem] font-bold hover:bg-[#fff0f6] hover:text-[#e61f83] sm:h-[50px] sm:w-auto sm:px-14 sm:text-[1.05rem]"
             >
               Inquire
             </Button>
-
             <div className="flex w-full items-center justify-center gap-3 sm:w-auto sm:flex-1 sm:justify-end">
               <button
                 onClick={() => onNavigate(activeIndex - 1)}

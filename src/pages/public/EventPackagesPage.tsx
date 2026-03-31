@@ -6,11 +6,8 @@ import { PackageModal } from '@/components/PackageModal';
 import { InquiryForm } from '@/components/InquiryForm';
 import type { PackageWithModal } from '@/components/PackageModal';
 
-// Replace with your actual hero photo placed in public/Pictures/
 const heroImage = '/Pictures/packages-hero.jpg';
 
-// ── Wedding package cards ──────────────────────────────────────
-// Place card photos in public/Pictures/ and update the src values.
 // ── Wedding package cards ──────────────────────────────────────
 const weddingPackages: PackageWithModal[] = [
   {
@@ -220,7 +217,6 @@ const weddingPackages: PackageWithModal[] = [
 ];
 
 // ── Debut package cards ────────────────────────────────────────
-// ── Debut package cards ────────────────────────────────────────
 const debutPackages: PackageWithModal[] = [
   {
     id: 1,
@@ -279,7 +275,7 @@ const debutPackages: PackageWithModal[] = [
     name: 'Irresistible Package',
     description:
       'The "Main Character" experience featuring social-media-ready tech with Same-Day Edit videos, LED walls, and signature craving stations.',
-    image: '/Pictures/debut-blooms.jpg',
+    image: '/Pictures/debut-irresistible.jpg',
     modal: {
       note: 'The "Main Character" experience featuring social-media-ready tech and cinematic storytelling. This package includes our full standard of service and professional coordination for up to 200 guests.',
       categories: [
@@ -331,7 +327,7 @@ const debutPackages: PackageWithModal[] = [
     name: 'Elegancia Package',
     description:
       'A sophisticated fusion of modern glamour and interactive luxury, featuring custom perfume bars and upgraded airbrush hair and makeup.',
-    image: '/Pictures/debut-blooms.jpg',
+    image: '/Pictures/debut-elegancia.jpg',
     modal: {
       note: 'A sophisticated collection designed for a refined and fragrant celebration. This package includes our full standard of service and professional coordination for up to 200 guests.',
       categories: [
@@ -383,7 +379,7 @@ const debutPackages: PackageWithModal[] = [
     name: 'Flawless Package',
     description:
       'The pinnacle of prestige for your 18th birthday, offering world-class chandelier production and personalized leather stamping souvenirs.',
-    image: '/Pictures/debut-blooms.jpg',
+    image: '/Pictures/debut-flawless.jpg',
     modal: {
       note: 'The ultimate debut experience — world-class production and personalized luxury throughout. This package includes our full standard of service and professional coordination for up to 200 guests.',
       categories: [
@@ -452,20 +448,20 @@ function PackageCarousel({
   };
 
   return (
-    <div className="relative">
+    <div className="relative px-4 sm:px-0">
       {/* Left arrow */}
       <button
         onClick={() => scroll('left')}
         aria-label="Scroll left"
-        className="absolute -left-5 top-1/2 z-10 -translate-y-1/2 flex h-12 w-12 items-center justify-center rounded-full bg-white/70 shadow-lg backdrop-blur-sm transition hover:bg-white"
+        className="absolute -left-2 top-1/2 z-10 -translate-y-1/2 flex h-10 w-10 items-center justify-center rounded-full bg-white/70 shadow-lg backdrop-blur-sm transition hover:bg-white sm:-left-5 sm:h-12 sm:w-12"
       >
-        <ChevronLeft className="h-6 w-6 text-[#3d2052]" />
+        <ChevronLeft className="h-5 w-5 text-[#3d2052] sm:h-6 sm:w-6" />
       </button>
 
       {/* Scrollable track */}
       <div
         ref={trackRef}
-        className="flex gap-8 overflow-x-auto scroll-smooth pb-6 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+        className="flex gap-6 overflow-x-auto scroll-smooth pb-6 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:gap-8"
       >
         {packages.map((pkg, i) => (
           <PackageCard key={pkg.id} pkg={pkg} onView={() => onView(i)} />
@@ -476,9 +472,9 @@ function PackageCarousel({
       <button
         onClick={() => scroll('right')}
         aria-label="Scroll right"
-        className="absolute -right-5 top-1/2 z-10 -translate-y-1/2 flex h-12 w-12 items-center justify-center rounded-full bg-white/70 shadow-lg backdrop-blur-sm transition hover:bg-white"
+        className="absolute -right-2 top-1/2 z-10 -translate-y-1/2 flex h-10 w-10 items-center justify-center rounded-full bg-white/70 shadow-lg backdrop-blur-sm transition hover:bg-white sm:-right-5 sm:h-12 sm:w-12"
       >
-        <ChevronRight className="h-6 w-6 text-[#3d2052]" />
+        <ChevronRight className="h-5 w-5 text-[#3d2052] sm:h-6 sm:w-6" />
       </button>
     </div>
   );
@@ -487,31 +483,41 @@ function PackageCarousel({
 export default function EventPackagesPage() {
   const [modal, setModal] = useState<{ packages: PackageWithModal[]; index: number } | null>(null);
   const [inquiryOpen, setInquiryOpen] = useState(false);
+  const weddingRef = useRef<HTMLDivElement>(null);
+  const debutRef = useRef<HTMLDivElement>(null);
+
+  const scrollToWedding = () => {
+    weddingRef.current?.scrollIntoView({ behavior: 'smooth' });
+  };
+
+  const scrollToDebut = () => {
+    debutRef.current?.scrollIntoView({ behavior: 'smooth' });
+  };
 
   return (
     <>
       <div>
         {/* ── Section 1: Hero ── */}
         <section
-          className="relative -mt-[88px] flex min-h-[70vh] flex-col overflow-hidden bg-cover bg-center bg-no-repeat sm:-mt-[110px] md:min-h-screen lg:-mt-[173px]"
+          className="relative -mt-[88px] flex min-h-[60vh] flex-col overflow-hidden bg-cover bg-center bg-no-repeat sm:-mt-[110px] md:min-h-[70vh] lg:-mt-[173px] lg:min-h-screen"
           style={{ backgroundImage: `url(${heroImage})` }}
         >
-          {/* Pink gradient overlay to lighten and add warmth */}
+          {/* Pink gradient overlay */}
           <div className="absolute inset-0 bg-gradient-to-br from-[#FF589C]/60 via-[#FD78AD]/40 to-transparent" />
 
-          {/* White overlay for extra brightness */}
+          {/* White overlay */}
           <div className="absolute inset-0 bg-white/40" />
 
-          {/* Subtle dark gradient for text readability */}
+          {/* Subtle dark gradient */}
           <div className="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-black/20" />
 
-          {/* Spacer that matches navbar height so content sits below it visually */}
+          {/* Spacer */}
           <div className="h-[88px] shrink-0 sm:h-[110px] lg:h-[173px]" />
 
           {/* Centered content */}
           <div className="relative z-10 flex flex-1 flex-col items-center justify-center px-4 text-center sm:px-6">
             <h1
-              className="font-['Libre_Baskerville'] text-[clamp(2rem,8vw,140px)] font-bold leading-tight bg-gradient-to-r from-[#FF0066] via-[#FF0066] to-[#4A1053] text-transparent bg-clip-text"
+              className="font-heading text-[clamp(2.5rem,6vw,5rem)] font-bold leading-tight bg-gradient-to-r from-[#FF0066] via-[#FF0066] to-[#4A1053] text-transparent bg-clip-text"
               style={{
                 backgroundImage: 'linear-gradient(to right, #FF0066 0%, #FF0066 46%, #4A1053 100%)',
               }}
@@ -521,16 +527,23 @@ export default function EventPackagesPage() {
               All-In-One.
             </h1>
 
-            <p className="mt-4 max-w-[44rem] text-[clamp(0.9rem,1.8vw,1.35rem)] leading-[1.75] text-black sm:mt-6">
+            <p className="mt-4 max-w-[40rem] text-[clamp(0.9rem,1.5vw,1.2rem)] leading-[1.7] text-black sm:mt-6">
               We&apos;ve spent 15 years perfecting the art of the hassle-free milestone. Explore our
               curated wedding and debut collections designed to handle every detail from your first
               photo to your final dance.
             </p>
-            <div className="mt-6 flex flex-col gap-4 sm:mt-10 sm:flex-row sm:gap-6">
-              <Button className="h-14 min-w-[160px] rounded-2xl bg-gradient-to-b from-[#FF0066] to-[#700F81] font-['Montserrat'] text-[1.1rem] font-bold tracking-wide shadow-[0_12px_28px_rgba(39,21,57,0.5)] hover:brightness-110 sm:h-[80px] sm:min-w-[200px] sm:text-[1.4rem] lg:h-[100px] lg:min-w-[250px] lg:text-[1.8rem]">
+
+            <div className="mt-6 flex flex-col gap-4 sm:mt-8 sm:flex-row sm:gap-5">
+              <Button
+                onClick={scrollToWedding}
+                className="h-12 min-w-[140px] rounded-full bg-gradient-to-b from-[#FF0066] to-[#700F81] font-sans text-sm font-bold uppercase tracking-wide shadow-[0_10px_20px_rgba(39,21,57,0.4)] hover:brightness-110 sm:h-14 sm:min-w-[160px] sm:text-base lg:h-16 lg:min-w-[180px] lg:text-lg"
+              >
                 Wedding
               </Button>
-              <Button className="h-14 min-w-[160px] rounded-2xl bg-gradient-to-b from-[#FF0066] to-[#700F81] font-['Montserrat'] text-[1.1rem] font-bold tracking-wide shadow-[0_12px_28px_rgba(39,21,57,0.5)] hover:brightness-110 sm:h-[80px] sm:min-w-[200px] sm:text-[1.4rem] lg:h-[100px] lg:min-w-[250px] lg:text-[1.8rem]">
+              <Button
+                onClick={scrollToDebut}
+                className="h-12 min-w-[140px] rounded-full bg-gradient-to-b from-[#FF0066] to-[#700F81] font-sans text-sm font-bold uppercase tracking-wide shadow-[0_10px_20px_rgba(39,21,57,0.4)] hover:brightness-110 sm:h-14 sm:min-w-[160px] sm:text-base lg:h-16 lg:min-w-[180px] lg:text-lg"
+              >
                 Debut
               </Button>
             </div>
@@ -538,73 +551,73 @@ export default function EventPackagesPage() {
         </section>
 
         {/* ── Section 2: Wedding Packages carousel ── */}
-        <section className="bg-white px-4 py-12 sm:px-6 sm:py-20 lg:px-20">
-          {/* Header */}
-          <div className="mb-6 text-center sm:mb-10">
-            <h2
-              className="font-heading text-[clamp(2rem,8vw,6rem)] font-bold bg-gradient-to-r text-transparent bg-clip-text"
-              style={{
-                backgroundImage: 'linear-gradient(to right, #FF0066 0%, #FF0066 46%, #4A1053 100%)',
-              }}
-            >
-              Wedding Packages
-            </h2>
-            <p className="mt-3 text-[clamp(1.1rem,2rem,1.8rem)] font-bold font-sans text-[#4A1053] sm:mt-4">
-              Your Dream Day, Defined by Your Style.
-            </p>
-            <p className="mt-2 text-[clamp(0.9rem,1.8vw,1.4rem)] leading-relaxed text-[#4a4a4a]">
-              From intimate gatherings to grand estate celebrations, discover
-              <br className="hidden sm:block" />
-              the curated package that perfectly mirrors your love story.
-            </p>
-          </div>
+        <div ref={weddingRef}>
+          <section className="bg-white px-4 py-10 sm:px-6 sm:py-16 lg:px-20 lg:py-20">
+            <div className="mb-6 text-center sm:mb-8 lg:mb-10">
+              <h2
+                className="font-heading text-[clamp(2rem,5vw,4rem)] font-bold bg-gradient-to-r text-transparent bg-clip-text"
+                style={{
+                  backgroundImage:
+                    'linear-gradient(to right, #FF0066 0%, #FF0066 46%, #4A1053 100%)',
+                }}
+              >
+                Wedding Packages
+              </h2>
+              <p className="mt-2 text-[clamp(1rem,1.8vw,1.5rem)] font-bold font-sans text-[#4A1053] sm:mt-3">
+                Your Dream Day, Defined by Your Style.
+              </p>
+              <p className="mt-1 text-[clamp(0.85rem,1.5vw,1.2rem)] leading-relaxed text-[#4a4a4a] sm:mt-2">
+                From intimate gatherings to grand estate celebrations, discover
+                <br className="hidden sm:block" />
+                the curated package that perfectly mirrors your love story.
+              </p>
+            </div>
 
-          {/* Carousel */}
-          <div className="w-full">
-            <PackageCarousel
-              packages={weddingPackages}
-              onView={(i) => setModal({ packages: weddingPackages, index: i })}
-            />
-          </div>
-        </section>
+            <div className="w-full">
+              <PackageCarousel
+                packages={weddingPackages}
+                onView={(i) => setModal({ packages: weddingPackages, index: i })}
+              />
+            </div>
+          </section>
+        </div>
 
         {/* ── Section 3: Debut Packages carousel ── */}
-        {/* ── Section 3: Debut Packages carousel ── */}
-        <section className="bg-white px-4 py-12 sm:px-6 sm:py-20 lg:px-20">
-          {/* Header */}
-          <div className="mb-6 text-center sm:mb-10">
-            <h2
-              className="font-heading text-[clamp(2rem,8vw,6rem)] font-bold bg-gradient-to-r text-transparent bg-clip-text"
-              style={{
-                backgroundImage: 'linear-gradient(to right, #FF0066 0%, #FF0066 46%, #4A1053 100%)',
-              }}
-            >
-              Debut Packages
-            </h2>
-            <p className="mt-3 text-[clamp(1.1rem,2rem,1.8rem)] font-bold font-sans text-[#4A1053] sm:mt-4">
-              Celebrate Your Glow-Up in Grand Style.
-            </p>
-            <p className="mt-2 text-[clamp(0.9rem,1.8vw,1.4rem)] leading-relaxed text-[#4a4a4a]">
-              From chic intimate parties to high-fashion galas, discover the
-              <br className="hidden sm:block" />
-              package that perfectly captures your journey into adulthood.
-            </p>
-          </div>
+        <div ref={debutRef}>
+          <section className="bg-white px-4 py-10 sm:px-6 sm:py-16 lg:px-20 lg:py-20">
+            <div className="mb-6 text-center sm:mb-8 lg:mb-10">
+              <h2
+                className="font-heading text-[clamp(2rem,5vw,4rem)] font-bold bg-gradient-to-r text-transparent bg-clip-text"
+                style={{
+                  backgroundImage:
+                    'linear-gradient(to right, #FF0066 0%, #FF0066 46%, #4A1053 100%)',
+                }}
+              >
+                Debut Packages
+              </h2>
+              <p className="mt-2 text-[clamp(1rem,1.8vw,1.5rem)] font-bold font-sans text-[#4A1053] sm:mt-3">
+                Celebrate Your Glow-Up in Grand Style.
+              </p>
+              <p className="mt-1 text-[clamp(0.85rem,1.5vw,1.2rem)] leading-relaxed text-[#4a4a4a] sm:mt-2">
+                From chic intimate parties to high-fashion galas, discover the
+                <br className="hidden sm:block" />
+                package that perfectly captures your journey into adulthood.
+              </p>
+            </div>
 
-          {/* Carousel */}
-          <div className="w-full">
-            <PackageCarousel
-              packages={debutPackages}
-              onView={(i) => setModal({ packages: debutPackages, index: i })}
-            />
-          </div>
-        </section>
+            <div className="w-full">
+              <PackageCarousel
+                packages={debutPackages}
+                onView={(i) => setModal({ packages: debutPackages, index: i })}
+              />
+            </div>
+          </section>
+        </div>
 
         {/* ── Section 4: Seamless Planning + Footer ── */}
-        <section className="relative min-h-[auto] overflow-hidden bg-[radial-gradient(ellipse_at_center,#fff0f7_0%,#fddcee_45%,#f9b8d8_100%)] px-4 pb-0 pt-14 sm:min-h-screen sm:px-6 sm:pt-24 lg:px-28">
-          {/* Heading */}
+        <section className="relative overflow-hidden bg-[radial-gradient(ellipse_at_center,#fff0f7_0%,#fddcee_45%,#f9b8d8_100%)] px-4 pb-0 pt-12 sm:px-6 sm:pt-16 lg:px-28 lg:pt-20">
           <div className="text-center">
-            <h2 className="font-heading text-[clamp(2rem,8vw,6rem)] font-bold leading-tight">
+            <h2 className="font-heading text-[clamp(1.8rem,5vw,3.5rem)] font-bold leading-tight">
               <span className="bg-gradient-to-r from-[#FF0066] to-[#4A1053] bg-clip-text text-transparent">
                 Seamless Planning,
               </span>{' '}
@@ -612,13 +625,12 @@ export default function EventPackagesPage() {
                 Proven Results
               </span>
             </h2>
-            <p className="mt-4 text-[clamp(1.2rem,2vw,1.6rem)] font-bold font-sans text-[#4A1053]">
+            <p className="mt-3 text-[clamp(1rem,1.8vw,1.3rem)] font-bold font-sans text-[#4A1053] sm:mt-4">
               Your Journey to a Flawless Celebration Starts Here
             </p>
           </div>
 
-          {/* Feature cards - Full width with larger cards */}
-          <div className="mx-auto mt-10 grid max-w-[90rem] grid-cols-1 gap-8 px-4 sm:mt-20 sm:grid-cols-3 sm:gap-12 sm:px-8 lg:px-16">
+          <div className="mx-auto mt-10 grid max-w-[80rem] grid-cols-1 gap-6 px-2 sm:mt-14 sm:grid-cols-3 sm:gap-8 sm:px-4 lg:mt-16 lg:gap-10">
             {[
               {
                 Icon: Sparkles,
@@ -638,39 +650,37 @@ export default function EventPackagesPage() {
             ].map(({ Icon, title, body }) => (
               <div
                 key={title}
-                className="flex flex-col items-center text-center transition-all duration-300 hover:-translate-y-2"
+                className="flex flex-col items-center text-center transition-all duration-300 hover:-translate-y-1 sm:hover:-translate-y-2"
               >
-                <div className="flex h-24 w-24 items-center justify-center rounded-2xl border-2 border-[#FF0066]/30 bg-white shadow-xl transition-all duration-300 hover:shadow-2xl sm:h-[140px] sm:w-[140px] sm:rounded-[28px] lg:h-[180px] lg:w-[180px] lg:rounded-[32px]">
+                <div className="flex h-20 w-20 items-center justify-center rounded-xl border-2 border-[#FF0066]/30 bg-white shadow-md transition-all duration-300 hover:shadow-lg sm:h-28 sm:w-28 sm:rounded-2xl lg:h-32 lg:w-32">
                   <Icon
-                    className="h-12 w-12 text-[#FF0066] sm:h-16 sm:w-16 lg:h-[88px] lg:w-[88px]"
+                    className="h-10 w-10 text-[#FF0066] sm:h-14 sm:w-14 lg:h-16 lg:w-16"
                     strokeWidth={1.5}
                   />
                 </div>
-                <h3 className="mt-5 text-[1.2rem] font-bold font-heading text-[#1a1a1a] sm:mt-8 sm:text-[1.5rem] lg:text-[1.8rem]">
+                <h3 className="mt-4 text-[1rem] font-bold font-heading text-[#1a1a1a] sm:mt-5 sm:text-[1.2rem] lg:mt-6 lg:text-[1.3rem]">
                   {title}
                 </h3>
-                <p className="mt-3 max-w-[20rem] text-[1rem] leading-[1.8] font-sans text-[#3d2052] sm:mt-4 sm:text-[1.1rem] lg:text-[1.2rem]">
+                <p className="mt-2 max-w-[18rem] text-[0.85rem] leading-[1.6] font-sans text-[#3d2052] sm:mt-3 sm:text-[0.9rem] lg:mt-4 lg:text-[1rem]">
                   {body}
                 </p>
               </div>
             ))}
           </div>
 
-          {/* Scroll-to-top */}
           <button
             onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
             aria-label="Back to top"
-            className="absolute bottom-8 right-8 flex h-12 w-12 items-center justify-center rounded-full bg-white/70 shadow-lg backdrop-blur-sm transition hover:bg-white"
+            className="absolute bottom-6 right-6 flex h-10 w-10 items-center justify-center rounded-full bg-white/70 shadow-lg backdrop-blur-sm transition hover:bg-white sm:bottom-8 sm:right-8 sm:h-12 sm:w-12"
           >
-            <ChevronUp className="h-6 w-6 text-[#3d2052]" />
+            <ChevronUp className="h-5 w-5 text-[#3d2052] sm:h-6 sm:w-6" />
           </button>
 
-          {/* Footer */}
-          <footer className="mt-14 flex flex-col items-center pb-10 sm:mt-24 sm:pb-14">
+          <footer className="mt-12 flex flex-col items-center pb-8 sm:mt-16 sm:pb-10 lg:mt-20 lg:pb-12">
             <img
               src="/Pictures/business-logo.png"
               alt="Schatzies Events logo"
-              className="h-20 w-auto sm:h-[100px] lg:h-[140px]"
+              className="h-16 w-auto sm:h-20 lg:h-24"
             />
           </footer>
         </section>

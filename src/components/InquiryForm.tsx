@@ -139,7 +139,7 @@ export function InquiryForm({ onClose }: InquiryFormProps) {
             </p>
             <button
               onClick={onClose}
-              className="mt-6 h-10 rounded-xl bg-gradient-to-r from-[#FF0066] to-[#700F81] px-8 text-[0.88rem] font-bold text-white shadow-lg transition hover:brightness-110"
+              className="mt-6 h-10 rounded-full bg-gradient-to-r from-[#FF0066] to-[#700F81] px-8 text-[0.88rem] font-bold text-white shadow-lg transition hover:brightness-110"
             >
               Submit
             </button>
