@@ -8,6 +8,13 @@ import ServicesPage from '@/pages/public/ServicesPage';
 import AboutUsPage from '@/pages/public/AboutUsPage';
 import ContactPage from '@/pages/public/ContactPage';
 import DashboardPage from '@/pages/dashboard/DashboardPage';
+import { OrganizerLayout } from '@/components/layouts/OrganizerLayout';
+import { OrganizerDashboard } from '@/pages/organizer/OrganizerDashboard';
+import { CalendarPage } from '@/pages/organizer/CalendarPage';
+import { EventPlannerPage } from '@/pages/organizer/EventPlannerPage';
+import { EventManagerPage } from '@/pages/organizer/EventManagerPage';
+import { RSVPPage } from '@/pages/organizer/RSVPPage';
+import { CostBreakdownPage } from '@/pages/organizer/CostBreakdownPage';
 
 const router = createBrowserRouter([
   {
@@ -49,6 +56,36 @@ const router = createBrowserRouter([
         Component: DashboardPage,
       },
       // Add more dashboard routes here as needed
+    ],
+  },
+  {
+    path: 'organizer',
+    Component: OrganizerLayout,
+    children: [
+      {
+        index: true,
+        Component: OrganizerDashboard,
+      },
+      {
+        path: 'calendar',
+        Component: CalendarPage,
+      },
+      {
+        path: 'event-planner',
+        Component: EventPlannerPage,
+      },
+      {
+        path: 'event-manager',
+        Component: EventManagerPage,
+      },
+      {
+        path: 'rsvp',
+        Component: RSVPPage,
+      },
+      {
+        path: 'cost-breakdown',
+        Component: CostBreakdownPage,
+      },
     ],
   },
 ]);
