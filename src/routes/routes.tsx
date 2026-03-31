@@ -1,6 +1,8 @@
 import { createBrowserRouter, RouterProvider } from 'react-router-dom';
 import { PublicLayout } from '@/components/layouts/PublicLayout';
 import { AdminLayout } from '@/components/layouts/AdminLayout';
+import { OrganizerLayout } from '@/components/layouts/OrganizerLayout';
+import { ClientLayout } from '@/components/layouts/ClientLayout';
 import { LandingPage } from '@/pages/public/LandingPage';
 import EventPackagesPage from '@/pages/public/EventPackagesPage';
 import { LoginPage } from '@/pages/public/LoginPage';
@@ -8,7 +10,6 @@ import ServicesPage from '@/pages/public/ServicesPage';
 import AboutUsPage from '@/pages/public/AboutUsPage';
 import ContactPage from '@/pages/public/ContactPage';
 import DashboardPage from '@/pages/dashboard/DashboardPage';
-import { OrganizerLayout } from '@/components/layouts/OrganizerLayout';
 import { OrganizerDashboard } from '@/pages/organizer/OrganizerDashboard';
 import { CalendarPage } from '@/pages/organizer/CalendarPage';
 import { EventPlannerPage } from '@/pages/organizer/EventPlannerPage';
@@ -48,7 +49,7 @@ const router = createBrowserRouter([
     ],
   },
   {
-    path: 'dashboard',
+    path: 'admin',
     Component: AdminLayout,
     children: [
       {
@@ -86,6 +87,17 @@ const router = createBrowserRouter([
         path: 'cost-breakdown',
         Component: CostBreakdownPage,
       },
+    ],
+  },
+  {
+    path: 'client',
+    Component: ClientLayout,
+    children: [
+      {
+        index: true,
+        element: <div>Client Dashboard</div>,
+      },
+      // Add more client routes here as needed
     ],
   },
 ]);

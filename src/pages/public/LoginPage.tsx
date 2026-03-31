@@ -27,9 +27,21 @@ export function LoginPage() {
   const navigate = useNavigate();
 
   const onSubmit = async (values: LoginFormValues) => {
-    const success = await login(values.email, values.password);
-    if (success) {
-      navigate('/dashboard', { replace: true });
+    const user = await login(values.email, values.password);
+    if (user) {
+      switch (user.role) {
+        case 'ADMIN':
+          navigate('/admin', { replace: true });
+          break;
+        case 'ORGANIZER':
+          navigate('/organizer', { replace: true });
+          break;
+        case 'CLIENT':
+          navigate('/client', { replace: true });
+          break;
+        default:
+          navigate('/dashboard', { replace: true }); // Fallback if needed
+      }
     }
   };
 
