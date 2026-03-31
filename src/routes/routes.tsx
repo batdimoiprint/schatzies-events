@@ -9,7 +9,7 @@ import { LoginPage } from '@/pages/public/LoginPage';
 import ServicesPage from '@/pages/public/ServicesPage';
 import AboutUsPage from '@/pages/public/AboutUsPage';
 import ContactPage from '@/pages/public/ContactPage';
-import DashboardPage from '@/pages/dashboard/DashboardPage';
+import { AdminDashboardPage } from '@/pages/admin/AdminDashboardPage';
 import { OrganizerDashboard } from '@/pages/organizer/OrganizerDashboard';
 import { CalendarPage } from '@/pages/organizer/CalendarPage';
 import { EventPlannerPage } from '@/pages/organizer/EventPlannerPage';
@@ -54,7 +54,7 @@ const router = createBrowserRouter([
     children: [
       {
         index: true,
-        Component: DashboardPage,
+        Component: AdminDashboardPage,
       },
       // Add more dashboard routes here as needed
     ],
