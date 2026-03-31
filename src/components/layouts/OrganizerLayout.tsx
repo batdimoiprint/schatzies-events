@@ -41,11 +41,8 @@ const pageDescriptions: Record<string, string> = {
 };
 
 export function OrganizerLayout() {
-  const { isAuthenticated: realIsAuthenticated, isLoading: realIsLoading } = useAuth();
-  // TEMP: Set to true to preview organizer UI without auth redirect.
-  const mockAuth = true;
-  const isLoading = mockAuth ? false : realIsLoading;
-  const isAuthenticated = mockAuth ? true : realIsAuthenticated;
+  const { user, isAuthenticated, isLoading } = useAuth();
+  
   const location = useLocation();
 
   if (isLoading) {
@@ -56,7 +53,7 @@ export function OrganizerLayout() {
     );
   }
 
-  if (!isAuthenticated) {
+  if (!isAuthenticated || user?.role !== 'ORGANIZER') {
     return <Navigate to="/login" replace />;
   }
 

@@ -9,29 +9,30 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const checkToken = async () => {
+  const checkToken = async (): Promise<User | null> => {
     try {
       setError(null);
       const verifiedUser = await verifyToken();
       setUser(verifiedUser ?? null);
+      return verifiedUser ?? null;
     } catch (err) {
       console.error('Token verification failed:', err);
       setUser(null);
       setError(err instanceof Error ? err.message : 'Failed to verify session');
+      return null;
     }
   };
 
-  const handleLogin = async (email: string, password: string): Promise<boolean> => {
+  const handleLogin = async (email: string, password: string): Promise<User | null> => {
     setIsLoading(true);
     setError(null);
 
     try {
       const status = await login(email, password);
       if (status === 200) {
-        await checkToken();
-        return true;
+        return await checkToken();
       }
-      return false;
+      return null;
     } catch (err: unknown) {
       setUser(null);
 
@@ -40,13 +41,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           ? (err as { response?: { status?: number } }).response?.status
           : undefined;
 
-      if (status === 401) {
+      if (status === 401 || status === 400) {
         setError('Invalid email or password.');
       } else {
         setError(err instanceof Error ? err.message : 'Unable to login');
       }
 
-      return false;
+      return null;
     } finally {
       setIsLoading(false);
     }
