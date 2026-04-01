@@ -2,7 +2,7 @@ import { Outlet, Navigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 
 export function AdminLayout() {
-  const { isAuthenticated, isLoading } = useAuth();
+  const { user, isAuthenticated, isLoading } = useAuth();
 
   if (isLoading) {
     return (
@@ -14,8 +14,8 @@ export function AdminLayout() {
     );
   }
 
-  if (!isAuthenticated) {
-    return <Navigate to="/" replace />;
+  if (!isAuthenticated || user?.role !== 'ADMIN') {
+    return <Navigate to="/login" replace />;
   }
 
   return (

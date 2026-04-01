@@ -1,14 +1,20 @@
 import { createBrowserRouter, RouterProvider } from 'react-router-dom';
 import { PublicLayout } from '@/components/layouts/PublicLayout';
 import { AdminLayout } from '@/components/layouts/AdminLayout';
+import { OrganizerLayout } from '@/components/layouts/OrganizerLayout';
+import { ClientLayout } from '@/components/layouts/ClientLayout';
 import { LandingPage } from '@/pages/public/LandingPage';
 import EventPackagesPage from '@/pages/public/EventPackagesPage';
 import { LoginPage } from '@/pages/public/LoginPage';
 import ServicesPage from '@/pages/public/ServicesPage';
 import AboutUsPage from '@/pages/public/AboutUsPage';
 import ContactPage from '@/pages/public/ContactPage';
+<<<<<<< HEAD
 import DashboardPage from '@/pages/dashboard/DashboardPage';
 import { OrganizerLayout } from '@/components/layouts/OrganizerLayout';
+=======
+import { AdminDashboardPage } from '@/pages/admin/AdminDashboardPage';
+>>>>>>> a92f0c2b2ed96cf84f14ea801ec6d7d1b7c438ef
 import { OrganizerDashboard } from '@/pages/organizer/OrganizerDashboard';
 import { CalendarPage } from '@/pages/organizer/CalendarPage';
 import { EventPlannerPage } from '@/pages/organizer/EventPlannerPage';
@@ -17,6 +23,10 @@ import { RSVPPage } from '@/pages/organizer/RSVPPage';
 import { CostBreakdownPage } from '@/pages/organizer/CostBreakdownPage';
 
 const router = createBrowserRouter([
+  {
+    path: 'login',
+    Component: LoginPage,
+  },
   {
     path: '/',
     Component: PublicLayout,
@@ -41,19 +51,15 @@ const router = createBrowserRouter([
         path: 'contact',
         Component: ContactPage,
       },
-      {
-        path: 'login',
-        Component: LoginPage,
-      },
     ],
   },
   {
-    path: 'dashboard',
+    path: 'admin',
     Component: AdminLayout,
     children: [
       {
         index: true,
-        Component: DashboardPage,
+        Component: AdminDashboardPage,
       },
       // Add more dashboard routes here as needed
     ],
@@ -88,6 +94,20 @@ const router = createBrowserRouter([
       },
     ],
   },
+<<<<<<< HEAD
+=======
+  {
+    path: 'client',
+    Component: ClientLayout,
+    children: [
+      {
+        index: true,
+        element: <div>Client Dashboard</div>,
+      },
+      // Add more client routes here as needed
+    ],
+  },
+>>>>>>> a92f0c2b2ed96cf84f14ea801ec6d7d1b7c438ef
 ]);
 
 export function AppRoutes() {
