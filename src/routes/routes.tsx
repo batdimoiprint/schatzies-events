@@ -9,12 +9,7 @@ import { LoginPage } from '@/pages/public/LoginPage';
 import ServicesPage from '@/pages/public/ServicesPage';
 import AboutUsPage from '@/pages/public/AboutUsPage';
 import ContactPage from '@/pages/public/ContactPage';
-<<<<<<< HEAD
-import DashboardPage from '@/pages/dashboard/DashboardPage';
-import { OrganizerLayout } from '@/components/layouts/OrganizerLayout';
-=======
-import { AdminDashboardPage } from '@/pages/admin/AdminDashboardPage';
->>>>>>> a92f0c2b2ed96cf84f14ea801ec6d7d1b7c438ef
+import { AdminDashboardPage } from '@/pages/admin/AdminDashboardPage'; 
 import { OrganizerDashboard } from '@/pages/organizer/OrganizerDashboard';
 import { CalendarPage } from '@/pages/organizer/CalendarPage';
 import { EventPlannerPage } from '@/pages/organizer/EventPlannerPage';
@@ -61,7 +56,6 @@ const router = createBrowserRouter([
         index: true,
         Component: AdminDashboardPage,
       },
-      // Add more dashboard routes here as needed
     ],
   },
   {
@@ -94,8 +88,6 @@ const router = createBrowserRouter([
       },
     ],
   },
-<<<<<<< HEAD
-=======
   {
     path: 'client',
     Component: ClientLayout,
@@ -104,10 +96,8 @@ const router = createBrowserRouter([
         index: true,
         element: <div>Client Dashboard</div>,
       },
-      // Add more client routes here as needed
     ],
   },
->>>>>>> a92f0c2b2ed96cf84f14ea801ec6d7d1b7c438ef
 ]);
 
 export function AppRoutes() {
