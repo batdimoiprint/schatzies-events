@@ -62,33 +62,12 @@ export function LoginPage() {
                 className="h-16 w-auto sm:h-20 lg:h-24"
               />
 
-<<<<<<< HEAD
-            <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
-              <Input
-                id="password"
-                type="password"
-                autoComplete="current-password"
-                {...register('password', {
-                  required: 'Password is required.',
-                })}
-              />
-              {errors.password && <p className="text-sm text-red-700">{errors.password.message}</p>}
-            </div>
-
-            {error && (
-              <p className="rounded-md border border-red-100 bg-red-50 px-3 py-2 text-sm text-red-700">
-                {error.includes('429')
-                  ? 'Too many authentication attempts. Please try again after an hour.'
-                  : error}
-=======
               <p className="text-sm font-medium font-sans text-[#3d2052]">
                 Your{' '}
                 <span className="font-bold uppercase bg-gradient-to-r from-[#FF0066] to-[#4A1053] bg-clip-text text-transparent">
                   MOST TRUSTED
                 </span>{' '}
                 team!
->>>>>>> a92f0c2b2ed96cf84f14ea801ec6d7d1b7c438ef
               </p>
             </div>
 
