@@ -42,7 +42,7 @@ const pageDescriptions: Record<string, string> = {
 
 export function OrganizerLayout() {
   const { user, isAuthenticated, isLoading } = useAuth();
-
+  
   const location = useLocation();
 
   if (isLoading) {
