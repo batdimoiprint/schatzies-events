@@ -56,7 +56,6 @@ const router = createBrowserRouter([
         index: true,
         Component: AdminDashboardPage,
       },
-      // Add more dashboard routes here as needed
     ],
   },
   {
@@ -97,7 +96,6 @@ const router = createBrowserRouter([
         index: true,
         element: <div>Client Dashboard</div>,
       },
-      // Add more client routes here as needed
     ],
   },
 ]);
