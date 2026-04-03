@@ -1,7 +1,4 @@
-import {
-  ChevronLeft,
-  ChevronRight,
-} from 'lucide-react';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -240,17 +237,19 @@ function ScheduleListCard({ title, entries }: { title: string; entries: ListEntr
                 className="flex items-center justify-between gap-4 bg-white px-5 py-4 hover:bg-[#fafafa] transition-colors"
               >
                 <div className="flex items-center gap-4 flex-1 min-w-0">
-                  <div
-                    className="flex size-10 shrink-0 items-center justify-center rounded-full bg-linear-to-br from-[#f456a4] to-[#e846b4] text-sm font-black text-white"
-                  >
+                  <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-linear-to-br from-[#f456a4] to-[#e846b4] text-sm font-black text-white">
                     {entry.rank}
                   </div>
                   <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm font-bold text-[#36303f] font-sans">{entry.title}</p>
+                    <p className="truncate text-sm font-bold text-[#36303f] font-sans">
+                      {entry.title}
+                    </p>
                     <p className="truncate text-xs text-[#a8a0b3]">{entry.subtitle}</p>
                   </div>
                 </div>
-                <p className="shrink-0 text-[10px] font-semibold text-[#d0c8db] whitespace-nowrap">Date: {entry.date}</p>
+                <p className="shrink-0 text-[10px] font-semibold text-[#d0c8db] whitespace-nowrap">
+                  Date: {entry.date}
+                </p>
               </div>
             ))}
           </div>
@@ -417,18 +416,26 @@ export function OrganizerDashboard() {
           <div>
             <div className="mb-6 flex items-center justify-between gap-2">
               <div>
-                <h3 className="text-3xl font-black leading-none text-[#2e2837]" style={{ fontFamily: 'Source Sans Pro, sans-serif' }}>
+                <h3
+                  className="text-3xl font-black leading-none text-[#2e2837]"
+                  style={{ fontFamily: 'Source Sans Pro, sans-serif' }}
+                >
                   Key Performance Index
                 </h3>
-                <p className="mt-1 text-xs font-semibold text-[#8f879f]" style={{ fontFamily: 'Montserrat, sans-serif' }}>
+                <p
+                  className="mt-1 text-xs font-semibold text-[#8f879f]"
+                  style={{ fontFamily: 'Montserrat, sans-serif' }}
+                >
                   Evaluation of events, vendors, and resources
                 </p>
               </div>
-              <Button
-                className="rounded-[10px] border-0 bg-white px-4 py-1.5 text-xs font-semibold text-[#717171] shadow-[0_4px_4px_rgba(0,0,0,0.05)] hover:bg-white/95 flex items-center gap-1"
-              >
-                Monthly 
-                <img src="/Pictures/organizerpics/dropdown.png" alt="dropdown" className="w-1.5 h-1.5" /> 
+              <Button className="rounded-[10px] border-0 bg-white px-4 py-1.5 text-xs font-semibold text-[#717171] shadow-[0_4px_4px_rgba(0,0,0,0.05)] hover:bg-white/95 flex items-center gap-1">
+                Monthly
+                <img
+                  src="/Pictures/organizerpics/dropdown.png"
+                  alt="dropdown"
+                  className="w-1.5 h-1.5"
+                />
               </Button>
             </div>
 
@@ -487,7 +494,8 @@ export function OrganizerDashboard() {
                               : isSelected
                                 ? 'bg-linear-to-br from-[#f456a4] to-[#e846b4] text-white font-bold shadow-sm'
                                 : 'text-[#9b8fa8] font-semibold',
-                          ].join(' ')}>
+                          ].join(' ')}
+                        >
                           {day ?? '.'}
                         </span>
                       </div>
