@@ -270,7 +270,7 @@ export function OrganizerDashboard() {
       <div className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1fr)_360px]">
         <div className="space-y-6">
           <Card className="border-none bg-transparent py-0 shadow-none">
-            <CardContent className="relative overflow-hidden rounded-3xl bg-linear-to-r from-[#f051a3] via-[#de3bc5] to-[#8f1fd0] p-8 text-white md:pr-72">
+            <CardContent className="relative overflow-hidden rounded-3xl bg-linear-to-r from-[#f051a3] via-[#de3bc5] to-[#8f1fd0] p-8 text-white md:pr-72 lg:pr-80">
               <div className="max-w-md">
                 <h3 className="font-heading text-6xl font-bold leading-[1.1]">Welcome Kring!</h3>
                 <p className="mt-3 text-base font-semibold text-white/90">
@@ -288,7 +288,7 @@ export function OrganizerDashboard() {
               <img
                 src="/Pictures/organizerpics/dashboard-banner.png.png"
                 alt="3D computer analytics"
-                className="pointer-events-none absolute -bottom-12 right-0 hidden w-80 drop-shadow-[0_16px_22px_rgba(69,21,111,0.35)] md:block"
+                className="pointer-events-none absolute bottom-0 right-2 hidden h-auto w-56 object-contain drop-shadow-[0_16px_22px_rgba(69,21,111,0.35)] md:block lg:w-64 xl:w-72"
               />
             </CardContent>
           </Card>
