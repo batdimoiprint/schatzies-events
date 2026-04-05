@@ -1,5 +1,9 @@
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { useMemo, useState } from 'react';
+import { Search } from 'lucide-react';
+
+import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 
 type EventStatus = 'Completed' | 'Pending' | 'Cancelled';
 
@@ -87,6 +91,30 @@ function getStatusBadgeClasses(status: EventStatus) {
 }
 
 export function EventManagerPage() {
+  const [searchTerm, setSearchTerm] = useState('');
+
+  const filteredEvents = useMemo(() => {
+    const normalizedSearchTerm = searchTerm.trim().toLowerCase();
+
+    if (!normalizedSearchTerm) return eventTableData;
+
+    return eventTableData.filter((event) => {
+      const searchableFields = [
+        event.title,
+        event.date,
+        event.timeSlot,
+        event.client,
+        event.type,
+        event.package,
+        event.venue,
+        event.status,
+        String(event.rsvp),
+      ];
+
+      return searchableFields.some((field) => field.toLowerCase().includes(normalizedSearchTerm));
+    });
+  }, [searchTerm]);
+
   return (
     <div className="space-y-4 p-6 font-sans">
       <div className="flex items-center justify-between">
@@ -128,6 +156,17 @@ export function EventManagerPage() {
         </div>
       </div>
 
+      <div className="relative w-full max-w-65">
+        <Search className="pointer-events-none absolute right-3 top-1/2 size-4 -translate-y-1/2 text-[#b2acbf]" />
+        <Input
+          type="search"
+          placeholder="Search something...."
+          value={searchTerm}
+          onChange={(event) => setSearchTerm(event.target.value)}
+          className="h-11 rounded-2xl border border-[#ddd8e8] bg-white px-4 pr-10 text-sm text-[#5d566f] placeholder:text-[#b2acbf]"
+        />
+      </div>
+
       <Card className="border-[#ebe6f1]">
         <CardHeader className="space-y-2"></CardHeader>
         <CardContent>
@@ -165,7 +204,7 @@ export function EventManagerPage() {
                 </tr>
               </thead>
               <tbody>
-                {eventTableData.map((event) => (
+                {filteredEvents.map((event) => (
                   <tr
                     key={event.id}
                     className="border-b border-[#f0edf4] hover:bg-[#fafaf8] transition-colors"
@@ -189,6 +228,13 @@ export function EventManagerPage() {
                     </td>
                   </tr>
                 ))}
+                {filteredEvents.length === 0 ? (
+                  <tr>
+                    <td colSpan={9} className="px-4 py-6 text-center text-sm text-[#8f879f]">
+                      No events found for "{searchTerm.trim()}".
+                    </td>
+                  </tr>
+                ) : null}
               </tbody>
             </table>
           </div>

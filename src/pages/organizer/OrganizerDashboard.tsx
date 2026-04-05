@@ -1,3 +1,4 @@
+import { useMemo, useState } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
@@ -126,50 +127,30 @@ const kpiCards: KpiCardData[] = [
 
 const calendarDays = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
 
-const calendarGrid: Array<number | null> = [
-  null,
-  null,
-  null,
-  null,
-  1,
-  2,
-  3,
-  4,
-  5,
-  6,
-  7,
-  8,
-  9,
-  10,
-  11,
-  12,
-  13,
-  14,
-  15,
-  16,
-  17,
-  18,
-  19,
-  20,
-  21,
-  22,
-  23,
-  24,
-  25,
-  26,
-  27,
-  28,
-  29,
-  30,
-  31,
-  null,
-  null,
-  null,
-  null,
-  null,
-  null,
-  null,
-];
+function isSameCalendarDay(left: Date | null, right: Date) {
+  if (!left) return false;
+
+  return (
+    left.getFullYear() === right.getFullYear() &&
+    left.getMonth() === right.getMonth() &&
+    left.getDate() === right.getDate()
+  );
+}
+
+function buildCalendarGrid(date: Date): Array<number | null> {
+  const year = date.getFullYear();
+  const month = date.getMonth();
+
+  const firstWeekDay = new Date(year, month, 1).getDay();
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+  const leadingPadding = Array.from({ length: firstWeekDay }, () => null);
+  const monthDays = Array.from({ length: daysInMonth }, (_, index) => index + 1);
+  const trailingCount = (7 - ((leadingPadding.length + monthDays.length) % 7)) % 7;
+  const trailingPadding = Array.from({ length: trailingCount }, () => null);
+
+  return [...leadingPadding, ...monthDays, ...trailingPadding];
+}
 
 function getDonutGradient(slices: StatusSlice[]) {
   let cursor = 0;
@@ -194,7 +175,9 @@ function DashboardMetricCard({
   iconImage,
 }: KpiCardData) {
   return (
-    <Card className={`border-none bg-linear-to-br py-0 shadow-sm ${gradientClassName}`}>
+    <Card
+      className={`border-none bg-linear-to-br py-0 shadow-sm transition-all duration-300 ease-out hover:-translate-y-1.5 hover:shadow-xl hover:brightness-105 cursor-default ${gradientClassName}`}
+    >
       <CardContent className={`space-y-6 p-5 ${textClassName}`}>
         <div className={`flex size-10 items-center justify-center rounded-xl ${iconBgClassName}`}>
           <img src={iconImage} alt={title} className="size-5 object-contain" />
@@ -260,7 +243,27 @@ function ScheduleListCard({ title, entries }: { title: string; entries: ListEntr
 }
 
 export function OrganizerDashboard() {
+  const today = useMemo(() => {
+    const now = new Date();
+    return new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  }, []);
+
+  const [selectedDate, setSelectedDate] = useState<Date | null>(() => today);
+  const [viewDate, setViewDate] = useState(
+    () => new Date(today.getFullYear(), today.getMonth(), 1)
+  );
+
   const chartMaxValue = Math.max(...semiAnnualCompletions.map((item) => item.value));
+
+  const calendarGrid = useMemo(() => buildCalendarGrid(viewDate), [viewDate]);
+
+  const goToPreviousMonth = () => {
+    setViewDate((prev) => new Date(prev.getFullYear(), prev.getMonth() - 1, 1));
+  };
+
+  const goToNextMonth = () => {
+    setViewDate((prev) => new Date(prev.getFullYear(), prev.getMonth() + 1, 1));
+  };
 
   return (
     <section className="pb-6">
@@ -291,7 +294,7 @@ export function OrganizerDashboard() {
           </Card>
 
           <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1.5fr_1fr]">
-            <Card className="border-[#e8e3ef] bg-white py-0 shadow-sm">
+            <Card className="border-[#e8e3ef] bg-white py-0 shadow-sm transition-all duration-300 ease-out hover:-translate-y-1.5 hover:shadow-lg hover:border-[#d0c8db]">
               <CardHeader className="pb-4">
                 <CardTitle className="text-lg font-bold text-[#4a4a4a] font-sans">
                   Semi-Annually Completed Events
@@ -335,7 +338,7 @@ export function OrganizerDashboard() {
                             className="flex-1 h-full flex justify-center items-end px-1 sm:px-2"
                           >
                             <div
-                              className="w-full bg-[#800080] rounded-t-sm"
+                              className="w-full bg-[#800080] rounded-t-sm transition-colors duration-200 hover:bg-[#a61ca6] cursor-pointer"
                               style={{
                                 height: `${Math.max((monthData.value / chartMaxValue) * 100, 5)}%`,
                               }}
@@ -369,7 +372,7 @@ export function OrganizerDashboard() {
               </CardContent>
             </Card>
 
-            <Card className="border-[#e8e3ef] bg-white py-0 shadow-sm">
+            <Card className="border-[#e8e3ef] bg-white py-0 shadow-sm transition-all duration-300 ease-out hover:-translate-y-1.5 hover:shadow-lg hover:border-[#d0c8db]">
               <CardHeader className="pb-4">
                 <div className="flex items-center justify-between gap-4">
                   <div className="flex-1">
@@ -397,7 +400,10 @@ export function OrganizerDashboard() {
 
                 <div className="grid grid-cols-3 gap-2 pt-1 text-center">
                   {monthlyStatus.map((slice) => (
-                    <div key={slice.label}>
+                    <div
+                      key={slice.label}
+                      className="transition-transform duration-200 hover:scale-105 cursor-default"
+                    >
                       <p className="text-2xl font-black text-[#3d3745]">{slice.value}%</p>
                       <p className="mt-1 inline-flex items-center gap-1 text-[11px] font-semibold text-[#8e8797]">
                         <span
@@ -454,17 +460,39 @@ export function OrganizerDashboard() {
                 {/* Date and Day wrapper */}
                 <div className="flex items-center gap-2">
                   <CardTitle className="whitespace-nowrap text-lg font-black leading-none text-[#393341] font-sans">
-                    January 12, 2026
+                    {selectedDate
+                      ? selectedDate.toLocaleDateString('en-US', {
+                          month: 'long',
+                          day: 'numeric',
+                          year: 'numeric',
+                        })
+                      : 'No Date Selected'}
                   </CardTitle>
-                  <p className="text-xs font-semibold text-[#c5bdd1]">(Sunday)</p>
+                  <p className="text-xs font-semibold text-[#c5bdd1]">
+                    {selectedDate
+                      ? `(${selectedDate.toLocaleDateString('en-US', { weekday: 'long' })})`
+                      : ''}
+                  </p>
                 </div>
 
                 {/* Navigation arrows wrapper */}
                 <div className="flex items-center gap-2">
-                  <Button variant="ghost" size="icon-sm" className="rounded-full text-[#8f879b]">
+                  <Button
+                    variant="ghost"
+                    size="icon-sm"
+                    className="rounded-full text-[#8f879b]"
+                    onClick={goToPreviousMonth}
+                    aria-label="Previous month"
+                  >
                     <ChevronLeft className="size-5" />
                   </Button>
-                  <Button variant="ghost" size="icon-sm" className="rounded-full text-[#8f879b]">
+                  <Button
+                    variant="ghost"
+                    size="icon-sm"
+                    className="rounded-full text-[#8f879b]"
+                    onClick={goToNextMonth}
+                    aria-label="Next month"
+                  >
                     <ChevronRight className="size-5" />
                   </Button>
                 </div>
@@ -482,22 +510,38 @@ export function OrganizerDashboard() {
 
                 <div className="grid grid-cols-7 gap-y-3 px-6 py-4 text-center">
                   {calendarGrid.map((day, index) => {
-                    const isSelected = day === 16 || day === 17;
+                    if (day === null) {
+                      return (
+                        <div key={`calendar-cell-${index}`} className="flex justify-center py-2">
+                          <span className="flex size-8 items-center justify-center rounded-md text-transparent">
+                            .
+                          </span>
+                        </div>
+                      );
+                    }
+
+                    const dayDate = new Date(viewDate.getFullYear(), viewDate.getMonth(), day);
+                    const isToday = isSameCalendarDay(today, dayDate);
+                    const isSelected = isSameCalendarDay(selectedDate, dayDate);
 
                     return (
                       <div key={`calendar-cell-${index}`} className="flex justify-center py-2">
-                        <span
+                        <button
+                          type="button"
+                          onClick={() => setSelectedDate(dayDate)}
+                          aria-pressed={isSelected}
+                          title={isToday ? `Today • Day ${day}` : `Day ${day}`}
                           className={[
-                            'flex size-8 items-center justify-center rounded-md text-xs font-sans',
-                            day === null
-                              ? 'text-transparent'
-                              : isSelected
-                                ? 'bg-linear-to-br from-[#f456a4] to-[#e846b4] text-white font-bold shadow-sm'
-                                : 'text-[#9b8fa8] font-semibold',
+                            'flex size-8 items-center justify-center rounded-md border text-xs font-sans transition-all duration-150',
+                            isSelected
+                              ? 'bg-linear-to-br from-[#f051a3] to-[#8f1fd0] text-white font-bold border-transparent'
+                              : isToday
+                                ? 'bg-[#fce4ec] text-[#7a667f] font-bold border-[#f1c3d7]'
+                                : 'text-[#9b8fa8] font-semibold border-transparent hover:bg-[#f4eff8]',
                           ].join(' ')}
                         >
-                          {day ?? '.'}
-                        </span>
+                          {day}
+                        </button>
                       </div>
                     );
                   })}

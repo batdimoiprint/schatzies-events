@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { useAuth } from '@/hooks/useAuth';
 
 const organizerNavItems = [
-  { label: 'Dashboard', to: '/organizer', icon: '/Pictures/organizerpics/dashboard.png' },
+  { label: 'Dashboard', to: '/organizer', icon: '/Pictures/organizerpics/dashboard 2.png' },
   {
     label: 'Calendar',
     to: '/organizer/calendar',
@@ -63,7 +63,7 @@ export function OrganizerLayout() {
   }
 
   if (!isAuthenticated || user?.role !== 'ORGANIZER') {
-    return <Navigate to="/login" replace />;
+      return <Navigate to="/login" replace />;
   }
 
   const currentPageTitle = pageTitles[location.pathname] ?? 'Organizer Workspace';
@@ -154,7 +154,7 @@ export function OrganizerLayout() {
                   <img
                     src="/Pictures/organizerpics/notif dashboard.png"
                     alt="Notifications"
-                    className="size-6"
+                    className="size-4"
                   />
                 </Button>
                 <Button
@@ -163,12 +163,12 @@ export function OrganizerLayout() {
                   className="rounded-full text-white hover:bg-white/20 hover:text-white"
                   aria-label="Email"
                 >
-                  <img src="/Pictures/organizerpics/email.png" alt="Email" className="size-6" />
+                  <img src="/Pictures/organizerpics/email.png" alt="Email" className="size-4" />
                 </Button>
                 <img
-                  src="/cse-logo.png"
+                  src="/Pictures/organizerpics/Profile Picture.png"
                   alt="Organizer profile"
-                  className="size-8 rounded-full border-2 border-white/70 object-cover"
+                  className="size-7 rounded-full border-2 border-white/70 object-cover"
                 />
                 <Button
                   variant="ghost"
@@ -179,7 +179,7 @@ export function OrganizerLayout() {
                   <img
                     src="/Pictures/organizerpics/settings dashboard.png"
                     alt="Settings"
-                    className="size-6"
+                    className="size-4"
                   />
                 </Button>
               </div>
