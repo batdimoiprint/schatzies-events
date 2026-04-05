@@ -1,36 +1,33 @@
-import { Navigate, Outlet } from 'react-router-dom';
+import { Outlet, Navigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
+import { ClientSidebar } from '@/components/ClientSidebar';
 
 export function ClientLayout() {
   const { user, isAuthenticated, isLoading } = useAuth();
 
   if (isLoading) {
-    return <div className="p-4">Loading...</div>;
+    return (
+      <div className="flex h-screen items-center justify-center bg-[#f6f5f8]">
+        <p className="text-base font-semibold text-[#4f4b57]">Loading client portal...</p>
+      </div>
+    );
   }
 
   if (!isAuthenticated || !user) {
     return <Navigate to="/login" replace />;
   }
 
-  // Optional: Prevent other roles from accessing the client portal
-  // if (user.role !== 'CLIENT') {
-  //   return <Navigate to="/" replace />;
-  // }
-
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col">
-      <header className="bg-white shadow px-6 py-4 flex justify-between items-center">
-        <h1 className="text-xl font-bold">Client Portal</h1>
-        <div>
-          <span className="text-gray-600 mr-4">
-            Welcome, {user.fname} {user.lname}!
-          </span>
+    <div className="h-screen bg-[#f6f5f8]">
+      <div className="flex h-full flex-col md:flex-row">
+        <ClientSidebar />
+
+        <div className="flex min-h-0 flex-1 flex-col">
+          <main className="min-h-0 flex-1 overflow-y-auto px-4 py-6 md:px-8">
+            <Outlet />
+          </main>
         </div>
-      </header>
-      <main className="flex-1 p-6">
-        {/* Child routes will be rendered here */}
-        <Outlet />
-      </main>
+      </div>
     </div>
   );
 }

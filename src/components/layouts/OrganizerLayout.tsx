@@ -61,7 +61,7 @@ export function OrganizerLayout() {
   }
 
   if (!isAuthenticated || user?.role !== 'ORGANIZER') {
-   return <Navigate to="/login" replace />;
+    return <Navigate to="/login" replace />;
   }
 
   const currentPageTitle = pageTitles[location.pathname] ?? 'Organizer Workspace';
