@@ -6,6 +6,7 @@ import { ClientLayout } from '@/components/layouts/ClientLayout';
 import { LandingPage } from '@/pages/public/LandingPage';
 import EventPackagesPage from '@/pages/public/EventPackagesPage';
 import { LoginPage } from '@/pages/public/LoginPage';
+import { ForgotPasswordPage } from '@/pages/public/ForgotPasswordPage';
 import ServicesPage from '@/pages/public/ServicesPage';
 import AboutUsPage from '@/pages/public/AboutUsPage';
 import ContactPage from '@/pages/public/ContactPage';
@@ -45,6 +46,10 @@ const router = createBrowserRouter([
       {
         path: 'contact',
         Component: ContactPage,
+      },
+      {
+        path: 'forgot-password',
+        Component: ForgotPasswordPage,
       },
     ],
   },
