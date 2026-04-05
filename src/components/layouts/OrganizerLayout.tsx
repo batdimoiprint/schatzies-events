@@ -1,7 +1,8 @@
-import { Bell, Mail } from 'lucide-react';
+import { Search } from 'lucide-react';
 import { Navigate, NavLink, Outlet, useLocation } from 'react-router-dom';
 
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { useAuth } from '@/hooks/useAuth';
 
 const organizerNavItems = [
@@ -48,9 +49,10 @@ const pageDescriptions: Record<string, string> = {
 };
 
 export function OrganizerLayout() {
-  const { user, isAuthenticated, isLoading } = useAuth();
+  const { isAuthenticated, isLoading, user } = useAuth();
 
   const location = useLocation();
+  const showHeaderSearch = location.pathname === '/organizer/event-planner';
 
   if (isLoading) {
     return (
@@ -130,44 +132,57 @@ export function OrganizerLayout() {
               ) : null}
             </div>
 
-            <div className="flex items-center gap-4 rounded-3xl bg-linear-to-r from-[#ef4aa4] to-[#8b1bce] px-4 py-3 shadow-[0_10px_24px_rgba(161,37,193,0.33)]">
-              <Button
-                variant="ghost"
-                size="icon-sm"
-                className="rounded-full text-white hover:bg-white/20 hover:text-white"
-                aria-label="Notifications"
-              >
+            <div className="flex items-center gap-4">
+              {showHeaderSearch ? (
+                <div className="relative hidden w-[240px] lg:block">
+                  <Search className="pointer-events-none absolute right-3 top-1/2 size-4 -translate-y-1/2 text-[#b2acbf]" />
+                  <Input
+                    type="search"
+                    placeholder="Search something...."
+                    className="h-11 rounded-2xl border border-[#ddd8e8] bg-white px-4 pr-10 text-sm text-[#5d566f] placeholder:text-[#b2acbf]"
+                  />
+                </div>
+              ) : null}
+
+              <div className="flex items-center gap-4 rounded-3xl bg-linear-to-r from-[#ef4aa4] to-[#8b1bce] px-4 py-3 shadow-[0_10px_24px_rgba(161,37,193,0.33)]">
+                <Button
+                  variant="ghost"
+                  size="icon-sm"
+                  className="rounded-full text-white hover:bg-white/20 hover:text-white"
+                  aria-label="Notifications"
+                >
+                  <img
+                    src="/Pictures/organizerpics/notif dashboard.png"
+                    alt="Notifications"
+                    className="size-6"
+                  />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon-sm"
+                  className="rounded-full text-white hover:bg-white/20 hover:text-white"
+                  aria-label="Email"
+                >
+                  <img src="/Pictures/organizerpics/email.png" alt="Email" className="size-6" />
+                </Button>
                 <img
-                  src="/Pictures/organizerpics/notif dashboard.png"
-                  alt="Notifications"
-                  className="size-6"
+                  src="/cse-logo.png"
+                  alt="Organizer profile"
+                  className="size-8 rounded-full border-2 border-white/70 object-cover"
                 />
-              </Button>
-              <Button
-                variant="ghost"
-                size="icon-sm"
-                className="rounded-full text-white hover:bg-white/20 hover:text-white"
-                aria-label="Email"
-              >
-                <img src="/Pictures/organizerpics/email.png" alt="Email" className="size-6" />
-              </Button>
-              <img
-                src="/cse-logo.png"
-                alt="Organizer profile"
-                className="size-8 rounded-full border-2 border-white/70 object-cover"
-              />
-              <Button
-                variant="ghost"
-                size="icon-sm"
-                className="rounded-full text-white hover:bg-white/20 hover:text-white"
-                aria-label="Settings"
-              >
-                <img
-                  src="/Pictures/organizerpics/settings dashboard.png"
-                  alt="Settings"
-                  className="size-6"
-                />
-              </Button>
+                <Button
+                  variant="ghost"
+                  size="icon-sm"
+                  className="rounded-full text-white hover:bg-white/20 hover:text-white"
+                  aria-label="Settings"
+                >
+                  <img
+                    src="/Pictures/organizerpics/settings dashboard.png"
+                    alt="Settings"
+                    className="size-6"
+                  />
+                </Button>
+              </div>
             </div>
           </header>
 
