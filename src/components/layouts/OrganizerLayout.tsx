@@ -1,5 +1,5 @@
 import { Search } from 'lucide-react';
-import { Navigate, NavLink, Outlet, useLocation } from 'react-router-dom';
+import { NavLink, Outlet, useLocation } from 'react-router-dom';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -41,7 +41,7 @@ const pageTitles: Record<string, string> = {
 
 const pageDescriptions: Record<string, string> = {
   '/organizer': "Shows the overview of the Schatzies Events' performance",
-  '/organizer/calendar': '',
+  '/organizer/calendar': 'Shows marked dates, bookings, meetings, and reminders.',
   '/organizer/event-planner': 'Planning and organization of the overall event',
   '/organizer/event-manager': 'Manages the list of the events completed',
   '/organizer/rsvp': 'Helps organizer to plan, allocate resources, schedule and confirm the event.',
@@ -49,7 +49,7 @@ const pageDescriptions: Record<string, string> = {
 };
 
 export function OrganizerLayout() {
-  const { isAuthenticated, isLoading, user } = useAuth();
+  const { isLoading } = useAuth();
 
   const location = useLocation();
   const showHeaderSearch = location.pathname === '/organizer/event-planner';
@@ -62,9 +62,9 @@ export function OrganizerLayout() {
     );
   }
 
-  if (!isAuthenticated || user?.role !== 'ORGANIZER') {
-    return <Navigate to="/login" replace />;
-  }
+  //if (!isAuthenticated || user?.role !== 'ORGANIZER') {
+  //  return <Navigate to="/login" replace />;
+  //  }
 
   const currentPageTitle = pageTitles[location.pathname] ?? 'Organizer Workspace';
   const currentPageDescription = pageDescriptions[location.pathname] ?? '';
