@@ -2,7 +2,7 @@ import { Button } from '@/components/ui/button';
 import { logout } from '@/api/auth';
 import { useNavigate } from 'react-router-dom';
 
-export default function DashboardPage() {
+export function AdminDashboardPage() {
   const navigate = useNavigate();
   const handleLogout = async () => {
     await logout();
@@ -11,7 +11,7 @@ export default function DashboardPage() {
 
   return (
     <div>
-      DashboardPage
+      Admin Dashboard
       <Button onClick={handleLogout} className="ml-4">
         Logout
       </Button>
