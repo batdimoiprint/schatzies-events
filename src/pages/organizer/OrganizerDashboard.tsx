@@ -1,13 +1,4 @@
-import {
-  BriefcaseBusiness,
-  Calendar,
-  ChevronLeft,
-  ChevronRight,
-  CircleDollarSign,
-  CirclePercent,
-  HandCoins,
-  Rocket,
-} from 'lucide-react';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -38,7 +29,7 @@ type KpiCardData = {
   gradientClassName: string;
   iconBgClassName: string;
   textClassName?: string;
-  Icon: typeof Rocket;
+  iconImage: string;
 };
 
 const semiAnnualCompletions: MonthlyValue[] = [
@@ -104,7 +95,7 @@ const kpiCards: KpiCardData[] = [
     caption: '(Events)',
     gradientClassName: 'from-[#cf6ef6] to-[#a536e4]',
     iconBgClassName: 'bg-white/25',
-    Icon: Calendar,
+    iconImage: '/Pictures/organizerpics/Event completed.png',
   },
   {
     title: 'Total Revenue',
@@ -112,7 +103,7 @@ const kpiCards: KpiCardData[] = [
     caption: '(Overall)',
     gradientClassName: 'from-[#f48db3] to-[#e75691]',
     iconBgClassName: 'bg-white/25',
-    Icon: HandCoins,
+    iconImage: '/Pictures/organizerpics/TotalRevenue.png',
   },
   {
     title: 'Active Vendors',
@@ -121,7 +112,7 @@ const kpiCards: KpiCardData[] = [
     gradientClassName: 'from-[#f0df72] to-[#ddc447]',
     iconBgClassName: 'bg-black/10',
     textClassName: 'text-[#5f4f00]',
-    Icon: BriefcaseBusiness,
+    iconImage: '/Pictures/organizerpics/ActiveVendors.png',
   },
   {
     title: 'Total Profit',
@@ -129,7 +120,7 @@ const kpiCards: KpiCardData[] = [
     caption: '(Overall profit per month)',
     gradientClassName: 'from-[#8cb2f7] to-[#4c7fe3]',
     iconBgClassName: 'bg-white/25',
-    Icon: CircleDollarSign,
+    iconImage: '/Pictures/organizerpics/TotalProfit.png',
   },
 ];
 
@@ -200,13 +191,13 @@ function DashboardMetricCard({
   gradientClassName,
   iconBgClassName,
   textClassName = 'text-white',
-  Icon,
+  iconImage,
 }: KpiCardData) {
   return (
     <Card className={`border-none bg-linear-to-br py-0 shadow-sm ${gradientClassName}`}>
       <CardContent className={`space-y-6 p-5 ${textClassName}`}>
         <div className={`flex size-10 items-center justify-center rounded-xl ${iconBgClassName}`}>
-          <Icon className="size-5" />
+          <img src={iconImage} alt={title} className="size-5 object-contain" />
         </div>
 
         <div className="space-y-1">
@@ -226,35 +217,43 @@ function DashboardMetricCard({
 function ScheduleListCard({ title, entries }: { title: string; entries: ListEntry[] }) {
   return (
     <Card className="border-[#e8e4ed] bg-white py-0 shadow-sm">
-      <CardHeader className="border-b border-[#efeaf5] pb-3">
+      <CardHeader className="pt-10 px-6 pb-4">
         <div className="flex items-center justify-between gap-2">
-          <CardTitle className="text-[22px] font-black text-[#36303f]">{title}</CardTitle>
+          <CardTitle className="text-lg font-bold text-[#4a4a4a] font-sans">{title}</CardTitle>
           <Button
-            className="rounded-full bg-linear-to-r from-[#f25ea6] to-[#cc4cd1] px-3 text-[10px] uppercase tracking-wide text-white hover:opacity-90"
+            className="h-8 px-4 rounded-full bg-[#ff7eb3] text-white hover:bg-[#ff6aa5] transition-colors"
             size="sm"
           >
-            View List
+            <span className="text-xs font-bold">View List</span>
           </Button>
         </div>
       </CardHeader>
-      <CardContent className="space-y-3 p-4">
-        {entries.map((entry) => (
-          <div
-            key={`${title}-${entry.rank}`}
-            className="flex items-start gap-3 rounded-xl border border-[#f0edf4] px-2.5 py-2"
-          >
-            <div
-              className={`mt-0.5 flex size-6 shrink-0 items-center justify-center rounded-full text-xs font-black text-white ${entry.badgeColor}`}
-            >
-              {entry.rank}
-            </div>
-            <div className="min-w-0 flex-1">
-              <p className="truncate text-sm font-black text-[#3b3544]">{entry.title}</p>
-              <p className="truncate text-[11px] text-[#8f889a]">{entry.subtitle}</p>
-            </div>
-            <p className="pt-1 text-[10px] font-semibold text-[#b0a9b9]">{entry.date}</p>
+      <CardContent className="p-0">
+        <div className="max-h-96 overflow-y-auto scrollbar-thin scrollbar-thumb-[#e8e0eb] scrollbar-track-transparent pt-3">
+          <div className="divide-y divide-[#f0edf4]">
+            {entries.map((entry) => (
+              <div
+                key={`${entry.rank}-${entry.title}`}
+                className="flex items-center justify-between gap-4 bg-white px-5 py-4 hover:bg-[#fafafa] transition-colors"
+              >
+                <div className="flex items-center gap-4 flex-1 min-w-0">
+                  <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-linear-to-br from-[#f456a4] to-[#e846b4] text-sm font-black text-white">
+                    {entry.rank}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-bold text-[#36303f] font-sans">
+                      {entry.title}
+                    </p>
+                    <p className="truncate text-xs text-[#a8a0b3]">{entry.subtitle}</p>
+                  </div>
+                </div>
+                <p className="shrink-0 text-[10px] font-semibold text-[#d0c8db] whitespace-nowrap">
+                  Date: {entry.date}
+                </p>
+              </div>
+            ))}
           </div>
-        ))}
+        </div>
       </CardContent>
     </Card>
   );
@@ -264,117 +263,136 @@ export function OrganizerDashboard() {
   const chartMaxValue = Math.max(...semiAnnualCompletions.map((item) => item.value));
 
   return (
-    <section className="pb-2">
-      <div className="grid grid-cols-1 gap-5 xl:grid-cols-[minmax(0,1fr)_320px]">
-        <div className="space-y-4">
+    <section className="pb-6">
+      <div className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1fr)_360px]">
+        <div className="space-y-6">
           <Card className="border-none bg-transparent py-0 shadow-none">
-            <CardContent className="relative overflow-hidden rounded-2xl bg-linear-to-r from-[#f051a3] via-[#de3bc5] to-[#8f1fd0] p-6 text-white md:pr-64">
-              <div className="max-w-sm">
-                <h3 className="font-heading text-5xl font-bold leading-[1.08]">Welcome Kring!</h3>
-                <p className="mt-2 text-sm font-semibold text-white/85">
+            <CardContent className="relative overflow-hidden rounded-3xl bg-linear-to-r from-[#f051a3] via-[#de3bc5] to-[#8f1fd0] p-8 text-white md:pr-72">
+              <div className="max-w-md">
+                <h3 className="font-heading text-6xl font-bold leading-[1.1]">Welcome Kring!</h3>
+                <p className="mt-3 text-base font-semibold text-white/90">
                   You have a lot of work today, so keep it up.
                 </p>
-                <p className="text-sm font-semibold text-white/85">Shall we start?</p>
+                <p className="text-base font-semibold text-white/90">Shall we start?</p>
                 <Button
                   variant="secondary"
-                  className="mt-5 rounded-full bg-white px-5 text-xs font-black uppercase tracking-wide text-[#6b2a87] hover:bg-white/90"
+                  className="mt-6 rounded-full bg-white px-6 py-2 text-xs font-black uppercase tracking-wide text-[#6b2a87] hover:bg-white/90"
                 >
                   View Calendar
                 </Button>
               </div>
 
               <img
-                src="/3d-computer.png"
+                src="/Pictures/organizerpics/dashboard-banner.png.png"
                 alt="3D computer analytics"
-                className="pointer-events-none absolute -bottom-8 right-2 hidden w-63.75 drop-shadow-[0_16px_22px_rgba(69,21,111,0.35)] md:block"
+                className="pointer-events-none absolute -bottom-12 right-0 hidden w-80 drop-shadow-[0_16px_22px_rgba(69,21,111,0.35)] md:block"
               />
             </CardContent>
           </Card>
 
-          <div className="grid grid-cols-1 gap-4 lg:grid-cols-[1.5fr_1fr]">
+          <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1.5fr_1fr]">
             <Card className="border-[#e8e3ef] bg-white py-0 shadow-sm">
-              <CardHeader className="pb-2">
-                <CardTitle className="text-[21px] font-black text-[#37313f]">
+              <CardHeader className="pb-4">
+                <CardTitle className="text-lg font-bold text-[#4a4a4a] font-sans">
                   Semi-Annually Completed Events
                 </CardTitle>
-                <CardDescription className="text-[11px] font-semibold text-[#9991a7]">
+                <CardDescription className="text-xs font-semibold text-[#9991a7]">
                   Projection of monthly completed events
                 </CardDescription>
               </CardHeader>
-              <CardContent className="pb-4">
-                <div className="relative h-53 rounded-xl border border-[#f0ecf5] bg-[#fdfcff] p-3">
-                  <div className="pointer-events-none absolute inset-x-3 top-3 bottom-8 grid grid-rows-5">
-                    {[0, 1, 2, 3, 4].map((line) => (
-                      <div
-                        key={`line-${line}`}
-                        className="border-b border-dashed border-[#eee8f5] last:border-none"
-                      />
-                    ))}
+              <CardContent className="pb-6">
+                <div className="flex gap-3">
+                  {/* Y-axis labels */}
+                  <div className="flex flex-col justify-between text-[11px] font-bold text-[#706980]">
+                    <span>50</span>
+                    <span>40</span>
+                    <span>30</span>
+                    <span>20</span>
+                    <span>10</span>
+                    <span>0</span>
                   </div>
 
-                  <div className="relative z-10 pt-2">
-                    <div className="grid h-34 grid-cols-6 items-end gap-3">
-                      {semiAnnualCompletions.map((monthData) => (
-                        <div
-                          key={`bar-${monthData.month}`}
-                          className="flex h-full items-end rounded-t-md bg-[#efe7f9]"
-                        >
+                  {/* Chart area */}
+                  <div className="flex-1">
+                    <div className="relative h-64 w-full mt-4 flex items-end bg-[#fdfcff]">
+                      {/* Grid lines background */}
+                      <div className="absolute inset-0 flex flex-col justify-between pointer-events-none px-2 py-0">
+                        {[0, 1, 2, 3, 4].map((line) => (
                           <div
-                            className="w-full rounded-t-md bg-linear-to-t from-[#7418ba] to-[#c238f3]"
-                            style={{
-                              height: `${Math.max((monthData.value / chartMaxValue) * 100, 16)}%`,
-                            }}
+                            key={`grid-line-${line}`}
+                            className="border-b border-[#e8e8e8] flex-1"
                           />
-                        </div>
-                      ))}
+                        ))}
+                        {/* Bottom solid line (0 line) */}
+                        <div className="border-b-2 border-[#2a2a2a]" />
+                      </div>
+
+                      {/* Bars container */}
+                      <div className="absolute inset-0 flex items-end justify-between px-2">
+                        {semiAnnualCompletions.map((monthData) => (
+                          <div
+                            key={`bar-${monthData.month}`}
+                            className="flex-1 h-full flex justify-center items-end px-1 sm:px-2"
+                          >
+                            <div
+                              className="w-full bg-[#800080] rounded-t-sm"
+                              style={{
+                                height: `${Math.max((monthData.value / chartMaxValue) * 100, 5)}%`,
+                              }}
+                            />
+                          </div>
+                        ))}
+                      </div>
                     </div>
 
-                    <div className="mt-2 grid grid-cols-6 gap-3 text-center">
+                    {/* Month labels */}
+                    <div className="flex justify-between gap-2 px-2 pt-2 text-center">
                       {semiAnnualCompletions.map((monthData) => (
                         <span
                           key={`label-${monthData.month}`}
-                          className="text-xs font-bold text-[#706980]"
+                          className="flex-1 text-xs font-bold text-[#706980]"
                         >
                           {monthData.month}
                         </span>
                       ))}
                     </div>
                   </div>
+                </div>
 
-                  <div className="sr-only" aria-hidden="true">
-                    {semiAnnualCompletions.map((monthData) => (
-                      <span key={`value-${monthData.month}`}>
-                        {monthData.month}: {monthData.value}
-                      </span>
-                    ))}
-                  </div>
+                <div className="sr-only" aria-hidden="true">
+                  {semiAnnualCompletions.map((monthData) => (
+                    <span key={`value-${monthData.month}`}>
+                      {monthData.month}: {monthData.value}
+                    </span>
+                  ))}
                 </div>
               </CardContent>
             </Card>
 
             <Card className="border-[#e8e3ef] bg-white py-0 shadow-sm">
-              <CardHeader className="pb-2">
-                <CardTitle className="text-[21px] font-black text-[#37313f]">
-                  Monthly Event Status Chart
-                </CardTitle>
-                <CardDescription className="text-[11px] font-semibold text-[#9991a7]">
-                  Percentage number of event status
-                </CardDescription>
+              <CardHeader className="pb-4">
+                <div className="flex items-center justify-between gap-4">
+                  <div className="flex-1">
+                    <CardTitle className="text-2xl font-black text-[#37313f]">
+                      Monthly Event Status Chart
+                    </CardTitle>
+                    <CardDescription className="mt-1 text-xs font-semibold text-[#9991a7]">
+                      Percentage number of event status
+                    </CardDescription>
+                  </div>
+                  <img
+                    src="/Pictures/organizerpics/Monthly Event Status Chart.png"
+                    alt="Chart icon"
+                    className="size-5 shrink-0 object-contain" // Sa icon ng monthly chart ito.
+                  />
+                </div>
               </CardHeader>
-              <CardContent className="space-y-4 pb-4">
+              <CardContent className="space-y-6 pb-6">
                 <div
-                  className="relative mx-auto size-43"
+                  className="relative mx-auto size-64 rounded-full"
                   style={{ background: getDonutGradient(monthlyStatus) }}
                 >
-                  <div className="absolute inset-0 rounded-full" />
-                  <div className="absolute inset-0 rounded-full border-8 border-transparent" />
-                  <div className="absolute inset-8.25 rounded-full bg-white shadow-inner" />
-                  <div className="absolute inset-0 rounded-full" />
-                  <div
-                    className="size-full rounded-full"
-                    style={{ background: getDonutGradient(monthlyStatus) }}
-                  />
-                  <div className="absolute inset-8.25 rounded-full bg-white" />
+                  <div className="absolute inset-16 rounded-full bg-white" />
                 </div>
 
                 <div className="grid grid-cols-3 gap-2 pt-1 text-center">
@@ -396,25 +414,32 @@ export function OrganizerDashboard() {
           </div>
 
           <div>
-            <div className="mb-3 flex items-center justify-between gap-2">
+            <div className="mb-6 flex items-center justify-between gap-2">
               <div>
-                <h3 className="text-[30px] font-black leading-none text-[#2e2837]">
+                <h3
+                  className="text-3xl font-black leading-none text-[#2e2837]"
+                  style={{ fontFamily: 'Source Sans Pro, sans-serif' }}
+                >
                   Key Performance Index
                 </h3>
-                <p className="text-[11px] font-semibold text-[#8f879f]">
+                <p
+                  className="mt-1 text-xs font-semibold text-[#8f879f]"
+                  style={{ fontFamily: 'Montserrat, sans-serif' }}
+                >
                   Evaluation of events, vendors, and resources
                 </p>
               </div>
-              <Button
-                variant="outline"
-                className="rounded-xl border-[#e8e1f0] bg-white px-3 text-xs font-semibold text-[#6b6474]"
-              >
+              <Button className="rounded-[10px] border-0 bg-white px-4 py-1.5 text-xs font-semibold text-[#717171] shadow-[0_4px_4px_rgba(0,0,0,0.05)] hover:bg-white/95 flex items-center gap-1">
                 Monthly
-                <CirclePercent className="size-4" />
+                <img
+                  src="/Pictures/organizerpics/dropdown.png"
+                  alt="dropdown"
+                  className="w-1.5 h-1.5"
+                />
               </Button>
             </div>
 
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+            <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
               {kpiCards.map((item) => (
                 <DashboardMetricCard key={item.title} {...item} />
               ))}
@@ -422,47 +447,53 @@ export function OrganizerDashboard() {
           </div>
         </div>
 
-        <div className="space-y-4">
+        <div className="space-y-6">
           <Card className="border-[#e8e4ed] bg-white py-0 shadow-sm">
-            <CardHeader className="pb-2">
-              <div className="flex items-start justify-between gap-3">
-                <div>
-                  <CardTitle className="text-[30px] font-black leading-none text-[#393341]">
+            <CardHeader className="py-4 px-6">
+              <div className="flex items-center justify-between gap-6">
+                {/* Date and Day wrapper */}
+                <div className="flex items-center gap-2">
+                  <CardTitle className="whitespace-nowrap text-lg font-black leading-none text-[#393341] font-sans">
                     January 12, 2026
                   </CardTitle>
-                  <p className="mt-1 text-xs font-semibold text-[#a59db0]">(Sunday)</p>
+                  <p className="text-xs font-semibold text-[#c5bdd1]">(Sunday)</p>
                 </div>
-                <div className="flex items-center gap-1 pt-1">
+
+                {/* Navigation arrows wrapper */}
+                <div className="flex items-center gap-2">
                   <Button variant="ghost" size="icon-sm" className="rounded-full text-[#8f879b]">
-                    <ChevronLeft className="size-4" />
+                    <ChevronLeft className="size-5" />
                   </Button>
                   <Button variant="ghost" size="icon-sm" className="rounded-full text-[#8f879b]">
-                    <ChevronRight className="size-4" />
+                    <ChevronRight className="size-5" />
                   </Button>
                 </div>
               </div>
             </CardHeader>
-            <CardContent className="pb-4">
-              <div className="rounded-xl border border-[#ebe5f1] bg-[#fdfdfe] p-3">
-                <div className="grid grid-cols-7 gap-y-2 text-center">
+            <CardContent className="pb-6">
+              <div className="rounded-xl border border-[#f0e0e8] bg-white p-0 overflow-hidden">
+                <div className="grid grid-cols-7 gap-y-3 bg-[#fce4ec] px-6 py-3 text-center">
                   {calendarDays.map((dayLabel) => (
-                    <p key={dayLabel} className="text-[10px] font-black text-[#8f889b]">
+                    <p key={dayLabel} className="text-[9px] font-black text-black">
                       {dayLabel}
                     </p>
                   ))}
+                </div>
 
+                <div className="grid grid-cols-7 gap-y-3 px-6 py-4 text-center">
                   {calendarGrid.map((day, index) => {
                     const isSelected = day === 16 || day === 17;
 
                     return (
-                      <div key={`calendar-cell-${index}`} className="flex justify-center py-0.5">
+                      <div key={`calendar-cell-${index}`} className="flex justify-center py-2">
                         <span
                           className={[
-                            'flex size-8 items-center justify-center rounded-lg text-xs font-semibold',
-                            day === null ? 'text-transparent' : 'text-[#706a7f]',
-                            isSelected
-                              ? 'bg-linear-to-r from-[#f456a4] to-[#e846b4] text-white shadow-sm'
-                              : '',
+                            'flex size-8 items-center justify-center rounded-md text-xs font-sans',
+                            day === null
+                              ? 'text-transparent'
+                              : isSelected
+                                ? 'bg-linear-to-br from-[#f456a4] to-[#e846b4] text-white font-bold shadow-sm'
+                                : 'text-[#9b8fa8] font-semibold',
                           ].join(' ')}
                         >
                           {day ?? '.'}
