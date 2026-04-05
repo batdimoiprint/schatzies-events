@@ -41,10 +41,10 @@ const pageTitles: Record<string, string> = {
 const pageDescriptions: Record<string, string> = {
   '/organizer': "Shows the overview of the Schatzies Events' performance",
   '/organizer/calendar': '',
-  '/organizer/event-planner': '',
-  '/organizer/event-manager': '',
-  '/organizer/rsvp': '',
-  '/organizer/cost-breakdown': '',
+  '/organizer/event-planner': 'Planning and organization of the overall event',
+  '/organizer/event-manager': 'Manages the list of the events completed',
+  '/organizer/rsvp': 'Helps organizer to plan, allocate resources, schedule and confirm the event.',
+  '/organizer/cost-breakdown': 'Displays cost and budget breakdown of an event or services',
 };
 
 export function OrganizerLayout() {
@@ -60,9 +60,9 @@ export function OrganizerLayout() {
     );
   }
 
-  //if (!isAuthenticated || user?.role !== 'ORGANIZER') {
-  // return <Navigate to="/login" replace />;
-  //}
+  if (!isAuthenticated || user?.role !== 'ORGANIZER') {
+   return <Navigate to="/login" replace />;
+  }
 
   const currentPageTitle = pageTitles[location.pathname] ?? 'Organizer Workspace';
   const currentPageDescription = pageDescriptions[location.pathname] ?? '';
