@@ -16,6 +16,10 @@ import { EventPlannerPage } from '@/pages/organizer/EventPlannerPage';
 import { EventManagerPage } from '@/pages/organizer/EventManagerPage';
 import { RSVPPage } from '@/pages/organizer/RSVPPage';
 import { CostBreakdownPage } from '@/pages/organizer/CostBreakdownPage';
+import { ClientDashboardPage } from '@/pages/client/ClientDashboardPage';
+import { EventPlanViewingPage } from '@/pages/client/EventPlanViewingPage';
+import { QrCodePage } from '@/pages/client/QrCodePage';
+import { MessagePage } from '@/pages/client/MessagePage';
 
 const router = createBrowserRouter([
   {
@@ -94,7 +98,19 @@ const router = createBrowserRouter([
     children: [
       {
         index: true,
-        element: <div>Client Dashboard</div>,
+        Component: ClientDashboardPage,
+      },
+      {
+        path: 'event-plan',
+        Component: EventPlanViewingPage,
+      },
+      {
+        path: 'qr-code',
+        Component: QrCodePage,
+      },
+      {
+        path: 'message',
+        Component: MessagePage,
       },
     ],
   },
