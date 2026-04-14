@@ -1,8 +1,8 @@
-import { useState, useMemo } from 'react';
-import { Search } from 'lucide-react';
+import { useMemo } from 'react';
+import { useOutletContext } from 'react-router-dom';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import type { OrganizerLayoutOutletContext } from '@/components/layouts/OrganizerLayout';
 
 type EventStatus = 'Completed' | 'Pending' | 'Cancelled';
 
@@ -90,7 +90,7 @@ function getStatusBadgeClasses(status: EventStatus) {
 }
 
 export function EventManagerPage() {
-  const [searchTerm, setSearchTerm] = useState('');
+  const { searchTerm } = useOutletContext<OrganizerLayoutOutletContext>();
 
   const filteredEvents = useMemo(() => {
     const normalizedSearchTerm = searchTerm.trim().toLowerCase();
@@ -153,17 +153,6 @@ export function EventManagerPage() {
             All Status
           </Button>
         </div>
-      </div>
-
-      <div className="relative w-full max-w-65">
-        <Search className="pointer-events-none absolute right-3 top-1/2 size-4 -translate-y-1/2 text-[#b2acbf]" />
-        <Input
-          type="search"
-          placeholder="Search something...."
-          value={searchTerm}
-          onChange={(event) => setSearchTerm(event.target.value)}
-          className="h-11 rounded-2xl border border-[#ddd8e8] bg-white px-4 pr-10 text-sm text-[#5d566f] placeholder:text-[#b2acbf]"
-        />
       </div>
 
       <Card className="border-[#ebe6f1]">
