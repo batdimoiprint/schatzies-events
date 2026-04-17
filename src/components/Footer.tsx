@@ -85,7 +85,7 @@ const Footer = ({ showScrollTop = true }: FooterProps) => {
                   onClick={(event) => event.preventDefault()}
                   className="hover:text-[#e61f83] transition-colors"
                 >
-                  +63 912 345 6789
+                  +63 933 380 7868/ 917 502 3538
                 </a>
               </li>
               <li className="flex items-center gap-2">
@@ -95,7 +95,8 @@ const Footer = ({ showScrollTop = true }: FooterProps) => {
                   onClick={(event) => event.preventDefault()}
                   className="hover:text-[#e61f83] transition-colors"
                 >
-                  hello@schatziesevents.com
+                  schatziesevents@gmail.com
+
                 </a>
               </li>
             </ul>
@@ -106,8 +107,9 @@ const Footer = ({ showScrollTop = true }: FooterProps) => {
             <h4 className="font-heading text-lg font-bold text-[#1a1225] mb-4">Follow Us</h4>
             <div className="flex gap-3">
               <a
-                href="#"
-                onClick={(event) => event.preventDefault()}
+                href="https://www.facebook.com/debutandweddingpackage"
+                target="_blank"
+                rel="noreferrer"
                 className="flex h-10 w-10 items-center justify-center rounded-full bg-white/60 text-[#3d2052] transition-all hover:bg-[#e61f83] hover:text-white hover:shadow-md"
                 aria-label="Facebook"
               >
@@ -116,25 +118,14 @@ const Footer = ({ showScrollTop = true }: FooterProps) => {
                 </svg>
               </a>
               <a
-                href="#"
-                onClick={(event) => event.preventDefault()}
+                href="https://www.instagram.com/schatziesevents25/"
+                target="_blank"
+                rel="noreferrer"
                 className="flex h-10 w-10 items-center justify-center rounded-full bg-white/60 text-[#3d2052] transition-all hover:bg-[#e61f83] hover:text-white hover:shadow-md"
                 aria-label="Instagram"
               >
                 <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 24 24">
-                  <rect x="2" y="2" width="20" height="20" rx="5" ry="5" />
-                  <circle cx="12" cy="12" r="4" />
-                  <line x1="18.5" y1="5.5" x2="18.5" y2="5.5" />
-                </svg>
-              </a>
-              <a
-                href="#"
-                onClick={(event) => event.preventDefault()}
-                className="flex h-10 w-10 items-center justify-center rounded-full bg-white/60 text-[#3d2052] transition-all hover:bg-[#e61f83] hover:text-white hover:shadow-md"
-                aria-label="TikTok"
-              >
-                <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 24 24">
-                  <path d="M19.59 6.69a4.83 4.83 0 01-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 01-5.2 1.74 2.89 2.89 0 015.2-1.74V9.47a6.33 6.33 0 003.76 1.13 6.34 6.34 0 003.46-1.03v-3.8a4.79 4.79 0 01-2.88 1.05z" />
+                  <path d="M7 2.5h10A4.5 4.5 0 0 1 21.5 7v10A4.5 4.5 0 0 1 17 21.5H7A4.5 4.5 0 0 1 2.5 17V7A4.5 4.5 0 0 1 7 2.5Zm0 2A2.5 2.5 0 0 0 4.5 7v10A2.5 2.5 0 0 0 7 19.5h10A2.5 2.5 0 0 0 19.5 17V7A2.5 2.5 0 0 0 17 4.5H7Zm5 2.5a5 5 0 1 1 0 10 5 5 0 0 1 0-10Zm0 2A3 3 0 1 0 12 17a3 3 0 0 0 0-6Zm5.25-2.75a1.25 1.25 0 1 1 0 2.5 1.25 1.25 0 0 1 0-2.5Z" />
                 </svg>
               </a>
             </div>
