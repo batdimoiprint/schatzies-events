@@ -1,12 +1,13 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { useOutletContext } from 'react-router-dom';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import type { OrganizerLayoutOutletContext } from '@/components/layouts/OrganizerLayout';
 
 type EventStatus = 'Completed' | 'Pending' | 'Cancelled';
+type VendorStatus = 'Active' | 'Inactive';
 
-const eventTableData: Array<{
+type Event = {
   id: number;
   title: string;
   date: string;
@@ -17,7 +18,19 @@ const eventTableData: Array<{
   venue: string;
   rsvp: number;
   status: EventStatus;
-}> = [
+};
+
+type Vendor = {
+  id: number;
+  name: string;
+  contactPerson: string;
+  email: string;
+  phone: string;
+  service: string;
+  status: VendorStatus;
+};
+
+const eventTableData: Event[] = [
   {
     id: 1,
     title: "Angela's 18 Birthday...",
@@ -80,8 +93,37 @@ const eventTableData: Array<{
   },
 ];
 
-const tabs = ['Events', 'Vendor'];
-const activeTab = 'Events';
+const initialVendorData: Vendor[] = [
+  {
+    id: 1,
+    name: 'Nice Print Photography',
+    contactPerson: 'Contact person',
+    email: 'niceprint@gmail.com',
+    phone: '09123456789',
+    service: 'Photo & Video',
+    status: 'Active',
+  },
+  {
+    id: 2,
+    name: "Sam's Catering Services",
+    contactPerson: 'Contact person',
+    email: 'sams@gmail.com',
+    phone: '09123456789',
+    service: 'Catering',
+    status: 'Active',
+  },
+  {
+    id: 3,
+    name: 'XYZ Lights & Sounds',
+    contactPerson: 'Contact person',
+    email: 'xyz@gmail.com',
+    phone: '09123456789',
+    service: 'Technical',
+    status: 'Inactive',
+  },
+];
+
+const tabs: Array<'Events' | 'Vendor'> = ['Events', 'Vendor'];
 
 function getStatusBadgeClasses(status: EventStatus) {
   if (status === 'Completed') return 'bg-[#e8d5f2] text-[#7c3aed]';
@@ -89,30 +131,83 @@ function getStatusBadgeClasses(status: EventStatus) {
   return 'bg-[#ffe8ef] text-[#8f1f4a]';
 }
 
+function getVendorStatusBadgeClasses(status: VendorStatus) {
+  if (status === 'Active') return 'bg-[#e6f4ea] text-[#1e7e34]';
+  return 'bg-[#fce8e6] text-[#c5221f]';
+}
+
 export function EventManagerPage() {
   const { searchTerm } = useOutletContext<OrganizerLayoutOutletContext>();
+  const [activeTab, setActiveTab] = useState<'Events' | 'Vendor'>('Events');
+  const [events, setEvents] = useState(eventTableData);
+  const [vendors, setVendors] = useState(initialVendorData);
 
-  const filteredEvents = useMemo(() => {
+  /*
+  useEffect(() => {
+    async function fetchDashboardData() {
+      // Replace these with actual API calls once backend endpoints are available.
+      // const [eventsResponse, vendorsResponse] = await Promise.all([
+      //   fetch('/api/events'),
+      //   fetch('/api/vendors'),
+      // ]);
+      // const [eventsData, vendorsData] = await Promise.all([
+      //   eventsResponse.json(),
+      //   vendorsResponse.json(),
+      // ]);
+      // setEvents(eventsData);
+      // setVendors(vendorsData);
+    }
+
+    fetchDashboardData();
+  }, []);
+  */
+
+  const filteredData = useMemo(() => {
     const normalizedSearchTerm = searchTerm.trim().toLowerCase();
 
-    if (!normalizedSearchTerm) return eventTableData;
+    if (activeTab === 'Events') {
+      if (!normalizedSearchTerm) {
+        return { activeTab: 'Events' as const, data: events };
+      }
 
-    return eventTableData.filter((event) => {
+      const data = events.filter((event) => {
+        const searchableFields = [
+          event.title,
+          event.date,
+          event.timeSlot,
+          event.client,
+          event.type,
+          event.package,
+          event.venue,
+          event.status,
+          String(event.rsvp),
+        ];
+
+        return searchableFields.some((field) => field.toLowerCase().includes(normalizedSearchTerm));
+      });
+
+      return { activeTab: 'Events' as const, data };
+    }
+
+    if (!normalizedSearchTerm) {
+      return { activeTab: 'Vendor' as const, data: vendors };
+    }
+
+    const data = vendors.filter((vendor) => {
       const searchableFields = [
-        event.title,
-        event.date,
-        event.timeSlot,
-        event.client,
-        event.type,
-        event.package,
-        event.venue,
-        event.status,
-        String(event.rsvp),
+        vendor.name,
+        vendor.contactPerson,
+        vendor.email,
+        vendor.phone,
+        vendor.service,
+        vendor.status,
       ];
 
       return searchableFields.some((field) => field.toLowerCase().includes(normalizedSearchTerm));
     });
-  }, [searchTerm]);
+
+    return { activeTab: 'Vendor' as const, data };
+  }, [activeTab, events, searchTerm, setEvents, setVendors, vendors]);
 
   return (
     <div className="space-y-4 p-6 font-sans">
@@ -128,6 +223,7 @@ export function EventManagerPage() {
               <button
                 key={tab}
                 type="button"
+                onClick={() => setActiveTab(tab)}
                 className={`px-4 py-1 text-sm font-medium border-b-2 transition-colors ${
                   isActive
                     ? 'border-[#2e2837] text-[#2e2837]'
@@ -161,65 +257,113 @@ export function EventManagerPage() {
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
-                <tr className="border-b border-[#e8e4ed]">
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-[#2e2837] font-sans">
-                    Title
-                  </th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-[#2e2837] font-sans">
-                    Date
-                  </th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-[#2e2837] font-sans">
-                    Time
-                  </th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-[#2e2837] font-sans">
-                    Client
-                  </th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-[#2e2837] font-sans">
-                    Type
-                  </th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-[#2e2837] font-sans">
-                    Package
-                  </th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-[#2e2837] font-sans">
-                    Venue
-                  </th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-[#2e2837] font-sans">
-                    RSVP
-                  </th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-[#2e2837] font-sans">
-                    Status
-                  </th>
-                </tr>
+                {activeTab === 'Events' ? (
+                  <tr className="border-b border-[#e8e4ed]">
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-[#2e2837] font-sans">
+                      Title
+                    </th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-[#2e2837] font-sans">
+                      Date
+                    </th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-[#2e2837] font-sans">
+                      Time
+                    </th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-[#2e2837] font-sans">
+                      Client
+                    </th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-[#2e2837] font-sans">
+                      Type
+                    </th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-[#2e2837] font-sans">
+                      Package
+                    </th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-[#2e2837] font-sans">
+                      Venue
+                    </th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-[#2e2837] font-sans">
+                      RSVP
+                    </th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-[#2e2837] font-sans">
+                      Status
+                    </th>
+                  </tr>
+                ) : (
+                  <tr className="border-b border-[#e8e4ed]">
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-[#2e2837] font-sans">
+                      Name
+                    </th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-[#2e2837] font-sans">
+                      Contact Person
+                    </th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-[#2e2837] font-sans">
+                      Email
+                    </th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-[#2e2837] font-sans">
+                      Phone
+                    </th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-[#2e2837] font-sans">
+                      Service
+                    </th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-[#2e2837] font-sans">
+                      Status
+                    </th>
+                  </tr>
+                )}
               </thead>
               <tbody>
-                {filteredEvents.map((event) => (
-                  <tr
-                    key={event.id}
-                    className="border-b border-[#f0edf4] hover:bg-[#fafaf8] transition-colors"
-                  >
-                    <td className="px-4 py-3 text-sm text-[#2e2837]">{event.title}</td>
-                    <td className="px-4 py-3 text-sm text-[#2e2837]">{event.date}</td>
-                    <td className="px-4 py-3 text-sm text-[#2e2837]">{event.timeSlot}</td>
-                    <td className="px-4 py-3 text-sm text-[#2e2837]">{event.client}</td>
-                    <td className="px-4 py-3 text-sm text-[#2e2837]">{event.type}</td>
-                    <td className="px-4 py-3 text-sm text-[#2e2837]">{event.package}</td>
-                    <td className="px-4 py-3 text-sm text-[#2e2837]">{event.venue}</td>
-                    <td className="px-4 py-3 text-sm text-[#2e2837]">{event.rsvp}</td>
-                    <td className="px-4 py-3 text-sm">
-                      <span
-                        className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${getStatusBadgeClasses(
-                          event.status
-                        )}`}
+                {filteredData.activeTab === 'Events'
+                  ? filteredData.data.map((event) => (
+                      <tr
+                        key={event.id}
+                        className="border-b border-[#f0edf4] hover:bg-[#fafaf8] transition-colors"
                       >
-                        {event.status}
-                      </span>
-                    </td>
-                  </tr>
-                ))}
-                {filteredEvents.length === 0 ? (
+                        <td className="px-4 py-3 text-sm text-[#2e2837]">{event.title}</td>
+                        <td className="px-4 py-3 text-sm text-[#2e2837]">{event.date}</td>
+                        <td className="px-4 py-3 text-sm text-[#2e2837]">{event.timeSlot}</td>
+                        <td className="px-4 py-3 text-sm text-[#2e2837]">{event.client}</td>
+                        <td className="px-4 py-3 text-sm text-[#2e2837]">{event.type}</td>
+                        <td className="px-4 py-3 text-sm text-[#2e2837]">{event.package}</td>
+                        <td className="px-4 py-3 text-sm text-[#2e2837]">{event.venue}</td>
+                        <td className="px-4 py-3 text-sm text-[#2e2837]">{event.rsvp}</td>
+                        <td className="px-4 py-3 text-sm">
+                          <span
+                            className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${getStatusBadgeClasses(
+                              event.status
+                            )}`}
+                          >
+                            {event.status}
+                          </span>
+                        </td>
+                      </tr>
+                    ))
+                  : filteredData.data.map((vendor) => (
+                      <tr
+                        key={vendor.id}
+                        className="border-b border-[#f0edf4] hover:bg-[#fafaf8] transition-colors"
+                      >
+                        <td className="px-4 py-3 text-sm text-[#2e2837]">{vendor.name}</td>
+                        <td className="px-4 py-3 text-sm text-[#2e2837]">{vendor.contactPerson}</td>
+                        <td className="px-4 py-3 text-sm text-[#2e2837]">{vendor.email}</td>
+                        <td className="px-4 py-3 text-sm text-[#2e2837]">{vendor.phone}</td>
+                        <td className="px-4 py-3 text-sm text-[#2e2837]">{vendor.service}</td>
+                        <td className="px-4 py-3 text-sm">
+                          <span
+                            className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${getVendorStatusBadgeClasses(
+                              vendor.status
+                            )}`}
+                          >
+                            {vendor.status}
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                {filteredData.data.length === 0 ? (
                   <tr>
-                    <td colSpan={9} className="px-4 py-6 text-center text-sm text-[#8f879f]">
-                      No events found for "{searchTerm.trim()}".
+                    <td
+                      colSpan={activeTab === 'Events' ? 9 : 6}
+                      className="px-4 py-6 text-center text-sm text-[#8f879f]"
+                    >
+                      No {activeTab.toLowerCase()} found for "{searchTerm.trim()}".
                     </td>
                   </tr>
                 ) : null}

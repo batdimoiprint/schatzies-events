@@ -223,6 +223,8 @@ function DashboardMetricCard({
 }
 
 function ScheduleListCard({ title, entries }: { title: string; entries: ListEntry[] }) {
+  const emptySlots = Math.max(0, 3 - entries.length);
+
   return (
     <Card className="border-[#e8e4ed] bg-white py-0 shadow-sm">
       <CardHeader className="pt-6 px-6 pb-4">
@@ -259,6 +261,16 @@ function ScheduleListCard({ title, entries }: { title: string; entries: ListEntr
                 </div>
                 <p className="shrink-0 text-[10px] font-semibold text-[#d0c8db] whitespace-nowrap">
                   Date: {entry.date}
+                </p>
+              </div>
+            ))}
+            {Array.from({ length: emptySlots }).map((_, index) => (
+              <div
+                key={`empty-slot-${title}-${index}`}
+                className="h-[72px] flex items-center justify-center bg-[#fafaf8]/50 px-5 py-4 transition-colors"
+              >
+                <p className="text-xs font-semibold text-[#d0c8db] italic">
+                  -- No additional entries --
                 </p>
               </div>
             ))}
