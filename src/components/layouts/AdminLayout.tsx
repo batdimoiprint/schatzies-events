@@ -1,5 +1,6 @@
 import { Outlet, Navigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
+import AdminSidebar from '@/components/admin/AdminSidebar';
 
 export function AdminLayout() {
   const { user, isAuthenticated, isLoading } = useAuth();
@@ -21,7 +22,12 @@ export function AdminLayout() {
   return (
     <div className="flex h-screen bg-gray-100">
       {/* Sidebar */}
-      <aside className="w-64 bg-gray-900 text-white shadow-lg"></aside>
+      <aside className="w-64 bg-gray-900 text-white shadow-lg">
+        <div className="p-4 border-b border-gray-700">
+          <h2 className="text-xl font-semibold">Admin Panel</h2>
+        </div>
+        <AdminSidebar />
+      </aside>
 
       <div className="flex-1 flex flex-col overflow-hidden">
         {/* Header */}

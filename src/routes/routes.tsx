@@ -10,6 +10,7 @@ import ServicesPage from '@/pages/public/ServicesPage';
 import AboutUsPage from '@/pages/public/AboutUsPage';
 import ContactPage from '@/pages/public/ContactPage';
 import { AdminDashboardPage } from '@/pages/admin/AdminDashboardPage';
+import { UsersManagement } from '@/pages/admin/UsersManagement';
 import { OrganizerDashboard } from '@/pages/organizer/OrganizerDashboard';
 import { CalendarPage } from '@/pages/organizer/CalendarPage';
 import { EventPlannerPage } from '@/pages/organizer/EventPlannerPage';
@@ -55,6 +56,10 @@ const router = createBrowserRouter([
       {
         index: true,
         Component: AdminDashboardPage,
+      },
+      {
+        path: 'users',
+        Component: UsersManagement,
       },
     ],
   },
