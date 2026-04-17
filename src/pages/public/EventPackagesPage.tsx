@@ -6,429 +6,10 @@ import { PackageModal } from '@/components/PackageModal';
 import { InquiryForm } from '@/components/InquiryForm';
 import LoadingScreen from '@/components/ui/LoadingScreen';
 import ScrollReveal from '@/components/ui/ScrollReveal';
+import { weddingPackages, debutPackages } from '@/data/packages';
 import type { PackageWithModal } from '@/components/PackageModal';
 
 const heroImage = '/Pictures/packages-hero.jpg';
-
-// ── Wedding package cards ──────────────────────────────────────
-const weddingPackages: PackageWithModal[] = [
-  {
-    id: 1,
-    name: 'Blooms Package',
-    description:
-      'Professionally styled reception backdrops, full photo and video coverage, and signature welcome treats like our Iced Coffee Bar.',
-    image: '/Pictures/pkg-blooms.jpg',
-    modal: {
-      note: 'A comprehensive all-in-one collection designed for a seamless event experience. This package includes our full standard of service and professional coordination for up to 200 guests.',
-      categories: [
-        {
-          iconName: 'user',
-          title: 'Professional Coordination',
-          items: [
-            '1 Lead Planner & 4 Coordinators',
-            'Staff with Handheld Radios',
-            'Professional Event Emcee',
-          ],
-        },
-        {
-          iconName: 'utensils',
-          title: 'Catering & Dining',
-          items: [
-            'Full Buffet (Beef, Pork, Chicken, Fish)',
-            'Signature Iced Coffee Bar',
-            'French Fries & Cookies Station',
-          ],
-        },
-        {
-          iconName: 'scissors',
-          title: 'Styling & Production',
-          items: [
-            'Elegant Reception Backdrop',
-            'Tiffany Chairs for all guests',
-            'Full Sound & Light System',
-          ],
-        },
-        {
-          iconName: 'video',
-          title: 'Media & Glamour',
-          items: [
-            '1 Photographer & 2 Videographers',
-            'Cinematic Highlight Video',
-            'Airbrush Makeup for Bride & Mom',
-          ],
-        },
-      ],
-    },
-  },
-  {
-    id: 2,
-    name: 'Fascinating Package',
-    description:
-      'A cinematic experience featuring high-end storytelling through drone coverage, LED visuals, and a professional magnetic leatherette album.',
-    image: '/Pictures/pkg-fascinating.jpg',
-    modal: {
-      note: 'A premium visual-focused collection designed for cinematic storytelling. This package includes our full standard of service and professional coordination for up to 200 guests.',
-      categories: [
-        {
-          iconName: 'user',
-          title: 'Professional Coordination',
-          items: [
-            '1 Lead Planner & 4 Coordinators',
-            'Staff with Handheld Radios',
-            'Professional Event Emcee',
-            { text: 'Chauffeured Bridal Car (3 Hours)', highlight: true },
-          ],
-        },
-        {
-          iconName: 'utensils',
-          title: 'Catering & Dining',
-          items: [
-            'Full Buffet (Beef, Pork, Chicken, Fish)',
-            'Signature Iced Coffee Bar',
-            'French Fries & Cookies Station',
-            { text: '10 Bottles of Local Wine', highlight: true },
-          ],
-        },
-        {
-          iconName: 'scissors',
-          title: 'Styling & Production',
-          items: [
-            'Elegant Reception Backdrop',
-            { text: 'High-Definition LED Wall', highlight: true },
-            'Full Sound & Light System',
-            { text: 'Drone Coverage for Aerial Shots', highlight: true },
-          ],
-        },
-        {
-          iconName: 'video',
-          title: 'Media & Glamour',
-          items: [
-            '1 Photographer & 2 Videographers',
-            { text: 'Same-Day Edit (SDE) Video', highlight: true },
-            'Airbrush Makeup for Bride & Mom',
-            { text: '40-Page Magnetic Leatherette Album', highlight: true },
-          ],
-        },
-      ],
-    },
-  },
-  {
-    id: 3,
-    name: 'Windy Package',
-    description:
-      'An enchanted atmosphere brought to life with signature fairy-light dance floors, entrance tunnels, and immersive overhead ceiling treatments.',
-    image: '/Pictures/pkg-windy.jpg',
-    modal: {
-      note: 'An immersive atmosphere-focused collection designed for a magical, light-filled experience. This package includes our full standard of service and professional coordination for up to 200 guests.',
-      categories: [
-        {
-          iconName: 'user',
-          title: 'Professional Coordination',
-          items: [
-            '1 Lead Planner & 4 Coordinators',
-            'Staff with Handheld Radios',
-            'Professional Event Emcee',
-            { text: 'Chauffeured Bridal Car (3 Hours)', highlight: true },
-          ],
-        },
-        {
-          iconName: 'utensils',
-          title: 'Catering & Dining',
-          items: [
-            'Full Buffet (Beef, Pork, Chicken, Fish)',
-            'Signature Iced Coffee Bar',
-            'French Fries & Cookies Station',
-            { text: '10 Bottles of Local Wine', highlight: true },
-          ],
-        },
-        {
-          iconName: 'scissors',
-          title: 'Styling & Production',
-          items: [
-            { text: 'Signature Fairy-light Dance Floor', highlight: true },
-            { text: 'Immersive Overhead Ceiling Treatment', highlight: true },
-            { text: 'Elegant Entrance Tunnel Setup', highlight: true },
-            'Full Sound & Light System',
-          ],
-        },
-        {
-          iconName: 'video',
-          title: 'Media & Glamour',
-          items: [
-            '1 Photographer & 2 Videographers',
-            { text: 'Same-Day Edit (SDE) Video', highlight: true },
-            'Airbrush Makeup for Bride & Mom',
-            { text: '40-Page Magnetic Leatherette Album', highlight: true },
-          ],
-        },
-      ],
-    },
-  },
-  {
-    id: 4,
-    name: 'De Luxe Package',
-    description:
-      'Sophisticated luxury defined by premium guest experiences, featuring a chauffeured Mercedes Benz and a free-flowing cocktail mobile bar.',
-    image: '/Pictures/pkg-deluxe.jpg',
-    modal: {
-      note: 'A high-end hospitality collection designed for a refined and sophisticated celebration. This package includes our full standard of service and professional coordination for up to 200 guests.',
-      categories: [
-        {
-          iconName: 'user',
-          title: 'Professional Coordination',
-          items: [
-            '1 Lead Planner & 5 Coordinators',
-            'Staff with Handheld Radios',
-            'Professional Event Emcee',
-            { text: 'Mercedes Benz Bridal Car (3 Hours)', highlight: true },
-          ],
-        },
-        {
-          iconName: 'utensils',
-          title: 'Catering & Dining',
-          items: [
-            'Full Buffet (Beef, Pork, Chicken, Fish)',
-            'Signature Iced Coffee Bar',
-            'French Fries & Cookies Station',
-            { text: 'Free-Flowing Mobile Bar (Cocktails)', highlight: true },
-          ],
-        },
-        {
-          iconName: 'scissors',
-          title: 'Styling & Production',
-          items: [
-            'Elegant Reception Backdrop',
-            { text: 'High-Definition LED Wall', highlight: true },
-            'Full Sound & Light System',
-            { text: 'Panoramic Entrance Backdrop', highlight: true },
-          ],
-        },
-        {
-          iconName: 'video',
-          title: 'Media & Glamour',
-          items: [
-            '1 Photographer & 2 Videographers',
-            { text: 'Same-Day Edit (SDE) Video', highlight: true },
-            { text: '40-Page Magnetic Leatherette Album', highlight: true },
-            { text: 'Personalized Guest Souvenirs', highlight: true },
-          ],
-        },
-      ],
-    },
-  },
-];
-
-// ── Debut package cards ────────────────────────────────────────
-const debutPackages: PackageWithModal[] = [
-  {
-    id: 1,
-    name: 'Blooms Package',
-    description:
-      'Professionally styled reception backdrops, full photo and video coverage, and signature welcome treats like our Iced Coffee Bar.',
-    image: '/Pictures/debut-blooms.jpg',
-    modal: {
-      note: 'A chic and stylish collection designed to handle your traditions with professional grace. This package includes our full standard of service and professional coordination for up to 200 guests.',
-      categories: [
-        {
-          iconName: 'user',
-          title: 'Professional Coordination',
-          items: [
-            '1 Lead Planner & 4 Coordinators',
-            'Staff with Handheld Radios',
-            'Professional Event Emcee',
-            'Coordination of 18 Roses & Treasures',
-          ],
-        },
-        {
-          iconName: 'utensils',
-          title: 'Catering & Dining',
-          items: [
-            'Full Buffet (Beef, Pork, Chicken, Fish)',
-            'Signature Iced Coffee Bar',
-            'French Fries & Cookies Station',
-            'One Round of Iced Tea for All Guests',
-          ],
-        },
-        {
-          iconName: 'scissors',
-          title: 'Styling & Production',
-          items: [
-            'Elegant Entrance Arch & Red Carpet',
-            'Professionally Styled Debutante Stage',
-            'Full Sound & Light System',
-            'Tiffany Chairs for all guests',
-          ],
-        },
-        {
-          iconName: 'video',
-          title: 'Media & Glamour',
-          items: [
-            '1 Photographer & 2 Videographers',
-            'Cinematic Debut Highlight Video',
-            'High-Resolution Edited Photos',
-            'Airbrush Makeup for Debutante',
-          ],
-        },
-      ],
-    },
-  },
-  {
-    id: 2,
-    name: 'Irresistible Package',
-    description:
-      'The "Main Character" experience featuring social-media-ready tech with Same-Day Edit videos, LED walls, and signature craving stations.',
-    image: '/Pictures/debut-irresistible.jpg',
-    modal: {
-      note: 'The "Main Character" experience featuring social-media-ready tech and cinematic storytelling. This package includes our full standard of service and professional coordination for up to 200 guests.',
-      categories: [
-        {
-          iconName: 'user',
-          title: 'Professional Coordination',
-          items: [
-            '1 Lead Planner & 4 Coordinators',
-            'Staff with Handheld Radios',
-            'Professional Event Emcee',
-            'Full Coordination of 18s Traditions',
-          ],
-        },
-        {
-          iconName: 'utensils',
-          title: 'Catering & Dining',
-          items: [
-            'Full Buffet (Beef, Pork, Chicken, Fish)',
-            'Signature Iced Coffee Bar',
-            'French Fries & Cookies Station',
-            'Interactive Cravings Station (Nachos/Donuts)',
-          ],
-        },
-        {
-          iconName: 'scissors',
-          title: 'Styling & Production',
-          items: [
-            'Elegant Entrance Arch & Red Carpet',
-            'Professionally Styled Debutante Stage',
-            'Full Sound & Light System',
-            { text: 'High-Definition LED Wall Backdrop', highlight: true },
-          ],
-        },
-        {
-          iconName: 'video',
-          title: 'Media & Glamour',
-          items: [
-            '1 Photographer & 2 Videographers',
-            { text: 'Same-Day Edit (SDE) Debut Video', highlight: true },
-            'Airbrush Makeup for Debutante',
-            { text: '40-Page Magnetic Leatherette Album', highlight: true },
-          ],
-        },
-      ],
-    },
-  },
-  {
-    id: 3,
-    name: 'Elegancia Package',
-    description:
-      'A sophisticated fusion of modern glamour and interactive luxury, featuring custom perfume bars and upgraded airbrush hair and makeup.',
-    image: '/Pictures/debut-elegancia.jpg',
-    modal: {
-      note: 'A sophisticated collection designed for a refined and fragrant celebration. This package includes our full standard of service and professional coordination for up to 200 guests.',
-      categories: [
-        {
-          iconName: 'user',
-          title: 'Professional Coordination',
-          items: [
-            '1 Lead Planner & 4 Coordinators',
-            'Staff with Handheld Radios',
-            'Professional Event Emcee',
-            'Full Coordination of 18s Traditions',
-          ],
-        },
-        {
-          iconName: 'utensils',
-          title: 'Catering & Dining',
-          items: [
-            'Full Buffet (Beef, Pork, Chicken, Fish)',
-            'Signature Iced Coffee Bar',
-            { text: 'Signature Perfume Bar for Guests', highlight: true },
-            'Interactive Cravings Station (Nachos/Donuts)',
-          ],
-        },
-        {
-          iconName: 'scissors',
-          title: 'Styling & Production',
-          items: [
-            { text: 'Panoramic Entrance Backdrop Gallery', highlight: true },
-            'Professionally Styled Debutante Stage',
-            'Full Sound & Light System',
-            { text: 'High-Definition LED Wall Backdrop', highlight: true },
-          ],
-        },
-        {
-          iconName: 'video',
-          title: 'Media & Glamour',
-          items: [
-            '1 Photographer & 2 Videographers',
-            { text: 'Same-Day Edit (SDE) Debut Video', highlight: true },
-            { text: '40-Page Magnetic Leatherette Album', highlight: true },
-            { text: 'Personalized Debutante Souvenirs', highlight: true },
-          ],
-        },
-      ],
-    },
-  },
-  {
-    id: 4,
-    name: 'Flawless Package',
-    description:
-      'The pinnacle of prestige for your 18th birthday, offering world-class chandelier production and personalized leather stamping souvenirs.',
-    image: '/Pictures/debut-flawless.jpg',
-    modal: {
-      note: 'The ultimate debut experience — world-class production and personalized luxury throughout. This package includes our full standard of service and professional coordination for up to 200 guests.',
-      categories: [
-        {
-          iconName: 'user',
-          title: 'Professional Coordination',
-          items: [
-            '1 Lead Planner & 5 Coordinators',
-            'Staff with Handheld Radios',
-            'Professional Event Emcee',
-            'Full Coordination of 18s Traditions',
-          ],
-        },
-        {
-          iconName: 'utensils',
-          title: 'Catering & Dining',
-          items: [
-            'Full Buffet (Beef, Pork, Chicken, Fish)',
-            'Signature Iced Coffee Bar',
-            { text: 'Signature Perfume Bar for Guests', highlight: true },
-            { text: 'Free-Flowing Mobile Bar (Cocktails)', highlight: true },
-          ],
-        },
-        {
-          iconName: 'scissors',
-          title: 'Styling & Production',
-          items: [
-            { text: 'World-Class Chandelier Production', highlight: true },
-            { text: 'Leather Stamping Souvenir Station', highlight: true },
-            { text: 'High-Definition LED Wall Backdrop', highlight: true },
-            'Full Sound & Light System',
-          ],
-        },
-        {
-          iconName: 'video',
-          title: 'Media & Glamour',
-          items: [
-            '1 Photographer & 2 Videographers',
-            { text: 'Same-Day Edit (SDE) Debut Video', highlight: true },
-            { text: '40-Page Magnetic Leatherette Album', highlight: true },
-            'Airbrush Makeup for Debutante',
-          ],
-        },
-      ],
-    },
-  },
-];
 
 // ── Carousel component ────────────────────────────────────────
 function PackageCarousel({
@@ -489,6 +70,10 @@ function PackageCarousel({
 export default function EventPackagesPage() {
   const [modal, setModal] = useState<{ packages: PackageWithModal[]; index: number } | null>(null);
   const [inquiryOpen, setInquiryOpen] = useState(false);
+  const [selectedPackageData, setSelectedPackageData] = useState<{
+    packageId: number;
+    eventType: string;
+  } | null>(null);
   const weddingRef = useRef<HTMLDivElement>(null);
   const debutRef = useRef<HTMLDivElement>(null);
 
@@ -498,6 +83,15 @@ export default function EventPackagesPage() {
 
   const scrollToDebut = () => {
     debutRef.current?.scrollIntoView({ behavior: 'smooth' });
+  };
+
+  const handleInquireFromPackage = () => {
+    if (modal) {
+      const eventType = modal.packages === weddingPackages ? 'Wedding' : 'Debut';
+      const pkg = modal.packages[modal.index];
+      setSelectedPackageData({ packageId: pkg.id, eventType });
+      setInquiryOpen(true);
+    }
   };
 
   return (
@@ -716,12 +310,18 @@ export default function EventPackagesPage() {
           activeIndex={modal!.index}
           onClose={() => setModal(null)}
           onNavigate={(i) => setModal((prev) => (prev ? { ...prev, index: i } : null))}
-          onInquire={() => setInquiryOpen(true)}
+          onInquire={() => handleInquireFromPackage()}
         />
       )}
 
       {/* ── Inquiry Form Modal ── */}
-      {inquiryOpen && <InquiryForm onClose={() => setInquiryOpen(false)} />}
+      {inquiryOpen && (
+        <InquiryForm
+          onClose={() => setInquiryOpen(false)}
+          selectedPackageId={selectedPackageData?.packageId}
+          selectedEventType={selectedPackageData?.eventType}
+        />
+      )}
     </>
   );
 }

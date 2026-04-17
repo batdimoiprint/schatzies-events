@@ -1,8 +1,52 @@
 // Replace with your actual services hero photo placed in public/Pictures/
 const heroImage = '/Pictures/services-hero.jpg';
 
+import { useState } from 'react';
 import LoadingScreen from '@/components/ui/LoadingScreen';
 import ScrollReveal from '@/components/ui/ScrollReveal';
+import { GalleryModal } from '@/components/GalleryModal';
+import { Button } from '@/components/ui/button';
+import { Camera } from 'lucide-react';
+
+/* ── Gallery Data ──────────────────────────────────────────── */
+const galleryData = [
+  {
+    id: 'event-planning',
+    title: 'Event Planning & Coordination',
+    folder: '_EventPics',
+    images: ['PC.jpg', 'PC2.jpg', 'PC3.jpg', 'PC4.jpg', 'PC5.jpg'],
+  },
+  {
+    id: 'venue-styling',
+    title: 'Elegant Venue Setup & Styling',
+    folder: '_EventPics',
+    images: ['V.jpg', 'V2.jpg', 'V3.jpg', 'V4.jpg', 'V5.jpg'],
+  },
+  {
+    id: 'catering',
+    title: 'Buffet Catering',
+    folder: '_EventPics',
+    images: ['C.jpg', 'C2.jpg', 'C3.jpg', 'C4.jpg', 'C5.jpg'],
+  },
+  {
+    id: 'photo-video',
+    title: 'Photo & Video Coverage',
+    folder: '_EventPics',
+    images: ['PC.jpg', 'PC2.jpg', 'PC3.jpg', 'PC4.jpg', 'PC5.jpg'],
+  },
+  {
+    id: 'ceiling-design',
+    title: 'Ceiling Treatment & Venue Design',
+    folder: '_EventPics',
+    images: ['V.jpg', 'V2.jpg', 'V3.jpg', 'V4.jpg', 'V5.jpg'],
+  },
+  {
+    id: 'full-coordination',
+    title: 'Full Event Coordination',
+    folder: '_EventPics',
+    images: ['BnC.jpg', 'BnC2.jpg', 'BnC3.jpg', 'BnC4.jpg', 'BnC5.jpg'],
+  },
+];
 
 /* ── Gradient icon components ───────────────────────────────── */
 function CalendarIcon() {
@@ -195,6 +239,13 @@ function CoordinationIcon() {
 }
 
 export default function ServicesPage() {
+  const [activeGallery, setActiveGallery] = useState<string | null>(null);
+
+  const gallery = galleryData.find((g) => g.id === activeGallery);
+  const galleryImages = gallery
+    ? gallery.images.map((img) => `/Pictures/${gallery.folder}/${img}`)
+    : [];
+
   return (
     <>
       <LoadingScreen />
@@ -268,6 +319,13 @@ export default function ServicesPage() {
                   Assistance in organizing and managing your event from preparation to the actual
                   day.
                 </p>
+                <Button
+                  onClick={() => setActiveGallery('event-planning')}
+                  className="mt-4 inline-flex items-center gap-2 bg-gradient-to-r from-[#FF0066] to-[#4A1053] px-6 py-2 rounded-full text-white font-medium hover:shadow-lg transition-all duration-300 sm:mt-5"
+                >
+                  <Camera className="h-4 w-4" />
+                  View Gallery
+                </Button>
               </div>
             </div>
           </div>
@@ -285,6 +343,13 @@ export default function ServicesPage() {
                 <p className="mt-2 text-[clamp(0.85rem,1.5vw,1.1rem)] leading-[1.6] text-[#4A1053] max-w-[500px] sm:mt-3 sm:ml-auto">
                   Beautiful decorations and designs tailored to match your event's theme and style.
                 </p>
+                <Button
+                  onClick={() => setActiveGallery('venue-styling')}
+                  className="mt-4 inline-flex items-center gap-2 bg-gradient-to-r from-[#FF0066] to-[#4A1053] px-6 py-2 rounded-full text-white font-medium hover:shadow-lg transition-all duration-300 sm:mt-5 sm:ml-auto"
+                >
+                  <Camera className="h-4 w-4" />
+                  View Gallery
+                </Button>
               </div>
               <div className="shrink-0 transform transition-transform duration-300 hover:scale-110">
                 <VenueIcon />
@@ -308,6 +373,13 @@ export default function ServicesPage() {
                 <p className="mt-2 text-[clamp(0.85rem,1.5vw,1.1rem)] leading-[1.6] text-[#4A1053] max-w-[500px] sm:mt-3">
                   Food prepared and served for guests to enjoy during the event.
                 </p>
+                <Button
+                  onClick={() => setActiveGallery('catering')}
+                  className="mt-4 inline-flex items-center gap-2 bg-gradient-to-r from-[#FF0066] to-[#4A1053] px-6 py-2 rounded-full text-white font-medium hover:shadow-lg transition-all duration-300 sm:mt-5"
+                >
+                  <Camera className="h-4 w-4" />
+                  View Gallery
+                </Button>
               </div>
             </div>
           </div>
@@ -329,6 +401,13 @@ export default function ServicesPage() {
                   Professional coverage that beautifully captures every special moment of your
                   event.
                 </p>
+                <Button
+                  onClick={() => setActiveGallery('photo-video')}
+                  className="mt-4 inline-flex items-center gap-2 bg-gradient-to-r from-[#FF0066] to-[#4A1053] px-6 py-2 rounded-full text-white font-medium hover:shadow-lg transition-all duration-300 sm:mt-5 sm:ml-auto"
+                >
+                  <Camera className="h-4 w-4" />
+                  View Gallery
+                </Button>
               </div>
               <div className="shrink-0 transform transition-transform duration-300 hover:scale-110">
                 <CameraIcon />
@@ -352,6 +431,13 @@ export default function ServicesPage() {
                 <p className="mt-2 text-[clamp(0.85rem,1.5vw,1.1rem)] leading-[1.6] text-[#4A1053] max-w-[500px] sm:mt-3">
                   Decorative ceiling setups that enhance the beauty and overall style of your venue.
                 </p>
+                <Button
+                  onClick={() => setActiveGallery('ceiling-design')}
+                  className="mt-4 inline-flex items-center gap-2 bg-gradient-to-r from-[#FF0066] to-[#4A1053] px-6 py-2 rounded-full text-white font-medium hover:shadow-lg transition-all duration-300 sm:mt-5"
+                >
+                  <Camera className="h-4 w-4" />
+                  View Gallery
+                </Button>
               </div>
             </div>
           </div>
@@ -370,6 +456,13 @@ export default function ServicesPage() {
                   A dedicated team that manages the program flow and ensures your event runs
                   smoothly from start to finish.
                 </p>
+                <Button
+                  onClick={() => setActiveGallery('full-coordination')}
+                  className="mt-4 inline-flex items-center gap-2 bg-gradient-to-r from-[#FF0066] to-[#4A1053] px-6 py-2 rounded-full text-white font-medium hover:shadow-lg transition-all duration-300 sm:mt-5 sm:ml-auto"
+                >
+                  <Camera className="h-4 w-4" />
+                  View Gallery
+                </Button>
               </div>
               <div className="shrink-0 transform transition-transform duration-300 hover:scale-110">
                 <CoordinationIcon />
@@ -378,6 +471,16 @@ export default function ServicesPage() {
           </div>
         </div>
       </section>
+
+      {/* ── Gallery Modal ── */}
+      {gallery && (
+        <GalleryModal
+          isOpen={activeGallery !== null}
+          onClose={() => setActiveGallery(null)}
+          title={gallery.title}
+          images={galleryImages}
+        />
+      )}
     </>
   );
 }
