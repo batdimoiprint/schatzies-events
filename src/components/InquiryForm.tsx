@@ -1,11 +1,9 @@
 import { useState } from 'react';
 import LoadingScreen from '@/components/ui/LoadingScreen';
+import { getPackageById, getPackagesByType } from '@/data/packages';
+import { User, Utensils, Scissors, Video, Eye } from 'lucide-react';
 
 const eventTypes = ['Wedding', 'Debut'];
-
-const weddingPackages = ['Blooms', 'Fascinating', 'Windy', 'De Luxe', 'Grandezza'];
-
-const debutPackages = ['Charming', 'Irresistible', 'Elegancia', 'Flawless', 'Grandiosa'];
 
 const paxOptions = ['50', '100', '150', '200', '300+'];
 
@@ -55,11 +53,22 @@ function SelectChevron() {
 
 interface InquiryFormProps {
   onClose: () => void;
+  selectedPackageId?: number;
+  selectedEventType?: string;
 }
 
-export function InquiryForm({ onClose }: InquiryFormProps) {
+export function InquiryForm({ onClose, selectedPackageId, selectedEventType }: InquiryFormProps) {
   const [submitted, setSubmitted] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [showTerms, setShowTerms] = useState(false);
+  const [termsAccepted, setTermsAccepted] = useState(false);
+  const [showPackageDetails, setShowPackageDetails] = useState(false);
+
+  // Get the selected package info if available
+  const selectedPackage =
+    selectedEventType && selectedPackageId
+      ? getPackageById(selectedEventType, selectedPackageId)
+      : null;
 
   const [form, setForm] = useState({
     firstName: '',
@@ -68,11 +77,27 @@ export function InquiryForm({ onClose }: InquiryFormProps) {
     email: '',
     contactNumber: '',
     eventDate: '',
-    eventType: '',
-    eventPackage: '',
+    eventType: selectedEventType || '',
+    eventPackage: selectedPackage?.name || '',
     eventPax: '',
     message: '',
   });
+
+  // Auto-populate form when selected package data changes
+  // Note: Form state is already managed through controlled inputs and onChange handlers
+
+  // Get currently selected package details from dropdown
+  const currentSelectedPackage =
+    form.eventType && form.eventPackage
+      ? getPackagesByType(form.eventType).find((pkg) => pkg.name === form.eventPackage)
+      : null;
+
+  // Calculate minimum date (1 month from today)
+  const getMinDate = () => {
+    const today = new Date();
+    const minDate = new Date(today.getFullYear(), today.getMonth() + 1, today.getDate());
+    return minDate.toISOString().split('T')[0];
+  };
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
@@ -87,15 +112,18 @@ export function InquiryForm({ onClose }: InquiryFormProps) {
   };
 
   // Pick packages based on selected event type
-  const packageOptions =
-    form.eventType === 'Debut'
-      ? debutPackages
-      : form.eventType === 'Wedding'
-        ? weddingPackages
-        : [...weddingPackages, ...debutPackages].filter((v, i, a) => a.indexOf(v) === i);
+  const packageOptions = form.eventType
+    ? getPackagesByType(form.eventType).map((pkg) => pkg.name)
+    : [];
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    // Validate terms acceptance
+    if (!termsAccepted) {
+      alert('Please accept the Terms and Conditions before submitting.');
+      return;
+    }
 
     // Start loading
     setIsLoading(true);
@@ -115,6 +143,239 @@ export function InquiryForm({ onClose }: InquiryFormProps) {
     <>
       {/* Reusable Loading Screen */}
       <LoadingScreen isLoading={isLoading} />
+
+      {/* Terms and Conditions Modal */}
+      {showTerms && (
+        <div
+          className="fixed inset-0 z-[10000] flex items-center justify-center bg-black/60 px-4 backdrop-blur-sm"
+          onClick={() => setShowTerms(false)}
+        >
+          <div
+            className="flex w-full max-w-[600px] flex-col rounded-2xl bg-white shadow-2xl"
+            style={{ maxHeight: '80vh' }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header */}
+            <div className="flex items-center justify-between border-b border-gray-200 px-6 py-4">
+              <h3 className="text-[1.3rem] font-bold text-[#1a1225]">Terms and Conditions</h3>
+              <button
+                onClick={() => setShowTerms(false)}
+                className="flex h-7 w-7 items-center justify-center rounded-full text-gray-400 transition hover:text-gray-600"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  className="h-5 w-5"
+                >
+                  <line x1="18" y1="6" x2="6" y2="18" />
+                  <line x1="6" y1="6" x2="18" y2="18" />
+                </svg>
+              </button>
+            </div>
+
+            {/* Scrollable Content */}
+            <div className="flex-1 overflow-y-auto px-6 py-6 text-[0.9rem] text-gray-700 space-y-4">
+              <section>
+                <h4 className="font-bold text-[#1a1225] mb-2">1. Event Booking</h4>
+                <p>
+                  By submitting an inquiry through this form, you are requesting booking services
+                  from Schatzies Events. All bookings are subject to our availability and
+                  confirmation.
+                </p>
+              </section>
+
+              <section>
+                <h4 className="font-bold text-[#1a1225] mb-2">2. Advance Booking Requirement</h4>
+                <p>
+                  Events must be booked at least 1 month in advance. We cannot accommodate booking
+                  requests for dates within 30 days from today. Event dates must be selected
+                  accordingly.
+                </p>
+              </section>
+
+              <section>
+                <h4 className="font-bold text-[#1a1225] mb-2">3. Inquiry Process</h4>
+                <p>
+                  After submitting your inquiry, our team will review your request and contact you
+                  within 2-3 business days with a personalized proposal and available options for
+                  your event.
+                </p>
+              </section>
+
+              <section>
+                <h4 className="font-bold text-[#1a1225] mb-2">4. Information Accuracy</h4>
+                <p>
+                  You agree to provide accurate and complete information in this form. Any false or
+                  misleading information may result in cancellation of your booking or inquiry.
+                </p>
+              </section>
+
+              <section>
+                <h4 className="font-bold text-[#1a1225] mb-2">5. Confidentiality</h4>
+                <p>
+                  We are committed to protecting your personal information. Your contact details and
+                  inquiry information will be used solely for the purpose of processing your event
+                  inquiry.
+                </p>
+              </section>
+
+              <section>
+                <h4 className="font-bold text-[#1a1225] mb-2">6. Cancellation Policy</h4>
+                <p>
+                  Cancellation policies will be discussed during your booking confirmation.
+                  Different packages may have different cancellation terms.
+                </p>
+              </section>
+
+              <section>
+                <h4 className="font-bold text-[#1a1225] mb-2">7. Liability</h4>
+                <p>
+                  Schatzies Events shall not be liable for any indirect, incidental, or
+                  consequential damages arising from the use of this inquiry form or the services
+                  provided.
+                </p>
+              </section>
+
+              <section>
+                <h4 className="font-bold text-[#1a1225] mb-2">8. Agreement</h4>
+                <p>
+                  By submitting this inquiry form, you acknowledge that you have read, understood,
+                  and agree to comply with these Terms and Conditions.
+                </p>
+              </section>
+            </div>
+
+            {/* Footer */}
+            <div className="flex gap-3 border-t border-gray-200 px-6 py-4">
+              <button
+                onClick={() => setShowTerms(false)}
+                className="flex-1 h-10 rounded-full bg-gray-200 text-gray-700 font-bold transition hover:bg-gray-300"
+              >
+                Close
+              </button>
+              <button
+                onClick={() => {
+                  setTermsAccepted(true);
+                  setShowTerms(false);
+                }}
+                className="flex-1 h-10 rounded-full bg-gradient-to-r from-[#FF0066] to-[#700F81] text-white font-bold transition hover:brightness-110"
+              >
+                Accept
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Package Details Modal */}
+      {showPackageDetails && (currentSelectedPackage || selectedPackage) && (
+        <div
+          className="fixed inset-0 z-[10000] flex items-center justify-center bg-black/60 px-4 backdrop-blur-sm"
+          onClick={() => setShowPackageDetails(false)}
+        >
+          <div
+            className="flex w-full max-w-[700px] flex-col rounded-2xl bg-white shadow-2xl"
+            style={{ maxHeight: '85vh' }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header */}
+            <div className="flex items-center justify-between border-b border-gray-200 px-6 py-5">
+              <h3 className="text-[1.5rem] font-bold text-[#1a1225]">
+                {(currentSelectedPackage || selectedPackage)?.name} Package Details
+              </h3>
+              <button
+                onClick={() => setShowPackageDetails(false)}
+                className="flex h-8 w-8 items-center justify-center rounded-full text-gray-400 transition hover:text-gray-600"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  className="h-5 w-5"
+                >
+                  <line x1="18" y1="6" x2="6" y2="18" />
+                  <line x1="6" y1="6" x2="18" y2="18" />
+                </svg>
+              </button>
+            </div>
+
+            {/* Scrollable Content */}
+            <div className="flex-1 overflow-y-auto px-6 py-6">
+              {/* Package Note */}
+              <div className="mb-6 rounded-lg bg-[#fff0f7] p-4 border-l-4 border-[#FF0066]">
+                <p className="text-[0.95rem] text-gray-700 leading-relaxed">
+                  {(currentSelectedPackage || selectedPackage)?.modal.note}
+                </p>
+              </div>
+
+              {/* Package Categories */}
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                {(currentSelectedPackage || selectedPackage)?.modal.categories.map((cat, idx) => {
+                  const iconMap = {
+                    user: User,
+                    utensils: Utensils,
+                    scissors: Scissors,
+                    video: Video,
+                  };
+                  const Icon = iconMap[cat.iconName];
+
+                  return (
+                    <div key={idx} className="rounded-xl bg-[#ede0f5] p-4">
+                      <div className="mb-3 flex items-center gap-2">
+                        <Icon className="h-5 w-5 text-[#c2649b]" />
+                        <span className="font-bold text-[#3d1a5e] text-[0.95rem]">{cat.title}</span>
+                      </div>
+                      <ul className="space-y-2">
+                        {cat.items.map((item) => {
+                          const isHighlight = typeof item === 'object';
+                          const text = typeof item === 'object' ? item.text : item;
+                          return (
+                            <li
+                              key={text}
+                              className={`flex items-start gap-2 text-[0.85rem] ${
+                                isHighlight ? 'text-[#FF0066] font-semibold' : 'text-gray-700'
+                              }`}
+                            >
+                              <span className="mt-0.5 flex h-3 w-3 shrink-0 items-center justify-center rounded-full bg-[#e61f83]">
+                                <svg
+                                  viewBox="0 0 10 10"
+                                  className="h-1.5 w-1.5 fill-none stroke-white stroke-[2]"
+                                >
+                                  <polyline points="2 5 4 7 8 3" />
+                                </svg>
+                              </span>
+                              <span>{text}</span>
+                            </li>
+                          );
+                        })}
+                      </ul>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Footer */}
+            <div className="border-t border-gray-200 px-6 py-4">
+              <button
+                onClick={() => setShowPackageDetails(false)}
+                className="w-full h-10 rounded-full bg-gradient-to-r from-[#FF0066] to-[#700F81] text-white font-bold transition hover:brightness-110"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <div
         className="fixed inset-0 z-[9998] flex items-center justify-center bg-black/60 px-4 backdrop-blur-sm"
@@ -334,6 +595,7 @@ export function InquiryForm({ onClose }: InquiryFormProps) {
                             value={form.eventDate}
                             onChange={handleChange}
                             required
+                            min={getMinDate()}
                             className={fieldBase}
                           />
                         </div>
@@ -363,10 +625,11 @@ export function InquiryForm({ onClose }: InquiryFormProps) {
                             name="eventPackage"
                             value={form.eventPackage}
                             onChange={handleChange}
-                            className={selectBase}
+                            disabled={!form.eventType || (selectedPackage ? true : false)}
+                            className={`${selectBase} ${!form.eventType || selectedPackage ? 'opacity-60 cursor-not-allowed' : ''}`}
                           >
                             <option value="" disabled hidden>
-                              Event Package
+                              {!form.eventType ? 'Select Event Type First' : 'Event Package'}
                             </option>
                             {packageOptions.map((p) => (
                               <option key={p} value={p}>
@@ -375,6 +638,17 @@ export function InquiryForm({ onClose }: InquiryFormProps) {
                             ))}
                           </select>
                           <SelectChevron />
+                          {/* Eye icon to view package details */}
+                          {form.eventPackage && (
+                            <button
+                              type="button"
+                              onClick={() => setShowPackageDetails(true)}
+                              className="absolute right-12 top-1/2 -translate-y-1/2 flex h-7 w-7 items-center justify-center rounded-full bg-[#FF0066]/20 text-[#FF0066] transition hover:bg-[#FF0066]/40"
+                              title="View package details"
+                            >
+                              <Eye className="h-4 w-4" />
+                            </button>
+                          )}
                         </div>
                         <div className="relative">
                           <select
@@ -396,6 +670,42 @@ export function InquiryForm({ onClose }: InquiryFormProps) {
                           <SelectChevron />
                         </div>
                       </div>
+
+                      {/* Show selected package info if available */}
+                      {(currentSelectedPackage || selectedPackage) && (
+                        <div className="mt-3 rounded-lg bg-gradient-to-r from-[#FF0066]/10 to-[#700F81]/10 p-3 border border-[#FF0066]/20">
+                          <div className="flex items-start justify-between gap-2">
+                            <div className="flex-1">
+                              <p className="text-[0.8rem] font-semibold text-gray-600">
+                                Selected Package
+                              </p>
+                              <p className="text-[1rem] font-bold text-[#3d2052]">
+                                {(currentSelectedPackage || selectedPackage)?.name}
+                              </p>
+                              <p className="text-[0.8rem] text-gray-600 mt-1 line-clamp-2">
+                                {(currentSelectedPackage || selectedPackage)?.description}
+                              </p>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => setShowPackageDetails(true)}
+                              className="shrink-0 mt-0 flex items-center justify-center h-9 w-9 rounded-full bg-gradient-to-r from-[#FF0066] to-[#700F81] text-white transition hover:brightness-110 hover:scale-110"
+                              title="View package details"
+                            >
+                              <Eye className="h-4 w-4" />
+                            </button>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Show "No package selected" message when form is open without a package */}
+                      {!(currentSelectedPackage || selectedPackage) && form.eventType && (
+                        <div className="mt-3 rounded-lg bg-blue-50/50 p-3 border border-blue-200/50">
+                          <p className="text-[0.8rem] text-blue-600">
+                            💡 Select a package from the dropdown to see its details and inclusions
+                          </p>
+                        </div>
+                      )}
                     </div>
                   </section>
 
@@ -412,11 +722,37 @@ export function InquiryForm({ onClose }: InquiryFormProps) {
                     />
                   </section>
 
+                  {/* ── Terms and Conditions ── */}
+                  <section>
+                    <div className="flex items-start gap-2">
+                      <input
+                        type="checkbox"
+                        id="termsAccepted"
+                        checked={termsAccepted}
+                        onChange={(e) => setTermsAccepted(e.target.checked)}
+                        className="mt-1 h-4 w-4 rounded cursor-pointer"
+                      />
+                      <label
+                        htmlFor="termsAccepted"
+                        className="flex-1 text-[0.85rem] text-gray-600"
+                      >
+                        I have read and agree to the{' '}
+                        <button
+                          type="button"
+                          onClick={() => setShowTerms(true)}
+                          className="text-[#700F81] font-bold hover:underline"
+                        >
+                          Terms and Conditions
+                        </button>
+                      </label>
+                    </div>
+                  </section>
+
                   {/* ── Submit ── */}
                   <div className="flex justify-center">
                     <button
                       type="submit"
-                      disabled={isLoading}
+                      disabled={isLoading || !termsAccepted}
                       className="h-10 rounded-full bg-gradient-to-r from-[#FF0066] to-[#700F81] px-12 text-[0.88rem] font-bold tracking-wide text-white shadow-[0_6px_20px_rgba(112,15,129,0.3)] transition hover:brightness-110 active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       {isLoading ? 'Submitting...' : 'Submit'}
