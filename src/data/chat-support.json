@@ -1,0 +1,251 @@
+{
+  "company": "Schatzies Events PH",
+  "faq": [
+    {
+      "category": "Booking & Reservations",
+      "items": [
+        {
+          "id": 1,
+          "type": "question",
+          "content": "What events do you specialize in?"
+        },
+        {
+          "id": 1,
+          "type": "answer",
+          "content": "Schatzies Events PH specializes in Luxury Weddings and Grand Debuts. We offer all-in packages that include catering, styling, photo/video, and coordination to ensure a seamless celebration."
+        },
+        {
+          "id": 2,
+          "type": "question",
+          "content": "Where are your office locations?"
+        },
+        {
+          "id": 2,
+          "type": "answer",
+          "content": "They have physical branches in Quezon City and Tagaytay.",
+          "extra": {
+            "locations": {
+              "Quezon City": "https://maps.app.goo.gl/wXrzfQYUfZWzrsgM7",
+              "Tagaytay": "https://maps.app.goo.gl/4vJ19ofgogf34k3j9?g_st=ic"
+            }
+          }
+        },
+        {
+          "id": 3,
+          "type": "question",
+          "content": "How do I start the booking process with Schatzies Events PH?"
+        },
+        {
+          "id": 3,
+          "type": "answer",
+          "content": "You can start by reaching out through our official contact numbers or Facebook page to check for date availability. We recommend visiting our Quezon City or Tagaytay branches for a formal consultation to discuss your specific vision and package choice."
+        },
+        {
+          "id": 4,
+          "type": "question",
+          "content": "What are your contact details for booking?"
+        },
+        {
+          "id": 4,
+          "type": "answer",
+          "content": "You can reach us through the following contact details.",
+          "extra": {
+            "contact": {
+              "mobile": ["0917 502 3538", "0933 380 7868"],
+              "facebook": "https://www.facebook.com/debutandweddingpackage",
+              "email": "schatziesevents@gmail.com"
+            }
+          }
+        },
+        {
+          "id": 5,
+          "type": "question",
+          "content": "What is required to officially reserve a date?"
+        },
+        {
+          "id": 5,
+          "type": "answer",
+          "content": "To secure your slot, we offer a low down payment option. This allows you to lock in your event date and current package pricing while you continue with the planning process."
+        },
+        {
+          "id": 6,
+          "type": "question",
+          "content": "Do you offer flexible payment terms after the down payment?"
+        },
+        {
+          "id": 6,
+          "type": "answer",
+          "content": "Yes. To make the planning process stress-free, we provide monthly installment plans and also accept credit card payments (note: credit card transactions are subject to bank charges)."
+        },
+        {
+          "id": 7,
+          "type": "question",
+          "content": "Can I book even if I am currently based overseas?"
+        },
+        {
+          "id": 7,
+          "type": "answer",
+          "content": "Absolutely. Schatzies Events is specifically known as a top choice for overseas brides and busy couples. We can handle the coordination and important details remotely, ensuring a smooth process until you arrive for your celebration."
+        },
+        {
+          "id": 8,
+          "type": "question",
+          "content": "Is an initial consultation free?"
+        },
+        {
+          "id": 8,
+          "type": "answer",
+          "content": "Our team is ready to discuss event plans at either of our physical locations to help you choose the package that best fits your needs and budget."
+        }
+      ]
+    },
+    {
+      "category": "Packages & Details",
+      "items": [
+        {
+          "id": 9,
+          "type": "question",
+          "content": "What are your official Wedding Packages?"
+        },
+        {
+          "id": 9,
+          "type": "answer",
+          "content": "We offer five tiers designed for every dream wedding.",
+          "extra": {
+            "packages": [
+              { "name": "Bloom", "starting_price": 235000 },
+              { "name": "Fascinating", "starting_price": 335000 },
+              { "name": "Windy", "starting_price": 455000 },
+              { "name": "De Luxe", "starting_price": 595000 },
+              { "name": "Grandezza", "starting_price": 755000 }
+            ]
+          }
+        },
+        {
+          "id": 10,
+          "type": "question",
+          "content": "Do wedding packages include a bridal car?"
+        },
+        {
+          "id": 10,
+          "type": "answer",
+          "content": "Yes. Lower tiers include 3 hours of use, while the De Luxe and Grandezza tiers provide a Mercedes Benz for 4 hours, inclusive of fuel, driver, and bouquet."
+        },
+        {
+          "id": 11,
+          "type": "question",
+          "content": "What are your official Debut Packages?"
+        },
+        {
+          "id": 11,
+          "type": "answer",
+          "content": "For a grand 18th birthday, you can choose from:",
+          "extra": {
+            "packages": [
+              { "name": "Charming", "starting_price": 200000 },
+              { "name": "Irresistible", "starting_price": 295000 },
+              { "name": "Flawless", "starting_price": 395000 },
+              { "name": "Elegancia", "starting_price": 495000 },
+              { "name": "Grandiosa", "starting_price": 595000 }
+            ]
+          }
+        },
+        {
+          "id": 12,
+          "type": "question",
+          "content": "Are the traditional 18 Roses and 18 Treasures ceremonies included?"
+        },
+        {
+          "id": 12,
+          "type": "answer",
+          "content": "Yes, all debut packages include the coordination and physical setup for both the 18 Roses and 18 Treasures ceremonies."
+        }
+      ]
+    },
+    {
+      "category": "Standard Services",
+      "items": [
+        {
+          "id": 13,
+          "type": "question",
+          "content": "What is included in your event packages?"
+        },
+        {
+          "id": 13,
+          "type": "answer",
+          "content": "Schatzies Events provides complete and affordable packages.",
+          "extra": {
+            "inclusions": [
+              "Full Event Planning and Coordination (from preparation to the actual day)",
+              "Elegant Venue Setup and Styling",
+              "Buffet Catering",
+              "Photo and Video Coverage",
+              "Ceiling Treatment and Venue Design",
+              "Program Flow Management"
+            ]
+          }
+        },
+        {
+          "id": 14,
+          "type": "question",
+          "content": "Do you handle the coordination on the actual day of the event?"
+        },
+        {
+          "id": 14,
+          "type": "answer",
+          "content": "Yes. Our team provides full coordination to manage the program flow and ensure everything runs smoothly on the day of the celebration."
+        },
+        {
+          "id": 15,
+          "type": "question",
+          "content": "Do you provide a host?"
+        },
+        {
+          "id": 15,
+          "type": "answer",
+          "content": "Yes, a Professional Program Emcee/Host is included in all our wedding and debut packages to keep your guests engaged and the program on track."
+        },
+        {
+          "id": 16,
+          "type": "question",
+          "content": "Are the packages All-In?"
+        },
+        {
+          "id": 16,
+          "type": "answer",
+          "content": "Yes. Our packages are designed to be comprehensive, covering full buffet catering, grand venue styling, photo and video coverage (with Same Day Edit), and technical needs like sounds and lights."
+        },
+        {
+          "id": 17,
+          "type": "question",
+          "content": "What is included in the catering and buffet?"
+        },
+        {
+          "id": 17,
+          "type": "answer",
+          "content": "All packages include a full buffet (Soup, Pork, Beef, Chicken, Fish, Vegetable, and Dessert) plus refillable drinks. Upgraded packages also feature a Pasta Bar or Grazing Table."
+        },
+        {
+          "id": 18,
+          "type": "question",
+          "content": "What photo and video services are provided?"
+        },
+        {
+          "id": 18,
+          "type": "answer",
+          "content": "Every package includes at least one main photographer/videographer, a prenup/pre-debut pictorial, a Save-the-Date video, and drone shots. Higher tiers include cinematic equipment and magnetic leatherette albums."
+        },
+        {
+          "id": 19,
+          "type": "question",
+          "content": "Is hair and makeup included for the celebrants?"
+        },
+        {
+          "id": 19,
+          "type": "answer",
+          "content": "Yes, professional airbrush makeup is provided for the bride/groom or debutante. Upgraded tiers also include additional traditional makeup heads for family or entourage members."
+        }
+      ]
+    }
+  ]
+}

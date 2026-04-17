@@ -1,23 +1,196 @@
 // src/components/ChatWidget.tsx
-import { useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import supportData from '@/data/chat-support.json';
+
+type SupportExtra =
+  | { locations: Record<string, string> }
+  | { contact: { mobile: string[]; facebook: string; email: string } }
+  | { packages: Array<{ name: string; starting_price: number }> }
+  | { inclusions: string[] };
+
+type SupportAnswer = {
+  id: number;
+  category: string;
+  question: string;
+  answer: string;
+  extra?: SupportExtra;
+};
+
+type SupportJson = {
+  company: string;
+  faq: Array<{
+    category: string;
+    items: Array<
+      | { id: number; type: 'question'; content: string }
+      | { id: number; type: 'answer'; content: string; extra?: SupportExtra }
+    >;
+  }>;
+};
+
+const supportContent = supportData as SupportJson;
+
+const faqs: SupportAnswer[] = supportContent.faq.flatMap((section) => {
+  const answers = new Map<number, { content: string; extra?: SupportExtra }>();
+
+  section.items.forEach((item) => {
+    if (item.type === 'answer') {
+      answers.set(item.id, { content: item.content, extra: item.extra });
+    }
+  });
+
+  return section.items.flatMap((item) => {
+    if (item.type !== 'question') {
+      return [];
+    }
+
+    const answer = answers.get(item.id);
+
+    if (!answer) {
+      return [];
+    }
+
+    return [
+      {
+        id: item.id,
+        category: section.category,
+        question: item.content,
+        answer: answer.content,
+        extra: answer.extra,
+      },
+    ];
+  });
+});
+
+function formatPrice(value: number) {
+  return value.toLocaleString('en-PH');
+}
+
+function SupportExtras({ extra }: { extra?: SupportExtra }) {
+  if (!extra) {
+    return null;
+  }
+
+  if ('locations' in extra) {
+    return (
+      <div className="mt-3 space-y-2 text-xs text-gray-600">
+        {Object.entries(extra.locations).map(([name, url]) => (
+          <a
+            key={name}
+            href={url}
+            target="_blank"
+            rel="noreferrer"
+            className="block rounded-lg bg-white px-3 py-2 text-[#700F81] underline-offset-2 transition hover:bg-pink-50 hover:underline"
+          >
+            {name}
+          </a>
+        ))}
+      </div>
+    );
+  }
+
+  if ('contact' in extra) {
+    return (
+      <div className="mt-3 space-y-2 text-xs text-gray-600">
+        <div className="rounded-lg bg-white px-3 py-2">
+          <p className="font-semibold text-gray-700">Mobile</p>
+          <ul className="mt-1 space-y-1">
+            {extra.contact.mobile.map((number) => (
+              <li key={number}>{number}</li>
+            ))}
+          </ul>
+        </div>
+        <a
+          href={extra.contact.facebook}
+          target="_blank"
+          rel="noreferrer"
+          className="block rounded-lg bg-white px-3 py-2 text-[#700F81] underline-offset-2 transition hover:bg-pink-50 hover:underline"
+        >
+          Facebook Page
+        </a>
+        <a
+          href={`mailto:${extra.contact.email}`}
+          className="block rounded-lg bg-white px-3 py-2 text-[#700F81] underline-offset-2 transition hover:bg-pink-50 hover:underline"
+        >
+          {extra.contact.email}
+        </a>
+      </div>
+    );
+  }
+
+  if ('packages' in extra) {
+    return (
+      <div className="mt-3 space-y-2 text-xs text-gray-600">
+        {extra.packages.map((packageItem) => (
+          <div key={packageItem.name} className="rounded-lg bg-white px-3 py-2">
+            <div className="flex items-center justify-between gap-3">
+              <span className="font-semibold text-gray-700">{packageItem.name}</span>
+              <span className="font-semibold text-[#700F81]">PHP {formatPrice(packageItem.starting_price)}</span>
+            </div>
+          </div>
+        ))}
+      </div>
+    );
+  }
+
+  if ('inclusions' in extra) {
+    return (
+      <ul className="mt-3 space-y-2 text-xs text-gray-600">
+        {extra.inclusions.map((item) => (
+          <li key={item} className="rounded-lg bg-white px-3 py-2">
+            {item}
+          </li>
+        ))}
+      </ul>
+    );
+  }
+
+  return null;
+}
 
 export function ChatWidget() {
   const [chatOpen, setChatOpen] = useState(false);
+  const [activeFaqId, setActiveFaqId] = useState<number | null>(null);
+  const responseRef = useRef<HTMLDivElement | null>(null);
+
+  const activeFaq = useMemo(
+    () => (activeFaqId === null ? null : faqs.find((faq) => faq.id === activeFaqId) ?? null),
+    [activeFaqId]
+  );
+
+  useEffect(() => {
+    if (!chatOpen || activeFaqId === null) {
+      return;
+    }
+
+    responseRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }, [activeFaqId, chatOpen]);
+
+  const handleToggleChat = () => {
+    setChatOpen((prev) => {
+      const nextOpen = !prev;
+
+      if (nextOpen) {
+        setActiveFaqId(null);
+      }
+
+      return nextOpen;
+    });
+  };
 
   return (
     <>
       {/* ── sCHATzies Chat Window ── */}
       {chatOpen && (
-        <div className="fixed bottom-20 left-3 right-3 z-[9999] flex flex-col overflow-hidden rounded-2xl bg-white shadow-2xl sm:bottom-7 sm:left-auto sm:right-[120px] sm:w-[370px]">
+          <div className="fixed bottom-14 left-3 right-3 z-[9999] flex max-h-[72vh] flex-col overflow-hidden rounded-2xl bg-white shadow-2xl sm:bottom-4 sm:left-auto sm:right-[120px] sm:w-[390px] sm:max-h-[68vh]">
           {/* Header */}
           <div className="flex items-center gap-3 bg-gradient-to-r from-[#FF0066] to-[#700F81] px-5 py-4">
             <img
               src="/Pictures/business-logo.png"
-              alt="Schatzies Events"
+              alt={supportContent.company}
               className="h-10 w-10 rounded-full bg-white object-contain p-0.5"
             />
             <div className="flex-1">
-              <p className="text-sm font-bold text-white">Schatzies Events PH</p>
+              <p className="text-sm font-bold text-white">{supportContent.company}</p>
               <p className="text-xs text-white/80">Frequently Asked Questions</p>
             </div>
             <button
@@ -43,7 +216,7 @@ export function ChatWidget() {
           </div>
 
           {/* Chat Body */}
-          <div className="flex flex-1 flex-col items-center px-6 py-6">
+            <div className="flex flex-1 flex-col overflow-y-auto px-5 py-5 sm:px-6 sm:py-5">
             {/* Welcome heading */}
             <h3 className="text-center text-xl font-bold text-[#FF0066]">Welcome to sCHATzies!</h3>
             <p className="mt-1 text-center text-sm text-gray-500">
@@ -53,29 +226,37 @@ export function ChatWidget() {
             </p>
 
             {/* Bot message */}
-            <div className="mt-5 flex w-full items-start gap-2">
-              <img
-                src="/Pictures/business-logo.png"
-                alt="SE"
-                className="mt-1 h-7 w-7 rounded-full bg-white object-contain p-0.5 ring-1 ring-gray-200"
-              />
-              <div className="rounded-xl bg-gray-100 px-4 py-3 text-sm text-gray-700">
-                Hi, Please let us know how we can help you.
-              </div>
-            </div>
+              {activeFaq && (
+                <div ref={responseRef} className="mt-4 flex w-full items-start gap-2" aria-live="polite">
+                  <img
+                    src="/Pictures/business-logo.png"
+                    alt={supportContent.company}
+                    className="mt-1 h-7 w-7 rounded-full bg-white object-contain p-0.5 ring-1 ring-gray-200"
+                  />
+                  <div className="max-w-[calc(100%-2rem)] rounded-xl bg-gray-100 px-4 py-3 text-sm text-gray-700">
+                    <p className="text-[0.78rem] font-semibold uppercase tracking-wide text-[#700F81]">
+                      {activeFaq.question}
+                    </p>
+                    <p className="mt-1">{activeFaq.answer}</p>
+                    <SupportExtras extra={activeFaq.extra} />
+                  </div>
+                </div>
+              )}
 
             {/* Quick-reply buttons */}
-            <div className="mt-5 flex w-full flex-col items-center gap-2">
-              {[
-                'Please send your wedding packages',
-                'What are your Debut Packages?',
-                'Can we set an appointment to discuss further?',
-              ].map((label) => (
+              <div className="mt-4 flex w-full flex-col gap-2 pr-1">
+              {faqs.map((faq) => (
                 <button
-                  key={label}
-                  className="w-fit rounded-full border border-pink-200 bg-pink-50 px-5 py-2 text-sm font-medium text-[#FF0066] transition-colors hover:bg-pink-100"
+                  key={faq.id}
+                  onClick={() => setActiveFaqId(faq.id)}
+                  aria-pressed={faq.id === activeFaqId}
+                  className={`w-full rounded-full border px-4 py-2 text-sm font-medium leading-snug transition-colors ${
+                    faq.id === activeFaqId
+                      ? 'border-[#700F81] bg-[#700F81]/10 text-[#700F81]'
+                      : 'border-pink-200 bg-pink-50 text-[#FF0066] hover:bg-pink-100'
+                  }`}
                 >
-                  {label}
+                  {faq.question}
                 </button>
               ))}
             </div>
@@ -113,7 +294,7 @@ export function ChatWidget() {
 
       {/* ── Floating Chat Button ── */}
       <button
-        onClick={() => setChatOpen((prev) => !prev)}
+        onClick={handleToggleChat}
         aria-label="Chat with our AI assistant"
         className="fixed bottom-4 right-4 z-[9999] flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br from-[#FF0066] to-[#700F81] shadow-[0_8px_32px_rgba(112,15,129,0.5)] transition-transform hover:scale-110 active:scale-95 sm:bottom-7 sm:right-7 sm:h-20 sm:w-20"
       >
