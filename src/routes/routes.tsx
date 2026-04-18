@@ -9,8 +9,20 @@ import { LoginPage } from '@/pages/public/LoginPage';
 import ServicesPage from '@/pages/public/ServicesPage';
 import AboutUsPage from '@/pages/public/AboutUsPage';
 import ContactPage from '@/pages/public/ContactPage';
+
+// Admin Pages
 import { AdminDashboardPage } from '@/pages/admin/AdminDashboardPage';
 import { UsersManagement } from '@/pages/admin/UsersManagement';
+import { AdminCalendarPage } from '@/pages/admin/AdminCalendarPage';
+import { AdminEventManagerPage } from '@/pages/admin/AdminEventManagerPage';
+import { AdminEventPlannerPage } from '@/pages/admin/AdminEventPlannerPage';
+import { AdminRSVPPage } from '@/pages/admin/AdminRSVPPage';
+import { AdminCostBreakdownPage } from '@/pages/admin/AdminCostBreakdownPage';
+import { AdminVendorPoolPage } from '@/pages/admin/AdminVendorPoolPage';
+import { AdminInquiriesPage } from '@/pages/admin/AdminInquiriesPage';
+import { AdminNotificationsPage } from '@/pages/admin/AdminNotificationsPage';
+
+// Organizer Pages
 import { OrganizerDashboard } from '@/pages/organizer/OrganizerDashboard';
 import { CalendarPage } from '@/pages/organizer/CalendarPage';
 import { EventPlannerPage } from '@/pages/organizer/EventPlannerPage';
@@ -64,6 +76,38 @@ const router = createBrowserRouter([
       {
         path: 'users',
         Component: UsersManagement,
+      },
+      {
+        path: 'calendar',
+        Component: AdminCalendarPage,
+      },
+      {
+        path: 'event-manager',
+        Component: AdminEventManagerPage,
+      },
+      {
+        path: 'event-planner',
+        Component: AdminEventPlannerPage,
+      },
+      {
+        path: 'rsvp',
+        Component: AdminRSVPPage,
+      },
+      {
+        path: 'costs',
+        Component: AdminCostBreakdownPage,
+      },
+      {
+        path: 'vendors',
+        Component: AdminVendorPoolPage,
+      },
+      {
+        path: 'inquiries',
+        Component: AdminInquiriesPage,
+      },
+      {
+        path: 'notifications',
+        Component: AdminNotificationsPage,
       },
     ],
   },
