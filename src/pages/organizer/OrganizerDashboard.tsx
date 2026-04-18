@@ -1,3 +1,4 @@
+import { useEffect, useMemo, useState, type ChangeEvent } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
@@ -111,7 +112,6 @@ const kpiCards: KpiCardData[] = [
     caption: '(Outsourced vendors)',
     gradientClassName: 'from-[#f0df72] to-[#ddc447]',
     iconBgClassName: 'bg-black/10',
-    textClassName: 'text-[#5f4f00]',
     iconImage: '/Pictures/organizerpics/ActiveVendors.png',
   },
   {
@@ -126,50 +126,45 @@ const kpiCards: KpiCardData[] = [
 
 const calendarDays = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
 
-const calendarGrid: Array<number | null> = [
-  null,
-  null,
-  null,
-  null,
-  1,
-  2,
-  3,
-  4,
-  5,
-  6,
-  7,
-  8,
-  9,
-  10,
-  11,
-  12,
-  13,
-  14,
-  15,
-  16,
-  17,
-  18,
-  19,
-  20,
-  21,
-  22,
-  23,
-  24,
-  25,
-  26,
-  27,
-  28,
-  29,
-  30,
-  31,
-  null,
-  null,
-  null,
-  null,
-  null,
-  null,
-  null,
+const calendarMonths = [
+  'January',
+  'February',
+  'March',
+  'April',
+  'May',
+  'June',
+  'July',
+  'August',
+  'September',
+  'October',
+  'November',
+  'December',
 ];
+
+function isSameCalendarDay(left: Date | null, right: Date) {
+  if (!left) return false;
+
+  return (
+    left.getFullYear() === right.getFullYear() &&
+    left.getMonth() === right.getMonth() &&
+    left.getDate() === right.getDate()
+  );
+}
+
+function buildCalendarGrid(date: Date): Array<number | null> {
+  const year = date.getFullYear();
+  const month = date.getMonth();
+
+  const firstWeekDay = new Date(year, month, 1).getDay();
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+  const leadingPadding = Array.from({ length: firstWeekDay }, () => null);
+  const monthDays = Array.from({ length: daysInMonth }, (_, index) => index + 1);
+  const trailingCount = (7 - ((leadingPadding.length + monthDays.length) % 7)) % 7;
+  const trailingPadding = Array.from({ length: trailingCount }, () => null);
+
+  return [...leadingPadding, ...monthDays, ...trailingPadding];
+}
 
 function getDonutGradient(slices: StatusSlice[]) {
   let cursor = 0;
@@ -189,24 +184,37 @@ function DashboardMetricCard({
   value,
   caption,
   gradientClassName,
-  iconBgClassName,
   textClassName = 'text-white',
   iconImage,
 }: KpiCardData) {
   return (
-    <Card className={`border-none bg-linear-to-br py-0 shadow-sm ${gradientClassName}`}>
+    <Card
+      className={`group border-none bg-linear-to-br py-0 shadow-sm transition-all duration-300 ease-out hover:-translate-y-1.5 hover:shadow-xl hover:brightness-105 cursor-default ${gradientClassName}`}
+    >
       <CardContent className={`space-y-6 p-5 ${textClassName}`}>
-        <div className={`flex size-10 items-center justify-center rounded-xl ${iconBgClassName}`}>
-          <img src={iconImage} alt={title} className="size-5 object-contain" />
+        <div className="mb-2">
+          <img
+            src={iconImage}
+            alt={title}
+            className="size-11 object-contain brightness-0 invert drop-shadow-[0_2px_4px_rgba(0,0,0,0.4)] transition-transform duration-300 group-hover:scale-110"
+          />
         </div>
 
         <div className="space-y-1">
-          <p className="max-w-40 text-[11px] font-bold uppercase tracking-wide opacity-95">
+          <p
+            className="text-[15px] font-bold opacity-100 mb-1"
+            style={{ fontFamily: 'Source Sans Pro, sans-serif' }}
+          >
             {title}
           </p>
-          <div className="flex items-end justify-between gap-3">
-            <p className="text-4xl font-black leading-none">{value}</p>
-            <p className="pb-1 text-[11px] font-semibold opacity-80">{caption}</p>
+          <div className="flex items-baseline justify-between gap-3 mt-1">
+            <p
+              className="text-4xl font-extrabold tracking-tight leading-none text-white drop-shadow-sm"
+              style={{ fontFamily: 'Source Sans Pro, sans-serif' }}
+            >
+              {value}
+            </p>
+            <p className="pb-1 text-[11px] font-medium opacity-90">{caption}</p>
           </div>
         </div>
       </CardContent>
@@ -217,7 +225,7 @@ function DashboardMetricCard({
 function ScheduleListCard({ title, entries }: { title: string; entries: ListEntry[] }) {
   return (
     <Card className="border-[#e8e4ed] bg-white py-0 shadow-sm">
-      <CardHeader className="pt-10 px-6 pb-4">
+      <CardHeader className="pt-6 px-6 pb-4">
         <div className="flex items-center justify-between gap-2">
           <CardTitle className="text-lg font-bold text-[#4a4a4a] font-sans">{title}</CardTitle>
           <Button
@@ -229,7 +237,7 @@ function ScheduleListCard({ title, entries }: { title: string; entries: ListEntr
         </div>
       </CardHeader>
       <CardContent className="p-0">
-        <div className="max-h-96 overflow-y-auto scrollbar-thin scrollbar-thumb-[#e8e0eb] scrollbar-track-transparent pt-3">
+        <div className="max-h-[260px] overflow-y-auto scrollbar-thin scrollbar-thumb-[#e8e0eb] scrollbar-track-transparent pt-3">
           <div className="divide-y divide-[#f0edf4]">
             {entries.map((entry) => (
               <div
@@ -237,7 +245,9 @@ function ScheduleListCard({ title, entries }: { title: string; entries: ListEntr
                 className="flex items-center justify-between gap-4 bg-white px-5 py-4 hover:bg-[#fafafa] transition-colors"
               >
                 <div className="flex items-center gap-4 flex-1 min-w-0">
-                  <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-linear-to-br from-[#f456a4] to-[#e846b4] text-sm font-black text-white">
+                  <div
+                    className={`flex size-10 shrink-0 items-center justify-center rounded-full text-sm font-black text-white ${entry.badgeColor}`}
+                  >
                     {entry.rank}
                   </div>
                   <div className="min-w-0 flex-1">
@@ -260,39 +270,100 @@ function ScheduleListCard({ title, entries }: { title: string; entries: ListEntr
 }
 
 export function OrganizerDashboard() {
+  const today = useMemo(() => {
+    const now = new Date();
+    return new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  }, []);
+
+  const [isChartMounted, setIsChartMounted] = useState(false);
+  const [selectedDate, setSelectedDate] = useState<Date | null>(() => today);
+  const [viewDate, setViewDate] = useState(
+    () => new Date(today.getFullYear(), today.getMonth(), 1)
+  );
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      setIsChartMounted(true);
+    }, 100);
+
+    return () => window.clearTimeout(timer);
+  }, []);
+
   const chartMaxValue = Math.max(...semiAnnualCompletions.map((item) => item.value));
+
+  const calendarGrid = useMemo(() => buildCalendarGrid(viewDate), [viewDate]);
+  const yearOptions = useMemo(() => {
+    const centerYear = viewDate.getFullYear();
+    return Array.from({ length: 11 }, (_, index) => centerYear - 5 + index);
+  }, [viewDate]);
+
+  const handleMonthChange = (event: ChangeEvent<HTMLSelectElement>) => {
+    const nextMonth = Number(event.target.value);
+    setViewDate((prev) => new Date(prev.getFullYear(), nextMonth, 1));
+  };
+
+  const handleYearChange = (event: ChangeEvent<HTMLSelectElement>) => {
+    const nextYear = Number(event.target.value);
+    setViewDate((prev) => new Date(nextYear, prev.getMonth(), 1));
+  };
+
+  const goToPreviousMonth = () => {
+    setViewDate((prev) => new Date(prev.getFullYear(), prev.getMonth() - 1, 1));
+  };
+
+  const goToNextMonth = () => {
+    setViewDate((prev) => new Date(prev.getFullYear(), prev.getMonth() + 1, 1));
+  };
 
   return (
     <section className="pb-6">
       <div className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1fr)_360px]">
         <div className="space-y-6">
           <Card className="border-none bg-transparent py-0 shadow-none">
-            <CardContent className="relative overflow-hidden rounded-3xl bg-linear-to-r from-[#f051a3] via-[#de3bc5] to-[#8f1fd0] p-8 text-white md:pr-72">
-              <div className="max-w-md">
-                <h3 className="font-heading text-6xl font-bold leading-[1.1]">Welcome Kring!</h3>
-                <p className="mt-3 text-base font-semibold text-white/90">
+            <CardContent className="relative overflow-hidden rounded-3xl bg-linear-to-r from-[#f051a3] via-[#de3bc5] to-[#8f1fd0] p-8 text-white min-h-[220px] flex flex-col justify-center md:pr-72 lg:pr-80">
+              <div className="max-w-md relative z-10">
+                <h3
+                  className={`font-heading text-4xl md:text-5xl font-bold leading-[1.1] transition-all duration-700 ease-out ${
+                    isChartMounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
+                  }`}
+                >
+                  Welcome, Kring!
+                </h3>
+                <p
+                  className={`mt-3 text-base font-semibold text-white/90 transition-all duration-700 delay-150 ease-out ${
+                    isChartMounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
+                  }`}
+                >
                   You have a lot of work today, so keep it up.
                 </p>
-                <p className="text-base font-semibold text-white/90">Shall we start?</p>
+                <p
+                  className={`text-base font-semibold text-white/90 transition-all duration-700 delay-[250ms] ease-out ${
+                    isChartMounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
+                  }`}
+                >
+                  Shall we start?
+                </p>
                 <Button
                   variant="secondary"
-                  className="mt-6 rounded-full bg-white px-6 py-2 text-xs font-black uppercase tracking-wide text-[#6b2a87] hover:bg-white/90"
+                  className={`mt-6 rounded-full bg-white px-6 py-2 text-xs font-black uppercase tracking-wide text-[#6b2a87] hover:bg-white/90 transition-all duration-700 delay-[350ms] ease-out ${
+                    isChartMounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
+                  }`}
                 >
                   View Calendar
                 </Button>
               </div>
 
-              <img
+              <img //yung computer 3D sa dashboard
                 src="/Pictures/organizerpics/dashboard-banner.png.png"
                 alt="3D computer analytics"
-                className="pointer-events-none absolute -bottom-12 right-0 hidden w-80 drop-shadow-[0_16px_22px_rgba(69,21,111,0.35)] md:block"
+                className="pointer-events-none absolute right-6 top-1/2 -translate-y-1/2 hidden h-[85%] w-auto object-contain drop-shadow-[0_16px_22px_rgba(69,21,111,0.35)] md:block"
               />
             </CardContent>
           </Card>
 
           <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1.5fr_1fr]">
-            <Card className="border-[#e8e3ef] bg-white py-0 shadow-sm">
-              <CardHeader className="pb-4">
+            <Card className="border-[#e8e3ef] bg-white py-0 shadow-sm transition-all duration-300 ease-out hover:-translate-y-1.5 hover:shadow-lg hover:border-[#d0c8db]">
+              <CardHeader className="pt-6 pb-4 px-6">
                 <CardTitle className="text-lg font-bold text-[#4a4a4a] font-sans">
                   Semi-Annually Completed Events
                 </CardTitle>
@@ -329,15 +400,18 @@ export function OrganizerDashboard() {
 
                       {/* Bars container */}
                       <div className="absolute inset-0 flex items-end justify-between px-2">
-                        {semiAnnualCompletions.map((monthData) => (
+                        {semiAnnualCompletions.map((monthData, index) => (
                           <div
                             key={`bar-${monthData.month}`}
                             className="flex-1 h-full flex justify-center items-end px-1 sm:px-2"
                           >
                             <div
-                              className="w-full bg-[#800080] rounded-t-sm"
+                              className="w-full bg-[#800080] rounded-t-sm cursor-pointer transition-all duration-1000 ease-out hover:bg-[#a61ca6]"
                               style={{
-                                height: `${Math.max((monthData.value / chartMaxValue) * 100, 5)}%`,
+                                height: isChartMounted
+                                  ? `${Math.max((monthData.value / chartMaxValue) * 100, 5)}%`
+                                  : '0%',
+                                transitionDelay: `${index * 150}ms`,
                               }}
                             />
                           </div>
@@ -369,11 +443,11 @@ export function OrganizerDashboard() {
               </CardContent>
             </Card>
 
-            <Card className="border-[#e8e3ef] bg-white py-0 shadow-sm">
-              <CardHeader className="pb-4">
+            <Card className="border-[#e8e3ef] bg-white py-0 shadow-sm transition-all duration-300 ease-out hover:-translate-y-1.5 hover:shadow-lg hover:border-[#d0c8db]">
+              <CardHeader className="pt-6 pb-4 px-6">
                 <div className="flex items-center justify-between gap-4">
                   <div className="flex-1">
-                    <CardTitle className="text-2xl font-black text-[#37313f]">
+                    <CardTitle className="text-lg font-bold text-[#4a4a4a] font-sans">
                       Monthly Event Status Chart
                     </CardTitle>
                     <CardDescription className="mt-1 text-xs font-semibold text-[#9991a7]">
@@ -383,13 +457,17 @@ export function OrganizerDashboard() {
                   <img
                     src="/Pictures/organizerpics/Monthly Event Status Chart.png"
                     alt="Chart icon"
-                    className="size-5 shrink-0 object-contain" // Sa icon ng monthly chart ito.
+                    className="size-5 shrink-0 object-contain"
                   />
                 </div>
               </CardHeader>
               <CardContent className="space-y-6 pb-6">
                 <div
-                  className="relative mx-auto size-64 rounded-full"
+                  className={`relative mx-auto size-64 rounded-full transition-all duration-[1500ms] ease-out ${
+                    isChartMounted
+                      ? 'opacity-100 scale-100 rotate-0'
+                      : 'opacity-0 scale-75 -rotate-45'
+                  }`}
                   style={{ background: getDonutGradient(monthlyStatus) }}
                 >
                   <div className="absolute inset-16 rounded-full bg-white" />
@@ -397,7 +475,10 @@ export function OrganizerDashboard() {
 
                 <div className="grid grid-cols-3 gap-2 pt-1 text-center">
                   {monthlyStatus.map((slice) => (
-                    <div key={slice.label}>
+                    <div
+                      key={slice.label}
+                      className="transition-transform duration-200 hover:scale-105 cursor-default"
+                    >
                       <p className="text-2xl font-black text-[#3d3745]">{slice.value}%</p>
                       <p className="mt-1 inline-flex items-center gap-1 text-[11px] font-semibold text-[#8e8797]">
                         <span
@@ -417,13 +498,13 @@ export function OrganizerDashboard() {
             <div className="mb-6 flex items-center justify-between gap-2">
               <div>
                 <h3
-                  className="text-3xl font-black leading-none text-[#2e2837]"
+                  className="text-xl font-bold leading-none text-[#37313f]"
                   style={{ fontFamily: 'Source Sans Pro, sans-serif' }}
                 >
                   Key Performance Index
                 </h3>
                 <p
-                  className="mt-1 text-xs font-semibold text-[#8f879f]"
+                  className="mt-1 text-xs font-semibold text-[#9991a7]"
                   style={{ fontFamily: 'Montserrat, sans-serif' }}
                 >
                   Evaluation of events, vendors, and resources
@@ -451,20 +532,63 @@ export function OrganizerDashboard() {
           <Card className="border-[#e8e4ed] bg-white py-0 shadow-sm">
             <CardHeader className="py-4 px-6">
               <div className="flex items-center justify-between gap-6">
-                {/* Date and Day wrapper */}
-                <div className="flex items-center gap-2">
-                  <CardTitle className="whitespace-nowrap text-lg font-black leading-none text-[#393341] font-sans">
-                    January 12, 2026
-                  </CardTitle>
-                  <p className="text-xs font-semibold text-[#c5bdd1]">(Sunday)</p>
+                <div className="flex flex-col items-center justify-center w-fit">
+                  <div className="flex items-center gap-2">
+                    <select
+                      aria-label="Select month"
+                      value={viewDate.getMonth()}
+                      onChange={handleMonthChange}
+                      className="rounded-md border border-transparent bg-transparent px-2 py-1 text-lg font-black leading-none text-[#393341] outline-none transition-colors hover:bg-[#f5eff9] focus:border-[#e3d8ed] focus:bg-white"
+                    >
+                      {calendarMonths.map((monthLabel, monthIndex) => (
+                        <option key={monthLabel} value={monthIndex}>
+                          {monthLabel}
+                        </option>
+                      ))}
+                    </select>
+                    <select
+                      aria-label="Select year"
+                      value={viewDate.getFullYear()}
+                      onChange={handleYearChange}
+                      className="rounded-md border border-transparent bg-transparent px-2 py-1 text-lg font-black leading-none text-[#393341] outline-none transition-colors hover:bg-[#f5eff9] focus:border-[#e3d8ed] focus:bg-white"
+                    >
+                      {yearOptions.map((yearValue) => (
+                        <option key={yearValue} value={yearValue}>
+                          {yearValue}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <p className="mt-1 text-xs font-semibold text-[#c5bdd1] text-center">
+                    {selectedDate
+                      ? selectedDate.toLocaleDateString('en-US', {
+                          weekday: 'long',
+                          month: 'short',
+                          day: 'numeric',
+                          year: 'numeric',
+                        })
+                      : 'No Date Selected'}
+                  </p>
                 </div>
 
                 {/* Navigation arrows wrapper */}
                 <div className="flex items-center gap-2">
-                  <Button variant="ghost" size="icon-sm" className="rounded-full text-[#8f879b]">
+                  <Button
+                    variant="ghost"
+                    size="icon-sm"
+                    className="rounded-full text-[#8f879b]"
+                    onClick={goToPreviousMonth}
+                    aria-label="Previous month"
+                  >
                     <ChevronLeft className="size-5" />
                   </Button>
-                  <Button variant="ghost" size="icon-sm" className="rounded-full text-[#8f879b]">
+                  <Button
+                    variant="ghost"
+                    size="icon-sm"
+                    className="rounded-full text-[#8f879b]"
+                    onClick={goToNextMonth}
+                    aria-label="Next month"
+                  >
                     <ChevronRight className="size-5" />
                   </Button>
                 </div>
@@ -480,24 +604,40 @@ export function OrganizerDashboard() {
                   ))}
                 </div>
 
-                <div className="grid grid-cols-7 gap-y-3 px-6 py-4 text-center">
+                <div className="grid grid-cols-7 gap-y-1 px-6 py-2 text-center">
                   {calendarGrid.map((day, index) => {
-                    const isSelected = day === 16 || day === 17;
+                    if (day === null) {
+                      return (
+                        <div key={`calendar-cell-${index}`} className="flex justify-center">
+                          <span className="flex size-8 items-center justify-center rounded-md text-transparent">
+                            .
+                          </span>
+                        </div>
+                      );
+                    }
+
+                    const dayDate = new Date(viewDate.getFullYear(), viewDate.getMonth(), day);
+                    const isToday = isSameCalendarDay(today, dayDate);
+                    const isSelected = isSameCalendarDay(selectedDate, dayDate);
 
                     return (
-                      <div key={`calendar-cell-${index}`} className="flex justify-center py-2">
-                        <span
+                      <div key={`calendar-cell-${index}`} className="flex justify-center">
+                        <button
+                          type="button"
+                          onClick={() => setSelectedDate(dayDate)}
+                          aria-pressed={isSelected}
+                          title={isToday ? `Today • Day ${day}` : `Day ${day}`}
                           className={[
-                            'flex size-8 items-center justify-center rounded-md text-xs font-sans',
-                            day === null
-                              ? 'text-transparent'
-                              : isSelected
-                                ? 'bg-linear-to-br from-[#f456a4] to-[#e846b4] text-white font-bold shadow-sm'
-                                : 'text-[#9b8fa8] font-semibold',
+                            'flex size-8 items-center justify-center rounded-md border text-xs font-sans transition-all duration-150',
+                            isSelected
+                              ? 'bg-linear-to-br from-[#f051a3] to-[#8f1fd0] text-white font-bold border-transparent'
+                              : isToday
+                                ? 'bg-[#fce4ec] text-[#7a667f] font-bold border-[#f1c3d7]'
+                                : 'text-[#9b8fa8] font-semibold border-transparent hover:bg-[#f4eff8]',
                           ].join(' ')}
                         >
-                          {day ?? '.'}
-                        </span>
+                          {day}
+                        </button>
                       </div>
                     );
                   })}

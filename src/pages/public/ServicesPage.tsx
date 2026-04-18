@@ -1,6 +1,53 @@
 // Replace with your actual services hero photo placed in public/Pictures/
 const heroImage = '/Pictures/services-hero.jpg';
 
+import { useState } from 'react';
+import LoadingScreen from '@/components/ui/LoadingScreen';
+import ScrollReveal from '@/components/ui/ScrollReveal';
+import { GalleryModal } from '@/components/GalleryModal';
+import { Button } from '@/components/ui/button';
+import { Camera } from 'lucide-react';
+
+/* ── Gallery Data ──────────────────────────────────────────── */
+const galleryData = [
+  {
+    id: 'event-planning',
+    title: 'Event Planning & Coordination',
+    folder: '_EventPics',
+    images: ['PC.jpg', 'PC2.jpg', 'PC3.jpg', 'PC4.jpg', 'PC5.jpg'],
+  },
+  {
+    id: 'venue-styling',
+    title: 'Elegant Venue Setup & Styling',
+    folder: '_EventPics',
+    images: ['V.jpg', 'V2.jpg', 'V3.jpg', 'V4.jpg', 'V5.jpg'],
+  },
+  {
+    id: 'catering',
+    title: 'Buffet Catering',
+    folder: '_EventPics',
+    images: ['C.jpg', 'C2.jpg', 'C3.jpg', 'C4.jpg', 'C5.jpg'],
+  },
+  {
+    id: 'photo-video',
+    title: 'Photo & Video Coverage',
+    folder: '_EventPics',
+    images: ['PC.jpg', 'PC2.jpg', 'PC3.jpg', 'PC4.jpg', 'PC5.jpg'],
+  },
+  {
+    id: 'ceiling-design',
+    title: 'Ceiling Treatment & Venue Design',
+    folder: '_EventPics',
+    images: ['V.jpg', 'V2.jpg', 'V3.jpg', 'V4.jpg', 'V5.jpg'],
+  },
+  {
+    id: 'full-coordination',
+    title: 'Full Event Coordination',
+    folder: '_EventPics',
+    images: ['BnC.jpg', 'BnC2.jpg', 'BnC3.jpg', 'BnC4.jpg', 'BnC5.jpg'],
+  },
+];
+
 /* ── Gradient icon components ───────────────────────────────── */
 function CalendarIcon() {
   return (
@@ -192,58 +239,65 @@ function CoordinationIcon() {
 }
 
 export default function ServicesPage() {
+  const [activeGallery, setActiveGallery] = useState<string | null>(null);
+
+  const gallery = galleryData.find((g) => g.id === activeGallery);
+  const galleryImages = gallery
+    ? gallery.images.map((img) => `/Pictures/${gallery.folder}/${img}`)
+    : [];
+
   return (
-    <div>
+    <>
+      <LoadingScreen />
+
       {/* ── Section 1: Hero ── */}
-      <section
-        className="relative -mt-[88px] flex min-h-[60vh] flex-col overflow-hidden bg-cover bg-center bg-no-repeat sm:-mt-[110px] md:min-h-[70vh] lg:-mt-[173px] lg:min-h-screen"
-        style={{ backgroundImage: `url(${heroImage})` }}
-      >
-        {/* Gradient overlay from #FF589C to #FD78AD */}
-        <div className="absolute inset-0 bg-gradient-to-br from-[#FF589C]/80 via-[#FD78AD]/60 to-transparent" />
+      <ScrollReveal>
+        <section
+          className="relative -mt-[88px] flex min-h-[60vh] flex-col overflow-hidden bg-cover bg-center bg-no-repeat sm:-mt-[110px] md:min-h-[70vh] lg:-mt-[173px] lg:min-h-screen"
+          style={{ backgroundImage: `url(${heroImage})` }}
+        >
+          {/* Gradient overlay from #FF589C to #FD78AD */}
+          <div className="absolute inset-0 bg-gradient-to-b from-white via-[#FF0066]/30 to-[#700F81]/40" />
+          {/* Subtle dark overlay for text readability */}
+          <div className="absolute inset-0 bg-black/20" />
 
-        {/* Additional white overlay for brightness */}
-        <div className="absolute inset-0 bg-white/20" />
+          {/* Spacer that matches navbar height */}
+          <div className="h-[88px] shrink-0 sm:h-[110px] lg:h-[173px]" />
 
-        {/* Subtle dark overlay for text readability */}
-        <div className="absolute inset-0 bg-black/20" />
+          {/* Centered content */}
+          <div className="relative z-10 flex flex-1 flex-col items-center justify-center px-4 pb-12 text-center sm:px-6 sm:pb-16 lg:pb-[173px] animate-fade-in-up">
+            <h1
+              className="font-heading text-[clamp(2rem,8vw,5rem)] font-bold leading-tight bg-gradient-to-r text-transparent bg-clip-text animate-fade-in"
+              style={{
+                backgroundImage: 'linear-gradient(to right, #FF0066 0%, #FF0066 46%, #4A1053 100%)',
+              }}
+            >
+              Your Perfect Event
+              <br />
+              Starts Here
+            </h1>
 
-        {/* Spacer that matches navbar height */}
-        <div className="h-[88px] shrink-0 sm:h-[110px] lg:h-[173px]" />
-
-        {/* Centered content */}
-        <div className="relative z-10 flex flex-1 flex-col items-center justify-center px-4 pb-12 text-center sm:px-6 sm:pb-16 lg:pb-[173px]">
-          <h1
-            className="font-heading text-[clamp(2rem,8vw,5rem)] font-bold leading-tight bg-gradient-to-r text-transparent bg-clip-text"
-            style={{
-              backgroundImage: 'linear-gradient(to right, #FF0066 0%, #FF0066 46%, #4A1053 100%)',
-            }}
-          >
-            Your Perfect Event
-            <br />
-            Starts Here
-          </h1>
-
-          <p className="mt-3 max-w-[40rem] text-[clamp(0.9rem,1.8vw,1.3rem)] leading-[1.7] font-sans text-white drop-shadow-lg sm:mt-4 sm:max-w-[45rem] lg:mt-6 lg:max-w-[50rem] lg:text-[1.4rem]">
-            From planning to execution, we offer everything you need to bring your dream event to
-            life.
-          </p>
-        </div>
-      </section>
+            <p className="mt-3 max-w-[40rem] text-[clamp(0.9rem,1.8vw,1.3rem)] leading-[1.7] font-sans text-white drop-shadow-lg sm:mt-4 sm:max-w-[45rem] lg:mt-6 lg:max-w-[50rem] lg:text-[1.4rem] animate-slide-in-left animation-delay-200">
+              From planning to execution, we offer everything you need to bring your dream event to
+              life.
+            </p>
+          </div>
+        </section>
+      </ScrollReveal>
 
       {/* ── Section 2: Services Offered ── */}
       <section className="bg-white pt-12 sm:pt-16 lg:pt-20">
         {/* Heading */}
         <div className="px-4 text-center sm:px-6">
           <h2
-            className="font-heading text-[clamp(1.8rem,6vw,4rem)] font-bold leading-[1.1] tracking-tight bg-gradient-to-r text-transparent bg-clip-text"
+            className="font-heading text-[clamp(1.8rem,6vw,4rem)] font-bold leading-[1.1] tracking-tight bg-gradient-to-r text-transparent bg-clip-text animate-fade-in"
             style={{
               backgroundImage: 'linear-gradient(to right, #FF0066 0%, #FF0066 46%, #4A1053 100%)',
             }}
           >
             Services Offered
           </h2>
-          <p className="mx-auto mt-3 max-w-[45rem] text-[clamp(0.9rem,1.6vw,1.2rem)] leading-[1.6] font-sans text-[#4A1053] sm:mt-4 lg:max-w-[50rem] lg:text-[1.3rem]">
+          <p className="mx-auto mt-3 max-w-[45rem] text-[clamp(0.9rem,1.6vw,1.2rem)] leading-[1.6] font-sans text-[#4A1053] sm:mt-4 lg:max-w-[50rem] lg:text-[1.3rem] animate-slide-in-left animation-delay-200">
             Schatzies Events offers complete event packages that include all the essential services
             for weddings and debut celebrations.
           </p>
@@ -251,9 +305,9 @@ export default function ServicesPage() {
 
         {/* Service rows */}
         <div className="mt-8 w-full sm:mt-12 lg:mt-16">
-          {/* ── Row 1 (LEFT): icon LEFT · text RIGHT ── */}
+          {/* ── Row 1 (LEFT): icon LEFT + text LEFT ── */}
           <div className="w-full bg-[#fdf2f6] py-10 sm:py-16 lg:py-20">
-            <div className="mx-auto flex max-w-[900px] flex-col items-center gap-5 px-4 sm:flex-row sm:gap-8 sm:px-6 lg:max-w-[1000px] lg:gap-12">
+            <div className="mx-auto flex max-w-[900px] flex-col items-center gap-5 px-4 sm:flex-row sm:gap-8 sm:px-6 lg:max-w-[1000px] lg:gap-12 sm:justify-start">
               <div className="shrink-0 transform transition-transform duration-300 hover:scale-110">
                 <CalendarIcon />
               </div>
@@ -265,6 +319,13 @@ export default function ServicesPage() {
                   Assistance in organizing and managing your event from preparation to the actual
                   day.
                 </p>
+                <Button
+                  onClick={() => setActiveGallery('event-planning')}
+                  className="mt-4 inline-flex items-center gap-2 bg-gradient-to-r from-[#FF0066] to-[#4A1053] px-6 py-2 rounded-full text-white font-medium hover:shadow-lg transition-all duration-300 sm:mt-5"
+                >
+                  <Camera className="h-4 w-4" />
+                  View Gallery
+                </Button>
               </div>
             </div>
           </div>
@@ -272,16 +333,23 @@ export default function ServicesPage() {
           {/* Divider */}
           <div className="h-[1px] w-full bg-gradient-to-r from-transparent via-[#FF0066]/40 to-transparent" />
 
-          {/* ── Row 2 (RIGHT): text LEFT · icon RIGHT ── */}
+          {/* ── Row 2 (RIGHT): icon RIGHT + text RIGHT ── */}
           <div className="w-full bg-white py-10 sm:py-16 lg:py-20">
-            <div className="mx-auto flex max-w-[900px] flex-col-reverse items-center gap-5 px-4 sm:flex-row sm:gap-8 sm:px-6 lg:max-w-[1000px] lg:gap-12">
-              <div className="text-center flex-1 sm:text-left">
+            <div className="mx-auto flex max-w-[900px] flex-col items-center gap-5 px-4 sm:flex-row sm:gap-8 sm:px-6 lg:max-w-[1000px] lg:gap-12 sm:justify-end">
+              <div className="text-center sm:text-right">
                 <h3 className="text-[clamp(1.2rem,2.5vw,1.8rem)] font-bold text-[#FF0066]">
                   Elegant Venue Setup and Styling
                 </h3>
-                <p className="mt-2 text-[clamp(0.85rem,1.5vw,1.1rem)] leading-[1.6] text-[#4A1053] max-w-[500px] sm:mt-3">
+                <p className="mt-2 text-[clamp(0.85rem,1.5vw,1.1rem)] leading-[1.6] text-[#4A1053] max-w-[500px] sm:mt-3 sm:ml-auto">
                   Beautiful decorations and designs tailored to match your event's theme and style.
                 </p>
+                <Button
+                  onClick={() => setActiveGallery('venue-styling')}
+                  className="mt-4 inline-flex items-center gap-2 bg-gradient-to-r from-[#FF0066] to-[#4A1053] px-6 py-2 rounded-full text-white font-medium hover:shadow-lg transition-all duration-300 sm:mt-5 sm:ml-auto"
+                >
+                  <Camera className="h-4 w-4" />
+                  View Gallery
+                </Button>
               </div>
               <div className="shrink-0 transform transition-transform duration-300 hover:scale-110">
                 <VenueIcon />
@@ -292,9 +360,9 @@ export default function ServicesPage() {
           {/* Divider */}
           <div className="h-[1px] w-full bg-gradient-to-r from-transparent via-[#FF0066]/40 to-transparent" />
 
-          {/* ── Row 3 (LEFT): icon LEFT · text RIGHT ── */}
+          {/* ── Row 3 (LEFT): icon LEFT + text LEFT ── */}
           <div className="w-full bg-[#fdf2f6] py-10 sm:py-16 lg:py-20">
-            <div className="mx-auto flex max-w-[900px] flex-col items-center gap-5 px-4 sm:flex-row sm:gap-8 sm:px-6 lg:max-w-[1000px] lg:gap-12">
+            <div className="mx-auto flex max-w-[900px] flex-col items-center gap-5 px-4 sm:flex-row sm:gap-8 sm:px-6 lg:max-w-[1000px] lg:gap-12 sm:justify-start">
               <div className="shrink-0 transform transition-transform duration-300 hover:scale-110">
                 <CateringIcon />
               </div>
@@ -305,6 +373,13 @@ export default function ServicesPage() {
                 <p className="mt-2 text-[clamp(0.85rem,1.5vw,1.1rem)] leading-[1.6] text-[#4A1053] max-w-[500px] sm:mt-3">
                   Food prepared and served for guests to enjoy during the event.
                 </p>
+                <Button
+                  onClick={() => setActiveGallery('catering')}
+                  className="mt-4 inline-flex items-center gap-2 bg-gradient-to-r from-[#FF0066] to-[#4A1053] px-6 py-2 rounded-full text-white font-medium hover:shadow-lg transition-all duration-300 sm:mt-5"
+                >
+                  <Camera className="h-4 w-4" />
+                  View Gallery
+                </Button>
               </div>
             </div>
           </div>
@@ -315,17 +390,24 @@ export default function ServicesPage() {
       <section className="bg-gradient-to-b from-white via-[#fce4ef] to-[#f9b8d4] pb-12 sm:pb-20 lg:pb-28">
         {/* Service rows */}
         <div className="w-full">
-          {/* ── Row 1 (RIGHT): text LEFT · icon RIGHT ── */}
+          {/* ── Row 4 (RIGHT): icon RIGHT + text RIGHT ── */}
           <div className="w-full py-10 sm:py-16 lg:py-20">
-            <div className="mx-auto flex max-w-[900px] flex-col-reverse items-center gap-5 px-4 sm:flex-row sm:gap-8 sm:px-6 lg:max-w-[1000px] lg:gap-12">
-              <div className="text-center flex-1 sm:text-left">
+            <div className="mx-auto flex max-w-[900px] flex-col items-center gap-5 px-4 sm:flex-row sm:gap-8 sm:px-6 lg:max-w-[1000px] lg:gap-12 sm:justify-end">
+              <div className="text-center sm:text-right">
                 <h3 className="text-[clamp(1.2rem,2.5vw,1.8rem)] font-bold text-[#FF0066]">
                   Photo and Video Coverage
                 </h3>
-                <p className="mt-2 text-[clamp(0.85rem,1.5vw,1.1rem)] leading-[1.6] text-[#4A1053] max-w-[500px] sm:mt-3">
+                <p className="mt-2 text-[clamp(0.85rem,1.5vw,1.1rem)] leading-[1.6] text-[#4A1053] max-w-[500px] sm:mt-3 sm:ml-auto">
                   Professional coverage that beautifully captures every special moment of your
                   event.
                 </p>
+                <Button
+                  onClick={() => setActiveGallery('photo-video')}
+                  className="mt-4 inline-flex items-center gap-2 bg-gradient-to-r from-[#FF0066] to-[#4A1053] px-6 py-2 rounded-full text-white font-medium hover:shadow-lg transition-all duration-300 sm:mt-5 sm:ml-auto"
+                >
+                  <Camera className="h-4 w-4" />
+                  View Gallery
+                </Button>
               </div>
               <div className="shrink-0 transform transition-transform duration-300 hover:scale-110">
                 <CameraIcon />
@@ -336,9 +418,9 @@ export default function ServicesPage() {
           {/* Divider */}
           <div className="h-[1px] w-full bg-gradient-to-r from-transparent via-[#FF0066]/40 to-transparent" />
 
-          {/* ── Row 2 (LEFT): icon LEFT · text RIGHT ── */}
+          {/* ── Row 5 (LEFT): icon LEFT + text LEFT ── */}
           <div className="w-full py-10 sm:py-16 lg:py-20">
-            <div className="mx-auto flex max-w-[900px] flex-col items-center gap-5 px-4 sm:flex-row sm:gap-8 sm:px-6 lg:max-w-[1000px] lg:gap-12">
+            <div className="mx-auto flex max-w-[900px] flex-col items-center gap-5 px-4 sm:flex-row sm:gap-8 sm:px-6 lg:max-w-[1000px] lg:gap-12 sm:justify-start">
               <div className="shrink-0 transform transition-transform duration-300 hover:scale-110">
                 <CeilingIcon />
               </div>
@@ -349,6 +431,13 @@ export default function ServicesPage() {
                 <p className="mt-2 text-[clamp(0.85rem,1.5vw,1.1rem)] leading-[1.6] text-[#4A1053] max-w-[500px] sm:mt-3">
                   Decorative ceiling setups that enhance the beauty and overall style of your venue.
                 </p>
+                <Button
+                  onClick={() => setActiveGallery('ceiling-design')}
+                  className="mt-4 inline-flex items-center gap-2 bg-gradient-to-r from-[#FF0066] to-[#4A1053] px-6 py-2 rounded-full text-white font-medium hover:shadow-lg transition-all duration-300 sm:mt-5"
+                >
+                  <Camera className="h-4 w-4" />
+                  View Gallery
+                </Button>
               </div>
             </div>
           </div>
@@ -356,17 +445,24 @@ export default function ServicesPage() {
           {/* Divider */}
           <div className="h-[1px] w-full bg-gradient-to-r from-transparent via-[#FF0066]/40 to-transparent" />
 
-          {/* ── Row 3 (RIGHT): text LEFT · icon RIGHT ── */}
+          {/* ── Row 6 (RIGHT): icon RIGHT + text RIGHT ── */}
           <div className="w-full py-10 sm:py-16 lg:py-20">
-            <div className="mx-auto flex max-w-[900px] flex-col-reverse items-center gap-5 px-4 sm:flex-row sm:gap-8 sm:px-6 lg:max-w-[1000px] lg:gap-12">
-              <div className="text-center flex-1 sm:text-left">
+            <div className="mx-auto flex max-w-[900px] flex-col items-center gap-5 px-4 sm:flex-row sm:gap-8 sm:px-6 lg:max-w-[1000px] lg:gap-12 sm:justify-end">
+              <div className="text-center sm:text-right">
                 <h3 className="text-[clamp(1.2rem,2.5vw,1.8rem)] font-bold text-[#FF0066]">
                   Full Event Coordination
                 </h3>
-                <p className="mt-2 text-[clamp(0.85rem,1.5vw,1.1rem)] leading-[1.6] text-[#4A1053] max-w-[500px] sm:mt-3">
+                <p className="mt-2 text-[clamp(0.85rem,1.5vw,1.1rem)] leading-[1.6] text-[#4A1053] max-w-[500px] sm:mt-3 sm:ml-auto">
                   A dedicated team that manages the program flow and ensures your event runs
                   smoothly from start to finish.
                 </p>
+                <Button
+                  onClick={() => setActiveGallery('full-coordination')}
+                  className="mt-4 inline-flex items-center gap-2 bg-gradient-to-r from-[#FF0066] to-[#4A1053] px-6 py-2 rounded-full text-white font-medium hover:shadow-lg transition-all duration-300 sm:mt-5 sm:ml-auto"
+                >
+                  <Camera className="h-4 w-4" />
+                  View Gallery
+                </Button>
               </div>
               <div className="shrink-0 transform transition-transform duration-300 hover:scale-110">
                 <CoordinationIcon />
@@ -374,16 +470,17 @@ export default function ServicesPage() {
             </div>
           </div>
         </div>
-
-        {/* Logo footer */}
-        <div className="mt-8 flex justify-center sm:mt-12 lg:mt-16">
-          <img
-            src="/Pictures/business-logo.png"
-            alt="Schatzies Events logo"
-            className="h-14 w-auto transition-transform duration-300 hover:scale-105 sm:h-20 lg:h-24"
-          />
-        </div>
       </section>
-    </div>
+
+      {/* ── Gallery Modal ── */}
+      {gallery && (
+        <GalleryModal
+          isOpen={activeGallery !== null}
+          onClose={() => setActiveGallery(null)}
+          title={gallery.title}
+          images={galleryImages}
+        />
+      )}
+    </>
   );
 }

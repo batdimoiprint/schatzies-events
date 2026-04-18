@@ -1,5 +1,8 @@
+import { useMemo } from 'react';
+import { useOutletContext } from 'react-router-dom';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import type { OrganizerLayoutOutletContext } from '@/components/layouts/OrganizerLayout';
 
 type EventStatus = 'Completed' | 'Pending' | 'Cancelled';
 
@@ -87,6 +90,30 @@ function getStatusBadgeClasses(status: EventStatus) {
 }
 
 export function EventManagerPage() {
+  const { searchTerm } = useOutletContext<OrganizerLayoutOutletContext>();
+
+  const filteredEvents = useMemo(() => {
+    const normalizedSearchTerm = searchTerm.trim().toLowerCase();
+
+    if (!normalizedSearchTerm) return eventTableData;
+
+    return eventTableData.filter((event) => {
+      const searchableFields = [
+        event.title,
+        event.date,
+        event.timeSlot,
+        event.client,
+        event.type,
+        event.package,
+        event.venue,
+        event.status,
+        String(event.rsvp),
+      ];
+
+      return searchableFields.some((field) => field.toLowerCase().includes(normalizedSearchTerm));
+    });
+  }, [searchTerm]);
+
   return (
     <div className="space-y-4 p-6 font-sans">
       <div className="flex items-center justify-between">
@@ -165,7 +192,7 @@ export function EventManagerPage() {
                 </tr>
               </thead>
               <tbody>
-                {eventTableData.map((event) => (
+                {filteredEvents.map((event) => (
                   <tr
                     key={event.id}
                     className="border-b border-[#f0edf4] hover:bg-[#fafaf8] transition-colors"
@@ -189,6 +216,13 @@ export function EventManagerPage() {
                     </td>
                   </tr>
                 ))}
+                {filteredEvents.length === 0 ? (
+                  <tr>
+                    <td colSpan={9} className="px-4 py-6 text-center text-sm text-[#8f879f]">
+                      No events found for "{searchTerm.trim()}".
+                    </td>
+                  </tr>
+                ) : null}
               </tbody>
             </table>
           </div>
