@@ -12,6 +12,10 @@ import AboutUsPage from '@/pages/public/AboutUsPage';
 import ContactPage from '@/pages/public/ContactPage';
 import { AdminDashboardPage } from '@/pages/admin/AdminDashboardPage';
 import { OrganizerDashboard } from '@/pages/organizer/OrganizerDashboard';
+import { ClientDashboardPage } from '@/pages/client/ClientDashboardPage';
+import { EventPlanViewingPage } from '@/pages/client/EventPlanViewingPage';
+import { MessagePage } from '@/pages/client/MessagePage';
+import { QrCodePage } from '@/pages/client/QrCodePage';
 import { CalendarPage } from '@/pages/organizer/CalendarPage';
 import { EventPlannerPage } from '@/pages/organizer/EventPlannerPage';
 import { EventManagerPage } from '@/pages/organizer/EventManagerPage';
@@ -99,7 +103,19 @@ const router = createBrowserRouter([
     children: [
       {
         index: true,
-        element: <div>Client Dashboard</div>,
+        Component: ClientDashboardPage,
+      },
+      {
+        path: 'event-plan',
+        Component: EventPlanViewingPage,
+      },
+      {
+        path: 'message',
+        Component: MessagePage,
+      },
+      {
+        path: 'qr-code',
+        Component: QrCodePage,
       },
       // Add more client routes here as needed
     ],

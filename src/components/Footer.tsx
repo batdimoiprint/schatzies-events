@@ -96,7 +96,6 @@ const Footer = ({ showScrollTop = true }: FooterProps) => {
                   className="hover:text-[#e61f83] transition-colors"
                 >
                   schatziesevents@gmail.com
-
                 </a>
               </li>
             </ul>

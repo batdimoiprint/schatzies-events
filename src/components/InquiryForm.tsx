@@ -127,8 +127,7 @@ export function InquiryForm({ onClose, selectedPackageId, selectedEventType }: I
     }));
   };
 
-  const selectedPaxOptions =
-    form.eventPackage === 'Blooms' ? bloomsPaxOptions : defaultPaxOptions;
+  const selectedPaxOptions = form.eventPackage === 'Blooms' ? bloomsPaxOptions : defaultPaxOptions;
 
   // Pick packages based on selected event type
   const packageOptions = form.eventType
@@ -169,8 +168,7 @@ export function InquiryForm({ onClose, selectedPackageId, selectedEventType }: I
         'response' in submitError &&
         typeof (submitError as { response?: { data?: { message?: string } } }).response?.data
           ?.message === 'string'
-          ? (submitError as { response?: { data?: { message?: string } } }).response?.data
-              ?.message
+          ? (submitError as { response?: { data?: { message?: string } } }).response?.data?.message
           : 'Failed to submit inquiry. Please try again.';
 
       setError(message ?? 'Failed to submit inquiry. Please try again.');

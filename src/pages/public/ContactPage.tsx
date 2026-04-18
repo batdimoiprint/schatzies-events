@@ -112,7 +112,8 @@ export default function ContactPage() {
                       Tagaytay Branch
                     </p>
                     <p className="mt-0.5 text-[0.75rem] text-[#4A1053] sm:text-[0.85rem] lg:text-[0.9rem]">
-                      Ministop bldg Marasigan st Tagaytay Nasugbu High way Brgy. Mendez, Tagaytay City, 4120 Cavite
+                      Ministop bldg Marasigan st Tagaytay Nasugbu High way Brgy. Mendez, Tagaytay
+                      City, 4120 Cavite
                     </p>
                   </div>
                 </div>
