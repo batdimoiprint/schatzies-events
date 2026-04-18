@@ -5,7 +5,94 @@ import {
   ChartBar,
   Download,
   Link as LinkIcon,
+  Bell,
+  Gear,
+  ChatCircle,
 } from '@phosphor-icons/react';
+
+const guestList = [
+  {
+    code: '001',
+    name: 'Juliana Rox Laurencio',
+    contact: '09876352675',
+    date: 'March 29, 2026 | 11:45 AM',
+    status: 'Confirmed',
+    note: false,
+    highlighted: false,
+  },
+  {
+    code: '002',
+    name: 'Sofia B. Villanueva',
+    contact: '09876352675',
+    date: 'March 29, 2026 | 01:20 PM',
+    status: 'Confirmed',
+    note: false,
+    highlighted: false,
+  },
+  {
+    code: '003',
+    name: 'Mateo Sebastian',
+    contact: '09876352675',
+    date: 'March 29, 2026 | 01:50 PM',
+    status: 'Confirmed',
+    note: false,
+    highlighted: false,
+  },
+  {
+    code: '004',
+    name: 'Beatriz "Bea" Lopez',
+    contact: '09876352675',
+    date: 'March 29, 2026 | 03:30 PM',
+    status: 'Declined',
+    note: false,
+    highlighted: true,
+  },
+  {
+    code: '005',
+    name: 'Dr. Ricardo Gomez',
+    contact: '09876352675',
+    date: 'March 29, 2026 | 06:20 PM',
+    status: 'Confirmed',
+    note: false,
+    highlighted: false,
+  },
+  {
+    code: '006',
+    name: 'Elena De Guzman',
+    contact: '09876352675',
+    date: 'March 29, 2026 | 11:45 PM',
+    status: 'Confirmed',
+    note: true,
+    highlighted: false,
+  },
+  {
+    code: '007',
+    name: 'Javier San Pedro',
+    contact: '09876352675',
+    date: 'March 30, 2026 | 08:40 AM',
+    status: 'Declined',
+    note: false,
+    highlighted: false,
+  },
+  {
+    code: '008',
+    name: 'Clara Isabel Torres',
+    contact: '09876352675',
+    date: 'March 30, 2026 | 11:45 AM',
+    status: 'Confirmed',
+    note: false,
+    highlighted: false,
+  },
+  {
+    code: '009',
+    name: 'Marcus Aurelio Tan',
+    contact: '09876352675',
+    date: 'March 30, 2026 | 05:25 PM',
+    status: 'Confirmed',
+    note: false,
+    highlighted: false,
+  },
+];
 
 type State = 'idle' | 'generated' | 'active';
 
@@ -32,7 +119,7 @@ export function QrCodePage() {
 
   return (
     <div className="flex h-full flex-col">
-      {/* â”€â”€ Header row: title + Create QR button â”€â”€ */}
+      {/* ── Header row: title + icons ── */}
       <div className="flex min-h-[6rem] items-start justify-between">
         <div>
           <h1 className="text-4xl font-extrabold tracking-tight text-[#2d2834]">RSVP Management</h1>
@@ -42,38 +129,49 @@ export function QrCodePage() {
         </div>
 
         {state === 'active' && (
-          <button
-            onClick={() => setState('idle')}
-            className="flex items-center gap-2 rounded-lg bg-[#E5E5E5] px-5 py-2.5 text-sm font-semibold text-gray-700 shadow-md transition hover:bg-gray-300 active:scale-95"
-          >
-            <PlusCircle weight="bold" size={18} />
-            Create QR Code
-          </button>
+          <div className="flex items-center gap-4 text-gray-600">
+            <Bell size={22} />
+            <img
+              src="/Pictures/organizerpics/Profile Picture.png"
+              alt="User avatar"
+              className="size-8 rounded-full object-cover"
+            />
+            <Gear size={22} />
+          </div>
         )}
       </div>
 
       {/* â”€â”€ Tabs (aligned with sidebar tagline) â”€â”€ */}
       {state === 'active' && (
-        <div className="mb-4 flex gap-6 border-b border-gray-200">
+        <div className="mb-6 flex items-end justify-between border-b border-gray-200">
+          <div className="flex gap-6">
+            <button
+              onClick={() => setActiveTab('overview')}
+              className={`pb-2 text-sm font-semibold transition ${
+                activeTab === 'overview'
+                  ? 'border-b-2 border-[#df2b80] text-[#df2b80]'
+                  : 'text-[#696373] hover:text-[#2d2834]'
+              }`}
+            >
+              Overview
+            </button>
+            <button
+              onClick={() => setActiveTab('guest-list')}
+              className={`pb-2 text-sm font-semibold transition ${
+                activeTab === 'guest-list'
+                  ? 'border-b-2 border-[#df2b80] text-[#df2b80]'
+                  : 'text-[#696373] hover:text-[#2d2834]'
+              }`}
+            >
+              Guest List
+            </button>
+          </div>
           <button
-            onClick={() => setActiveTab('overview')}
-            className={`pb-2 text-sm font-semibold transition ${
-              activeTab === 'overview'
-                ? 'border-b-2 border-[#df2b80] text-[#df2b80]'
-                : 'text-[#696373] hover:text-[#2d2834]'
-            }`}
+            onClick={() => setState('idle')}
+            className="mb-2 flex items-center gap-2 rounded-md bg-gray-200 px-5 py-2.5 text-sm font-semibold text-gray-700 shadow-md transition hover:bg-gray-300 active:scale-95"
           >
-            Overview
-          </button>
-          <button
-            onClick={() => setActiveTab('guest-list')}
-            className={`pb-2 text-sm font-semibold transition ${
-              activeTab === 'guest-list'
-                ? 'border-b-2 border-[#df2b80] text-[#df2b80]'
-                : 'text-[#696373] hover:text-[#2d2834]'
-            }`}
-          >
-            Guest List
+            <PlusCircle weight="bold" size={18} />
+            Create QR Code
           </button>
         </div>
       )}
@@ -215,10 +313,55 @@ export function QrCodePage() {
         </div>
       )}
 
-      {/* â”€â”€ STATE: Active â€” Guest List â”€â”€ */}
+      {/* ── STATE: Active – Guest List ── */}
       {state === 'active' && activeTab === 'guest-list' && (
-        <div className="flex flex-1 items-center justify-center rounded-xl border border-gray-100 bg-white p-8 shadow-sm">
-          <p className="text-sm font-semibold text-[#696373]">Guest list coming soon...</p>
+        <div className="rounded-xl bg-white shadow-md p-6">
+          {/* Container header */}
+          <div className="mb-4 flex items-center justify-between">
+            <h3 className="text-base font-bold text-[#2d2834]">Guest List Responses</h3>
+            <span className="text-sm font-bold text-gray-400">60/150</span>
+          </div>
+
+          {/* Column headers */}
+          <div className="mb-1 grid grid-cols-[80px_1fr_160px_230px_170px] gap-4 border-b border-gray-100 px-4 pb-3 text-xs font-semibold text-gray-500">
+            <span>Guest Code</span>
+            <span>Guest Name</span>
+            <span>Contact Number</span>
+            <span>Date Responded</span>
+            <span>Response</span>
+          </div>
+
+          {/* Rows */}
+          {guestList.map((guest, i) => (
+            <div
+              key={guest.code}
+              className={[
+                'grid grid-cols-[80px_1fr_160px_230px_170px] gap-4 px-4 py-3 items-center text-sm',
+                guest.highlighted
+                  ? 'relative z-10 rounded-md bg-white shadow-lg'
+                  : i % 2 === 0
+                    ? 'bg-white'
+                    : 'bg-[#FFF5F8]',
+              ].join(' ')}
+            >
+              <span className="text-gray-500">{guest.code}</span>
+              <span className="font-medium text-[#2d2834]">{guest.name}</span>
+              <span className="text-gray-600">{guest.contact}</span>
+              <span className="text-gray-600">{guest.date}</span>
+              <div className="flex items-center gap-2">
+                <span
+                  className={`rounded-full px-4 py-1 text-xs font-semibold ${
+                    guest.status === 'Confirmed'
+                      ? 'bg-green-100 text-green-800'
+                      : 'bg-red-200 text-red-700'
+                  }`}
+                >
+                  {guest.status}
+                </span>
+                {guest.note && <ChatCircle size={16} className="text-gray-400" />}
+              </div>
+            </div>
+          ))}
         </div>
       )}
     </div>

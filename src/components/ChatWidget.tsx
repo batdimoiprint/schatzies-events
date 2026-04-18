@@ -124,7 +124,9 @@ function SupportExtras({ extra }: { extra?: SupportExtra }) {
           <div key={packageItem.name} className="rounded-lg bg-white px-3 py-2">
             <div className="flex items-center justify-between gap-3">
               <span className="font-semibold text-gray-700">{packageItem.name}</span>
-              <span className="font-semibold text-[#700F81]">PHP {formatPrice(packageItem.starting_price)}</span>
+              <span className="font-semibold text-[#700F81]">
+                PHP {formatPrice(packageItem.starting_price)}
+              </span>
             </div>
           </div>
         ))}
@@ -153,7 +155,7 @@ export function ChatWidget() {
   const responseRef = useRef<HTMLDivElement | null>(null);
 
   const activeFaq = useMemo(
-    () => (activeFaqId === null ? null : faqs.find((faq) => faq.id === activeFaqId) ?? null),
+    () => (activeFaqId === null ? null : (faqs.find((faq) => faq.id === activeFaqId) ?? null)),
     [activeFaqId]
   );
 
@@ -181,7 +183,7 @@ export function ChatWidget() {
     <>
       {/* ── sCHATzies Chat Window ── */}
       {chatOpen && (
-          <div className="fixed bottom-14 left-3 right-3 z-[9999] flex max-h-[72vh] flex-col overflow-hidden rounded-2xl bg-white shadow-2xl sm:bottom-4 sm:left-auto sm:right-[120px] sm:w-[390px] sm:max-h-[68vh]">
+        <div className="fixed bottom-14 left-3 right-3 z-[9999] flex max-h-[72vh] flex-col overflow-hidden rounded-2xl bg-white shadow-2xl sm:bottom-4 sm:left-auto sm:right-[120px] sm:w-[390px] sm:max-h-[68vh]">
           {/* Header */}
           <div className="flex items-center gap-3 bg-gradient-to-r from-[#FF0066] to-[#700F81] px-5 py-4">
             <img
@@ -216,7 +218,7 @@ export function ChatWidget() {
           </div>
 
           {/* Chat Body */}
-            <div className="flex flex-1 flex-col overflow-y-auto px-5 py-5 sm:px-6 sm:py-5">
+          <div className="flex flex-1 flex-col overflow-y-auto px-5 py-5 sm:px-6 sm:py-5">
             {/* Welcome heading */}
             <h3 className="text-center text-xl font-bold text-[#FF0066]">Welcome to sCHATzies!</h3>
             <p className="mt-1 text-center text-sm text-gray-500">
@@ -226,25 +228,29 @@ export function ChatWidget() {
             </p>
 
             {/* Bot message */}
-              {activeFaq && (
-                <div ref={responseRef} className="mt-4 flex w-full items-start gap-2" aria-live="polite">
-                  <img
-                    src="/Pictures/business-logo.png"
-                    alt={supportContent.company}
-                    className="mt-1 h-7 w-7 rounded-full bg-white object-contain p-0.5 ring-1 ring-gray-200"
-                  />
-                  <div className="max-w-[calc(100%-2rem)] rounded-xl bg-gray-100 px-4 py-3 text-sm text-gray-700">
-                    <p className="text-[0.78rem] font-semibold uppercase tracking-wide text-[#700F81]">
-                      {activeFaq.question}
-                    </p>
-                    <p className="mt-1">{activeFaq.answer}</p>
-                    <SupportExtras extra={activeFaq.extra} />
-                  </div>
+            {activeFaq && (
+              <div
+                ref={responseRef}
+                className="mt-4 flex w-full items-start gap-2"
+                aria-live="polite"
+              >
+                <img
+                  src="/Pictures/business-logo.png"
+                  alt={supportContent.company}
+                  className="mt-1 h-7 w-7 rounded-full bg-white object-contain p-0.5 ring-1 ring-gray-200"
+                />
+                <div className="max-w-[calc(100%-2rem)] rounded-xl bg-gray-100 px-4 py-3 text-sm text-gray-700">
+                  <p className="text-[0.78rem] font-semibold uppercase tracking-wide text-[#700F81]">
+                    {activeFaq.question}
+                  </p>
+                  <p className="mt-1">{activeFaq.answer}</p>
+                  <SupportExtras extra={activeFaq.extra} />
                 </div>
-              )}
+              </div>
+            )}
 
             {/* Quick-reply buttons */}
-              <div className="mt-4 flex w-full flex-col gap-2 pr-1">
+            <div className="mt-4 flex w-full flex-col gap-2 pr-1">
               {faqs.map((faq) => (
                 <button
                   key={faq.id}
