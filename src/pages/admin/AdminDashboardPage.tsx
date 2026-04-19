@@ -1,4 +1,3 @@
-
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
@@ -134,7 +133,9 @@ function DashboardMetricCard({
           <img src={iconImage} alt={title} className="size-5 object-contain" />
         </div>
         <div className="space-y-1">
-          <p className="max-w-40 text-[11px] font-bold uppercase tracking-wide opacity-95">{title}</p>
+          <p className="max-w-40 text-[11px] font-bold uppercase tracking-wide opacity-95">
+            {title}
+          </p>
           <div className="flex items-end justify-between gap-3">
             <p className="text-4xl font-black leading-none">{value}</p>
             <p className="pb-1 text-[11px] font-semibold opacity-80">{caption}</p>
@@ -151,7 +152,10 @@ function ScheduleListCard({ title, entries }: { title: string; entries: AdminLis
       <CardHeader className="pt-10 px-6 pb-4">
         <div className="flex items-center justify-between gap-2">
           <CardTitle className="text-lg font-bold text-[#4a4a4a] font-sans">{title}</CardTitle>
-          <Button className="h-8 px-4 rounded-full bg-[#ff7eb3] text-white hover:bg-[#ff6aa5] transition-colors" size="sm">
+          <Button
+            className="h-8 px-4 rounded-full bg-[#ff7eb3] text-white hover:bg-[#ff6aa5] transition-colors"
+            size="sm"
+          >
             <span className="text-xs font-bold">View List</span>
           </Button>
         </div>
@@ -160,15 +164,24 @@ function ScheduleListCard({ title, entries }: { title: string; entries: AdminLis
         <div className="max-h-96 overflow-y-auto scrollbar-thin scrollbar-thumb-[#e8e0eb] scrollbar-track-transparent pt-3">
           <div className="divide-y divide-[#f0edf4]">
             {entries.map((entry) => (
-              <div key={`${entry.rank}-${entry.title}`} className="flex items-center justify-between gap-4 bg-white px-5 py-4 hover:bg-[#fafafa] transition-colors">
+              <div
+                key={`${entry.rank}-${entry.title}`}
+                className="flex items-center justify-between gap-4 bg-white px-5 py-4 hover:bg-[#fafafa] transition-colors"
+              >
                 <div className="flex items-center gap-4 flex-1 min-w-0">
-                  <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-linear-to-br from-[#f456a4] to-[#e846b4] text-sm font-black text-white">{entry.rank}</div>
+                  <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-linear-to-br from-[#f456a4] to-[#e846b4] text-sm font-black text-white">
+                    {entry.rank}
+                  </div>
                   <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm font-bold text-[#36303f] font-sans">{entry.title}</p>
+                    <p className="truncate text-sm font-bold text-[#36303f] font-sans">
+                      {entry.title}
+                    </p>
                     <p className="truncate text-xs text-[#a8a0b3]">{entry.subtitle}</p>
                   </div>
                 </div>
-                <p className="shrink-0 text-[10px] font-semibold text-[#d0c8db] whitespace-nowrap">{entry.date}</p>
+                <p className="shrink-0 text-[10px] font-semibold text-[#d0c8db] whitespace-nowrap">
+                  {entry.date}
+                </p>
               </div>
             ))}
           </div>
@@ -187,21 +200,47 @@ export function AdminDashboardPage() {
             <CardContent className="relative overflow-hidden rounded-3xl bg-linear-to-r from-[#51a3f0] via-[#3b7cde] to-[#1f4ad0] p-8 text-white md:pr-72">
               <div className="max-w-md">
                 <h3 className="font-heading text-6xl font-bold leading-[1.1]">Welcome Admin!</h3>
-                <p className="mt-3 text-base font-semibold text-white/90">Here is an overview of the platform's performance.</p>
+                <p className="mt-3 text-base font-semibold text-white/90">
+                  Here is an overview of the platform's performance.
+                </p>
                 <p className="text-base font-semibold text-white/90">Monitor, manage, and grow.</p>
-                <Button variant="secondary" className="mt-6 rounded-full bg-white px-6 py-2 text-xs font-black uppercase tracking-wide text-[#2a4a6b] hover:bg-white/90">View Reports</Button>
+                <Button
+                  variant="secondary"
+                  className="mt-6 rounded-full bg-white px-6 py-2 text-xs font-black uppercase tracking-wide text-[#2a4a6b] hover:bg-white/90"
+                >
+                  View Reports
+                </Button>
               </div>
-              <img src="/Pictures/organizerpics/dashboard-banner.png.png" alt="Admin dashboard banner" className="pointer-events-none absolute -bottom-12 right-0 hidden w-80 drop-shadow-[0_16px_22px_rgba(21,69,111,0.35)] md:block" />
+              <img
+                src="/Pictures/organizerpics/dashboard-banner.png.png"
+                alt="Admin dashboard banner"
+                className="pointer-events-none absolute -bottom-12 right-0 hidden w-80 drop-shadow-[0_16px_22px_rgba(21,69,111,0.35)] md:block"
+              />
             </CardContent>
           </Card>
 
           <div className="mb-6 flex items-center justify-between gap-2">
             <div>
-              <h3 className="text-3xl font-black leading-none text-[#2e2837]" style={{ fontFamily: 'Source Sans Pro, sans-serif' }}>Key Performance Index</h3>
-              <p className="mt-1 text-xs font-semibold text-[#8f879f]" style={{ fontFamily: 'Montserrat, sans-serif' }}>Evaluation of users, events, and organizers</p>
+              <h3
+                className="text-3xl font-black leading-none text-[#2e2837]"
+                style={{ fontFamily: 'Source Sans Pro, sans-serif' }}
+              >
+                Key Performance Index
+              </h3>
+              <p
+                className="mt-1 text-xs font-semibold text-[#8f879f]"
+                style={{ fontFamily: 'Montserrat, sans-serif' }}
+              >
+                Evaluation of users, events, and organizers
+              </p>
             </div>
-            <Button className="rounded-[10px] border-0 bg-white px-4 py-1.5 text-xs font-semibold text-[#717171] shadow-[0_4px_4px_rgba(0,0,0,0.05)] hover:bg-white/95 flex items-center gap-1">Monthly
-              <img src="/Pictures/organizerpics/dropdown.png" alt="dropdown" className="w-1.5 h-1.5" />
+            <Button className="rounded-[10px] border-0 bg-white px-4 py-1.5 text-xs font-semibold text-[#717171] shadow-[0_4px_4px_rgba(0,0,0,0.05)] hover:bg-white/95 flex items-center gap-1">
+              Monthly
+              <img
+                src="/Pictures/organizerpics/dropdown.png"
+                alt="dropdown"
+                className="w-1.5 h-1.5"
+              />
             </Button>
           </div>
 
@@ -214,7 +253,9 @@ export function AdminDashboardPage() {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
             <Card className="shadow-sm border-[#e8e4ed]">
               <CardHeader>
-                <CardTitle className="text-lg font-bold text-[#4a4a4a]">Semi-annual Event Trends</CardTitle>
+                <CardTitle className="text-lg font-bold text-[#4a4a4a]">
+                  Semi-annual Event Trends
+                </CardTitle>
               </CardHeader>
               <CardContent className="h-64">
                 <ResponsiveContainer width="100%" height="100%">
@@ -231,7 +272,9 @@ export function AdminDashboardPage() {
 
             <Card className="shadow-sm border-[#e8e4ed]">
               <CardHeader>
-                <CardTitle className="text-lg font-bold text-[#4a4a4a]">Monthly Status Breakdown</CardTitle>
+                <CardTitle className="text-lg font-bold text-[#4a4a4a]">
+                  Monthly Status Breakdown
+                </CardTitle>
               </CardHeader>
               <CardContent className="h-64 flex items-center justify-center">
                 <ResponsiveContainer width="100%" height="100%">
