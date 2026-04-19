@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Badge } from '@/components/ui/badge';
-import { Calendar as CalendarIcon, CheckCircle2, Clock3, MessageSquareText} from 'lucide-react';
+import { Calendar as CalendarIcon, Check, CheckCircle2, Clock3, Copy, Eye, EyeOff, MessageSquareText } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { getInquiries, updateInquiryStatus, scheduleInquiryMeeting } from '@/api/inquiries';
-import { getOrganizerUsers } from '@/api/users';
+import { createUser, getOrganizerUsers } from '@/api/users';
 
 export function AdminInquiriesPage() {
   const [inquiries, setInquiries] = useState<any[]>([]);
@@ -24,6 +24,12 @@ export function AdminInquiriesPage() {
   const [scheduleError, setScheduleError] = useState('');
   const [selectedMeetingOrganizerId, setSelectedMeetingOrganizerId] = useState('');
   const [isUpdatingMeetingOrganizer, setIsUpdatingMeetingOrganizer] = useState(false);
+  const [isCreatingAccount, setIsCreatingAccount] = useState(false);
+  const [accountCreateError, setAccountCreateError] = useState('');
+  const [accountCreateSuccess, setAccountCreateSuccess] = useState('');
+  const [createdAccounts, setCreatedAccounts] = useState<Record<string, { password: string; createdAt: string }>>({});
+  const [showPasswordByInquiry, setShowPasswordByInquiry] = useState<Record<string, boolean>>({});
+  const [copiedInquiryId, setCopiedInquiryId] = useState('');
 
   const todayKey = new Date().toISOString().split('T')[0];
   const [draftEntry, setDraftEntry] = useState({
@@ -174,8 +180,14 @@ export function AdminInquiriesPage() {
   const handleViewDetails = (inquiry: any) => {
     setSelectedInquiry(inquiry);
     setSelectedMeetingOrganizerId(inquiry?.meetingDetails?.organizerId || '');
+    setAccountCreateError('');
+    setAccountCreateSuccess('');
+    setCopiedInquiryId('');
     setIsDialogOpen(true);
   };
+
+  const getInquiryKey = (inquiry: any) =>
+    String(inquiry?.id || inquiry?._id || inquiry?.email || '').trim();
 
   const getOrganizerLabel = (organizerId: string) => {
     if (!organizerId) return 'Unassigned';
@@ -297,6 +309,88 @@ export function AdminInquiriesPage() {
       setIsUpdatingMeetingOrganizer(false);
     }
   };
+
+  const generateRandomPassword = (length = 12) => {
+    const charset = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789!@#$%';
+    const randomValues = new Uint32Array(length);
+    crypto.getRandomValues(randomValues);
+
+    return Array.from(randomValues, (value) => charset[value % charset.length]).join('');
+  };
+
+  const handleCreateUserAccount = async () => {
+    if (!selectedInquiry) return;
+
+    const inquiryKey = getInquiryKey(selectedInquiry);
+    if (inquiryKey && createdAccounts[inquiryKey]) {
+      setAccountCreateError('');
+      setAccountCreateSuccess('An account for this inquiry was already created in this session.');
+      return;
+    }
+
+    const email = String(selectedInquiry.email || '').trim();
+    if (!email) {
+      setAccountCreateError('Inquiry has no email address to use for account creation.');
+      setAccountCreateSuccess('');
+      return;
+    }
+
+    const generatedPassword = generateRandomPassword();
+
+    try {
+      setIsCreatingAccount(true);
+      setAccountCreateError('');
+      setAccountCreateSuccess('');
+
+      await createUser({
+        firstName: selectedInquiry.firstName || 'Client',
+        lastName: selectedInquiry.lastName || 'User',
+        email,
+        password: generatedPassword,
+        contactNumber: selectedInquiry.contactNumber || '',
+        role: 'CLIENT',
+      });
+
+      if (inquiryKey) {
+        setCreatedAccounts((prev) => ({
+          ...prev,
+          [inquiryKey]: {
+            password: generatedPassword,
+            createdAt: new Date().toISOString(),
+          },
+        }));
+        setShowPasswordByInquiry((prev) => ({ ...prev, [inquiryKey]: false }));
+      }
+
+      setAccountCreateSuccess('Account created successfully.');
+    } catch (error: any) {
+      const serverMessage =
+        error?.response?.data?.error ||
+        error?.response?.data?.message ||
+        'Unable to create account right now. Please try again.';
+      setAccountCreateError(String(serverMessage));
+      setAccountCreateSuccess('');
+    } finally {
+      setIsCreatingAccount(false);
+    }
+  };
+
+  const handleCopyPassword = async (inquiryKey: string, password: string) => {
+    try {
+      await navigator.clipboard.writeText(password);
+      setCopiedInquiryId(inquiryKey);
+      setTimeout(() => {
+        setCopiedInquiryId((current) => (current === inquiryKey ? '' : current));
+      }, 1500);
+    } catch {
+      setAccountCreateError('Unable to copy password. Please copy it manually.');
+    }
+  };
+
+  const selectedInquiryKey = selectedInquiry ? getInquiryKey(selectedInquiry) : '';
+  const createdAccount = selectedInquiryKey ? createdAccounts[selectedInquiryKey] : null;
+  const isPasswordVisible = selectedInquiryKey ? Boolean(showPasswordByInquiry[selectedInquiryKey]) : false;
+  const isCopied = selectedInquiryKey ? copiedInquiryId === selectedInquiryKey : false;
 
   return (
     <div className="space-y-6 p-4 ">
@@ -586,6 +680,69 @@ export function AdminInquiriesPage() {
                     </Button>
                   </div>
                 )}
+
+                <div className="mt-4 rounded-lg border border-[#eadcf7] bg-white p-3">
+                  <p className="text-xs font-black uppercase tracking-[0.08em] text-[#6f2ea8]">
+                    Client Account
+                  </p>
+                  <p className="mt-1 text-xs text-[#6a5a83]">
+                    Create a login account for this inquiry using the submitted email.
+                  </p>
+                  <Button
+                    type="button"
+                    onClick={handleCreateUserAccount}
+                    disabled={isCreatingAccount || !selectedInquiry?.email || Boolean(createdAccount)}
+                    className="mt-3 w-full bg-linear-to-r from-[#f347a5] to-[#8f1fd1] text-white hover:brightness-105"
+                  >
+                    {isCreatingAccount ? 'Creating Account...' : createdAccount ? 'Account Created' : 'Create User Account'}
+                  </Button>
+
+                  {createdAccount ? (
+                    <div className="mt-3 space-y-2 rounded-md border border-[#e5dbef] bg-[#faf7ff] p-2.5">
+                      <p className="text-xs font-semibold text-[#5b4f71]">Temporary Password</p>
+                      <div className="flex items-center gap-2">
+                        <Input
+                          readOnly
+                          value={isPasswordVisible ? createdAccount.password : '•'.repeat(Math.max(createdAccount.password.length, 8))}
+                          className="h-9 border-[#ddd8e8] bg-white text-xs font-semibold text-[#4c455e]"
+                        />
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={() =>
+                            setShowPasswordByInquiry((prev) => ({
+                              ...prev,
+                              [selectedInquiryKey]: !isPasswordVisible,
+                            }))
+                          }
+                          className="h-9 border-[#ddd8e8] px-2"
+                        >
+                          {isPasswordVisible ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={() => handleCopyPassword(selectedInquiryKey, createdAccount.password)}
+                          className="h-9 border-[#ddd8e8] px-2"
+                        >
+                          {isCopied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                        </Button>
+                      </div>
+                    </div>
+                  ) : null}
+
+                  {accountCreateError ? (
+                    <p className="mt-2 text-xs font-semibold text-[#c33274]" role="alert">
+                      {accountCreateError}
+                    </p>
+                  ) : null}
+
+                  {accountCreateSuccess ? (
+                    <p className="mt-2 text-xs font-semibold text-emerald-700" role="status">
+                      {accountCreateSuccess}
+                    </p>
+                  ) : null}
+                </div>
               </div>
             </div>
           )}
