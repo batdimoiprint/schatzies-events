@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { useOutletContext } from 'react-router-dom';
+import { useLocation, useOutletContext } from 'react-router-dom';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import type { OrganizerLayoutOutletContext } from '@/components/layouts/OrganizerLayout';
@@ -137,11 +137,15 @@ function getVendorStatusBadgeClasses(status: VendorStatus) {
 }
 
 export function EventManagerPage() {
+  const location = useLocation();
   const { searchTerm } = useOutletContext<OrganizerLayoutOutletContext>();
-  const [activeTab, setActiveTab] = useState<'Events' | 'Vendor'>('Events');
+  const [activeTab, setActiveTab] = useState<'Events' | 'Vendor'>(
+    location.state?.activeTab || 'Events'
+  );
   const [events, setEvents] = useState(eventTableData);
   const [vendors, setVendors] = useState(initialVendorData);
 
+  //sa API ng backend here, pa check if tama hehe
   /*
   useEffect(() => {
     async function fetchDashboardData() {

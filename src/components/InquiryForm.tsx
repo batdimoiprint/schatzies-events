@@ -1,11 +1,13 @@
 import { useState } from 'react';
 import LoadingScreen from '@/components/ui/LoadingScreen';
+import { submitInquiry } from '@/api/inquiries';
 import { getPackageById, getPackagesByType } from '@/data/packages';
 import { User, Utensils, Scissors, Video, Eye } from 'lucide-react';
 
 const eventTypes = ['Wedding', 'Debut'];
 
-const paxOptions = ['50', '100', '150', '200', '300+'];
+const defaultPaxOptions = ['100', '150', '200'];
+const bloomsPaxOptions = ['50', '100', '150', '200'];
 
 /* ── shared styling tokens ── */
 const fieldBase =
@@ -60,6 +62,7 @@ interface InquiryFormProps {
 export function InquiryForm({ onClose, selectedPackageId, selectedEventType }: InquiryFormProps) {
   const [submitted, setSubmitted] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [showTerms, setShowTerms] = useState(false);
   const [termsAccepted, setTermsAccepted] = useState(false);
   const [showPackageDetails, setShowPackageDetails] = useState(false);
@@ -103,13 +106,28 @@ export function InquiryForm({ onClose, selectedPackageId, selectedEventType }: I
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
   ) => {
     const { name, value } = e.target;
+
+    if (name === 'contactNumber') {
+      const digitsOnly = value.replace(/\D/g, '').replace(/^0+/, '').slice(0, 10);
+
+      setForm((prev) => ({
+        ...prev,
+        contactNumber: digitsOnly,
+      }));
+
+      return;
+    }
+
     setForm((prev) => ({
       ...prev,
       [name]: value,
       // Reset package when event type changes
-      ...(name === 'eventType' ? { eventPackage: '' } : {}),
+      ...(name === 'eventType' ? { eventPackage: '', eventPax: '' } : {}),
+      ...(name === 'eventPackage' ? { eventPax: '' } : {}),
     }));
   };
+
+  const selectedPaxOptions = form.eventPackage === 'Blooms' ? bloomsPaxOptions : defaultPaxOptions;
 
   // Pick packages based on selected event type
   const packageOptions = form.eventType
@@ -118,6 +136,7 @@ export function InquiryForm({ onClose, selectedPackageId, selectedEventType }: I
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError(null);
 
     // Validate terms acceptance
     if (!termsAccepted) {
@@ -125,18 +144,38 @@ export function InquiryForm({ onClose, selectedPackageId, selectedEventType }: I
       return;
     }
 
-    // Start loading
     setIsLoading(true);
 
-    // Simulate API call (replace with actual API call)
-    await new Promise((resolve) => setTimeout(resolve, 2000));
+    try {
+      await submitInquiry({
+        firstName: form.firstName.trim(),
+        lastName: form.lastName.trim(),
+        middleName: form.middleName.trim() || undefined,
+        email: form.email.trim(),
+        contactNumber: `+63${form.contactNumber.trim()}`,
+        date: form.eventDate,
+        eventType: form.eventType,
+        eventPackage: form.eventPackage,
+        eventPax: Number.parseInt(form.eventPax, 10),
+        message: form.message.trim() || undefined,
+      });
 
-    // TODO: wire up to backend API
-    console.log('Inquiry submitted:', form);
+      setSubmitted(true);
+    } catch (submitError) {
+      const message =
+        typeof submitError === 'object' &&
+        submitError !== null &&
+        'response' in submitError &&
+        typeof (submitError as { response?: { data?: { message?: string } } }).response?.data
+          ?.message === 'string'
+          ? (submitError as { response?: { data?: { message?: string } } }).response?.data?.message
+          : 'Failed to submit inquiry. Please try again.';
 
-    // Stop loading and show success
-    setIsLoading(false);
-    setSubmitted(true);
+      setError(message ?? 'Failed to submit inquiry. Please try again.');
+      console.error('Error submitting inquiry:', submitError);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -511,6 +550,11 @@ export function InquiryForm({ onClose, selectedPackageId, selectedEventType }: I
 
               {/* Scrollable form body */}
               <div className="flex-1 overflow-y-auto px-4 pb-4 sm:px-7 sm:pb-6">
+                {error && (
+                  <div className="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600">
+                    {error}
+                  </div>
+                )}
                 <form onSubmit={handleSubmit} className="space-y-5">
                   {/* ── Personal Details ── */}
                   <section>
@@ -566,15 +610,22 @@ export function InquiryForm({ onClose, selectedPackageId, selectedEventType }: I
                           />
                         </Field>
                         <Field required>
-                          <input
-                            type="tel"
-                            name="contactNumber"
-                            placeholder="Contact Number"
-                            value={form.contactNumber}
-                            onChange={handleChange}
-                            required
-                            className={fieldBase}
-                          />
+                          <div className="flex items-stretch overflow-hidden rounded-lg bg-[#e8e8e8] focus-within:ring-2 focus-within:ring-[#3d2052]/25">
+                            <span className="flex items-center border-r border-gray-300 px-3 text-[0.85rem] font-medium text-gray-600">
+                              +63
+                            </span>
+                            <input
+                              type="tel"
+                              name="contactNumber"
+                              inputMode="numeric"
+                              placeholder="9XXXXXXXXX"
+                              value={form.contactNumber}
+                              onChange={handleChange}
+                              required
+                              maxLength={10}
+                              className="h-11 w-full border-0 bg-transparent px-4 text-[0.85rem] text-gray-700 outline-none placeholder:text-gray-400 [color-scheme:light]"
+                            />
+                          </div>
                         </Field>
                       </div>
                     </div>
@@ -656,12 +707,13 @@ export function InquiryForm({ onClose, selectedPackageId, selectedEventType }: I
                             value={form.eventPax}
                             onChange={handleChange}
                             required
-                            className={selectBase}
+                            disabled={!form.eventPackage}
+                            className={`${selectBase} ${!form.eventPackage ? 'opacity-60 cursor-not-allowed' : ''}`}
                           >
                             <option value="" disabled hidden>
-                              Event Pax
+                              {!form.eventPackage ? 'Select Event Package First' : 'Event Pax'}
                             </option>
-                            {paxOptions.map((p) => (
+                            {selectedPaxOptions.map((p) => (
                               <option key={p} value={p}>
                                 {p}
                               </option>

@@ -86,7 +86,7 @@ export default function ContactPage() {
                       Quezon City Branch
                     </p>
                     <p className="mt-0.5 text-[0.75rem] text-[#4A1053] sm:text-[0.85rem] lg:text-[0.9rem]">
-                      123 QC Avenue, Quezon City
+                      27, Novaliches, Mendoza Village, Project 8, Quezon City, Metro Manila
                     </p>
                   </div>{' '}
                   {/* closes inner flex container */}
@@ -112,7 +112,8 @@ export default function ContactPage() {
                       Tagaytay Branch
                     </p>
                     <p className="mt-0.5 text-[0.75rem] text-[#4A1053] sm:text-[0.85rem] lg:text-[0.9rem]">
-                      456 Tagaytay Ridge, Tagaytay City
+                      Ministop bldg Marasigan st Tagaytay Nasugbu High way Brgy. Mendez, Tagaytay
+                      City, 4120 Cavite
                     </p>
                   </div>
                 </div>
@@ -186,7 +187,7 @@ export default function ContactPage() {
                       Email
                     </p>
                     <p className="mt-0.5 text-[0.75rem] text-[#4A1053] sm:text-[0.85rem] lg:text-[0.9rem]">
-                      info@schatziesevents.com
+                      schatziesevents@gmail.com
                     </p>
                   </div>
                 </div>
@@ -217,7 +218,7 @@ export default function ContactPage() {
                       Facebook
                     </p>
                     <p className="mt-0.5 text-[0.75rem] text-[#4A1053] sm:text-[0.85rem] lg:text-[0.9rem]">
-                      @schatziesevents
+                      Schatzies Events PH
                     </p>
                   </div>
                 </div>
