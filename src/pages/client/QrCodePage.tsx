@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+﻿import { useState, useEffect } from 'react';
 import {
   PlusCircle,
   CheckCircle,
@@ -12,7 +12,6 @@ import {
 import { generateRSVPQRCode, downloadQRCode } from '@/lib/qrCodeGenerator';
 import { getAllEvents } from '@/lib/rsvpStorage';
 import LoadingScreen from '@/components/ui/LoadingScreen';
-import type { EventData } from '@/types/rsvp';
 
 const guestList = [
   {
@@ -106,13 +105,11 @@ export function QrCodePage() {
   const [qrCode, setQrCode] = useState<string>('');
   const [currentQRId, setCurrentQRId] = useState<string>('');
   const [isLoading, setIsLoading] = useState(false); // Changed from 'loading' to 'isLoading' to match the pattern
-  const [events, setEvents] = useState<EventData[]>([]);
   const [selectedEventId, setSelectedEventId] = useState<string>('');
   const [copied, setCopied] = useState(false);
 
   useEffect(() => {
     const loadedEvents = getAllEvents();
-    setEvents(loadedEvents);
     if (loadedEvents.length > 0) {
       setSelectedEventId(loadedEvents[0].id);
     }
@@ -163,34 +160,15 @@ export function QrCodePage() {
           </p>
         </div>
 
-        {state === 'active' && (
-          <div className="flex items-center gap-4 text-gray-600">
-            <Bell size={22} />
-            <img
-              src="/Pictures/organizerpics/Profile Picture.png"
-              alt="User avatar"
-              className="size-8 rounded-full object-cover"
-            />
-            <Gear size={22} />
-          </div>
-        )}
-      </div>
-
-      {/* Event Selector - Always visible to select which event to generate QR for */}
-      <div className="mb-6 flex items-center gap-4">
-        <label className="text-sm font-semibold text-[#2d2834]">Select Event to Generate QR:</label>
-        <select
-          value={selectedEventId}
-          onChange={(e) => setSelectedEventId(e.target.value)}
-          className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-semibold text-[#2d2834]"
-          disabled={isLoading}
-        >
-          {events.map((event) => (
-            <option key={event.id} value={event.id}>
-              {event.title}
-            </option>
-          ))}
-        </select>
+        <div className="flex items-center gap-4 text-gray-600">
+          <Bell size={22} />
+          <img
+            src="/Pictures/organizerpics/Profile Picture.png"
+            alt="User avatar"
+            className="size-8 rounded-full object-cover"
+          />
+          <Gear size={22} />
+        </div>
       </div>
 
       {/* ── Tabs (aligned with sidebar tagline) ── */}

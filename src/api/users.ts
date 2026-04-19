@@ -55,7 +55,10 @@ export const createUser = async (payload: UserPayload): Promise<UserResponse> =>
   return response.data.user;
 };
 
-export const updateUser = async (userId: string, payload: Partial<UserPayload>): Promise<UserResponse> => {
+export const updateUser = async (
+  userId: string,
+  payload: Partial<UserPayload>
+): Promise<UserResponse> => {
   const response = await axiosInstance.put(`/users/${userId}`, payload);
   return response.data.user;
 };

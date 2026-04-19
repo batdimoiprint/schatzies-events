@@ -73,11 +73,11 @@ const router = createBrowserRouter([
         path: 'forgot-password',
         Component: ForgotPasswordPage,
       },
-      {
-        path: 'rsvp',
-        Component: RSVPPage,
-      },
     ],
+  },
+  {
+    path: 'rsvp',
+    Component: RSVPPage,
   },
   {
     path: 'admin',

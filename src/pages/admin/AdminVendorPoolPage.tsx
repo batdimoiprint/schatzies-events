@@ -5,11 +5,46 @@ import { Briefcase, Search, Star } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 
 const mockVendors = [
-  { id: 1, name: 'Creative Caterers', category: 'Food & Beverage', rating: 4.8, status: 'Available', eventsDone: 112 },
-  { id: 2, name: 'Lens Magic Studio', category: 'Photography', rating: 4.9, status: 'Booked', eventsDone: 84 },
-  { id: 3, name: 'Floral Essence', category: 'Decorations', rating: 4.6, status: 'Available', eventsDone: 230 },
-  { id: 4, name: 'Sound & Soul', category: 'Audio/Visual', rating: 4.7, status: 'Available', eventsDone: 156 },
-  { id: 5, name: 'Royal Rides', category: 'Transportation', rating: 4.5, status: 'Available', eventsDone: 45 },
+  {
+    id: 1,
+    name: 'Creative Caterers',
+    category: 'Food & Beverage',
+    rating: 4.8,
+    status: 'Available',
+    eventsDone: 112,
+  },
+  {
+    id: 2,
+    name: 'Lens Magic Studio',
+    category: 'Photography',
+    rating: 4.9,
+    status: 'Booked',
+    eventsDone: 84,
+  },
+  {
+    id: 3,
+    name: 'Floral Essence',
+    category: 'Decorations',
+    rating: 4.6,
+    status: 'Available',
+    eventsDone: 230,
+  },
+  {
+    id: 4,
+    name: 'Sound & Soul',
+    category: 'Audio/Visual',
+    rating: 4.7,
+    status: 'Available',
+    eventsDone: 156,
+  },
+  {
+    id: 5,
+    name: 'Royal Rides',
+    category: 'Transportation',
+    rating: 4.5,
+    status: 'Available',
+    eventsDone: 45,
+  },
 ];
 
 export function AdminVendorPoolPage() {
@@ -18,12 +53,17 @@ export function AdminVendorPoolPage() {
       <div className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
         <div>
           <h1 className="text-3xl font-black text-[#2e2837]">Vendor Pool</h1>
-          <p className="font-semibold text-[#8f879f]">Manage and track your outsourced event vendors</p>
+          <p className="font-semibold text-[#8f879f]">
+            Manage and track your outsourced event vendors
+          </p>
         </div>
         <div className="flex gap-3">
           <div className="relative w-64">
             <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-            <Input placeholder="Search vendors..." className="pl-8 bg-white border-none shadow-sm" />
+            <Input
+              placeholder="Search vendors..."
+              className="pl-8 bg-white border-none shadow-sm"
+            />
           </div>
           <Button className="bg-[#ff7eb3] hover:bg-[#ff6aa5] text-white">Add Vendor</Button>
         </div>
@@ -41,7 +81,10 @@ export function AdminVendorPoolPage() {
                   </div>
                   <p className="text-sm font-semibold text-muted-foreground">{vendor.category}</p>
                 </div>
-                <Badge variant={vendor.status === 'Available' ? 'default' : 'secondary'} className={vendor.status === 'Available' ? 'bg-[#29bf4c] hover:bg-[#23a542]' : ''}>
+                <Badge
+                  variant={vendor.status === 'Available' ? 'default' : 'secondary'}
+                  className={vendor.status === 'Available' ? 'bg-[#29bf4c] hover:bg-[#23a542]' : ''}
+                >
                   {vendor.status}
                 </Badge>
               </div>

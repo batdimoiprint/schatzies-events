@@ -196,7 +196,9 @@ export function AdminInquiriesPage() {
     <div className="p-6 space-y-6">
       <div className="flex flex-col gap-2">
         <h1 className="text-3xl font-black text-[#2e2837]">Client Inquiries</h1>
-        <p className="font-semibold text-[#8f879f]">Monitor and respond to incoming event requests</p>
+        <p className="font-semibold text-[#8f879f]">
+          Monitor and respond to incoming event requests
+        </p>
       </div>
 
       <div className="bg-white rounded-lg border shadow-sm">
