@@ -32,8 +32,8 @@ import { QrCodePage } from '@/pages/client/QrCodePage';
 import { CalendarPage } from '@/pages/organizer/CalendarPage';
 import { EventPlannerPage } from '@/pages/organizer/EventPlannerPage';
 import { EventManagerPage } from '@/pages/organizer/EventManagerPage';
-import { RSVPPage } from '@/pages/client/RSVPPage';
 import { CostBreakdownPage } from '@/pages/organizer/CostBreakdownPage';
+import { RSVPPage } from '@/pages/client/RSVPPage';
 import { InvitationPage } from '@/pages/public/InvitationPage';
 
 const router = createBrowserRouter([
