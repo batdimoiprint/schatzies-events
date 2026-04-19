@@ -143,6 +143,13 @@ const calendarMonths = [
   'December',
 ];
 
+const calendarLegend = [
+  { label: 'Task', color: 'bg-[#e2c341]' },
+  { label: 'Meeting', color: 'bg-[#9740d0]' },
+  { label: 'Reminder', color: 'bg-[#e54e9d]' },
+  { label: 'Event Day', color: 'bg-[#3b28cc]' },
+];
+
 function isSameCalendarDay(left: Date | null, right: Date) {
   if (!left) return false;
 
@@ -744,12 +751,43 @@ export function OrganizerDashboard() {
                                 : 'text-[#9b8fa8] font-semibold border-transparent hover:bg-[#f4eff8]',
                           ].join(' ')}
                         >
-                          {day}
+                          <div className="flex flex-col items-center justify-center gap-[2px]">
+                            <span>{day}</span>
+                            {/* Calendar mini eto then yung sa may Legend na 4 so may Temporary Simulation: Add a purple 'Meeting' dot every 5th day, and a yellow 'Task' dot on the 12th, then dito nyo alisin y ung logic na day % 5 === 0 || day === 12. for API integration */}
+                            {day % 5 === 0 || day === 12 ? (
+                              <span
+                                className={`size-1.5 rounded-full ${day === 12 ? 'bg-[#e2c341]' : 'bg-[#9740d0]'}`}
+                              />
+                            ) : (
+                              <span className="size-1.5" />
+                            )}
+                          </div>
                         </button>
                       </div>
                     );
                   })}
                 </div>
+              </div>
+
+              <div className="mt-4 flex flex-wrap items-center justify-center gap-3 sm:gap-4">
+                {calendarLegend.map((item) => (
+                  <div key={item.label} className="flex items-center gap-1.5">
+                    <div
+                      className={`flex size-4 items-center justify-center rounded-md ${item.color}`}
+                    >
+                      <svg
+                        className="size-2.5 text-white"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                        strokeWidth={3}
+                      >
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                      </svg>
+                    </div>
+                    <span className="text-xs font-semibold text-[#4f4a56]">{item.label}</span>
+                  </div>
+                ))}
               </div>
             </CardContent>
           </Card>
