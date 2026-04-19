@@ -27,10 +27,6 @@ export function AdminLayout() {
         </aside>
 
         <div className="flex min-h-0 flex-1 flex-col">
-          <header className="flex items-start justify-between border-b border-[#e2deea] bg-[#f6f5f8] px-4 py-5 md:px-8">
-            {/* Add header content if needed */}
-          </header>
-
           <main className="min-h-0 flex-1 overflow-y-auto px-4 py-6 md:px-8">
             <Outlet />
           </main>

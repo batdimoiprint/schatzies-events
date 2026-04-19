@@ -10,7 +10,6 @@ import {
   Briefcase,
   UsersRound,
   MessageSquare,
-  Bell,
   LogOut,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -19,15 +18,14 @@ import { useAuth } from '@/hooks/useAuth';
 
 const adminNavItems = [
   { label: 'Dashboard', to: '/admin', icon: LayoutDashboard },
-  { label: 'Calendar', to: '/admin/calendar', icon: Calendar },
+  { label: 'Inquiries', to: '/admin/inquiries', icon: MessageSquare },
   { label: 'Event Manager', to: '/admin/event-manager', icon: CalendarCheck },
   { label: 'Event Planner', to: '/admin/event-planner', icon: NotebookPen },
+  { label: 'User Management', to: '/admin/users', icon: UsersRound },
+  { label: 'Calendar', to: '/admin/calendar', icon: Calendar },
   { label: 'RSVP', to: '/admin/rsvp', icon: Users },
   { label: 'Cost Breakdown', to: '/admin/costs', icon: Wallet },
   { label: 'Vendor Pool', to: '/admin/vendors', icon: Briefcase },
-  { label: 'User Management', to: '/admin/users', icon: UsersRound },
-  { label: 'Inquiries', to: '/admin/inquiries', icon: MessageSquare },
-  { label: 'Notifications', to: '/admin/notifications', icon: Bell },
 ];
 
 export default function AdminSidebar() {
