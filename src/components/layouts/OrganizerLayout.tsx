@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { ChevronLeft, ChevronRight, Search } from 'lucide-react';
-import { Navigate, NavLink, Outlet, useLocation } from 'react-router-dom';
+import { NavLink, Outlet, useLocation, useNavigate, Navigate } from 'react-router-dom';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -54,10 +54,12 @@ export type OrganizerLayoutOutletContext = {
 };
 
 export function OrganizerLayout() {
-  const { isAuthenticated, isLoading, user } = useAuth();
+  const { isLoading, setAuthenticatedUser, isAuthenticated, user } = useAuth();
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 
+  const navigate = useNavigate();
   const location = useLocation();
   const showHeaderSearch = ['/organizer/event-planner', '/organizer/event-manager'].includes(
     location.pathname
@@ -249,18 +251,43 @@ export function OrganizerLayout() {
                   alt="Organizer profile"
                   className="size-7 rounded-full border-2 border-white object-cover"
                 />
-                <Button
-                  variant="ghost"
-                  size="icon-sm"
-                  className="rounded-full text-white hover:bg-white/20 hover:text-white"
-                  aria-label="Settings"
-                >
-                  <img
-                    src="/Pictures/organizerpics/settings dashboard.png"
-                    alt="Settings"
-                    className="size-4"
-                  />
-                </Button>
+                <div className="relative">
+                  <Button
+                    variant="ghost"
+                    size="icon-sm"
+                    className="rounded-full text-white hover:bg-white/20 hover:text-white"
+                    aria-label="Settings"
+                    onClick={() => setIsSettingsOpen(!isSettingsOpen)}
+                  >
+                    <img
+                      src="/Pictures/organizerpics/settings dashboard.png"
+                      alt="Settings"
+                      className="size-4"
+                    />
+                  </Button>
+                  {isSettingsOpen ? (
+                    <div className="absolute right-0 top-full mt-2 w-48 rounded-xl bg-white border border-[#e2deea] shadow-lg py-2 z-50 animate-in fade-in slide-in-from-top-2">
+                      <button
+                        type="button"
+                        className="cursor-pointer hover:bg-[#f6f5f8] text-sm font-semibold text-[#4f4a56] px-4 py-2 w-full text-left transition-colors"
+                        onClick={() => setIsSettingsOpen(false)}
+                      >
+                        My Profile
+                      </button>
+                      <button
+                        type="button"
+                        className="cursor-pointer hover:bg-[#f6f5f8] text-sm font-semibold text-[#df2b80] px-4 py-2 w-full text-left transition-colors"
+                        onClick={() => {
+                          setIsSettingsOpen(false);
+                          setAuthenticatedUser(null);
+                          navigate('/login');
+                        }}
+                      >
+                        Logout
+                      </button>
+                    </div>
+                  ) : null}
+                </div>
               </div>
             </div>
           </header>

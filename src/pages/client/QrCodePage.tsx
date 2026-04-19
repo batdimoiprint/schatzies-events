@@ -1,4 +1,4 @@
-﻿import { useState } from 'react';
+﻿import { useState, useEffect } from 'react';
 import {
   PlusCircle,
   CheckCircle,
@@ -9,6 +9,9 @@ import {
   Gear,
   ChatCircle,
 } from '@phosphor-icons/react';
+import { generateRSVPQRCode, downloadQRCode } from '@/lib/qrCodeGenerator';
+import { getAllEvents } from '@/lib/rsvpStorage';
+import LoadingScreen from '@/components/ui/LoadingScreen';
 
 const guestList = [
   {
@@ -96,29 +99,58 @@ const guestList = [
 
 type State = 'idle' | 'generated' | 'active';
 
-const qrPattern = [
-  1, 1, 1, 1, 1, 1, 1, 0, 1, 0, 1, 0, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 1, 0, 0, 1, 0, 1,
-  0, 0, 1, 0, 0, 0, 0, 0, 1, 1, 0, 1, 1, 1, 0, 1, 0, 1, 1, 0, 0, 1, 0, 1, 0, 1, 1, 1, 0, 1, 1, 0, 1,
-  1, 1, 0, 1, 0, 0, 0, 1, 1, 0, 0, 1, 0, 1, 1, 1, 0, 1, 1, 0, 1, 1, 1, 0, 1, 0, 1, 0, 0, 1, 1, 0, 1,
-  0, 1, 1, 1, 0, 1, 1, 0, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1,
-  1, 0, 1, 0, 1, 0, 1, 0, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 1, 0, 0, 0, 0, 0, 0,
-  0, 0, 0, 1, 0, 1, 0, 1, 1, 1, 1, 0, 0, 1, 0, 1, 1, 1, 0, 1, 0, 1, 1, 0, 0, 1, 0, 1, 0, 0, 0, 1, 1,
-  0, 0, 1, 0, 0, 0, 1, 0, 1, 0, 0, 1, 1, 1, 0, 0, 1, 0, 1, 0, 1, 1, 1, 0, 1, 0, 1, 0, 0, 1, 1, 0, 0,
-  0, 0, 1, 1, 0, 1, 0, 0, 0, 1, 0, 1, 0, 1, 0, 0, 1, 0, 0, 1, 1, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0,
-  1, 0, 1, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0, 0, 1, 1, 1, 1,
-  1, 1, 1, 1, 0, 0, 1, 1, 0, 1, 0, 1, 0, 0, 1, 1, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 1, 0, 1, 0,
-  0, 1, 0, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1, 0, 1, 1, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 0, 1, 0, 1, 1, 1, 0,
-  1, 0, 0, 0, 1, 1, 0, 0, 0, 1, 0, 1, 0, 0, 1, 1, 0, 1, 1, 1, 0, 1, 0, 1, 0, 0, 1, 1, 0, 1, 0, 0, 1,
-  1, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1,
-  0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 0,
-].flat();
-
 export function QrCodePage() {
   const [state, setState] = useState<State>('idle');
   const [activeTab, setActiveTab] = useState<'overview' | 'guest-list'>('overview');
+  const [qrCode, setQrCode] = useState<string>('');
+  const [currentQRId, setCurrentQRId] = useState<string>('');
+  const [isLoading, setIsLoading] = useState(false); // Changed from 'loading' to 'isLoading' to match the pattern
+  const [selectedEventId, setSelectedEventId] = useState<string>('');
+  const [copied, setCopied] = useState(false);
+
+  useEffect(() => {
+    const loadedEvents = getAllEvents();
+    if (loadedEvents.length > 0) {
+      setSelectedEventId(loadedEvents[0].id);
+    }
+  }, []);
+
+  const generateQRCode = async () => {
+    if (!selectedEventId) return;
+    setIsLoading(true);
+
+    try {
+      const qrId = `qr-${Date.now()}`;
+      const invitationUrl = `${window.location.origin}/invitation/${selectedEventId}/${qrId}`;
+      const qrDataUrl = await generateRSVPQRCode(invitationUrl, selectedEventId);
+      setQrCode(qrDataUrl);
+      setCurrentQRId(qrId);
+      setState('generated');
+    } catch (error) {
+      console.error('Error generating QR code:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleDownloadQR = () => {
+    if (qrCode) {
+      downloadQRCode(qrCode, 'wedding-invitation.png');
+    }
+  };
+
+  const handleCopyLink = () => {
+    const invitationLink = `${window.location.origin}/invitation/${selectedEventId}/${currentQRId}`;
+    navigator.clipboard.writeText(invitationLink);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
 
   return (
     <div className="flex h-full flex-col">
+      {/* Reusable Loading Screen - same as InquiryForm */}
+      <LoadingScreen isLoading={isLoading} />
+
       {/* ── Header row: title + icons ── */}
       <div className="flex min-h-[6rem] items-start justify-between">
         <div>
@@ -128,20 +160,18 @@ export function QrCodePage() {
           </p>
         </div>
 
-        {state === 'active' && (
-          <div className="flex items-center gap-4 text-gray-600">
-            <Bell size={22} />
-            <img
-              src="/Pictures/organizerpics/Profile Picture.png"
-              alt="User avatar"
-              className="size-8 rounded-full object-cover"
-            />
-            <Gear size={22} />
-          </div>
-        )}
+        <div className="flex items-center gap-4 text-gray-600">
+          <Bell size={22} />
+          <img
+            src="/Pictures/organizerpics/Profile Picture.png"
+            alt="User avatar"
+            className="size-8 rounded-full object-cover"
+          />
+          <Gear size={22} />
+        </div>
       </div>
 
-      {/* â”€â”€ Tabs (aligned with sidebar tagline) â”€â”€ */}
+      {/* ── Tabs (aligned with sidebar tagline) ── */}
       {state === 'active' && (
         <div className="mb-6 flex items-end justify-between border-b border-gray-200">
           <div className="flex gap-6">
@@ -169,6 +199,7 @@ export function QrCodePage() {
           <button
             onClick={() => setState('idle')}
             className="mb-2 flex items-center gap-2 rounded-md bg-gray-200 px-5 py-2.5 text-sm font-semibold text-gray-700 shadow-md transition hover:bg-gray-300 active:scale-95"
+            disabled={isLoading}
           >
             <PlusCircle weight="bold" size={18} />
             Create QR Code
@@ -176,12 +207,13 @@ export function QrCodePage() {
         </div>
       )}
 
-      {/* â”€â”€ STATE: Idle â”€â”€ */}
+      {/* ── STATE: Idle ── */}
       {state === 'idle' && (
         <div className="mt-6 flex flex-1 items-center justify-center rounded-lg border border-gray-300 bg-[#E6E6E6] shadow-inner">
           <button
-            onClick={() => setState('generated')}
-            className="flex items-center gap-2.5 rounded-md bg-white px-6 py-3 text-lg font-semibold text-pink-600 shadow-lg transition hover:shadow-xl active:scale-95"
+            onClick={generateQRCode}
+            disabled={isLoading || !selectedEventId}
+            className="flex items-center gap-2.5 rounded-md bg-white px-6 py-3 text-lg font-semibold text-pink-600 shadow-lg transition hover:shadow-xl active:scale-95 disabled:opacity-50"
           >
             <PlusCircle weight="bold" size={22} />
             Create QR Code
@@ -189,7 +221,7 @@ export function QrCodePage() {
         </div>
       )}
 
-      {/* â”€â”€ STATE: Generated modal â”€â”€ */}
+      {/* ── STATE: Generated modal ── */}
       {state === 'generated' && (
         <div className="relative mt-6 flex flex-1 items-center justify-center rounded-lg border border-gray-300 bg-[#E6E6E6] shadow-inner">
           <div className="absolute inset-0 rounded-lg bg-black/20" />
@@ -211,43 +243,50 @@ export function QrCodePage() {
         </div>
       )}
 
-      {/* â”€â”€ STATE: Active â€” Overview â”€â”€ */}
+      {/* ── STATE: Active — Overview ── */}
       {state === 'active' && activeTab === 'overview' && (
         <div className="rounded-xl border border-gray-100 bg-white p-8 shadow-sm">
           <div className="grid grid-cols-1 gap-10 md:grid-cols-[auto_1fr]">
-            {/* â”€â”€ QR Code column â”€â”€ */}
+            {/* ── QR Code column ── */}
             <div className="flex flex-col items-center rounded-2xl bg-white p-6 shadow-lg">
               <p className="text-base font-bold text-[#df2b80]">Schatzies Events</p>
 
-              <div className="mt-4 grid aspect-square w-48 grid-cols-[repeat(21,1fr)] grid-rows-[repeat(21,1fr)] overflow-hidden rounded-sm">
-                {qrPattern.map((cell, i) => (
-                  <div key={i} className={cell ? 'bg-[#8b1bce]' : 'bg-white'} />
-                ))}
-              </div>
+              {qrCode && (
+                <div className="mt-4 rounded-lg bg-white p-4">
+                  <img src={qrCode} alt="Generated QR Code" className="w-48 h-48" />
+                </div>
+              )}
 
               <p className="mt-5 text-sm font-extrabold uppercase tracking-wide text-[#2d2834]">
                 Share QR to Invite Guest!
               </p>
               <p className="mt-1 text-xs text-[#696373]">
-                QR CODE ID: <span className="font-semibold">SEC-2026-001</span>
+                QR CODE ID: <span className="font-semibold">{currentQRId.substring(3, 13)}</span>
               </p>
+
               <span className="mt-2 inline-block rounded-full bg-green-100 px-3 py-0.5 text-xs font-bold text-green-800">
                 Active Invitation Link
               </span>
 
               <div className="mt-5 flex gap-3">
-                <button className="flex items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-4 py-2 text-xs font-semibold text-[#df2b80] shadow-md transition hover:bg-gray-50">
+                <button
+                  onClick={handleDownloadQR}
+                  className="flex items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-4 py-2 text-xs font-semibold text-[#df2b80] shadow-md transition hover:bg-gray-50"
+                >
                   <Download weight="bold" size={14} />
                   Download QR
                 </button>
-                <button className="flex items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-4 py-2 text-xs font-semibold text-[#df2b80] shadow-md transition hover:bg-gray-50">
+                <button
+                  onClick={handleCopyLink}
+                  className="flex items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-4 py-2 text-xs font-semibold text-[#df2b80] shadow-md transition hover:bg-gray-50"
+                >
                   <LinkIcon weight="bold" size={14} />
-                  Copy Link
+                  {copied ? 'Copied!' : 'Copy Link'}
                 </button>
               </div>
             </div>
 
-            {/* â”€â”€ Attendance Breakdown column â”€â”€ */}
+            {/* ── Attendance Breakdown column ── */}
             <div className="flex flex-col">
               <h3 className="pb-2 text-lg font-extrabold text-[#2d2834] border-b border-black">
                 Attendance Breakdown

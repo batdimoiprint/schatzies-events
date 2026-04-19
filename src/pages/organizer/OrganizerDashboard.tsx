@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState, type ChangeEvent } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -12,6 +13,7 @@ type MonthlyValue = {
 type StatusSlice = {
   label: string;
   value: number;
+  eventCount: number;
   color: string;
 };
 
@@ -43,9 +45,9 @@ const semiAnnualCompletions: MonthlyValue[] = [
 ];
 
 const monthlyStatus: StatusSlice[] = [
-  { label: 'Completed', value: 75, color: '#b964ef' },
-  { label: 'Execution', value: 20, color: '#ef79b3' },
-  { label: 'On queue', value: 5, color: '#f4d03f' },
+  { label: 'Completed', value: 75, eventCount: 15, color: '#b964ef' },
+  { label: 'Execution', value: 20, eventCount: 4, color: '#ef79b3' },
+  { label: 'Planning', value: 5, eventCount: 1, color: '#f4d03f' },
 ];
 
 const upcomingEvents: ListEntry[] = [
@@ -141,6 +143,13 @@ const calendarMonths = [
   'December',
 ];
 
+const calendarLegend = [
+  { label: 'Task', color: 'bg-[#e2c341]' },
+  { label: 'Meeting', color: 'bg-[#9740d0]' },
+  { label: 'Reminder', color: 'bg-[#e54e9d]' },
+  { label: 'Event Day', color: 'bg-[#3b28cc]' },
+];
+
 function isSameCalendarDay(left: Date | null, right: Date) {
   if (!left) return false;
 
@@ -164,19 +173,6 @@ function buildCalendarGrid(date: Date): Array<number | null> {
   const trailingPadding = Array.from({ length: trailingCount }, () => null);
 
   return [...leadingPadding, ...monthDays, ...trailingPadding];
-}
-
-function getDonutGradient(slices: StatusSlice[]) {
-  let cursor = 0;
-
-  const colorStops = slices.map((slice) => {
-    const start = cursor;
-    cursor += slice.value;
-
-    return `${slice.color} ${start}% ${cursor}%`;
-  });
-
-  return `conic-gradient(${colorStops.join(', ')})`;
 }
 
 function DashboardMetricCard({
@@ -222,7 +218,19 @@ function DashboardMetricCard({
   );
 }
 
-function ScheduleListCard({ title, entries }: { title: string; entries: ListEntry[] }) {
+function ScheduleListCard({
+  title,
+  entries,
+  onViewListClick,
+}: {
+  title: string;
+  entries: ListEntry[];
+  onViewListClick?: () => void;
+}) {
+  const visibleEntries = entries.slice(0, 3);
+  const hiddenCount = Math.max(0, entries.length - 3);
+  const emptySlots = Math.max(0, 3 - visibleEntries.length);
+
   return (
     <Card className="border-[#e8e4ed] bg-white py-0 shadow-sm">
       <CardHeader className="pt-6 px-6 pb-4">
@@ -231,15 +239,21 @@ function ScheduleListCard({ title, entries }: { title: string; entries: ListEntr
           <Button
             className="h-8 px-4 rounded-full bg-[#ff7eb3] text-white hover:bg-[#ff6aa5] transition-colors"
             size="sm"
+            onClick={onViewListClick}
           >
             <span className="text-xs font-bold">View List</span>
+            {hiddenCount > 0 ? (
+              <span className="ml-2 inline-flex items-center rounded-full bg-[#8f1fd0] px-2 py-0.5 text-[10px] font-black leading-none text-white">
+                +{hiddenCount}
+              </span>
+            ) : null}
           </Button>
         </div>
       </CardHeader>
       <CardContent className="p-0">
         <div className="max-h-[260px] overflow-y-auto scrollbar-thin scrollbar-thumb-[#e8e0eb] scrollbar-track-transparent pt-3">
           <div className="divide-y divide-[#f0edf4]">
-            {entries.map((entry) => (
+            {visibleEntries.map((entry) => (
               <div
                 key={`${entry.rank}-${entry.title}`}
                 className="flex items-center justify-between gap-4 bg-white px-5 py-4 hover:bg-[#fafafa] transition-colors"
@@ -262,6 +276,16 @@ function ScheduleListCard({ title, entries }: { title: string; entries: ListEntr
                 </p>
               </div>
             ))}
+            {Array.from({ length: emptySlots }).map((_, index) => (
+              <div
+                key={`empty-slot-${title}-${index}`}
+                className="h-[72px] flex items-center justify-center bg-[#fafaf8]/50 px-5 py-4 transition-colors"
+              >
+                <p className="text-xs font-semibold text-[#d0c8db] italic">
+                  -- No additional entries --
+                </p>
+              </div>
+            ))}
           </div>
         </div>
       </CardContent>
@@ -270,12 +294,15 @@ function ScheduleListCard({ title, entries }: { title: string; entries: ListEntr
 }
 
 export function OrganizerDashboard() {
+  const navigate = useNavigate();
+
   const today = useMemo(() => {
     const now = new Date();
     return new Date(now.getFullYear(), now.getMonth(), now.getDate());
   }, []);
 
   const [isChartMounted, setIsChartMounted] = useState(false);
+  const [hoveredDonut, setHoveredDonut] = useState<StatusSlice | null>(null);
   const [selectedDate, setSelectedDate] = useState<Date | null>(() => today);
   const [viewDate, setViewDate] = useState(
     () => new Date(today.getFullYear(), today.getMonth(), 1)
@@ -289,9 +316,16 @@ export function OrganizerDashboard() {
     return () => window.clearTimeout(timer);
   }, []);
 
-  const chartMaxValue = Math.max(...semiAnnualCompletions.map((item) => item.value));
+  const chartMaxValue = 50;
+  const donutRadius = 40;
+  const donutCircumference = 2 * Math.PI * donutRadius;
 
   const calendarGrid = useMemo(() => buildCalendarGrid(viewDate), [viewDate]);
+  const totalEvents = useMemo(
+    () => monthlyStatus.reduce((sum, slice) => sum + slice.eventCount, 0),
+    []
+  );
+
   const yearOptions = useMemo(() => {
     const centerYear = viewDate.getFullYear();
     return Array.from({ length: 11 }, (_, index) => centerYear - 5 + index);
@@ -345,7 +379,8 @@ export function OrganizerDashboard() {
                 </p>
                 <Button
                   variant="secondary"
-                  className={`mt-6 rounded-full bg-white px-6 py-2 text-xs font-black uppercase tracking-wide text-[#6b2a87] hover:bg-white/90 transition-all duration-700 delay-[350ms] ease-out ${
+                  onClick={() => navigate('/organizer/calendar')}
+                  className={`mt-6 rounded-full bg-white px-6 py-2 text-xs font-black uppercase tracking-wide text-[#6b2a87] hover:bg-white/90 hover:scale-105 hover:shadow-lg transition-all duration-700 delay-[350ms] ease-out ${
                     isChartMounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
                   }`}
                 >
@@ -374,7 +409,7 @@ export function OrganizerDashboard() {
               <CardContent className="pb-6">
                 <div className="flex gap-3">
                   {/* Y-axis labels */}
-                  <div className="flex flex-col justify-between text-[11px] font-bold text-[#706980]">
+                  <div className="flex flex-col justify-between text-[11px] font-bold text-[#706980] h-64 mt-4 py-[2px]">
                     <span>50</span>
                     <span>40</span>
                     <span>30</span>
@@ -385,7 +420,10 @@ export function OrganizerDashboard() {
 
                   {/* Chart area */}
                   <div className="flex-1">
-                    <div className="relative h-64 w-full mt-4 flex items-end bg-[#fdfcff]">
+                    <div
+                      className="relative h-64 w-full mt-4 flex items-end bg-[#fdfcff]"
+                      data-scale-max={chartMaxValue}
+                    >
                       {/* Grid lines background */}
                       <div className="absolute inset-0 flex flex-col justify-between pointer-events-none px-2 py-0">
                         {[0, 1, 2, 3, 4].map((line) => (
@@ -403,13 +441,16 @@ export function OrganizerDashboard() {
                         {semiAnnualCompletions.map((monthData, index) => (
                           <div
                             key={`bar-${monthData.month}`}
-                            className="flex-1 h-full flex justify-center items-end px-1 sm:px-2"
+                            className="flex-1 h-full flex justify-center items-end px-1 sm:px-2 relative group"
                           >
+                            <div className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none bg-[#3d3745] text-white text-[10px] font-bold px-2 py-1 rounded-md whitespace-nowrap z-10">
+                              {monthData.value} Events
+                            </div>
                             <div
-                              className="w-full bg-[#800080] rounded-t-sm cursor-pointer transition-all duration-1000 ease-out hover:bg-[#a61ca6]"
+                              className="w-full bg-[#b964ef] rounded-t-sm cursor-pointer transition-all duration-1000 ease-out hover:bg-[#a04bd9]"
                               style={{
                                 height: isChartMounted
-                                  ? `${Math.max((monthData.value / chartMaxValue) * 100, 5)}%`
+                                  ? `${Math.max(5, Math.min((monthData.value / 50) * 100, 100))}%`
                                   : '0%',
                                 transitionDelay: `${index * 150}ms`,
                               }}
@@ -463,14 +504,88 @@ export function OrganizerDashboard() {
               </CardHeader>
               <CardContent className="space-y-6 pb-6">
                 <div
-                  className={`relative mx-auto size-64 rounded-full transition-all duration-[1500ms] ease-out ${
+                  className={`relative mx-auto size-64 transition-all duration-[1500ms] ease-out ${
                     isChartMounted
                       ? 'opacity-100 scale-100 rotate-0'
                       : 'opacity-0 scale-75 -rotate-45'
                   }`}
-                  style={{ background: getDonutGradient(monthlyStatus) }}
                 >
-                  <div className="absolute inset-16 rounded-full bg-white" />
+                  <svg viewBox="0 0 100 100" className="size-64 -rotate-90">
+                    {totalEvents === 0 ? (
+                      <circle
+                        cx="50"
+                        cy="50"
+                        r={donutRadius}
+                        fill="transparent"
+                        stroke="#ece7f2"
+                        strokeWidth="20"
+                      />
+                    ) : (
+                      (() => {
+                        let cumulativePercent = 0;
+
+                        return monthlyStatus.map((slice) => {
+                          const sliceLength = (slice.value / 100) * donutCircumference;
+                          const strokeDasharray = `${sliceLength} ${donutCircumference - sliceLength}`;
+                          const strokeDashoffset =
+                            donutCircumference - (cumulativePercent / 100) * donutCircumference;
+                          const isSliceHovered = hoveredDonut?.label === slice.label;
+
+                          cumulativePercent += slice.value;
+
+                          return (
+                            <circle
+                              key={slice.label}
+                              cx="50"
+                              cy="50"
+                              r={donutRadius}
+                              fill="transparent"
+                              stroke={slice.color}
+                              strokeWidth="20"
+                              strokeDasharray={strokeDasharray}
+                              strokeDashoffset={strokeDashoffset}
+                              onMouseEnter={() => setHoveredDonut(slice)}
+                              onMouseLeave={() => setHoveredDonut(null)}
+                              className="cursor-pointer transition-[transform,opacity] duration-200"
+                              style={{
+                                transformOrigin: '50% 50%',
+                                transform: isSliceHovered ? 'scale(1.03)' : 'scale(1)',
+                                opacity: hoveredDonut && !isSliceHovered ? 0.9 : 1,
+                              }}
+                            />
+                          );
+                        });
+                      })()
+                    )}
+                  </svg>
+
+                  <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center text-center">
+                    {totalEvents === 0 ? (
+                      <>
+                        <p className="text-xs font-semibold text-[#8e8797]">Total Events</p>
+                        <p className="mt-1 text-4xl font-black leading-none text-[#8e8797]">
+                          0 Events
+                        </p>
+                      </>
+                    ) : hoveredDonut ? (
+                      <>
+                        <p className="text-xs font-semibold text-[#8e8797]">{hoveredDonut.label}</p>
+                        <p
+                          className="mt-1 text-4xl font-black leading-none"
+                          style={{ color: hoveredDonut.color }}
+                        >
+                          {hoveredDonut.eventCount} Events
+                        </p>
+                      </>
+                    ) : (
+                      <>
+                        <p className="text-xs font-semibold text-[#8e8797]">Total Events</p>
+                        <p className="mt-1 text-4xl font-black leading-none text-[#3d3745]">
+                          {totalEvents}
+                        </p>
+                      </>
+                    )}
+                  </div>
                 </div>
 
                 <div className="grid grid-cols-3 gap-2 pt-1 text-center">
@@ -636,18 +751,65 @@ export function OrganizerDashboard() {
                                 : 'text-[#9b8fa8] font-semibold border-transparent hover:bg-[#f4eff8]',
                           ].join(' ')}
                         >
-                          {day}
+                          <div className="flex flex-col items-center justify-center gap-[2px]">
+                            <span>{day}</span>
+                            {/* Calendar mini eto then yung sa may Legend na 4 so may Temporary Simulation: Add a purple 'Meeting' dot every 5th day, and a yellow 'Task' dot on the 12th, then dito nyo alisin y ung logic na day % 5 === 0 || day === 12. for API integration */}
+                            {day % 5 === 0 || day === 12 ? (
+                              <span
+                                className={`size-1.5 rounded-full ${day === 12 ? 'bg-[#e2c341]' : 'bg-[#9740d0]'}`}
+                              />
+                            ) : (
+                              <span className="size-1.5" />
+                            )}
+                          </div>
                         </button>
                       </div>
                     );
                   })}
                 </div>
               </div>
+
+              <div className="mt-4 flex flex-wrap items-center justify-center gap-3 sm:gap-4">
+                {calendarLegend.map((item) => (
+                  <div key={item.label} className="flex items-center gap-1.5">
+                    <div
+                      className={`flex size-4 items-center justify-center rounded-md ${item.color}`}
+                    >
+                      <svg
+                        className="size-2.5 text-white"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                        strokeWidth={3}
+                      >
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                      </svg>
+                    </div>
+                    <span className="text-xs font-semibold text-[#4f4a56]">{item.label}</span>
+                  </div>
+                ))}
+              </div>
             </CardContent>
           </Card>
 
-          <ScheduleListCard title="Upcoming Events" entries={upcomingEvents} />
-          <ScheduleListCard title="Active Outsourced Vendors" entries={activeVendors} />
+          <ScheduleListCard
+            title="Upcoming Events"
+            entries={upcomingEvents}
+            onViewListClick={() =>
+              navigate('/organizer/event-manager', {
+                state: { activeTab: 'Events' },
+              })
+            }
+          />
+          <ScheduleListCard
+            title="Active Outsourced Vendors"
+            entries={activeVendors}
+            onViewListClick={() =>
+              navigate('/organizer/event-manager', {
+                state: { activeTab: 'Vendor' },
+              })
+            }
+          />
         </div>
       </div>
     </section>
