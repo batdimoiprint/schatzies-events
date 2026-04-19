@@ -90,7 +90,8 @@ function getStatusBadgeClasses(status: EventStatus) {
 }
 
 export function EventManagerPage() {
-  const { searchTerm } = useOutletContext<OrganizerLayoutOutletContext>();
+  const outletContext = useOutletContext<Partial<OrganizerLayoutOutletContext> | null>();
+  const searchTerm = outletContext?.searchTerm ?? '';
 
   const filteredEvents = useMemo(() => {
     const normalizedSearchTerm = searchTerm.trim().toLowerCase();
