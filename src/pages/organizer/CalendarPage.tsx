@@ -261,6 +261,7 @@ export function CalendarPage() {
     Meeting: true,
     Reminder: true,
   });
+  const [showOnlyMarkedDates, setShowOnlyMarkedDates] = useState(false);
   const [customLabels, setCustomLabels] = useState<string[]>([]);
   const [isAddingCustomLabel, setIsAddingCustomLabel] = useState(false);
   const [customLabelDraft, setCustomLabelDraft] = useState('');
@@ -347,6 +348,15 @@ export function CalendarPage() {
 
     return map;
   }, [filteredEntries]);
+
+  const visibleDaysToRender = useMemo(() => {
+    if (!showOnlyMarkedDates) return visibleDays;
+    return visibleDays.filter((d) => {
+      const key = toDateKey(d);
+      const list = entriesByDate[key];
+      return Array.isArray(list) && list.length > 0;
+    });
+  }, [visibleDays, showOnlyMarkedDates, entriesByDate]);
 
   const selectedDateEntries = entriesByDate[selectedDateKey] ?? [];
 
@@ -509,32 +519,39 @@ export function CalendarPage() {
           <div className="self-start rounded-2xl border border-[#ddd8e8] bg-white p-5 shadow-[0_8px_20px_rgba(46,22,76,0.07)]">
             <div className="flex items-center justify-between gap-3 border-b border-[#ece7f2] pb-4">
               <div>
-                <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.12em] text-[#9b92a9]">
-                  <CalendarDays className="size-3.5" />
-                  Calendar Overview
-                </div>
                 <div className="mt-1 flex flex-wrap items-center gap-2">
                   <h2 className="text-2xl font-black text-[#2f2b39]">{periodLabel}</h2>
-                  <div className="flex items-center gap-1">
+                  <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-1">
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon-sm"
+                        onClick={handleNavigatePrevious}
+                        className="rounded-full bg-linear-to-r from-[#8f1fd1] to-[#be8de4] text-white shadow-[0_8px_18px_rgba(143,31,209,0.18)] hover:opacity-95"
+                        aria-label="Previous period"
+                      >
+                        <ChevronLeft className="size-4" />
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon-sm"
+                        onClick={handleNavigateNext}
+                        className="rounded-full bg-linear-to-r from-[#8f1fd1] to-[#be8de4] text-white shadow-[0_8px_18px_rgba(143,31,209,0.18)] hover:opacity-95"
+                        aria-label="Next period"
+                      >
+                        <ChevronRight className="size-4" />
+                      </Button>
+                    </div>
+
                     <Button
                       type="button"
-                      variant="ghost"
-                      size="icon-sm"
-                      onClick={handleNavigatePrevious}
-                      className="rounded-full border border-[#ddd8e8] text-[#5e5670] hover:bg-[#f4effa]"
-                      aria-label="Previous period"
+                      variant="outline"
+                      onClick={handleGoToToday}
+                      className="h-8 rounded-full border-2 border-[#f347a5] bg-white px-3 text-xs font-bold text-[#8f2bd2] hover:bg-[#fff8fb]"
                     >
-                      <ChevronLeft className="size-4" />
-                    </Button>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon-sm"
-                      onClick={handleNavigateNext}
-                      className="rounded-full border border-[#ddd8e8] text-[#5e5670] hover:bg-[#f4effa]"
-                      aria-label="Next period"
-                    >
-                      <ChevronRight className="size-4" />
+                      Today
                     </Button>
                   </div>
                 </div>
@@ -570,15 +587,6 @@ export function CalendarPage() {
                     Weekly
                   </button>
                 </div>
-
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={handleGoToToday}
-                  className="h-8 rounded-full border-[#ddd8e8] px-3 text-xs font-bold text-[#655d75] hover:bg-[#f4effa]"
-                >
-                  Today
-                </Button>
 
                 <div className="relative" ref={filterMenuRef}>
                   <Button
@@ -659,6 +667,18 @@ export function CalendarPage() {
                           </button>
                         </div>
                       </div>
+
+                      <div className="mt-3 border-t border-[#ede8f4] pt-3">
+                        <label className="flex cursor-pointer items-center justify-between rounded-lg px-2 py-1.5 text-xs font-semibold text-[#5c556f] hover:bg-[#f9f6fd]">
+                          <span className="truncate">Show only dates with events</span>
+                          <input
+                            type="checkbox"
+                            checked={showOnlyMarkedDates}
+                            onChange={() => setShowOnlyMarkedDates((prev) => !prev)}
+                            className="size-3.5 rounded border border-[#cbc3d9] accent-[#8f1fd1]"
+                          />
+                        </label>
+                      </div>
                     </div>
                   ) : null}
                 </div>
@@ -679,7 +699,7 @@ export function CalendarPage() {
                 </div>
 
                 <div className="mt-2 grid grid-cols-7 gap-2">
-                  {visibleDays.map((date) => {
+                  {visibleDaysToRender.map((date) => {
                     const dateKey = toDateKey(date);
                     const dayEntries = entriesByDate[dateKey] ?? [];
                     const isToday = dateKey === todayKey;

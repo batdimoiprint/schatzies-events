@@ -1,8 +1,10 @@
-import { useMemo, useState } from 'react';
-import { ArrowRight, CalendarDays, Download, Printer } from 'lucide-react';
+import { useMemo, useState, useRef } from 'react';
+import { ArrowRight, CalendarDays, Download, ChevronDown } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import {
   Select,
   SelectContent,
@@ -18,6 +20,16 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+
+import {
+  Dialog,
+  DialogTrigger,
+  DialogContent,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+  DialogClose,
+} from '@/components/ui/dialog';
 
 type VendorCategory = 'Manpower' | 'Supplies' | 'Vendors';
 
@@ -41,6 +53,7 @@ type SummarySegmentWithPercentage = SummarySegment & {
 type EventCostBreakdown = {
   id: string;
   eventName: string;
+  packageName?: string;
   eventType: string;
   eventDate: string;
   packagePerPax: number;
@@ -53,6 +66,7 @@ const MOCK_EVENTS: EventCostBreakdown[] = [
   {
     id: 'event-1',
     eventName: "Angela's 18th Birthday",
+    packageName: 'Blooms Package',
     eventType: 'Debut',
     eventDate: '2026-01-03',
     packagePerPax: 3200,
@@ -100,6 +114,7 @@ const MOCK_EVENTS: EventCostBreakdown[] = [
   {
     id: 'event-2',
     eventName: 'Ray & Sam Wedding Reception',
+    packageName: 'Elegance Package',
     eventType: 'Wedding',
     eventDate: '2026-02-14',
     packagePerPax: 4200,
@@ -135,6 +150,7 @@ const MOCK_EVENTS: EventCostBreakdown[] = [
   {
     id: 'event-3',
     eventName: 'Mika Corporate Year-End Gala',
+    packageName: 'Corporate Gala Package',
     eventType: 'Corporate',
     eventDate: '2026-03-28',
     packagePerPax: 2900,
@@ -223,6 +239,37 @@ export function CostBreakdownPage() {
     return MOCK_EVENTS.find((event) => event.id === selectedEventId) ?? MOCK_EVENTS[0];
   }, [selectedEventId]);
 
+  const [additionalChargesMap, setAdditionalChargesMap] = useState<
+    Record<string, { id: string; description: string; amount: number }[]>
+  >({});
+
+  const additionalItems = additionalChargesMap[selectedEvent.id] ?? [];
+  const additionalChargesFromItems = additionalItems.reduce((s, it) => s + (it.amount || 0), 0);
+  // Start at zero; only reflect items added in the dialog
+  const displayedAdditionalCharges = additionalChargesFromItems;
+
+  const [newAddDesc, setNewAddDesc] = useState('');
+  const [newAddAmount, setNewAddAmount] = useState<string>('');
+
+  const handleAddAdditional = () => {
+    const amt = Number(newAddAmount || 0);
+    if (!newAddDesc || !amt) return;
+    const item = { id: Date.now().toString(), description: newAddDesc, amount: amt };
+    setAdditionalChargesMap((prev) => ({
+      ...prev,
+      [selectedEvent.id]: [...(prev[selectedEvent.id] ?? []), item],
+    }));
+    setNewAddDesc('');
+    setNewAddAmount('');
+  };
+
+  const handleRemoveAdditional = (id: string) => {
+    setAdditionalChargesMap((prev) => ({
+      ...prev,
+      [selectedEvent.id]: (prev[selectedEvent.id] ?? []).filter((it) => it.id !== id),
+    }));
+  };
+
   const packagePayment = selectedEvent.packagePerPax * selectedEvent.paxCount;
 
   const totalVendorCharges = useMemo(() => {
@@ -232,8 +279,8 @@ export function CostBreakdownPage() {
   }, [selectedEvent.vendorCharges]);
 
   const profitOrRemainingBudget = packagePayment - totalVendorCharges;
-  const totalRevenue = packagePayment + selectedEvent.additionalCharges;
-  const totalExpenses = totalVendorCharges + selectedEvent.additionalCharges;
+  const totalRevenue = packagePayment + displayedAdditionalCharges;
+  const totalExpenses = totalVendorCharges + displayedAdditionalCharges;
   const netProfitAfterAllCosts = packagePayment - totalExpenses;
 
   const netProfitMargin = useMemo(() => {
@@ -281,7 +328,7 @@ export function CostBreakdownPage() {
       },
       {
         label: 'Logistics & Extras',
-        value: selectedEvent.additionalCharges,
+        value: displayedAdditionalCharges,
         color: '#9d8d98',
       },
       {
@@ -297,7 +344,7 @@ export function CostBreakdownPage() {
     categoryTotals.Supplies,
     categoryTotals.Vendors,
     netProfitAfterAllCosts,
-    selectedEvent.additionalCharges,
+    displayedAdditionalCharges,
   ]);
 
   const summarySegmentsWithPercentages = useMemo<SummarySegmentWithPercentage[]>(() => {
@@ -343,8 +390,30 @@ export function CostBreakdownPage() {
     );
   }, [hoveredChartSegmentLabel, summarySegmentsWithPercentages]);
 
-  const handlePrint = () => {
-    window.print();
+  const printRef = useRef<HTMLDivElement | null>(null);
+
+  const handleDownloadPdf = () => {
+    if (!printRef.current) return;
+
+    const printHTML = printRef.current.outerHTML;
+    const newWindow = window.open('', '_blank', 'width=900,height=700');
+    if (!newWindow) return;
+
+    const styleNodes = Array.from(document.querySelectorAll('link[rel="stylesheet"], style'));
+    const styles = styleNodes.map((n) => n.outerHTML).join('\n');
+
+    newWindow.document
+      .write(`<!doctype html><html><head><meta charset="utf-8"><title>Cost Breakdown</title>${styles}
+      <style>@page{size:A4 portrait;margin:12mm;}body{background:#fff;color:#000;margin:0;padding:0;} .print-container{width:180mm;max-width:100%;margin:0 auto;} table{border-collapse:collapse;} th,td{padding:6px 6px;}</style></head><body>${printHTML}</body></html>`);
+    newWindow.document.close();
+    newWindow.focus();
+    newWindow.onload = () => {
+      try {
+        newWindow.print();
+      } catch (e) {
+        // ignore
+      }
+    };
   };
 
   const handleExportCsv = () => {
@@ -354,7 +423,7 @@ export function CostBreakdownPage() {
       ['Date', formattedEventDate],
       [],
       ['Client Package Payment', packagePayment],
-      ['Additional Charges', selectedEvent.additionalCharges],
+      ['Additional Charges', displayedAdditionalCharges],
       ['Total Revenue', totalRevenue],
       ['Total Vendor Charges', totalVendorCharges],
       ['Profit or Remaining Budget', profitOrRemainingBudget],
@@ -382,31 +451,159 @@ export function CostBreakdownPage() {
 
   return (
     <section className="space-y-6">
+      {/* Print-only receipt layout: hidden in screen, visible when printing */}
+      <div className="hidden print:block">
+        <div
+          ref={printRef}
+          className="mx-auto bg-white p-4 text-black print-container"
+          style={{
+            fontFamily: 'Source Sans Pro, Arial, sans-serif',
+            width: '180mm',
+            maxWidth: '100%',
+          }}
+        >
+          <div className="text-center mb-3">
+            <img
+              src="/Pictures/business-logo.png"
+              alt="Schatzies Events"
+              className="mx-auto mb-2"
+              style={{ width: 72 }}
+            />
+            <div className="text-sm font-bold uppercase tracking-wide">Schatzies Events</div>
+            <h1 className="text-lg font-bold mt-1">{selectedEvent.eventName}</h1>
+            <div className="text-sm text-gray-700">{selectedEvent.packageName}</div>
+            <div className="text-sm mt-1">{formattedEventDate}</div>
+          </div>
+
+          <div className="mb-3">
+            <div className="text-sm font-semibold mb-2">Additional Charges (Breakdown)</div>
+            <table className="w-full" style={{ borderCollapse: 'collapse' }}>
+              <thead>
+                <tr style={{ borderTop: '1px solid #111', borderBottom: '1px solid #111' }}>
+                  <th className="text-left text-[11px] py-1">Description</th>
+                  <th className="text-left text-[11px] py-1">Date</th>
+                  <th className="text-right text-[11px] py-1">Amount</th>
+                </tr>
+              </thead>
+              <tbody>
+                {additionalItems.length === 0 ? (
+                  <tr>
+                    <td colSpan={3} className="py-1 text-xs text-[#6e6585]">
+                      No additional items.
+                    </td>
+                  </tr>
+                ) : (
+                  additionalItems.map((it) => (
+                    <tr key={it.id}>
+                      <td className="py-1">{it.description}</td>
+                      <td className="py-1">{new Date(Number(it.id)).toLocaleString()}</td>
+                      <td className="py-1 text-right">{formatPeso(it.amount)}</td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+
+          <div className="mb-3">
+            <table className="w-full" style={{ borderCollapse: 'collapse' }}>
+              <thead>
+                <tr>
+                  <th className="text-left text-[12px] py-1">Description</th>
+                  <th className="text-right text-[12px] py-1">Amount</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td className="py-1">Client Package ({selectedEvent.paxCount} pax)</td>
+                  <td className="py-1 text-right font-semibold">{formatPeso(packagePayment)}</td>
+                </tr>
+                <tr>
+                  <td className="py-1">Additional Charges</td>
+                  <td className="py-1 text-right font-semibold">
+                    {formatPeso(displayedAdditionalCharges)}
+                  </td>
+                </tr>
+                <tr>
+                  <td className="py-1">Total Vendor Charges</td>
+                  <td className="py-1 text-right font-semibold">
+                    {formatPeso(totalVendorCharges)}
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div className="mb-3">
+            <div className="text-sm font-semibold mb-2">Vendor Charges</div>
+            <table className="w-full" style={{ borderCollapse: 'collapse' }}>
+              <thead>
+                <tr style={{ borderTop: '1px solid #111', borderBottom: '1px solid #111' }}>
+                  <th className="text-left text-[11px] py-1">Category</th>
+                  <th className="text-left text-[11px] py-1">Vendor / Item</th>
+                  <th className="text-right text-[11px] py-1">Cost</th>
+                </tr>
+              </thead>
+              <tbody>
+                {selectedEvent.vendorCharges.map((c) => (
+                  <tr key={c.id}>
+                    <td className="py-1">{c.category}</td>
+                    <td className="py-1">{c.name}</td>
+                    <td className="py-1 text-right">{formatPeso(c.cost)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          <div className="mt-3 border-t pt-2">
+            <div className="flex justify-between text-sm font-bold">
+              <span>Total Expenses</span>
+              <span>{formatPeso(totalExpenses)}</span>
+            </div>
+            <div className="flex justify-between text-sm font-bold mt-1">
+              <span>Net Profit</span>
+              <span>{formatPeso(netProfitAfterAllCosts)}</span>
+            </div>
+          </div>
+        </div>
+      </div>
       <div className="overflow-x-auto pb-2">
         <div className="min-w-[1140px] space-y-6 pr-1">
           <div className="flex items-center justify-between gap-4 rounded-3xl border border-[#e7dfef] bg-white p-4 shadow-sm print:hidden">
             <div className="flex items-center gap-3">
-              <Select value={selectedEvent.id} onValueChange={setSelectedEventId}>
-                <SelectTrigger className="h-11 w-[280px] rounded-2xl border-[#d8cae8] bg-linear-to-r from-[#f651a8] to-[#8f23cf] px-4 text-sm font-semibold text-white shadow-[0_10px_24px_rgba(165,44,180,0.3)] data-[placeholder]:text-white/80">
-                  <SelectValue placeholder="Select an event" />
-                </SelectTrigger>
-                <SelectContent className="rounded-xl">
-                  {MOCK_EVENTS.map((event) => (
-                    <SelectItem key={event.id} value={event.id}>
-                      {event.eventName}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <div className="relative">
+                <Select value={selectedEvent.id} onValueChange={setSelectedEventId}>
+                  <SelectTrigger className="h-10 w-[240px] rounded-2xl border-[#d8cae8] bg-linear-to-r from-[#f651a8] to-[#8f23cf] px-4 text-sm font-semibold text-white shadow-[0_10px_24px_rgba(165,44,180,0.3)] data-[placeholder]:text-white/80 [&_svg]:hidden">
+                    <SelectValue placeholder="Select an event" />
+                  </SelectTrigger>
+                  <SelectContent className="rounded-xl">
+                    {MOCK_EVENTS.map((event) => (
+                      <SelectItem key={event.id} value={event.id}>
+                        {event.eventName}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
 
-              <p className="inline-flex items-center gap-2 text-sm font-semibold text-[#5f5870]">
-                <CalendarDays className="size-4 text-[#8f23cf]" />
-                {formattedEventDate}
-              </p>
+                <ChevronDown className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 size-4 text-white" />
+              </div>
 
-              <span className="rounded-full border border-[#eadcf6] bg-[#f8f1fd] px-3 py-1 text-xs font-bold tracking-wide text-[#8f23cf] uppercase">
-                {selectedEvent.eventType}
-              </span>
+              <div className="flex items-center gap-3">
+                <div>
+                  <p className="text-sm font-semibold text-[#4b4152]">
+                    {selectedEvent.packageName}
+                  </p>
+                  <p className="inline-flex items-center gap-2 text-sm font-semibold text-[#5f5870]">
+                    <CalendarDays className="size-4 text-[#8f23cf]" />
+                    {formattedEventDate}
+                  </p>
+                </div>
+
+                <span className="rounded-full border border-[#eadcf6] bg-[#f8f1fd] px-3 py-1 text-xs font-bold tracking-wide text-[#8f23cf] uppercase">
+                  {selectedEvent.eventType}
+                </span>
+              </div>
             </div>
 
             <div className="flex items-center gap-2">
@@ -421,11 +618,11 @@ export function CostBreakdownPage() {
               </Button>
               <Button
                 size="lg"
-                onClick={handlePrint}
+                onClick={handleDownloadPdf}
                 className="rounded-full bg-linear-to-r from-[#f551a8] to-[#8f23cf] px-4 text-white hover:opacity-95"
               >
-                <Printer className="size-4" />
-                Print View
+                <Download className="size-4" />
+                Download PDF
               </Button>
             </div>
           </div>
@@ -475,15 +672,111 @@ export function CostBreakdownPage() {
                   Additional Charges
                 </p>
                 <p className="mt-5 font-sans text-5xl font-black tracking-tight text-[#2d2834]">
-                  {formatPeso(selectedEvent.additionalCharges)}
+                  {formatPeso(displayedAdditionalCharges)}
                 </p>
-                <a
-                  href="#cost-summary"
-                  className="mt-2 inline-flex items-center gap-1 text-xs font-semibold text-[#6e6585] transition-colors hover:text-[#4f4760]"
-                >
-                  View Details
-                  <ArrowRight className="size-3" />
-                </a>
+                <Dialog>
+                  <DialogTrigger asChild>
+                    <button className="mt-2 inline-flex items-center gap-1 text-xs font-semibold text-[#6e6585] transition-colors hover:text-[#4f4760]">
+                      View Details
+                      <ArrowRight className="size-3" />
+                    </button>
+                  </DialogTrigger>
+                  <DialogContent>
+                    <DialogTitle>Additional Charges</DialogTitle>
+                    <DialogDescription>
+                      <div className="space-y-4">
+                        <div>
+                          <div className="flex items-center justify-between mb-2">
+                            <span className="text-sm text-[#6e6585]">Total Additional Charges</span>
+                            <span className="font-semibold">
+                              {formatPeso(displayedAdditionalCharges)}
+                            </span>
+                          </div>
+
+                          <div className="space-y-3 max-h-40 overflow-y-auto mb-2">
+                            {additionalItems.length === 0 ? (
+                              <div className="text-xs text-muted-foreground">
+                                No additional items yet.
+                              </div>
+                            ) : (
+                              additionalItems.map((it) => (
+                                <div
+                                  key={it.id}
+                                  className="flex items-center justify-between gap-3 rounded-md bg-[#fbfbfd] p-2"
+                                >
+                                  <div className="min-w-0">
+                                    <div className="text-sm font-medium text-[#2f2939] truncate">
+                                      {it.description}
+                                    </div>
+                                    <div className="text-xs text-[#8c859d]">
+                                      {new Date(Number(it.id)).toLocaleString()}
+                                    </div>
+                                  </div>
+                                  <div className="flex items-center gap-3">
+                                    <div className="font-semibold text-sm">
+                                      {formatPeso(it.amount)}
+                                    </div>
+                                    <Button
+                                      variant="ghost"
+                                      onClick={() => handleRemoveAdditional(it.id)}
+                                      className="text-xs text-red-500"
+                                    >
+                                      Remove
+                                    </Button>
+                                  </div>
+                                </div>
+                              ))
+                            )}
+                          </div>
+
+                          <div className="grid grid-cols-1 sm:grid-cols-[1fr_120px] gap-2 items-end">
+                            <div>
+                              <Label className="text-sm">Description</Label>
+                              <Input
+                                value={newAddDesc}
+                                onChange={(e) => setNewAddDesc(e.target.value)}
+                                placeholder="e.g. Extra chairs"
+                              />
+                            </div>
+                            <div>
+                              <Label className="text-sm">Amount</Label>
+                              <Input
+                                value={newAddAmount}
+                                onChange={(e) => setNewAddAmount(e.target.value)}
+                                placeholder="0"
+                                type="number"
+                              />
+                            </div>
+                          </div>
+                          <div className="mt-3 flex gap-2">
+                            <Button
+                              onClick={handleAddAdditional}
+                              className="rounded-full bg-linear-to-r from-[#f551a8] to-[#8f23cf] px-4 py-1 text-white text-sm"
+                            >
+                              Add
+                            </Button>
+                            <Button
+                              variant="outline"
+                              onClick={() => {
+                                setNewAddDesc('');
+                                setNewAddAmount('');
+                              }}
+                              className="rounded-full px-4 py-1"
+                            >
+                              Clear
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
+                    </DialogDescription>
+                    <DialogFooter>
+                      <div />
+                      <DialogClose asChild>
+                        <button className="rounded-full border px-3 py-1">Done</button>
+                      </DialogClose>
+                    </DialogFooter>
+                  </DialogContent>
+                </Dialog>
               </div>
             </div>
           </div>
@@ -547,7 +840,7 @@ export function CostBreakdownPage() {
               <div className="flex justify-center pt-1">
                 <div className="relative size-44">
                   <svg viewBox="0 0 160 160" className="size-full -rotate-90">
-                    <circle cx="80" cy="80" r="62" fill="none" stroke="#f0e9f7" strokeWidth="24" />
+                    <circle cx="80" cy="80" r="62" fill="none" stroke="#f0e9f7" strokeWidth="32" />
                     {donutSegments.map((segment) => (
                       <circle
                         key={segment.label}
@@ -556,7 +849,7 @@ export function CostBreakdownPage() {
                         r="62"
                         fill="none"
                         stroke={segment.color}
-                        strokeWidth="24"
+                        strokeWidth="32"
                         strokeDasharray={segment.dashArray}
                         strokeDashoffset={segment.dashOffset}
                         className="cursor-pointer transition-opacity duration-150"
@@ -615,7 +908,7 @@ export function CostBreakdownPage() {
                     <div className="flex items-center justify-between pl-5 text-[14px]">
                       <span className="text-[#8c859d]">Logistics & Extras</span>
                       <span className="font-semibold text-[#2f2939]">
-                        {formatPeso(selectedEvent.additionalCharges)}
+                        {formatPeso(displayedAdditionalCharges)}
                       </span>
                     </div>
                   </div>
