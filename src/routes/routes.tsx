@@ -6,6 +6,7 @@ import { ClientLayout } from '@/components/layouts/ClientLayout';
 import { LandingPage } from '@/pages/public/LandingPage';
 import EventPackagesPage from '@/pages/public/EventPackagesPage';
 import { LoginPage } from '@/pages/public/LoginPage';
+import { ForgotPasswordPage } from '@/pages/public/ForgotPasswordPage';
 import ServicesPage from '@/pages/public/ServicesPage';
 import AboutUsPage from '@/pages/public/AboutUsPage';
 import ContactPage from '@/pages/public/ContactPage';
@@ -24,17 +25,22 @@ import { AdminNotificationsPage } from '@/pages/admin/AdminNotificationsPage';
 
 // Organizer Pages
 import { OrganizerDashboard } from '@/pages/organizer/OrganizerDashboard';
+import { ClientDashboardPage } from '@/pages/client/ClientDashboardPage';
+import { EventPlanViewingPage } from '@/pages/client/EventPlanViewingPage';
+import { MessagePage } from '@/pages/client/MessagePage';
+import { QrCodePage } from '@/pages/client/QrCodePage';
 import { CalendarPage } from '@/pages/organizer/CalendarPage';
 import { EventPlannerPage } from '@/pages/organizer/EventPlannerPage';
 import { EventManagerPage } from '@/pages/organizer/EventManagerPage';
-import { RSVPPage } from '@/pages/organizer/RSVPPage';
+import { RSVPPage } from '@/pages/client/RSVPPage';
 import { CostBreakdownPage } from '@/pages/organizer/CostBreakdownPage';
-import { ClientDashboardPage } from '@/pages/client/ClientDashboardPage';
-import { EventPlanViewingPage } from '@/pages/client/EventPlanViewingPage';
-import { QrCodePage } from '@/pages/client/QrCodePage';
-import { MessagePage } from '@/pages/client/MessagePage';
+import { InvitationPage } from '@/pages/public/InvitationPage';
 
 const router = createBrowserRouter([
+  {
+    path: 'invitation/:eventId/:qrId',
+    Component: InvitationPage,
+  },
   {
     path: 'login',
     Component: LoginPage,
@@ -62,6 +68,14 @@ const router = createBrowserRouter([
       {
         path: 'contact',
         Component: ContactPage,
+      },
+      {
+        path: 'forgot-password',
+        Component: ForgotPasswordPage,
+      },
+      {
+        path: 'rsvp',
+        Component: RSVPPage,
       },
     ],
   },
@@ -154,13 +168,14 @@ const router = createBrowserRouter([
         Component: EventPlanViewingPage,
       },
       {
-        path: 'qr-code',
-        Component: QrCodePage,
-      },
-      {
         path: 'message',
         Component: MessagePage,
       },
+      {
+        path: 'qr-code',
+        Component: QrCodePage,
+      },
+      // Add more client routes here as needed
     ],
   },
 ]);
