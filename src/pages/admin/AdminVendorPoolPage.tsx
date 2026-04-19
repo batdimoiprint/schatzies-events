@@ -21,7 +21,6 @@ import {
 } from '@/components/ui/select';
 import {
   createVendor,
-  createVendorPool,
   deleteVendor,
   getVendorById,
   getVendorEntitiesByEventId,
@@ -41,11 +40,11 @@ interface EventOption {
 }
 
 const EMPTY_VENDOR_FORM: CreateVendorPayload = {
-  name: '',
+  vendorName: '',
   serviceType: '',
-  contactEmail: '',
-  contactPhone: '',
-  status: 'inactive',
+  email: '',
+  contactNumber: '',
+  availabilityStatus: 'inactive',
 };
 
 function normalizeStatus(status: string): 'active' | 'inactive' {
@@ -166,12 +165,12 @@ export function AdminVendorPoolPage() {
     try {
       const vendor = await getVendorById(vendorId);
       setVendorForm({
-        name: vendor.name,
+        vendorName: vendor.name,
         serviceType: vendor.serviceType,
         eventId: vendor.eventId,
-        contactEmail: vendor.contactEmail,
-        contactPhone: vendor.contactPhone,
-        status: normalizeStatus(vendor.status),
+        email: vendor.contactEmail,
+        contactNumber: vendor.contactPhone,
+        availabilityStatus: normalizeStatus(vendor.status),
       });
       setIsDialogOpen(true);
     } catch {
@@ -185,14 +184,14 @@ export function AdminVendorPoolPage() {
     const normalizedEventId = vendorForm.eventId?.trim() || '';
 
     const payloadBase = {
-      name: vendorForm.name.trim(),
+      vendorName: vendorForm.vendorName.trim(),
       serviceType: vendorForm.serviceType.trim(),
-      contactEmail: vendorForm.contactEmail?.trim() || '',
-      contactPhone: vendorForm.contactPhone?.trim() || '',
-      status: normalizeStatus(vendorForm.status || 'inactive'),
+      email: vendorForm.email?.trim() || '',
+      contactNumber: vendorForm.contactNumber?.trim() || '',
+      availabilityStatus: normalizeStatus(vendorForm.availabilityStatus || 'inactive'),
     };
 
-    if (!payloadBase.name || !payloadBase.serviceType) {
+    if (!payloadBase.vendorName || !payloadBase.serviceType) {
       setError('Name and service type are required.');
       return;
     }
@@ -202,15 +201,11 @@ export function AdminVendorPoolPage() {
 
     try {
       if (dialogMode === 'create') {
-        if (normalizedEventId) {
-          const payload: CreateVendorPayload = {
-            ...payloadBase,
-            eventId: normalizedEventId,
-          };
-          await createVendor(payload);
-        } else {
-          await createVendorPool(payloadBase);
-        }
+        const payload: CreateVendorPayload = {
+          ...payloadBase,
+          eventId: normalizedEventId || undefined,
+        };
+        await createVendor(payload);
       } else if (editingVendorId) {
         const updatePayload: UpdateVendorPayload = {
           ...payloadBase,
@@ -428,8 +423,10 @@ export function AdminVendorPoolPage() {
           <div className="grid gap-3">
             <Input
               placeholder="Vendor name"
-              value={vendorForm.name}
-              onChange={(event) => setVendorForm((current) => ({ ...current, name: event.target.value }))}
+              value={vendorForm.vendorName}
+              onChange={(event) =>
+                setVendorForm((current) => ({ ...current, vendorName: event.target.value }))
+              }
             />
 
             <Input
@@ -461,24 +458,24 @@ export function AdminVendorPoolPage() {
 
             <Input
               placeholder="Contact email"
-              value={vendorForm.contactEmail || ''}
+              value={vendorForm.email || ''}
               onChange={(event) =>
-                setVendorForm((current) => ({ ...current, contactEmail: event.target.value }))
+                setVendorForm((current) => ({ ...current, email: event.target.value }))
               }
             />
 
             <Input
               placeholder="Contact phone"
-              value={vendorForm.contactPhone || ''}
+              value={vendorForm.contactNumber || ''}
               onChange={(event) =>
-                setVendorForm((current) => ({ ...current, contactPhone: event.target.value }))
+                setVendorForm((current) => ({ ...current, contactNumber: event.target.value }))
               }
             />
 
             <Select
-              value={normalizeStatus(vendorForm.status || 'inactive')}
+              value={normalizeStatus(vendorForm.availabilityStatus || 'inactive')}
               onValueChange={(value) =>
-                setVendorForm((current) => ({ ...current, status: normalizeStatus(value) }))
+                setVendorForm((current) => ({ ...current, availabilityStatus: normalizeStatus(value) }))
               }
             >
               <SelectTrigger className="h-10 w-full">

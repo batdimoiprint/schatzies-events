@@ -15,12 +15,12 @@ export interface Vendor {
 }
 
 export interface CreateVendorPayload {
-  name: string;
+  vendorName: string;
   serviceType: string;
   eventId?: string;
-  contactEmail?: string;
-  contactPhone?: string;
-  status?: string;
+  email?: string;
+  contactNumber?: string;
+  availabilityStatus?: string;
 }
 
 export interface UpdateVendorPayload extends Partial<CreateVendorPayload> {}
@@ -39,8 +39,12 @@ export interface EventManagerVendor {
 interface BackendVendor {
   id: string;
   eventId?: string;
+  vendorName?: string;
   name?: string;
   serviceType?: string;
+  contactNumber?: string;
+  email?: string;
+  availabilityStatus?: string;
   contactEmail?: string;
   contactPhone?: string;
   status?: string;
@@ -54,27 +58,29 @@ function mapVendorStatus(status?: string): VendorStatus {
 }
 
 function mapVendor(vendor: BackendVendor): EventManagerVendor {
+  const status = vendor.availabilityStatus || vendor.status;
   return {
     id: vendor.id,
     eventId: vendor.eventId || '',
-    name: vendor.name || 'Unnamed vendor',
+    name: vendor.vendorName || vendor.name || 'Unnamed vendor',
     contactPerson: '-',
-    email: vendor.contactEmail || '-',
-    phone: vendor.contactPhone || '-',
+    email: vendor.email || vendor.contactEmail || '-',
+    phone: vendor.contactNumber || vendor.contactPhone || '-',
     service: vendor.serviceType || '-',
-    status: mapVendorStatus(vendor.status),
+    status: mapVendorStatus(status),
   };
 }
 
 function mapVendorEntity(vendor: BackendVendor): Vendor {
+  const status = vendor.availabilityStatus || vendor.status;
   return {
     id: vendor.id,
     eventId: vendor.eventId || '',
-    name: vendor.name || 'Unnamed vendor',
+    name: vendor.vendorName || vendor.name || 'Unnamed vendor',
     serviceType: vendor.serviceType || '',
-    contactEmail: vendor.contactEmail || '',
-    contactPhone: vendor.contactPhone || '',
-    status: String(vendor.status || 'inactive'),
+    contactEmail: vendor.email || vendor.contactEmail || '',
+    contactPhone: vendor.contactNumber || vendor.contactPhone || '',
+    status: String(status || 'inactive'),
     createdAt: vendor.createdAt,
     updatedAt: vendor.updatedAt,
   };
@@ -82,11 +88,6 @@ function mapVendorEntity(vendor: BackendVendor): Vendor {
 
 export async function createVendor(payload: CreateVendorPayload): Promise<Vendor> {
   const response = await axiosInstance.post('/vendors', payload);
-  return mapVendorEntity(response.data.vendor || {});
-}
-
-export async function createVendorPool(payload: CreateVendorPayload): Promise<Vendor> {
-  const response = await axiosInstance.post('/vendors/pool', payload);
   return mapVendorEntity(response.data.vendor || {});
 }
 
