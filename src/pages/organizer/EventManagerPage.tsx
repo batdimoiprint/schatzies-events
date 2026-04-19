@@ -1,140 +1,41 @@
-import { useMemo, useState, useRef, useEffect } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useLocation, useOutletContext } from 'react-router-dom';
-import { Card, CardContent, CardHeader } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
 import type { OrganizerLayoutOutletContext } from '@/components/layouts/OrganizerLayout';
+import {
+  createEvent,
+  deleteEvent,
+  getEventManagerEvents,
+  updateEvent,
+  type EventManagerEvent,
+} from '@/api/events';
+import { getVendorsByEventId, type EventManagerVendor } from '@/api/vendors';
 
-type EventStatus = 'Completed' | 'Pending' | 'Cancelled';
-type VendorStatus = 'Active' | 'Inactive';
+type EventStatus = EventManagerEvent['status'];
+type VendorStatus = EventManagerVendor['status'];
 
-type Event = {
-  id: number;
-  title: string;
-  date: string;
-  timeSlot: string;
-  client: string;
-  type: string;
-  package: string;
-  venue: string;
-  rsvp: number;
-  status: EventStatus;
-};
-
-type Vendor = {
-  id: number;
-  name: string;
-  contactPerson: string;
-  email: string;
-  phone: string;
-  service: string;
-  status: VendorStatus;
-};
-
-const eventTableData: Event[] = [
-  {
-    id: 1,
-    title: "Angela's 18 Birthday...",
-    date: '00/00/00',
-    timeSlot: '9:00 AM - 10:00PM',
-    client: 'Samantha Jumuad',
-    type: 'Debut',
-    package: 'Blooms (40)',
-    venue: 'Trees Residence',
-    rsvp: 40,
-    status: 'Completed',
-  },
-  {
-    id: 2,
-    title: "Angela's 18 Birthday...",
-    date: '00/00/00',
-    timeSlot: '9:00 AM - 10:00PM',
-    client: 'Samantha Jumuad',
-    type: 'Debut',
-    package: 'Blooms (40)',
-    venue: 'Trees Residence',
-    rsvp: 40,
-    status: 'Completed',
-  },
-  {
-    id: 3,
-    title: "Angela's 18 Birthday...",
-    date: '00/00/00',
-    timeSlot: '9:00 AM - 10:00PM',
-    client: 'Samantha Jumuad',
-    type: 'Debut',
-    package: 'Blooms (40)',
-    venue: 'Trees Residence',
-    rsvp: 40,
-    status: 'Completed',
-  },
-  {
-    id: 4,
-    title: "Angela's 18 Birthday...",
-    date: '00/00/00',
-    timeSlot: '9:00 AM - 10:00PM',
-    client: 'Samantha Jumuad',
-    type: 'Debut',
-    package: 'Blooms (40)',
-    venue: 'Trees Residence',
-    rsvp: 40,
-    status: 'Completed',
-  },
-  {
-    id: 5,
-    title: "Angela's 18 Birthday...",
-    date: '00/00/00',
-    timeSlot: '9:00 AM - 10:00PM',
-    client: 'Samantha Jumuad',
-    type: 'Debut',
-    package: 'Blooms (40)',
-    venue: 'Trees Residence',
-    rsvp: 40,
-    status: 'Completed',
-  },
-];
-
-const initialVendorData: Vendor[] = [
-  {
-    id: 1,
-    name: 'Nice Print Photography',
-    contactPerson: 'Contact person',
-    email: 'niceprint@gmail.com',
-    phone: '09123456789',
-    service: 'Photo & Video',
-    status: 'Active',
-  },
-  {
-    id: 2,
-    name: "Sam's Catering Services",
-    contactPerson: 'Contact person',
-    email: 'sams@gmail.com',
-    phone: '09123456789',
-    service: 'Catering',
-    status: 'Active',
-  },
-  {
-    id: 3,
-    name: 'XYZ Lights & Sounds',
-    contactPerson: 'Contact person',
-    email: 'xyz@gmail.com',
-    phone: '09123456789',
-    service: 'Technical',
-    status: 'Inactive',
-  },
-];
-
-const tabs: Array<'Events' | 'Outsourced' | 'Insourced' | 'Archived'> = [
-  'Events',
-  'Outsourced',
-  'Insourced',
-  'Archived',
-];
+const tabs: Array<'Events' | 'Vendor'> = ['Events', 'Vendor'];
 
 function getStatusBadgeClasses(status: EventStatus) {
   if (status === 'Completed') return 'bg-[#e8d5f2] text-[#7c3aed]';
   if (status === 'Pending') return 'bg-[#fff5db] text-[#7a5a11]';
-  if (status === 'Execution') return 'bg-[#efe6ff] text-[#6f2ea8]';
-  if (status === 'On-going') return 'bg-[#e6f4ea] text-[#1e7e34]';
   return 'bg-[#ffe8ef] text-[#8f1f4a]';
 }
 
@@ -153,104 +54,57 @@ function getTabButtonClasses(isActive: boolean) {
 
 export function EventManagerPage() {
   const location = useLocation();
-  const { searchTerm } = useOutletContext<OrganizerLayoutOutletContext>();
+  const outletContext = useOutletContext<OrganizerLayoutOutletContext | undefined>();
+  const searchTerm = outletContext?.searchTerm ?? '';
   const [activeTab, setActiveTab] = useState<'Events' | 'Vendor'>(
     location.state?.activeTab || 'Events'
   );
-  const [events, setEvents] = useState(eventTableData);
-  const [archivedEvents, setArchivedEvents] = useState<Event[]>([]);
-  const [vendors] = useState(initialVendorData);
-  const [localSearch, setLocalSearch] = useState('');
-  const [statusFilter, setStatusFilter] = useState<'All' | EventStatus>('All');
-  const statusMenuRef = useRef<HTMLDivElement | null>(null);
-  const [isStatusOpen, setIsStatusOpen] = useState(false);
-  const [editingEvent, setEditingEvent] = useState<Event | null>(null);
-  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
-  const [openMenuId, setOpenMenuId] = useState<number | null>(null);
+  const [events, setEvents] = useState<EventManagerEvent[]>([]);
+  const [vendors, setVendors] = useState<EventManagerVendor[]>([]);
+  const [selectedEventId, setSelectedEventId] = useState<string>('');
+  const [isLoading, setIsLoading] = useState(false);
+  const [isMutating, setIsMutating] = useState(false);
+  const [error, setError] = useState<string>('');
 
-  function openEditDialogFor(event: Event) {
-    setEditingEvent(event);
-    setIsEditDialogOpen(true);
-  }
+  const fetchEvents = useCallback(async () => {
+    setIsLoading(true);
+    setError('');
 
-  function handleSaveEdit(updated: Event) {
-    setEvents((prev) => prev.map((e) => (e.id === updated.id ? updated : e)));
-    setIsEditDialogOpen(false);
-    setEditingEvent(null);
-  }
+    try {
+      const eventRows = await getEventManagerEvents();
+      setEvents(eventRows);
+      setSelectedEventId((current) => {
+        if (current && eventRows.some((event) => event.id === current)) {
+          return current;
+        }
 
-  function handleArchive(id: number) {
-    const ev = events.find((e) => e.id === id);
-    if (!ev) return;
-    setEvents((prev) => prev.filter((e) => e.id !== id));
-    setArchivedEvents((prev) => [ev, ...prev]);
-    setOpenMenuId(null);
-  }
-
-  function handleUnarchive(id: number) {
-    const ev = archivedEvents.find((e) => e.id === id);
-    if (!ev) return;
-    setArchivedEvents((prev) => prev.filter((e) => e.id !== id));
-    setEvents((prev) => [ev, ...prev]);
-    setOpenMenuId(null);
-  }
-
-  // RSVP dialog state
-  const [isRsvpOpen, setIsRsvpOpen] = useState(false);
-  const [rsvpEvent, setRsvpEvent] = useState<Event | null>(null);
-  const [rsvpAttendees, setRsvpAttendees] = useState<Array<{ name: string; time: string }>>([]);
-
-  function generateAttendees(n: number) {
-    const names = [
-      'Jeremy Urmenita',
-      'Diana Rose Urmenita',
-      'Meryl C. Alicantara',
-      'Stefani Vienne R. Carcer',
-      'Aleah Missy Cabria',
-      'Kridsel Ybanez',
-      'Anna Lopez',
-      'John Doe',
-      'Jane Smith',
-      'Robert Brown',
-    ];
-    const list: Array<{ name: string; time: string }> = [];
-    for (let i = 0; i < Math.min(n, 200); i++) {
-      list.push({ name: names[i % names.length], time: '00:00 AM' });
+        return eventRows[0]?.id || '';
+      });
+    } catch {
+      setError('Unable to load events right now.');
+    } finally {
+      setIsLoading(false);
     }
-    return list;
-  }
+  }, []);
 
-  function openRsvpDialog(event: Event) {
-    // close edit dialog to avoid overlap
-    setIsEditDialogOpen(false);
-    setRsvpEvent(event);
-    // simulate live attendees (up to full RSVP)
-    setRsvpAttendees(generateAttendees(Math.min(event.rsvp, 50)));
-    setIsRsvpOpen(true);
-    setOpenMenuId(null);
-  }
+  const fetchVendors = useCallback(async (eventId: string) => {
+    if (!eventId) {
+      setVendors([]);
+      return;
+    }
 
-  // RSVP modal removed per request — no state or dialog for RSVP
+    try {
+      const vendorRows = await getVendorsByEventId(eventId);
+      setVendors(vendorRows);
+    } catch {
+      setVendors([]);
+    }
+  }, []);
 
   useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
-      if (
-        isStatusOpen &&
-        statusMenuRef.current &&
-        !statusMenuRef.current.contains(event.target as Node)
-      ) {
-        setIsStatusOpen(false);
-      }
-      // close per-row action menu on outside click
-      setOpenMenuId((prev) => (prev !== null ? null : prev));
-    }
+    void fetchEvents();
+  }, [fetchEvents]);
 
-    document.addEventListener('click', handleClickOutside);
-    return () => document.removeEventListener('click', handleClickOutside);
-  }, [isStatusOpen]);
-
-  //sa API ng backend here, pa check if tama hehe
-  /*
   useEffect(() => {
     void fetchVendors(selectedEventId);
   }, [fetchVendors, selectedEventId]);
@@ -329,70 +183,37 @@ export function EventManagerPage() {
 
 
   const filteredData = useMemo(() => {
-    const q = (localSearch || searchTerm || '').trim().toLowerCase();
+    const normalizedSearchTerm = searchTerm.trim().toLowerCase();
 
     if (activeTab === 'Events') {
-      let list = events.slice();
-
-      if (statusFilter !== 'All') {
-        list = list.filter((e) => e.status === statusFilter);
+      if (!normalizedSearchTerm) {
+        return { activeTab: 'Events' as const, data: events };
       }
 
-      if (!q) return { activeTab: 'Events' as const, data: list };
-
-      const data = list.filter((event) => {
+      const data = events.filter((event) => {
         const searchableFields = [
           event.title,
           event.date,
           event.timeSlot,
-          event.organizerName ?? '',
           event.client,
-          event.clientEmail ?? '',
           event.type,
           event.package,
           event.venue,
-          event.message ?? '',
+          event.status,
           String(event.rsvp),
-          String(event.status),
         ];
 
-        return searchableFields.some((field) => field.toLowerCase().includes(q));
+        return searchableFields.some((field) => field.toLowerCase().includes(normalizedSearchTerm));
       });
 
       return { activeTab: 'Events' as const, data };
     }
 
-    // Archived tab: show archived events using same columns as Events
-    if (activeTab === 'Archived') {
-      let list = archivedEvents.slice();
-      if (statusFilter !== 'All') {
-        list = list.filter((e) => e.status === statusFilter);
-      }
-      if (!q) return { activeTab: 'Events' as const, data: list };
-      const data = list.filter((event) => {
-        const searchableFields = [
-          event.title,
-          event.date,
-          event.timeSlot,
-          event.organizerName ?? '',
-          event.client,
-          event.clientEmail ?? '',
-          event.type,
-          event.package,
-          event.venue,
-          event.message ?? '',
-          String(event.rsvp),
-          String(event.status),
-        ];
-        return searchableFields.some((field) => field.toLowerCase().includes(q));
-      });
-      return { activeTab: 'Events' as const, data };
+    if (!normalizedSearchTerm) {
+      return { activeTab: 'Vendor' as const, data: vendors };
     }
 
-    let vlist = vendors.slice();
-    if (!q) return { activeTab: 'Vendor' as const, data: vlist };
-
-    const vdata = vlist.filter((vendor) => {
+    const data = vendors.filter((vendor) => {
       const searchableFields = [
         vendor.name,
         vendor.contactPerson,
@@ -402,11 +223,11 @@ export function EventManagerPage() {
         vendor.status,
       ];
 
-      return searchableFields.some((field) => field.toLowerCase().includes(q));
+      return searchableFields.some((field) => field.toLowerCase().includes(normalizedSearchTerm));
     });
 
-    return { activeTab: 'Vendor' as const, data: vdata };
-  }, [activeTab, events, vendors, localSearch, searchTerm, statusFilter]);
+    return { activeTab: 'Vendor' as const, data };
+  }, [activeTab, events, searchTerm, vendors]);
 
   return (
     <div className="space-y-5 p-6 font-sans">
@@ -438,11 +259,11 @@ export function EventManagerPage() {
       </Card>
 
       <div className="flex items-center justify-between">
-        <h2 className="text-lg font-bold text-[#2e2837]">Event Manager</h2>
+        <h2 className="text-lg font-bold text-[#2e2837]">Table List</h2>
       </div>
 
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
+      <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl bg-[#f5f1fa] p-2 ring-1 ring-[#ece4f4]">
+        <div className="flex flex-wrap gap-2 rounded-xl bg-[#ede6f6] p-1">
           {tabs.map((tab) => {
             const isActive = tab === activeTab;
             return (
@@ -452,96 +273,37 @@ export function EventManagerPage() {
                 size="sm"
                 variant="ghost"
                 onClick={() => setActiveTab(tab)}
-                className={`px-3 py-1 text-sm font-medium rounded-full transition-colors ${
-                  isActive
-                    ? 'bg-white/90 text-[#2e2837] shadow-sm'
-                    : 'text-[#8f879f] hover:bg-white/60'
-                }`}
+                className={`rounded-lg px-4 transition-all ${getTabButtonClasses(isActive)}`}
               >
                 {tab}
               </Button>
             );
           })}
         </div>
-
-        {/* removed centered search - moved beside Status button */}
-
-        <div className="flex items-center gap-2">
-          {/* Search moved here and shortened */}
-          <input
-            aria-label="Search events"
-            value={localSearch}
-            onChange={(e) => setLocalSearch(e.target.value)}
-            placeholder="Search..."
-            className="h-9 w-48 rounded-full border border-[#e7e0ef] px-3 text-sm outline-none"
-          />
-
-          {/* Actions button removed per design */}
-
-          <div className="relative" ref={statusMenuRef}>
-            <button
-              type="button"
-              onClick={() => setIsStatusOpen((v) => !v)}
-              className="h-9 rounded-full bg-white border border-[#e7e0ef] px-4 text-sm text-[#655d75] flex items-center gap-2"
-            >
-              Status
-              <span className="text-xs">▾</span>
-            </button>
-
-            {isStatusOpen && (
-              <div className="absolute right-0 z-20 mt-2 w-44 rounded-xl border border-[#e3deec] bg-white p-2 shadow-[0_14px_24px_rgba(49,25,77,0.16)]">
-                <div
-                  onClick={() => {
-                    setStatusFilter('Pending');
-                    setIsStatusOpen(false);
-                  }}
-                  className="flex items-center gap-3 px-3 py-2 hover:bg-[#faf7ff] cursor-pointer"
-                >
-                  <span className="w-2 h-2 rounded-full bg-[#ffd95a] inline-block" />
-                  <span className="text-sm text-[#2e2837]">Planning</span>
-                </div>
-
-                <div
-                  onClick={() => {
-                    setStatusFilter('Execution');
-                    setIsStatusOpen(false);
-                  }}
-                  className="flex items-center gap-3 px-3 py-2 hover:bg-[#faf7ff] cursor-pointer"
-                >
-                  <span className="w-2 h-2 rounded-full bg-[#f347a5] inline-block" />
-                  <span className="text-sm text-[#2e2837]">Execution</span>
-                </div>
-
-                <div
-                  onClick={() => {
-                    setStatusFilter('Completed');
-                    setIsStatusOpen(false);
-                  }}
-                  className="flex items-center gap-3 px-3 py-2 hover:bg-[#faf7ff] cursor-pointer"
-                >
-                  <span className="w-2 h-2 rounded-full bg-[#7c3aed] inline-block" />
-                  <span className="text-sm text-[#2e2837]">Completed</span>
-                </div>
-
-                <div
-                  onClick={() => {
-                    setStatusFilter('All');
-                    setIsStatusOpen(false);
-                  }}
-                  className="flex items-center gap-3 px-3 py-2 hover:bg-[#faf7ff] cursor-pointer"
-                >
-                  <span className="w-2 h-2 rounded-full bg-[#cfc9d9] inline-block" />
-                  <span className="text-sm text-[#2e2837]">All</span>
-                </div>
-              </div>
-            )}
-          </div>
+        <div className="flex gap-2">
+          <Button
+            disabled={isMutating}
+            onClick={() => void handleCreateEvent()}
+            className="h-9 rounded-xl bg-linear-to-r from-[#f051a3] to-[#8f1fd0] px-4 text-white shadow-md shadow-[#c26adf4d] transition-shadow hover:shadow-lg disabled:opacity-60"
+          >
+            <img src="/Pictures/organizerpics/Actions.png" alt="Actions" className="h-3 w-3" />
+            Add Event
+          </Button>
+          <Button
+            disabled={isLoading}
+            onClick={() => void fetchEvents()}
+            variant="outline"
+            className="h-9 rounded-xl border-[#dacde8] bg-white px-4 text-[#4f4462] hover:bg-[#f8f5fc] disabled:opacity-60"
+          >
+            <img
+              src="/Pictures/organizerpics/All Status.png"
+              alt="Refresh"
+              className="h-3 w-3"
+            />
+            Refresh
+          </Button>
         </div>
       </div>
-
-      {/* Dropdown menus: implemented below via refs and state */}
-
-      {/* Dropdown menus: implemented below via refs and state */}
 
       {activeTab === 'Vendor' && events.length > 0 ? (
         <div className="flex items-center gap-3 rounded-xl bg-[#f8f4fc] px-3 py-2 ring-1 ring-[#ece4f4]">
@@ -590,12 +352,11 @@ export function EventManagerPage() {
           </div>
         </CardHeader>
         <CardContent>
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                {activeTab === 'Events' || activeTab === 'Archived' ? (
-                  <tr className="border-b border-[#e8e4ed]">
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-[#2e2837] font-sans">
+          <Table className="text-sm">
+              <TableHeader>
+                {activeTab === 'Events' ? (
+                  <TableRow className="border-[#efe8f6] bg-[#fcfbff]">
+                    <TableHead className="px-3 font-semibold text-[#5c536d]">
                       Title
                     </TableHead>
                     <TableHead className="px-3 font-semibold text-[#5c536d]">
@@ -621,11 +382,11 @@ export function EventManagerPage() {
                     </TableHead>
                     <TableHead className="px-3 font-semibold text-[#5c536d]">
                       Status
-                    </th>
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-[#2e2837] font-sans">
+                    </TableHead>
+                    <TableHead className="px-3 font-semibold text-[#5c536d]">
                       Actions
-                    </th>
-                  </tr>
+                    </TableHead>
+                  </TableRow>
                 ) : (
                   <TableRow className="border-[#efe8f6] bg-[#fcfbff]">
                     <TableHead className="px-3 font-semibold text-[#5c536d]">
@@ -642,17 +403,11 @@ export function EventManagerPage() {
                     </TableHead>
                     <TableHead className="px-3 font-semibold text-[#5c536d]">
                       Service
-                    </th>
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-[#2e2837] font-sans">
-                      Last Transaction
-                    </th>
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-[#2e2837] font-sans">
+                    </TableHead>
+                    <TableHead className="px-3 font-semibold text-[#5c536d]">
                       Status
-                    </th>
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-[#2e2837] font-sans">
-                      Actions
-                    </th>
-                  </tr>
+                    </TableHead>
+                  </TableRow>
                 )}
               </TableHeader>
               <TableBody>
@@ -662,126 +417,66 @@ export function EventManagerPage() {
                         key={event.id}
                         className="border-[#f2edf8]"
                       >
-                        <td className="px-4 py-3 text-sm text-[#2e2837]">{event.title}</td>
-                        <td className="px-4 py-3 text-sm text-[#2e2837]">{event.date}</td>
-                        <td className="px-4 py-3 text-sm text-[#2e2837]">{event.timeSlot}</td>
-                        <td className="px-4 py-3 text-sm text-[#2e2837]">
-                          <div>{event.client}</div>
-                          {event.clientEmail && (
-                            <div className="text-xs text-[#7d7686]">{event.clientEmail}</div>
-                          )}
-                        </td>
-                        <td className="px-4 py-3 text-sm text-[#2e2837]">{event.type}</td>
-                        <td className="px-4 py-3 text-sm text-[#2e2837]">{event.package}</td>
-                        <td className="px-4 py-3 text-sm text-[#2e2837]">{event.venue}</td>
-                        <td className="px-4 py-3 text-sm text-[#2e2837]">
-                          <div className="flex items-center gap-3">
-                            <span className="text-lg font-semibold">
-                              {String(event.rsvp).padStart(2, '0')}
-                            </span>
-                            <button
-                              type="button"
-                              onClick={() => openRsvpDialog(event)}
-                              className="text-xs text-[#6f2ea8] underline"
-                            >
-                              View RSVP
-                            </button>
-                          </div>
-                        </td>
-                        <td className="px-4 py-3 text-sm">
-                          <span
-                            className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${getStatusBadgeClasses(
-                              event.status
-                            )}`}
-                          >
+                        <TableCell className="px-3 font-medium text-[#2e2837]">{event.title}</TableCell>
+                        <TableCell className="px-3 text-[#514a61]">{event.date}</TableCell>
+                        <TableCell className="px-3 text-[#514a61]">{event.timeSlot}</TableCell>
+                        <TableCell className="px-3 text-[#514a61]">{event.client}</TableCell>
+                        <TableCell className="px-3 text-[#514a61]">{event.type}</TableCell>
+                        <TableCell className="px-3 text-[#514a61]">{event.package}</TableCell>
+                        <TableCell className="px-3 text-[#514a61]">{event.venue}</TableCell>
+                        <TableCell className="px-3 text-[#514a61]">{event.rsvp}</TableCell>
+                        <TableCell className="px-3">
+                          <Badge className={getStatusBadgeClasses(event.status)}>
                             {event.status}
-                          </span>
-                        </td>
-
-                        <td className="px-4 py-3 text-sm relative">
-                          <div onClick={(e) => e.stopPropagation()}>
-                            <button
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="px-3">
+                          <div className="flex gap-2">
+                            <Button
                               type="button"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setOpenMenuId(openMenuId === event.id ? null : event.id);
-                              }}
-                              className="h-8 w-8 rounded-full bg-white border border-[#e7e0ef] text-sm text-[#655d75] flex items-center justify-center"
-                              aria-label={`Actions for event ${event.id}`}
+                              size="sm"
+                              variant="outline"
+                              disabled={isMutating}
+                              onClick={() => void handleUpdateEventTitle(event)}
+                              className="h-7 rounded-lg border-[#d6cee2] px-3"
                             >
-                              ⋯
-                            </button>
-
-                            {openMenuId === event.id && (
-                              <div
-                                onClick={(e) => e.stopPropagation()}
-                                className="absolute right-0 mt-2 w-36 rounded-xl border border-[#e3deec] bg-white p-1 shadow-[0_14px_24px_rgba(49,25,77,0.16)] z-30"
-                              >
-                                {activeTab === 'Archived' ? (
-                                  <button
-                                    type="button"
-                                    onClick={() => handleUnarchive(event.id)}
-                                    className="w-full text-left px-3 py-2 text-sm text-[#2e2837] hover:bg-[#faf7ff]"
-                                  >
-                                    Unarchive
-                                  </button>
-                                ) : (
-                                  <>
-                                    <button
-                                      type="button"
-                                      onClick={() => {
-                                        openEditDialogFor(event);
-                                        setOpenMenuId(null);
-                                      }}
-                                      className="w-full text-left px-3 py-2 text-sm text-[#2e2837] hover:bg-[#faf7ff]"
-                                    >
-                                      Edit
-                                    </button>
-                                    <button
-                                      type="button"
-                                      onClick={() => handleArchive(event.id)}
-                                      className="w-full text-left px-3 py-2 text-sm text-[#2e2837] hover:bg-[#faf7ff]"
-                                    >
-                                      Archive
-                                    </button>
-                                  </>
-                                )}
-                              </div>
-                            )}
+                              Edit
+                            </Button>
+                            <Button
+                              type="button"
+                              size="sm"
+                              disabled={isMutating}
+                              onClick={() => void handleDeleteEvent(event)}
+                              className="h-7 rounded-lg bg-[#ffe5ee] px-3 text-[#8f1f4a] hover:bg-[#ffd8e7]"
+                            >
+                              Delete
+                            </Button>
                           </div>
-                        </td>
-                      </tr>
+                        </TableCell>
+                      </TableRow>
                     ))
                   : filteredData.data.map((vendor) => (
                       <TableRow
                         key={vendor.id}
                         className="border-[#f2edf8]"
                       >
-                        <td className="px-4 py-3 text-sm text-[#2e2837]">{vendor.name}</td>
-                        <td className="px-4 py-3 text-sm text-[#2e2837]">{vendor.contactPerson}</td>
-                        <td className="px-4 py-3 text-sm text-[#2e2837]">{vendor.email}</td>
-                        <td className="px-4 py-3 text-sm text-[#2e2837]">{vendor.phone}</td>
-                        <td className="px-4 py-3 text-sm text-[#2e2837]">{vendor.service}</td>
-                        <td className="px-4 py-3 text-sm text-[#2e2837]">
-                          {vendor.lastTransaction}
-                        </td>
-                        <td className="px-4 py-3 text-sm">
-                          <span
-                            className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${getVendorStatusBadgeClasses(
-                              vendor.status
-                            )}`}
-                          >
+                        <TableCell className="px-3 font-medium text-[#2e2837]">{vendor.name}</TableCell>
+                        <TableCell className="px-3 text-[#514a61]">{vendor.contactPerson}</TableCell>
+                        <TableCell className="px-3 text-[#514a61]">{vendor.email}</TableCell>
+                        <TableCell className="px-3 text-[#514a61]">{vendor.phone}</TableCell>
+                        <TableCell className="px-3 text-[#514a61]">{vendor.service}</TableCell>
+                        <TableCell className="px-3">
+                          <Badge className={getVendorStatusBadgeClasses(vendor.status)}>
                             {vendor.status}
-                          </span>
-                        </td>
-                        <td className="px-4 py-3 text-sm">&nbsp;</td>
-                      </tr>
+                          </Badge>
+                        </TableCell>
+                      </TableRow>
                     ))}
                 {filteredData.data.length === 0 ? (
-                  <tr>
-                    <td
-                      colSpan={activeTab === 'Events' || activeTab === 'Archived' ? 10 : 8}
-                      className="px-4 py-6 text-center text-sm text-[#8f879f]"
+                  <TableRow>
+                    <TableCell
+                      colSpan={activeTab === 'Events' ? 10 : 6}
+                      className="py-12 text-center text-sm text-[#8f879f]"
                     >
                       {isLoading
                         ? 'Loading data...'
@@ -793,236 +488,6 @@ export function EventManagerPage() {
           </Table>
         </CardContent>
       </Card>
-
-      {/* Edit dialog for events */}
-      <Dialog open={isEditDialogOpen} onOpenChange={(open) => setIsEditDialogOpen(open)}>
-        <DialogContent className="bg-transparent p-0 shadow-none" showCloseButton={false}>
-          <DialogTitle>Edit Event</DialogTitle>
-          <div className="grid grid-cols-1 gap-2 mt-3">
-            <Input
-              placeholder="Title"
-              value={editingEvent?.title ?? ''}
-              onChange={(e) =>
-                editingEvent && setEditingEvent({ ...editingEvent, title: e.target.value })
-              }
-            />
-            <div className="flex gap-2">
-              <Input
-                placeholder="Date"
-                value={editingEvent?.date ?? ''}
-                onChange={(e) =>
-                  editingEvent && setEditingEvent({ ...editingEvent, date: e.target.value })
-                }
-              />
-              <Input
-                placeholder="Time slot"
-                value={editingEvent?.timeSlot ?? ''}
-                onChange={(e) =>
-                  editingEvent && setEditingEvent({ ...editingEvent, timeSlot: e.target.value })
-                }
-              />
-            </div>
-            <Input
-              placeholder="Client"
-              value={editingEvent?.client ?? ''}
-              onChange={(e) =>
-                editingEvent && setEditingEvent({ ...editingEvent, client: e.target.value })
-              }
-            />
-            <Input
-              placeholder="Client Email"
-              value={editingEvent?.clientEmail ?? ''}
-              onChange={(e) =>
-                editingEvent && setEditingEvent({ ...editingEvent, clientEmail: e.target.value })
-              }
-            />
-            <Input
-              placeholder="Organizer Name"
-              value={editingEvent?.organizerName ?? ''}
-              onChange={(e) =>
-                editingEvent && setEditingEvent({ ...editingEvent, organizerName: e.target.value })
-              }
-            />
-            <div className="flex gap-2">
-              <Input
-                placeholder="Type"
-                value={editingEvent?.type ?? ''}
-                onChange={(e) =>
-                  editingEvent && setEditingEvent({ ...editingEvent, type: e.target.value })
-                }
-              />
-              <Input
-                placeholder="Package"
-                value={editingEvent?.package ?? ''}
-                onChange={(e) =>
-                  editingEvent && setEditingEvent({ ...editingEvent, package: e.target.value })
-                }
-              />
-            </div>
-            <Input
-              placeholder="Venue"
-              value={editingEvent?.venue ?? ''}
-              onChange={(e) =>
-                editingEvent && setEditingEvent({ ...editingEvent, venue: e.target.value })
-              }
-            />
-            <Input
-              placeholder="Message"
-              value={editingEvent?.message ?? ''}
-              onChange={(e) =>
-                editingEvent && setEditingEvent({ ...editingEvent, message: e.target.value })
-              }
-            />
-            <div className="flex gap-2">
-              <Input
-                placeholder="RSVP"
-                value={editingEvent?.rsvp ?? 0}
-                onChange={(e) =>
-                  editingEvent &&
-                  setEditingEvent({ ...editingEvent, rsvp: Number(e.target.value) || 0 })
-                }
-              />
-              <Select
-                value={editingEvent?.status ?? 'Pending'}
-                onValueChange={(val: string) =>
-                  editingEvent && setEditingEvent({ ...editingEvent, status: val as EventStatus })
-                }
-              >
-                <option value="Pending">Planning</option>
-                <option value="Execution">Execution</option>
-                <option value="On-going">On-going</option>
-                <option value="Completed">Completed</option>
-                <option value="Cancelled">Cancelled</option>
-              </Select>
-            </div>
-          </div>
-          <DialogFooter className="mt-4 flex gap-2">
-            <DialogClose asChild>
-              <button className="px-4 py-2 bg-[#f3f2f7] rounded">Cancel</button>
-            </DialogClose>
-            <button
-              onClick={() => editingEvent && handleSaveEdit(editingEvent)}
-              className="px-4 py-2 bg-gradient-to-r from-[#f051a3] to-[#8f1fd0] text-white rounded"
-            >
-              Save
-            </button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* RSVP dialog (live counts + attendees) */}
-      <Dialog open={isRsvpOpen} onOpenChange={(open) => setIsRsvpOpen(open)}>
-        <DialogContent>
-          <div className="w-full flex justify-center items-start p-6">
-            <div className="relative w-full max-w-3xl">
-              {/* white backdrop behind the purple card */}
-              <div
-                aria-hidden
-                className="absolute -left-4 -top-4 w-[calc(100%+32px)] h-[calc(100%+32px)] rounded-2xl bg-white"
-                style={{ boxShadow: '0 18px 30px rgba(49,25,77,0.12)' }}
-              />
-
-              <div className="relative z-10 w-full rounded-2xl bg-[#f3e0fb] p-6">
-                <DialogClose asChild>
-                  <button
-                    aria-label="Close RSVP"
-                    className="absolute right-4 top-4 text-white hover:text-gray-100"
-                  >
-                    ×
-                  </button>
-                </DialogClose>
-
-                <div className="flex items-start justify-between">
-                  <div>
-                    <DialogTitle className="text-2xl font-semibold mb-1">RSVP</DialogTitle>
-                    <p className="text-sm text-gray-600">Live counts of attendees</p>
-                  </div>
-                  <div className="w-1/4" />
-                </div>
-
-                <div className="flex gap-6 items-start mt-6">
-                  <div className="w-72 flex-shrink-0">
-                    <div className="rounded-lg border-2 border-[#e6c9f5] bg-[#f6e9fb] p-4 h-full">
-                      <p className="text-xs text-[#6b5b72] uppercase tracking-wider text-center font-semibold">
-                        LIVE HEADCOUNT
-                      </p>
-                      <div className="mt-4 flex justify-center">
-                        <div className="flex gap-3">
-                          {String(rsvpAttendees.length)
-                            .padStart(3, '0')
-                            .split('')
-                            .map((d, i) => (
-                              <div
-                                key={i}
-                                className="w-20 h-20 rounded-md bg-white border border-[#d8cbe6] flex items-center justify-center text-3xl font-mono font-bold shadow-sm"
-                              >
-                                {d}
-                              </div>
-                            ))}
-                        </div>
-                      </div>
-                      <div className="text-sm text-gray-700 mt-4 text-center">
-                        Expected Attendees:{' '}
-                        <span className="font-semibold">{rsvpEvent?.rsvp ?? '-'}</span> pax
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="flex-1 flex justify-end">
-                    <div className="text-sm text-right">
-                      <div className="text-xs font-semibold text-[#6b5b72]">DETAILS:</div>
-                      <div className="mt-2 text-sm text-gray-800">
-                        FINAL HEADCOUNT:{' '}
-                        <span className="font-semibold">{rsvpAttendees.length}</span>
-                      </div>
-                      <div className="text-sm text-gray-800">
-                        ABSENTEES:{' '}
-                        <span className="font-semibold">
-                          {Math.max((rsvpEvent?.rsvp ?? 0) - rsvpAttendees.length, 0)}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                <h3 className="text-sm font-semibold text-center mt-6">
-                  NAMES OF PRESENT ATTENDEES
-                </h3>
-
-                <div className="mt-4 rounded-lg border border-[#e6e0ea] bg-white p-2">
-                  <div className="overflow-auto" style={{ maxHeight: 320 }}>
-                    <table className="w-full text-sm">
-                      <thead>
-                        <tr className="text-xs text-gray-500">
-                          <th className="px-4 py-3 text-left">Name</th>
-                          <th className="px-4 py-3 text-left">Time</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {rsvpAttendees.map((a, idx) => (
-                          <tr key={idx} className="border-t border-[#f3f1f6]">
-                            <td className="px-4 py-3 text-gray-700">
-                              {idx + 1}. {a.name}
-                            </td>
-                            <td className="px-4 py-3 text-gray-700">{a.time}</td>
-                          </tr>
-                        ))}
-                        {rsvpAttendees.length === 0 && (
-                          <tr>
-                            <td colSpan={2} className="px-4 py-6 text-center text-sm text-gray-500">
-                              No attendees yet
-                            </td>
-                          </tr>
-                        )}
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }
