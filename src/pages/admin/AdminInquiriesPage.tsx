@@ -1,6 +1,6 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Badge } from '@/components/ui/badge';
-import { Calendar as CalendarIcon } from 'lucide-react';
+import { Calendar as CalendarIcon, CheckCircle2, Clock3, MessageSquareText } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Table,
@@ -26,6 +26,9 @@ import { getOrganizerUsers } from '@/api/users';
 export function AdminInquiriesPage() {
   const [inquiries, setInquiries] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [sortBy, setSortBy] = useState<'date' | 'status'>('date');
+  const [sortOrder, setSortOrder] = useState<'desc' | 'asc'>('desc');
   const [selectedInquiry, setSelectedInquiry] = useState<any | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isScheduleModalOpen, setIsScheduleModalOpen] = useState(false);
@@ -62,6 +65,110 @@ export function AdminInquiriesPage() {
     };
     fetchInquiries();
   }, []);
+
+  const statusCounts = useMemo(() => {
+    const counts = {
+      total: inquiries.length,
+      pending: 0,
+      scheduled: 0,
+      approved: 0,
+    };
+
+    inquiries.forEach((inquiry) => {
+      const status = String(inquiry.status || '').toLowerCase();
+
+      if (!status || status === 'new' || status === 'pending review' || status === 'pending') {
+        counts.pending += 1;
+      }
+
+      if (status === 'meeting scheduled') {
+        counts.scheduled += 1;
+      }
+
+      if (status === 'approved' || status === 'resolved') {
+        counts.approved += 1;
+      }
+    });
+
+    return counts;
+  }, [inquiries]);
+
+  const getStatusBadgeClass = (statusValue?: string) => {
+    const status = String(statusValue || '').toLowerCase();
+
+    if (!status || status === 'new' || status === 'pending review' || status === 'pending') {
+      return 'bg-[#ff7eb3] hover:bg-[#ff7eb3] text-white';
+    }
+
+    if (status === 'in progress' || status === 'requires clarification') {
+      return 'bg-amber-100 hover:bg-amber-100 text-amber-700';
+    }
+
+    if (status === 'meeting scheduled') {
+      return 'bg-[#f7ebff] hover:bg-[#f7ebff] text-[#6f2ea8]';
+    }
+
+    if (status === 'resolved' || status === 'approved') {
+      return 'bg-emerald-100 hover:bg-emerald-100 text-emerald-700';
+    }
+
+    if (status === 'declined') {
+      return 'bg-red-100 hover:bg-red-100 text-red-700';
+    }
+
+    return 'bg-slate-100 hover:bg-slate-100 text-slate-700';
+  };
+
+  const getStatusRank = (statusValue?: string) => {
+    const status = String(statusValue || '').toLowerCase();
+
+    if (!status || status === 'new' || status === 'pending review' || status === 'pending')
+      return 1;
+    if (status === 'in progress' || status === 'requires clarification') return 2;
+    if (status === 'meeting scheduled') return 3;
+    if (status === 'approved' || status === 'resolved') return 4;
+    if (status === 'declined') return 5;
+
+    return 99;
+  };
+
+  const filteredAndSortedInquiries = useMemo(() => {
+    const normalizedQuery = searchQuery.trim().toLowerCase();
+
+    const filtered = inquiries.filter((inquiry) => {
+      if (!normalizedQuery) return true;
+
+      const searchBucket = [
+        inquiry.firstName,
+        inquiry.lastName,
+        inquiry.email,
+        inquiry.eventType,
+        inquiry.subject,
+        inquiry.status,
+      ]
+        .filter(Boolean)
+        .join(' ')
+        .toLowerCase();
+
+      return searchBucket.includes(normalizedQuery);
+    });
+
+    const sorted = [...filtered].sort((a, b) => {
+      if (sortBy === 'status') {
+        const statusCompare = getStatusRank(a.status) - getStatusRank(b.status);
+        if (statusCompare !== 0) {
+          return sortOrder === 'asc' ? statusCompare : -statusCompare;
+        }
+      }
+
+      const aDate = new Date(a.date || a.createdAt || 0).getTime();
+      const bDate = new Date(b.date || b.createdAt || 0).getTime();
+      const dateCompare = aDate - bDate;
+      return sortOrder === 'asc' ? dateCompare : -dateCompare;
+    });
+
+    return sorted;
+  }, [inquiries, searchQuery, sortBy, sortOrder]);
 
   useEffect(() => {
     const fetchOrganizers = async () => {
@@ -218,56 +325,157 @@ export function AdminInquiriesPage() {
   };
 
   return (
-    <div className="p-6 space-y-6">
-      <div className="flex flex-col gap-2">
-        <h1 className="text-3xl font-black text-[#2e2837]">Client Inquiries</h1>
-        <p className="font-semibold text-[#8f879f]">
-          Monitor and respond to incoming event requests
-        </p>
-      </div>
+    <div className="space-y-6 p-4 ">
+      <section className="relative overflow-hidden rounded-2xl border border-[#efe6f6] bg-linear-to-r from-[#fff8fc] via-[#fef9ff] to-[#f4f7ff] p-5 md:p-7">
+        <div className="pointer-events-none absolute -right-10 -top-16 h-44 w-44 rounded-full bg-[#f347a5]/10 blur-3xl" />
+        <div className="pointer-events-none absolute -bottom-14 left-20 h-40 w-40 rounded-full bg-[#8f1fd1]/10 blur-3xl" />
 
-      <div className="bg-white rounded-lg border shadow-sm">
-        {loading ? (
-          <div className="p-6">
-            <p>Loading inquiries...</p>
+        <div className="relative flex flex-wrap items-start justify-between gap-4">
+          <div>
+            <h1 className="mt-3 text-2xl font-black text-[#2e2837] md:text-3xl">
+              Client Inquiries
+            </h1>
+            <p className="mt-1 max-w-2xl text-lg font-semibold text-[#8f879f] md:text-[15px]">
+              Review incoming requests, schedule discovery meetings, and move clients through your
+              booking pipeline.
+            </p>
           </div>
-        ) : inquiries.length === 0 ? (
-          <div className="p-6">
-            <p>No inquiries found.</p>
+        </div>
+
+        <div className="relative mt-5 grid grid-cols-2 gap-3 md:grid-cols-4">
+          <div className="rounded-xl border border-[#f1e8f7] bg-white/80 p-3">
+            <p className="text-[11px] font-bold uppercase tracking-wide text-[#8a7ca3]">Total</p>
+            <p className="mt-1 text-2xl font-black text-[#2e2837]">{statusCounts.total}</p>
+          </div>
+          <div className="rounded-xl border border-[#f1e8f7] bg-white/80 p-3">
+            <p className="inline-flex items-center gap-1 text-[11px] font-bold uppercase tracking-wide text-[#8a7ca3]">
+              <Clock3 className="h-3.5 w-3.5" /> Pending
+            </p>
+            <p className="mt-1 text-2xl font-black text-[#2e2837]">{statusCounts.pending}</p>
+          </div>
+          <div className="rounded-xl border border-[#f1e8f7] bg-white/80 p-3">
+            <p className="inline-flex items-center gap-1 text-[11px] font-bold uppercase tracking-wide text-[#8a7ca3]">
+              <CalendarIcon className="h-3.5 w-3.5" /> Scheduled
+            </p>
+            <p className="mt-1 text-2xl font-black text-[#2e2837]">{statusCounts.scheduled}</p>
+          </div>
+          <div className="rounded-xl border border-[#f1e8f7] bg-white/80 p-3">
+            <p className="inline-flex items-center gap-1 text-[11px] font-bold uppercase tracking-wide text-[#8a7ca3]">
+              <CheckCircle2 className="h-3.5 w-3.5" /> Approved
+            </p>
+            <p className="mt-1 text-2xl font-black text-[#2e2837]">{statusCounts.approved}</p>
+          </div>
+        </div>
+      </section>
+
+      <div className="overflow-hidden rounded-2xl border border-[#eee7f4] bg-white shadow-[0_8px_30px_rgba(53,36,71,0.06)]">
+        <div className="flex flex-col gap-3 border-b border-[#f1eaf7] bg-[#fcf9ff] p-4 md:flex-row md:items-end md:justify-between">
+          <div className="w-full md:max-w-sm">
+            <Label
+              htmlFor="inquiry-search"
+              className="mb-1 block text-[11px] font-black uppercase tracking-[0.08em] text-[#857a98]"
+            >
+              Search
+            </Label>
+            <Input
+              id="inquiry-search"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search sender, email, event type, status"
+              className="h-9 border-[#e5ddee] bg-white"
+            />
+          </div>
+
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
+            <div>
+              <Label className="mb-1 block text-[11px] font-black uppercase tracking-[0.08em] text-[#857a98]">
+                Sort By
+              </Label>
+              <Select value={sortBy} onValueChange={(value: 'date' | 'status') => setSortBy(value)}>
+                <SelectTrigger className="h-9 w-full min-w-[150px] border-[#e5ddee] bg-white sm:w-[170px]">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="date">Date</SelectItem>
+                  <SelectItem value="status">Status</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div>
+              <Label className="mb-1 block text-[11px] font-black uppercase tracking-[0.08em] text-[#857a98]">
+                Order
+              </Label>
+              <Select
+                value={sortOrder}
+                onValueChange={(value: 'asc' | 'desc') => setSortOrder(value)}
+              >
+                <SelectTrigger className="h-9 w-full min-w-[150px] border-[#e5ddee] bg-white sm:w-[170px]">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="desc">Descending</SelectItem>
+                  <SelectItem value="asc">Ascending</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+        </div>
+
+        {loading ? (
+          <div className="p-8">
+            <p className="text-lg font-semibold text-[#80788f]">Loading inquiries...</p>
+          </div>
+        ) : filteredAndSortedInquiries.length === 0 ? (
+          <div className="flex flex-col items-center justify-center gap-2 p-10 text-center">
+            <MessageSquareText className="h-10 w-10 text-[#d5c9e4]" />
+            <p className="text-base font-bold text-[#5a5368]">No inquiries found.</p>
+            <p className="text-lg font-medium text-[#91889f]">
+              {inquiries.length > 0
+                ? 'Try adjusting your search or sort settings.'
+                : 'New client requests will appear here once submitted.'}
+            </p>
           </div>
         ) : (
           <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Sender</TableHead>
-                <TableHead>Email</TableHead>
-                <TableHead>Event Type</TableHead>
-                <TableHead>Date</TableHead>
-                <TableHead>Status</TableHead>
+            <TableHeader className="bg-[#faf7fd]">
+              <TableRow className="border-b border-[#efe7f6]">
+                <TableHead className="h-12 text-lg font-black uppercase tracking-[0.06em] text-[#7c7390]">
+                  Sender
+                </TableHead>
+                <TableHead className="h-12 text-lg font-black uppercase tracking-[0.06em] text-[#7c7390]">
+                  Email
+                </TableHead>
+                <TableHead className="h-12 text-lg font-black uppercase tracking-[0.06em] text-[#7c7390]">
+                  Event Type
+                </TableHead>
+                <TableHead className="h-12 text-lg font-black uppercase tracking-[0.06em] text-[#7c7390]">
+                  Date
+                </TableHead>
+                <TableHead className="h-12 text-lg font-black uppercase tracking-[0.06em] text-[#7c7390]">
+                  Status
+                </TableHead>
                 <TableHead className="text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {inquiries.map((inquiry: any) => (
-                <TableRow key={inquiry.id || inquiry._id}>
-                  <TableCell className="font-medium">
+              {filteredAndSortedInquiries.map((inquiry: any) => (
+                <TableRow
+                  key={inquiry.id || inquiry._id}
+                  className="border-b border-[#f3edf8] hover:bg-[#fcf9ff]"
+                >
+                  <TableCell className="py-3.5 font-semibold text-lg text-[#2e2837]">
                     {inquiry.firstName} {inquiry.lastName}
                   </TableCell>
-                  <TableCell>{inquiry.email}</TableCell>
-                  <TableCell>{inquiry.eventType || inquiry.subject || 'Inquiry'}</TableCell>
-                  <TableCell>
+                  <TableCell className="text-lg text-[#635a73]">{inquiry.email}</TableCell>
+                  <TableCell className="font-semibold text-lg text-[#4e4560]">
+                    {inquiry.eventType || inquiry.subject || 'Inquiry'}
+                  </TableCell>
+                  <TableCell className="font-semibold text-lg text-[#4e4560]">
                     {new Date(inquiry.date || inquiry.createdAt).toLocaleDateString()}
                   </TableCell>
                   <TableCell>
-                    <Badge
-                      className={`
-                      ${inquiry.status === 'New' || inquiry.status === 'Pending Review' || inquiry.status === 'pending' ? 'bg-[#ff7eb3] hover:bg-[#ff7eb3] text-white' : ''}
-                      ${inquiry.status === 'In Progress' || inquiry.status === 'Requires Clarification' ? 'bg-amber-100 hover:bg-amber-100 text-amber-700' : ''}
-                      ${inquiry.status === 'Meeting Scheduled' || inquiry.status === 'meeting scheduled' ? 'bg-[#f7ebff] hover:bg-[#f7ebff] text-[#6f2ea8]' : ''}
-                      ${inquiry.status === 'Resolved' || inquiry.status === 'Approved' || inquiry.status === 'approved' ? 'bg-emerald-100 hover:bg-emerald-100 text-emerald-700' : ''}
-                      ${inquiry.status === 'Declined' || inquiry.status === 'declined' ? 'bg-red-100 hover:bg-red-100 text-red-700' : ''}
-                    `}
-                    >
+                    <Badge className={getStatusBadgeClass(inquiry.status)}>
                       {inquiry.status || 'New'}
                     </Badge>
                   </TableCell>
@@ -275,7 +483,7 @@ export function AdminInquiriesPage() {
                     <Button
                       variant="outline"
                       size="sm"
-                      className="font-bold"
+                      className="rounded-lg border-[#e7dff0] bg-white font-bold text-[#5f5472] hover:bg-[#f8f2fd] hover:text-[#4d4360]"
                       onClick={() => handleViewDetails(inquiry)}
                     >
                       View Details
@@ -289,34 +497,36 @@ export function AdminInquiriesPage() {
       </div>
 
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="sm:max-w-[600px]">
+        <DialogContent className="sm:max-w-[680px]">
           <DialogHeader>
-            <DialogTitle>Inquiry Details</DialogTitle>
+            <DialogTitle className="text-xl font-black text-[#2e2837]">Inquiry Details</DialogTitle>
           </DialogHeader>
           {selectedInquiry && (
             <div className="pt-4 md:flex md:gap-4">
               <div className="space-y-4 md:w-1/2">
-                <div>
-                  <h4 className="text-sm font-semibold text-muted-foreground uppercase">Sender</h4>
+                <div className="rounded-xl border border-[#efe8f6] bg-[#fcfaff] p-4">
+                  <h4 className="text-[11px] font-black uppercase tracking-[0.08em] text-[#857a98]">
+                    Sender
+                  </h4>
                   <p className="text-[#2e2837] font-medium">
                     {selectedInquiry.firstName} {selectedInquiry.lastName}
                   </p>
-                  <p className="text-sm text-muted-foreground">{selectedInquiry.email}</p>
+                  <p className="text-lg text-[#7a708d]">{selectedInquiry.email}</p>
                   {selectedInquiry.contactNumber && (
-                    <p className="text-sm text-muted-foreground">{selectedInquiry.contactNumber}</p>
+                    <p className="text-lg text-[#7a708d]">{selectedInquiry.contactNumber}</p>
                   )}
                 </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <h4 className="text-sm font-semibold text-muted-foreground uppercase">
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="rounded-xl border border-[#efe8f6] bg-white p-3">
+                    <h4 className="text-[11px] font-black uppercase tracking-[0.08em] text-[#857a98]">
                       Event Format
                     </h4>
                     <p className="text-[#2e2837] font-medium">
                       {selectedInquiry.eventType || selectedInquiry.subject || 'N/A'}
                     </p>
                   </div>
-                  <div>
-                    <h4 className="text-sm font-semibold text-muted-foreground uppercase">
+                  <div className="rounded-xl border border-[#efe8f6] bg-white p-3">
+                    <h4 className="text-[11px] font-black uppercase tracking-[0.08em] text-[#857a98]">
                       Planned Date
                     </h4>
                     <p className="text-[#2e2837] font-medium">
@@ -326,32 +536,32 @@ export function AdminInquiriesPage() {
                     </p>
                   </div>
                   {selectedInquiry.eventPackage && (
-                    <div>
-                      <h4 className="text-sm font-semibold text-muted-foreground uppercase">
+                    <div className="rounded-xl border border-[#efe8f6] bg-white p-3">
+                      <h4 className="text-[11px] font-black uppercase tracking-[0.08em] text-[#857a98]">
                         Package
                       </h4>
                       <p className="text-[#2e2837] font-medium">{selectedInquiry.eventPackage}</p>
                     </div>
                   )}
                   {selectedInquiry.eventPax && (
-                    <div>
-                      <h4 className="text-sm font-semibold text-muted-foreground uppercase">
+                    <div className="rounded-xl border border-[#efe8f6] bg-white p-3">
+                      <h4 className="text-[11px] font-black uppercase tracking-[0.08em] text-[#857a98]">
                         Expected Pax
                       </h4>
                       <p className="text-[#2e2837] font-medium">{selectedInquiry.eventPax}</p>
                     </div>
                   )}
                 </div>
-                <div className="flex gap-4 items-center pt-2">
+                <div className="flex items-center gap-4 pt-1">
                   <div className="w-full">
-                    <h4 className="text-sm font-semibold text-muted-foreground uppercase mb-1">
+                    <h4 className="mb-1 text-lg font-black uppercase tracking-[0.08em] text-[#857a98]">
                       Status
                     </h4>
                     <Select
                       value={selectedInquiry.status || 'New'}
                       onValueChange={handleStatusChange}
                     >
-                      <SelectTrigger className="w-full">
+                      <SelectTrigger className="w-full border-[#e5ddee] bg-white">
                         <SelectValue placeholder="Update status" />
                       </SelectTrigger>
                       <SelectContent>
@@ -379,21 +589,23 @@ export function AdminInquiriesPage() {
                   </div>
                 </div>
                 <div>
-                  <h4 className="text-sm font-semibold text-muted-foreground uppercase">Message</h4>
-                  <div className="bg-slate-50 p-4 rounded-md mt-1 text-[#2e2837] min-h-[100px] whitespace-pre-wrap">
+                  <h4 className="text-[11px] font-black uppercase tracking-[0.08em] text-[#857a98]">
+                    Message
+                  </h4>
+                  <div className="mt-1 min-h-[100px] whitespace-pre-wrap rounded-xl border border-[#ece4f5] bg-[#faf7ff] p-4 text-[#2e2837]">
                     {selectedInquiry.message || 'No additional message provided.'}
                   </div>
                 </div>
               </div>
 
-              <div className="mt-4 border-t pt-4 md:mt-0 md:w-1/2 md:border-t-0 md:border-l md:pl-4 md:pt-0">
+              <div className="mt-4 border-t border-[#efe8f6] pt-4 md:mt-0 md:w-1/2 md:border-l md:border-t-0 md:pl-4 md:pt-0">
                 {selectedInquiry.meetingDetails ? (
                   <div className="w-full space-y-3">
                     <div className="rounded-lg border border-[#eadcf7] bg-[#fbf6ff] p-3">
                       <p className="text-xs font-black uppercase tracking-[0.08em] text-[#6f2ea8]">
                         Meeting Details
                       </p>
-                      <p className="mt-1 text-sm font-semibold text-[#5f4f7a]">
+                      <p className="mt-1 text-lg font-semibold text-[#5f4f7a]">
                         {selectedInquiry.meetingDetails.date
                           ? new Date(selectedInquiry.meetingDetails.date).toLocaleDateString()
                           : 'TBD'}{' '}
@@ -445,7 +657,7 @@ export function AdminInquiriesPage() {
                   </div>
                 ) : (
                   <div className="space-y-3">
-                    <div className="rounded-lg border border-dashed border-[#eadcf7] bg-[#fbf6ff] p-3 text-sm text-[#6a5a83]">
+                    <div className="rounded-lg border border-dashed border-[#eadcf7] bg-[#fbf6ff] p-3 text-lg font-medium text-[#6a5a83]">
                       No meeting has been scheduled yet.
                     </div>
                     <Button
@@ -503,7 +715,7 @@ export function AdminInquiriesPage() {
                   value={draftEntry.title}
                   onChange={(e) => setDraftEntry({ ...draftEntry, title: e.target.value })}
                   placeholder="Enter title"
-                  className="h-9 rounded-lg border-[#ddd8e8] bg-white px-3 text-sm text-[#4c455e]"
+                  className="h-9 rounded-lg border-[#ddd8e8] bg-white px-3 text-lg text-[#4c455e]"
                 />
               </div>
 
@@ -542,7 +754,7 @@ export function AdminInquiriesPage() {
                     required
                     value={draftEntry.startDateKey}
                     onChange={(e) => setDraftEntry({ ...draftEntry, startDateKey: e.target.value })}
-                    className="h-9 rounded-lg border-[#ddd8e8] text-sm text-[#4c455e]"
+                    className="h-9 rounded-lg border-[#ddd8e8] text-lg text-[#4c455e]"
                   />
                 </div>
                 <div className="space-y-1.5">
@@ -552,7 +764,7 @@ export function AdminInquiriesPage() {
                     required
                     value={draftEntry.startTime}
                     onChange={(e) => setDraftEntry({ ...draftEntry, startTime: e.target.value })}
-                    className="h-9 rounded-lg border-[#ddd8e8] text-sm text-[#4c455e]"
+                    className="h-9 rounded-lg border-[#ddd8e8] text-lg text-[#4c455e]"
                   />
                 </div>
                 <div className="space-y-1.5">
@@ -562,7 +774,7 @@ export function AdminInquiriesPage() {
                     required
                     value={draftEntry.endDateKey}
                     onChange={(e) => setDraftEntry({ ...draftEntry, endDateKey: e.target.value })}
-                    className="h-9 rounded-lg border-[#ddd8e8] text-sm text-[#4c455e]"
+                    className="h-9 rounded-lg border-[#ddd8e8] text-lg text-[#4c455e]"
                   />
                 </div>
                 <div className="space-y-1.5">
@@ -572,7 +784,7 @@ export function AdminInquiriesPage() {
                     required
                     value={draftEntry.endTime}
                     onChange={(e) => setDraftEntry({ ...draftEntry, endTime: e.target.value })}
-                    className="h-9 rounded-lg border-[#ddd8e8] text-sm text-[#4c455e]"
+                    className="h-9 rounded-lg border-[#ddd8e8] text-lg text-[#4c455e]"
                   />
                 </div>
               </div>
@@ -615,7 +827,7 @@ export function AdminInquiriesPage() {
                   value={draftEntry.location}
                   onChange={(e) => setDraftEntry({ ...draftEntry, location: e.target.value })}
                   placeholder="Optional location / Link"
-                  className="h-9 rounded-lg border-[#ddd8e8] px-3 text-sm text-[#4c455e]"
+                  className="h-9 rounded-lg border-[#ddd8e8] px-3 text-lg text-[#4c455e]"
                 />
               </div>
 
@@ -625,7 +837,7 @@ export function AdminInquiriesPage() {
                   value={draftEntry.description}
                   onChange={(e) => setDraftEntry({ ...draftEntry, description: e.target.value })}
                   placeholder="Optional notes"
-                  className="h-20 w-full resize-none rounded-lg border border-[#ddd8e8] bg-white px-3 py-2 text-sm text-[#4c455e] outline-none placeholder:text-[#a49cb3] focus:border-[#be8de4]"
+                  className="h-20 w-full resize-none rounded-lg border border-[#ddd8e8] bg-white px-3 py-2 text-lg text-[#4c455e] outline-none placeholder:text-[#a49cb3] focus:border-[#be8de4]"
                 />
               </div>
 

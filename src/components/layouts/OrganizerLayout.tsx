@@ -49,8 +49,7 @@ const pageDescriptions: Record<string, string> = {
   '/organizer/calendar': 'Shows the mark dates and important meetings',
   '/organizer/event-planner': 'Planning and organization of the overall event',
   '/organizer/event-manager': 'Manages the list of the events completed',
-  '/organizer/rsvp':
-    'Helps organizer to plan, allocate resources, schedule and confirm the event.',
+  '/organizer/rsvp': 'Helps organizer to plan, allocate resources, schedule and confirm the event.',
   '/organizer/cost-breakdown': 'Displays cost and budget breakdown of an event or services',
 };
 
@@ -321,7 +320,11 @@ export function OrganizerLayout() {
                     }}
                   >
                     <div className="relative">
-                      <img src="/Pictures/organizerpics/notif dashboard.png" alt="Notifications" className="size-4" />
+                      <img
+                        src="/Pictures/organizerpics/notif dashboard.png"
+                        alt="Notifications"
+                        className="size-4"
+                      />
                       {hasNewNotif && (
                         <span className="absolute -right-0.5 -top-0.5 size-2 rounded-full bg-[#f44b9e] border border-white/50" />
                       )}
@@ -378,7 +381,9 @@ export function OrganizerLayout() {
                               </p>
                             </div>
                             <div className="shrink-0 pt-2">
-                              <span className={`block size-2 rounded-full ${notif.unread ? 'bg-[#f44b9e]' : 'bg-[#d1cbd9]'}`} />
+                              <span
+                                className={`block size-2 rounded-full ${notif.unread ? 'bg-[#f44b9e]' : 'bg-[#d1cbd9]'}`}
+                              />
                             </div>
                           </div>
                         ))}
@@ -439,7 +444,9 @@ export function OrganizerLayout() {
                             key={msg.id}
                             className="flex cursor-pointer items-start gap-3 border-b border-[#f0edf4] p-4 transition-colors hover:bg-[#fafafa]"
                           >
-                            <div className={`flex size-10 shrink-0 items-center justify-center rounded-full text-white text-lg font-bold ${msg.color}`}>
+                            <div
+                              className={`flex size-10 shrink-0 items-center justify-center rounded-full text-white text-lg font-bold ${msg.color}`}
+                            >
                               {msg.initial}
                             </div>
                             <div className="min-w-0 flex-1 pt-0.5">
