@@ -2,9 +2,22 @@ import { useEffect, useState } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Calendar as CalendarIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { getInquiries, updateInquiryStatus, scheduleInquiryMeeting } from '@/api/inquiries';
@@ -94,7 +107,9 @@ export function AdminInquiriesPage() {
     try {
       await updateInquiryStatus(id, newStatus);
       setSelectedInquiry({ ...selectedInquiry, status: newStatus });
-      setInquiries(inquiries.map(inq => (inq.id || inq._id) === id ? { ...inq, status: newStatus } : inq));
+      setInquiries(
+        inquiries.map((inq) => ((inq.id || inq._id) === id ? { ...inq, status: newStatus } : inq))
+      );
     } catch (error) {
       console.error('Failed to update status', error);
     }
@@ -118,7 +133,7 @@ export function AdminInquiriesPage() {
         location: draftEntry.location,
         organizerId: draftEntry.organizerId,
       });
-      
+
       // Update UI state reflecting new status and meeting details globally
       const newStatus = 'Meeting Scheduled';
       const meetingDetails = {
@@ -127,13 +142,23 @@ export function AdminInquiriesPage() {
         location: draftEntry.location,
         organizerId: draftEntry.organizerId,
       };
-      
+
       setSelectedInquiry({ ...selectedInquiry, status: newStatus, meetingDetails });
-      setInquiries(inquiries.map(inq => (inq.id || inq._id) === id ? { ...inq, status: newStatus, meetingDetails } : inq));
-      
+      setInquiries(
+        inquiries.map((inq) =>
+          (inq.id || inq._id) === id ? { ...inq, status: newStatus, meetingDetails } : inq
+        )
+      );
+
       setIsScheduleModalOpen(false);
       // Reset form properly
-      setDraftEntry(prev => ({ ...prev, title: '', location: '', description: '', organizerId: '' }));
+      setDraftEntry((prev) => ({
+        ...prev,
+        title: '',
+        location: '',
+        description: '',
+        organizerId: '',
+      }));
     } catch (error) {
       console.error('Failed to schedule meeting and assign organizer', error);
       setScheduleError('Unable to schedule meeting right now. Please try again.');
@@ -203,9 +228,13 @@ export function AdminInquiriesPage() {
 
       <div className="bg-white rounded-lg border shadow-sm">
         {loading ? (
-          <div className="p-6"><p>Loading inquiries...</p></div>
+          <div className="p-6">
+            <p>Loading inquiries...</p>
+          </div>
         ) : inquiries.length === 0 ? (
-          <div className="p-6"><p>No inquiries found.</p></div>
+          <div className="p-6">
+            <p>No inquiries found.</p>
+          </div>
         ) : (
           <Table>
             <TableHeader>
@@ -226,20 +255,29 @@ export function AdminInquiriesPage() {
                   </TableCell>
                   <TableCell>{inquiry.email}</TableCell>
                   <TableCell>{inquiry.eventType || inquiry.subject || 'Inquiry'}</TableCell>
-                  <TableCell>{new Date(inquiry.date || inquiry.createdAt).toLocaleDateString()}</TableCell>
                   <TableCell>
-                    <Badge className={`
+                    {new Date(inquiry.date || inquiry.createdAt).toLocaleDateString()}
+                  </TableCell>
+                  <TableCell>
+                    <Badge
+                      className={`
                       ${inquiry.status === 'New' || inquiry.status === 'Pending Review' || inquiry.status === 'pending' ? 'bg-[#ff7eb3] hover:bg-[#ff7eb3] text-white' : ''}
                       ${inquiry.status === 'In Progress' || inquiry.status === 'Requires Clarification' ? 'bg-amber-100 hover:bg-amber-100 text-amber-700' : ''}
                       ${inquiry.status === 'Meeting Scheduled' || inquiry.status === 'meeting scheduled' ? 'bg-[#f7ebff] hover:bg-[#f7ebff] text-[#6f2ea8]' : ''}
                       ${inquiry.status === 'Resolved' || inquiry.status === 'Approved' || inquiry.status === 'approved' ? 'bg-emerald-100 hover:bg-emerald-100 text-emerald-700' : ''}
                       ${inquiry.status === 'Declined' || inquiry.status === 'declined' ? 'bg-red-100 hover:bg-red-100 text-red-700' : ''}
-                    `}>
+                    `}
+                    >
                       {inquiry.status || 'New'}
                     </Badge>
                   </TableCell>
                   <TableCell className="text-right">
-                    <Button variant="outline" size="sm" className="font-bold" onClick={() => handleViewDetails(inquiry)}>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="font-bold"
+                      onClick={() => handleViewDetails(inquiry)}
+                    >
                       View Details
                     </Button>
                   </TableCell>
@@ -260,7 +298,9 @@ export function AdminInquiriesPage() {
               <div className="space-y-4 md:w-1/2">
                 <div>
                   <h4 className="text-sm font-semibold text-muted-foreground uppercase">Sender</h4>
-                  <p className="text-[#2e2837] font-medium">{selectedInquiry.firstName} {selectedInquiry.lastName}</p>
+                  <p className="text-[#2e2837] font-medium">
+                    {selectedInquiry.firstName} {selectedInquiry.lastName}
+                  </p>
                   <p className="text-sm text-muted-foreground">{selectedInquiry.email}</p>
                   {selectedInquiry.contactNumber && (
                     <p className="text-sm text-muted-foreground">{selectedInquiry.contactNumber}</p>
@@ -268,41 +308,71 @@ export function AdminInquiriesPage() {
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <h4 className="text-sm font-semibold text-muted-foreground uppercase">Event Format</h4>
-                    <p className="text-[#2e2837] font-medium">{selectedInquiry.eventType || selectedInquiry.subject || 'N/A'}</p>
+                    <h4 className="text-sm font-semibold text-muted-foreground uppercase">
+                      Event Format
+                    </h4>
+                    <p className="text-[#2e2837] font-medium">
+                      {selectedInquiry.eventType || selectedInquiry.subject || 'N/A'}
+                    </p>
                   </div>
                   <div>
-                    <h4 className="text-sm font-semibold text-muted-foreground uppercase">Planned Date</h4>
-                    <p className="text-[#2e2837] font-medium">{new Date(selectedInquiry.date || selectedInquiry.createdAt).toLocaleDateString()}</p>
+                    <h4 className="text-sm font-semibold text-muted-foreground uppercase">
+                      Planned Date
+                    </h4>
+                    <p className="text-[#2e2837] font-medium">
+                      {new Date(
+                        selectedInquiry.date || selectedInquiry.createdAt
+                      ).toLocaleDateString()}
+                    </p>
                   </div>
                   {selectedInquiry.eventPackage && (
                     <div>
-                      <h4 className="text-sm font-semibold text-muted-foreground uppercase">Package</h4>
+                      <h4 className="text-sm font-semibold text-muted-foreground uppercase">
+                        Package
+                      </h4>
                       <p className="text-[#2e2837] font-medium">{selectedInquiry.eventPackage}</p>
                     </div>
                   )}
                   {selectedInquiry.eventPax && (
                     <div>
-                      <h4 className="text-sm font-semibold text-muted-foreground uppercase">Expected Pax</h4>
+                      <h4 className="text-sm font-semibold text-muted-foreground uppercase">
+                        Expected Pax
+                      </h4>
                       <p className="text-[#2e2837] font-medium">{selectedInquiry.eventPax}</p>
                     </div>
                   )}
                 </div>
                 <div className="flex gap-4 items-center pt-2">
                   <div className="w-full">
-                    <h4 className="text-sm font-semibold text-muted-foreground uppercase mb-1">Status</h4>
-                    <Select value={selectedInquiry.status || 'New'} onValueChange={handleStatusChange}>
+                    <h4 className="text-sm font-semibold text-muted-foreground uppercase mb-1">
+                      Status
+                    </h4>
+                    <Select
+                      value={selectedInquiry.status || 'New'}
+                      onValueChange={handleStatusChange}
+                    >
                       <SelectTrigger className="w-full">
                         <SelectValue placeholder="Update status" />
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="Pending Review">Pending Review</SelectItem>
-                        <SelectItem value="Requires Clarification">Requires Clarification</SelectItem>
+                        <SelectItem value="Requires Clarification">
+                          Requires Clarification
+                        </SelectItem>
                         <SelectItem value="Meeting Scheduled">Meeting Scheduled</SelectItem>
                         <SelectItem value="Approved">Approved</SelectItem>
                         <SelectItem value="Declined">Declined</SelectItem>
-                        {['New', 'In Progress', 'Resolved', 'pending', 'approved', 'declined'].includes(selectedInquiry.status) && (
-                          <SelectItem value={selectedInquiry.status} disabled className="hidden">{selectedInquiry.status}</SelectItem>
+                        {[
+                          'New',
+                          'In Progress',
+                          'Resolved',
+                          'pending',
+                          'approved',
+                          'declined',
+                        ].includes(selectedInquiry.status) && (
+                          <SelectItem value={selectedInquiry.status} disabled className="hidden">
+                            {selectedInquiry.status}
+                          </SelectItem>
                         )}
                       </SelectContent>
                     </Select>
@@ -311,7 +381,7 @@ export function AdminInquiriesPage() {
                 <div>
                   <h4 className="text-sm font-semibold text-muted-foreground uppercase">Message</h4>
                   <div className="bg-slate-50 p-4 rounded-md mt-1 text-[#2e2837] min-h-[100px] whitespace-pre-wrap">
-                    {selectedInquiry.message || "No additional message provided."}
+                    {selectedInquiry.message || 'No additional message provided.'}
                   </div>
                 </div>
               </div>
@@ -333,7 +403,8 @@ export function AdminInquiriesPage() {
                         Location: {selectedInquiry.meetingDetails.location || 'TBD'}
                       </p>
                       <p className="mt-1 text-xs text-[#6a5a83]">
-                        Organizer: {getOrganizerLabel(selectedInquiry.meetingDetails.organizerId || '')}
+                        Organizer:{' '}
+                        {getOrganizerLabel(selectedInquiry.meetingDetails.organizerId || '')}
                       </p>
                     </div>
 
@@ -361,7 +432,11 @@ export function AdminInquiriesPage() {
                       <Button
                         type="button"
                         onClick={handleUpdateMeetingOrganizer}
-                        disabled={isUpdatingMeetingOrganizer || organizersLoading || !selectedMeetingOrganizerId}
+                        disabled={
+                          isUpdatingMeetingOrganizer ||
+                          organizersLoading ||
+                          !selectedMeetingOrganizerId
+                        }
                         className="bg-linear-to-r from-[#f347a5] to-[#8f1fd1] text-white hover:brightness-105"
                       >
                         {isUpdatingMeetingOrganizer ? 'Updating...' : 'Update Organizer'}
@@ -376,11 +451,15 @@ export function AdminInquiriesPage() {
                     <Button
                       className="w-full bg-linear-to-r from-[#f347a5] to-[#8f1fd1] text-white hover:brightness-105"
                       onClick={() => {
-                        setDraftEntry(prev => ({
+                        setDraftEntry((prev) => ({
                           ...prev,
                           title: `Meeting with ${selectedInquiry?.firstName} ${selectedInquiry?.lastName}`,
-                          startDateKey: selectedInquiry?.date ? new Date(selectedInquiry.date).toISOString().split('T')[0] : prev.startDateKey,
-                          endDateKey: selectedInquiry?.date ? new Date(selectedInquiry.date).toISOString().split('T')[0] : prev.endDateKey,
+                          startDateKey: selectedInquiry?.date
+                            ? new Date(selectedInquiry.date).toISOString().split('T')[0]
+                            : prev.startDateKey,
+                          endDateKey: selectedInquiry?.date
+                            ? new Date(selectedInquiry.date).toISOString().split('T')[0]
+                            : prev.endDateKey,
                           organizerId: prev.organizerId || organizers[0]?.user_id || '',
                         }));
                         setScheduleError('');
@@ -402,12 +481,17 @@ export function AdminInquiriesPage() {
       <Dialog open={isScheduleModalOpen} onOpenChange={setIsScheduleModalOpen}>
         <DialogContent className="sm:max-w-[760px]">
           <DialogHeader>
-            <DialogTitle className="text-xl font-black text-[#2e2837]">Schedule Meeting</DialogTitle>
+            <DialogTitle className="text-xl font-black text-[#2e2837]">
+              Schedule Meeting
+            </DialogTitle>
           </DialogHeader>
           <p className="mt-1 text-xs font-semibold text-[#7e768f]">
             Plot tasks, meetings, and reminders in your calendar.
           </p>
-          <form onSubmit={handleScheduleSubmit} className="mt-2 flex flex-col gap-4 md:flex-row md:items-start">
+          <form
+            onSubmit={handleScheduleSubmit}
+            className="mt-2 flex flex-col gap-4 md:flex-row md:items-start"
+          >
             <div className="w-full space-y-3 md:w-1/2">
               <div className="space-y-1.5">
                 <Label htmlFor="calendar-title" className="text-[11px] font-bold text-[#6a627c]">
@@ -431,7 +515,9 @@ export function AdminInquiriesPage() {
                   onChange={(e) => setDraftEntry({ ...draftEntry, organizerId: e.target.value })}
                   className="h-9 w-full rounded-lg border border-[#ddd8e8] bg-white px-2 text-xs font-semibold text-[#4c455e] outline-none focus:border-[#be8de4]"
                 >
-                  <option value="">{organizersLoading ? 'Loading organizers...' : 'Select organizer'}</option>
+                  <option value="">
+                    {organizersLoading ? 'Loading organizers...' : 'Select organizer'}
+                  </option>
                   {organizers.map((organizer) => (
                     <option key={organizer.user_id} value={organizer.user_id}>
                       {[organizer.firstName, organizer.middleName, organizer.lastName]
@@ -442,7 +528,9 @@ export function AdminInquiriesPage() {
                   ))}
                 </select>
                 {!organizersLoading && organizers.length === 0 ? (
-                  <p className="text-xs font-semibold text-[#c33274]">No organizer accounts available.</p>
+                  <p className="text-xs font-semibold text-[#c33274]">
+                    No organizer accounts available.
+                  </p>
                 ) : null}
               </div>
 
@@ -548,7 +636,11 @@ export function AdminInquiriesPage() {
               ) : null}
 
               <div className="pt-2 flex justify-end gap-2">
-                <Button type="button" variant="outline" onClick={() => setIsScheduleModalOpen(false)}>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setIsScheduleModalOpen(false)}
+                >
                   Cancel
                 </Button>
                 <Button
