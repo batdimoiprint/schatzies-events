@@ -137,8 +137,34 @@ function getVendorStatusBadgeClasses(status: VendorStatus) {
 }
 
 export function EventManagerPage() {
-  const outletContext = useOutletContext<Partial<OrganizerLayoutOutletContext> | null>();
-  const searchTerm = outletContext?.searchTerm ?? '';
+    const location = useLocation();
+  const { searchTerm } = useOutletContext<OrganizerLayoutOutletContext>();
+  const [activeTab, setActiveTab] = useState<'Events' | 'Vendor'>(
+    location.state?.activeTab || 'Events'
+  );
+  const [events, setEvents] = useState(eventTableData);
+  const [vendors, setVendors] = useState(initialVendorData);
+
+  //sa API ng backend here, pa check if tama hehe
+  /*
+  useEffect(() => {
+    async function fetchDashboardData() {
+      // Replace these with actual API calls once backend endpoints are available.
+      // const [eventsResponse, vendorsResponse] = await Promise.all([
+      //   fetch('/api/events'),
+      //   fetch('/api/vendors'),
+      // ]);
+      // const [eventsData, vendorsData] = await Promise.all([
+      //   eventsResponse.json(),
+      //   vendorsResponse.json(),
+      // ]);
+      // setEvents(eventsData);
+      // setVendors(vendorsData);
+    }
+    fetchDashboardData();
+  }, []);
+  */
+
 
   const filteredData = useMemo(() => {
     const normalizedSearchTerm = searchTerm.trim().toLowerCase();
