@@ -24,8 +24,9 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { getUsers, createUser, deleteUser, type UserResponse, type UserPayload } from '@/api/users';
-import { Plus, Trash2 } from 'lucide-react';
+import { Plus, Trash2, Users, UserCircle, Briefcase, Shield } from 'lucide-react';
 
 const initialFormState: UserPayload = {
   firstName: '',
@@ -110,10 +111,16 @@ export function UsersManagement() {
     return <div className="p-4">Loading users...</div>;
   }
 
+  const totalUsers = users.length;
+  const totalClients = users.filter((u) => u.role === 'CLIENT').length;
+  const totalOrganizers = users.filter((u) => u.role === 'ORGANIZER').length;
+  const totalAdmins = users.filter((u) => u.role === 'ADMIN').length;
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold">Users Management</h1>
+
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogTrigger asChild>
             <Button>
@@ -289,7 +296,46 @@ export function UsersManagement() {
         </div>
       )}
 
-      <div className="border rounded-lg">
+      <div className="grid gap-4 md:grid-cols-4">
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Total Users</CardTitle>
+            <Users className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{totalUsers}</div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Total Clients</CardTitle>
+            <UserCircle className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{totalClients}</div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Organizers</CardTitle>
+            <Briefcase className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{totalOrganizers}</div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Admins</CardTitle>
+            <Shield className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{totalAdmins}</div>
+          </CardContent>
+        </Card>
+      </div>
+
+      <div className="border rounded-lg bg-white shadow-sm">
         <Table>
           <TableHeader>
             <TableRow>

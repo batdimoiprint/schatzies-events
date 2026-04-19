@@ -40,6 +40,11 @@ export const getUsers = async (): Promise<UserResponse[]> => {
   return response.data.users;
 };
 
+export const getOrganizerUsers = async (): Promise<UserResponse[]> => {
+  const response = await axiosInstance.get('/users/organizers');
+  return response.data.users;
+};
+
 export const getUserById = async (userId: string): Promise<UserResponse> => {
   const response = await axiosInstance.get(`/users/${userId}`);
   return response.data.user;

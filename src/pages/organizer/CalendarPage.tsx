@@ -298,13 +298,6 @@ export function CalendarPage() {
     };
   }, [isFilterMenuOpen]);
 
-  useEffect(() => {
-    setDraftEntry((previous) => ({
-      ...previous,
-      startDateKey: selectedDateKey,
-    }));
-  }, [selectedDateKey]);
-
   const selectedDate = useMemo(() => parseDateKey(selectedDateKey), [selectedDateKey]);
 
   const visibleDays = useMemo(() => {
