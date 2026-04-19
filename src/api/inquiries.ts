@@ -37,10 +37,7 @@ export const updateInquiryStatus = async (id: string, status: string): Promise<a
   return response.data;
 };
 
-export const scheduleInquiryMeeting = async (
-  id: string,
-  data: { date: string; time: string; location: string; organizerId: string }
-): Promise<any> => {
+export const scheduleInquiryMeeting = async (id: string, data: { date: string, time: string, location: string, organizerId: string }): Promise<any> => {
   const response = await axiosInstance.post(`/inquiries/${id}/meeting`, data);
   return response.data;
 };
