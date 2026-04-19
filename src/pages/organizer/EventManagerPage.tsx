@@ -1,50 +1,10 @@
-<<<<<<< HEAD
 import { useMemo, useState, useRef, useEffect } from 'react';
 import { useLocation, useOutletContext } from 'react-router-dom';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
-import {
-  Dialog,
-  DialogContent,
-  DialogTitle,
-  DialogFooter,
-  DialogClose,
-} from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
-import { Select } from '@/components/ui/select';
-=======
-import { useCallback, useEffect, useMemo, useState } from 'react';
-import { useLocation, useOutletContext } from 'react-router-dom';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
->>>>>>> 7a832392fd571cf10b80d361f3d0bdd8a4137256
 import type { OrganizerLayoutOutletContext } from '@/components/layouts/OrganizerLayout';
-import {
-  createEvent,
-  deleteEvent,
-  getEventManagerEvents,
-  updateEvent,
-  type EventManagerEvent,
-} from '@/api/events';
-import { getVendorsByEventId, type EventManagerVendor } from '@/api/vendors';
 
-<<<<<<< HEAD
-type EventStatus = 'Completed' | 'Pending' | 'Cancelled' | 'Execution' | 'On-going';
+type EventStatus = 'Completed' | 'Pending' | 'Cancelled';
 type VendorStatus = 'Active' | 'Inactive';
 
 type Event = {
@@ -52,15 +12,12 @@ type Event = {
   title: string;
   date: string;
   timeSlot: string;
-  organizerName?: string;
   client: string;
-  clientEmail?: string;
   type: string;
   package: string;
   venue: string;
   rsvp: number;
   status: EventStatus;
-  message?: string;
 };
 
 type Vendor = {
@@ -71,54 +28,68 @@ type Vendor = {
   phone: string;
   service: string;
   status: VendorStatus;
-  lastTransaction?: string;
 };
 
 const eventTableData: Event[] = [
   {
     id: 1,
-    title: "Angela's 18 Birthday",
-    date: '2026-01-03',
-    timeSlot: '9:00 AM - 10:00 PM',
-    organizerName: 'Schatzies Events',
+    title: "Angela's 18 Birthday...",
+    date: '00/00/00',
+    timeSlot: '9:00 AM - 10:00PM',
     client: 'Samantha Jumuad',
-    clientEmail: 'samantha@example.com',
     type: 'Debut',
     package: 'Blooms (40)',
     venue: 'Trees Residence',
-    message: 'Please prepare floral arrangements according to the moodboard.',
     rsvp: 40,
     status: 'Completed',
   },
   {
     id: 2,
-    title: 'Ray & Sam Wedding Reception',
-    date: '2026-02-14',
-    timeSlot: '4:00 PM - 11:00 PM',
-    organizerName: 'Schatzies Events',
-    client: 'Ray Mendoza',
-    clientEmail: 'ray@example.com',
-    type: 'Wedding',
-    package: 'Elegance (70)',
-    venue: 'Riverside Pavilion',
-    message: 'Couple requested live band and premium catering.',
-    rsvp: 70,
-    status: 'Execution',
+    title: "Angela's 18 Birthday...",
+    date: '00/00/00',
+    timeSlot: '9:00 AM - 10:00PM',
+    client: 'Samantha Jumuad',
+    type: 'Debut',
+    package: 'Blooms (40)',
+    venue: 'Trees Residence',
+    rsvp: 40,
+    status: 'Completed',
   },
   {
     id: 3,
-    title: 'Mika Corporate Year-End Gala',
-    date: '2026-03-28',
-    timeSlot: '6:00 PM - 11:00 PM',
-    organizerName: 'Schatzies Events',
-    client: 'Mika Corporation',
-    clientEmail: 'events@mika.com',
-    type: 'Corporate',
-    package: 'Corporate Gala (90)',
-    venue: 'Grand Ballroom',
-    message: 'Branding & sponsor booths required.',
-    rsvp: 90,
-    status: 'Pending',
+    title: "Angela's 18 Birthday...",
+    date: '00/00/00',
+    timeSlot: '9:00 AM - 10:00PM',
+    client: 'Samantha Jumuad',
+    type: 'Debut',
+    package: 'Blooms (40)',
+    venue: 'Trees Residence',
+    rsvp: 40,
+    status: 'Completed',
+  },
+  {
+    id: 4,
+    title: "Angela's 18 Birthday...",
+    date: '00/00/00',
+    timeSlot: '9:00 AM - 10:00PM',
+    client: 'Samantha Jumuad',
+    type: 'Debut',
+    package: 'Blooms (40)',
+    venue: 'Trees Residence',
+    rsvp: 40,
+    status: 'Completed',
+  },
+  {
+    id: 5,
+    title: "Angela's 18 Birthday...",
+    date: '00/00/00',
+    timeSlot: '9:00 AM - 10:00PM',
+    client: 'Samantha Jumuad',
+    type: 'Debut',
+    package: 'Blooms (40)',
+    venue: 'Trees Residence',
+    rsvp: 40,
+    status: 'Completed',
   },
 ];
 
@@ -131,7 +102,6 @@ const initialVendorData: Vendor[] = [
     phone: '09123456789',
     service: 'Photo & Video',
     status: 'Active',
-    lastTransaction: '2026-01-05',
   },
   {
     id: 2,
@@ -141,7 +111,6 @@ const initialVendorData: Vendor[] = [
     phone: '09123456789',
     service: 'Catering',
     status: 'Active',
-    lastTransaction: '2026-02-01',
   },
   {
     id: 3,
@@ -151,13 +120,8 @@ const initialVendorData: Vendor[] = [
     phone: '09123456789',
     service: 'Technical',
     status: 'Inactive',
-    lastTransaction: '2025-11-20',
   },
 ];
-=======
-type EventStatus = EventManagerEvent['status'];
-type VendorStatus = EventManagerVendor['status'];
->>>>>>> 7a832392fd571cf10b80d361f3d0bdd8a4137256
 
 const tabs: Array<'Events' | 'Outsourced' | 'Insourced' | 'Archived'> = [
   'Events',
@@ -189,11 +153,9 @@ function getTabButtonClasses(isActive: boolean) {
 
 export function EventManagerPage() {
   const location = useLocation();
-<<<<<<< HEAD
   const { searchTerm } = useOutletContext<OrganizerLayoutOutletContext>();
-  // navigate not used currently
-  const [activeTab, setActiveTab] = useState<'Events' | 'Outsourced' | 'Insourced' | 'Archived'>(
-    (location.state?.activeTab as 'Events' | 'Outsourced' | 'Insourced' | 'Archived') || 'Events'
+  const [activeTab, setActiveTab] = useState<'Events' | 'Vendor'>(
+    location.state?.activeTab || 'Events'
   );
   const [events, setEvents] = useState(eventTableData);
   const [archivedEvents, setArchivedEvents] = useState<Event[]>([]);
@@ -286,59 +248,9 @@ export function EventManagerPage() {
     document.addEventListener('click', handleClickOutside);
     return () => document.removeEventListener('click', handleClickOutside);
   }, [isStatusOpen]);
-=======
-  const outletContext = useOutletContext<OrganizerLayoutOutletContext | undefined>();
-  const searchTerm = outletContext?.searchTerm ?? '';
-  const [activeTab, setActiveTab] = useState<'Events' | 'Vendor'>(
-    location.state?.activeTab || 'Events'
-  );
-  const [events, setEvents] = useState<EventManagerEvent[]>([]);
-  const [vendors, setVendors] = useState<EventManagerVendor[]>([]);
-  const [selectedEventId, setSelectedEventId] = useState<string>('');
-  const [isLoading, setIsLoading] = useState(false);
-  const [isMutating, setIsMutating] = useState(false);
-  const [error, setError] = useState<string>('');
->>>>>>> 7a832392fd571cf10b80d361f3d0bdd8a4137256
 
-  const fetchEvents = useCallback(async () => {
-    setIsLoading(true);
-    setError('');
-
-    try {
-      const eventRows = await getEventManagerEvents();
-      setEvents(eventRows);
-      setSelectedEventId((current) => {
-        if (current && eventRows.some((event) => event.id === current)) {
-          return current;
-        }
-
-        return eventRows[0]?.id || '';
-      });
-    } catch {
-      setError('Unable to load events right now.');
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
-
-  const fetchVendors = useCallback(async (eventId: string) => {
-    if (!eventId) {
-      setVendors([]);
-      return;
-    }
-
-    try {
-      const vendorRows = await getVendorsByEventId(eventId);
-      setVendors(vendorRows);
-    } catch {
-      setVendors([]);
-    }
-  }, []);
-
-  useEffect(() => {
-    void fetchEvents();
-  }, [fetchEvents]);
-
+  //sa API ng backend here, pa check if tama hehe
+  /*
   useEffect(() => {
     void fetchVendors(selectedEventId);
   }, [fetchVendors, selectedEventId]);
@@ -493,13 +405,8 @@ export function EventManagerPage() {
       return searchableFields.some((field) => field.toLowerCase().includes(q));
     });
 
-<<<<<<< HEAD
     return { activeTab: 'Vendor' as const, data: vdata };
   }, [activeTab, events, vendors, localSearch, searchTerm, statusFilter]);
-=======
-    return { activeTab: 'Vendor' as const, data };
-  }, [activeTab, events, searchTerm, vendors]);
->>>>>>> 7a832392fd571cf10b80d361f3d0bdd8a4137256
 
   return (
     <div className="space-y-5 p-6 font-sans">
@@ -534,13 +441,8 @@ export function EventManagerPage() {
         <h2 className="text-lg font-bold text-[#2e2837]">Event Manager</h2>
       </div>
 
-<<<<<<< HEAD
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-=======
-      <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl bg-[#f5f1fa] p-2 ring-1 ring-[#ece4f4]">
-        <div className="flex flex-wrap gap-2 rounded-xl bg-[#ede6f6] p-1">
->>>>>>> 7a832392fd571cf10b80d361f3d0bdd8a4137256
           {tabs.map((tab) => {
             const isActive = tab === activeTab;
             return (
@@ -550,22 +452,17 @@ export function EventManagerPage() {
                 size="sm"
                 variant="ghost"
                 onClick={() => setActiveTab(tab)}
-<<<<<<< HEAD
                 className={`px-3 py-1 text-sm font-medium rounded-full transition-colors ${
                   isActive
                     ? 'bg-white/90 text-[#2e2837] shadow-sm'
                     : 'text-[#8f879f] hover:bg-white/60'
                 }`}
-=======
-                className={`rounded-lg px-4 transition-all ${getTabButtonClasses(isActive)}`}
->>>>>>> 7a832392fd571cf10b80d361f3d0bdd8a4137256
               >
                 {tab}
               </Button>
             );
           })}
         </div>
-<<<<<<< HEAD
 
         {/* removed centered search - moved beside Status button */}
 
@@ -644,40 +541,7 @@ export function EventManagerPage() {
 
       {/* Dropdown menus: implemented below via refs and state */}
 
-      <Card className="border-[#ebe6f1]">
-        <CardHeader className="space-y-2"></CardHeader>
-        <CardContent>
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                {activeTab === 'Events' || activeTab === 'Archived' ? (
-                  <tr className="border-b border-[#e8e4ed]">
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-[#2e2837] font-sans">
-=======
-        <div className="flex gap-2">
-          <Button
-            disabled={isMutating}
-            onClick={() => void handleCreateEvent()}
-            className="h-9 rounded-xl bg-linear-to-r from-[#f051a3] to-[#8f1fd0] px-4 text-white shadow-md shadow-[#c26adf4d] transition-shadow hover:shadow-lg disabled:opacity-60"
-          >
-            <img src="/Pictures/organizerpics/Actions.png" alt="Actions" className="h-3 w-3" />
-            Add Event
-          </Button>
-          <Button
-            disabled={isLoading}
-            onClick={() => void fetchEvents()}
-            variant="outline"
-            className="h-9 rounded-xl border-[#dacde8] bg-white px-4 text-[#4f4462] hover:bg-[#f8f5fc] disabled:opacity-60"
-          >
-            <img
-              src="/Pictures/organizerpics/All Status.png"
-              alt="Refresh"
-              className="h-3 w-3"
-            />
-            Refresh
-          </Button>
-        </div>
-      </div>
+      {/* Dropdown menus: implemented below via refs and state */}
 
       {activeTab === 'Vendor' && events.length > 0 ? (
         <div className="flex items-center gap-3 rounded-xl bg-[#f8f4fc] px-3 py-2 ring-1 ring-[#ece4f4]">
@@ -726,12 +590,12 @@ export function EventManagerPage() {
           </div>
         </CardHeader>
         <CardContent>
-          <Table className="text-sm">
-              <TableHeader>
-                {activeTab === 'Events' ? (
-                  <TableRow className="border-[#efe8f6] bg-[#fcfbff]">
-                    <TableHead className="px-3 font-semibold text-[#5c536d]">
->>>>>>> 7a832392fd571cf10b80d361f3d0bdd8a4137256
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead>
+                {activeTab === 'Events' || activeTab === 'Archived' ? (
+                  <tr className="border-b border-[#e8e4ed]">
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-[#2e2837] font-sans">
                       Title
                     </TableHead>
                     <TableHead className="px-3 font-semibold text-[#5c536d]">
@@ -757,19 +621,11 @@ export function EventManagerPage() {
                     </TableHead>
                     <TableHead className="px-3 font-semibold text-[#5c536d]">
                       Status
-<<<<<<< HEAD
                     </th>
                     <th className="px-4 py-3 text-left text-xs font-semibold text-[#2e2837] font-sans">
                       Actions
                     </th>
                   </tr>
-=======
-                    </TableHead>
-                    <TableHead className="px-3 font-semibold text-[#5c536d]">
-                      Actions
-                    </TableHead>
-                  </TableRow>
->>>>>>> 7a832392fd571cf10b80d361f3d0bdd8a4137256
                 ) : (
                   <TableRow className="border-[#efe8f6] bg-[#fcfbff]">
                     <TableHead className="px-3 font-semibold text-[#5c536d]">
@@ -786,7 +642,6 @@ export function EventManagerPage() {
                     </TableHead>
                     <TableHead className="px-3 font-semibold text-[#5c536d]">
                       Service
-<<<<<<< HEAD
                     </th>
                     <th className="px-4 py-3 text-left text-xs font-semibold text-[#2e2837] font-sans">
                       Last Transaction
@@ -798,13 +653,6 @@ export function EventManagerPage() {
                       Actions
                     </th>
                   </tr>
-=======
-                    </TableHead>
-                    <TableHead className="px-3 font-semibold text-[#5c536d]">
-                      Status
-                    </TableHead>
-                  </TableRow>
->>>>>>> 7a832392fd571cf10b80d361f3d0bdd8a4137256
                 )}
               </TableHeader>
               <TableBody>
@@ -814,7 +662,6 @@ export function EventManagerPage() {
                         key={event.id}
                         className="border-[#f2edf8]"
                       >
-<<<<<<< HEAD
                         <td className="px-4 py-3 text-sm text-[#2e2837]">{event.title}</td>
                         <td className="px-4 py-3 text-sm text-[#2e2837]">{event.date}</td>
                         <td className="px-4 py-3 text-sm text-[#2e2837]">{event.timeSlot}</td>
@@ -904,52 +751,12 @@ export function EventManagerPage() {
                           </div>
                         </td>
                       </tr>
-=======
-                        <TableCell className="px-3 font-medium text-[#2e2837]">{event.title}</TableCell>
-                        <TableCell className="px-3 text-[#514a61]">{event.date}</TableCell>
-                        <TableCell className="px-3 text-[#514a61]">{event.timeSlot}</TableCell>
-                        <TableCell className="px-3 text-[#514a61]">{event.client}</TableCell>
-                        <TableCell className="px-3 text-[#514a61]">{event.type}</TableCell>
-                        <TableCell className="px-3 text-[#514a61]">{event.package}</TableCell>
-                        <TableCell className="px-3 text-[#514a61]">{event.venue}</TableCell>
-                        <TableCell className="px-3 text-[#514a61]">{event.rsvp}</TableCell>
-                        <TableCell className="px-3">
-                          <Badge className={getStatusBadgeClasses(event.status)}>
-                            {event.status}
-                          </Badge>
-                        </TableCell>
-                        <TableCell className="px-3">
-                          <div className="flex gap-2">
-                            <Button
-                              type="button"
-                              size="sm"
-                              variant="outline"
-                              disabled={isMutating}
-                              onClick={() => void handleUpdateEventTitle(event)}
-                              className="h-7 rounded-lg border-[#d6cee2] px-3"
-                            >
-                              Edit
-                            </Button>
-                            <Button
-                              type="button"
-                              size="sm"
-                              disabled={isMutating}
-                              onClick={() => void handleDeleteEvent(event)}
-                              className="h-7 rounded-lg bg-[#ffe5ee] px-3 text-[#8f1f4a] hover:bg-[#ffd8e7]"
-                            >
-                              Delete
-                            </Button>
-                          </div>
-                        </TableCell>
-                      </TableRow>
->>>>>>> 7a832392fd571cf10b80d361f3d0bdd8a4137256
                     ))
                   : filteredData.data.map((vendor) => (
                       <TableRow
                         key={vendor.id}
                         className="border-[#f2edf8]"
                       >
-<<<<<<< HEAD
                         <td className="px-4 py-3 text-sm text-[#2e2837]">{vendor.name}</td>
                         <td className="px-4 py-3 text-sm text-[#2e2837]">{vendor.contactPerson}</td>
                         <td className="px-4 py-3 text-sm text-[#2e2837]">{vendor.email}</td>
@@ -975,25 +782,6 @@ export function EventManagerPage() {
                     <td
                       colSpan={activeTab === 'Events' || activeTab === 'Archived' ? 10 : 8}
                       className="px-4 py-6 text-center text-sm text-[#8f879f]"
-=======
-                        <TableCell className="px-3 font-medium text-[#2e2837]">{vendor.name}</TableCell>
-                        <TableCell className="px-3 text-[#514a61]">{vendor.contactPerson}</TableCell>
-                        <TableCell className="px-3 text-[#514a61]">{vendor.email}</TableCell>
-                        <TableCell className="px-3 text-[#514a61]">{vendor.phone}</TableCell>
-                        <TableCell className="px-3 text-[#514a61]">{vendor.service}</TableCell>
-                        <TableCell className="px-3">
-                          <Badge className={getVendorStatusBadgeClasses(vendor.status)}>
-                            {vendor.status}
-                          </Badge>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                {filteredData.data.length === 0 ? (
-                  <TableRow>
-                    <TableCell
-                      colSpan={activeTab === 'Events' ? 10 : 6}
-                      className="py-12 text-center text-sm text-[#8f879f]"
->>>>>>> 7a832392fd571cf10b80d361f3d0bdd8a4137256
                     >
                       {isLoading
                         ? 'Loading data...'
