@@ -41,8 +41,17 @@ export const getUsers = async (): Promise<UserResponse[]> => {
 };
 
 export const getOrganizerUsers = async (): Promise<UserResponse[]> => {
-  const response = await axiosInstance.get('/users/organizers');
-  return response.data.users;
+  const response = await axiosInstance.get('/users');
+  const users: UserResponse[] = response.data.users || [];
+
+  return users.filter((user) => {
+    const normalizedRole = String(user.role || '')
+      .trim()
+      .toUpperCase()
+      .replace(/\s+/g, '_');
+
+    return normalizedRole === 'ORGANIZER';
+  });
 };
 
 export const getUserById = async (userId: string): Promise<UserResponse> => {

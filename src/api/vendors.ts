@@ -5,8 +5,17 @@ export type VendorStatus = 'Active' | 'Inactive';
 export interface Vendor {
   id: string;
   eventId: string;
+  vendorName: string;
   name: string;
+  contactPerson: string;
   serviceType: string;
+  typeOfSupply: string;
+  servicesOffered: string;
+  pricing: string;
+  price: number | null;
+  availabilityStatus: string;
+  lastEventHandled: string;
+  notes: string;
   contactEmail: string;
   contactPhone: string;
   status: string;
@@ -16,11 +25,18 @@ export interface Vendor {
 
 export interface CreateVendorPayload {
   vendorName: string;
+  contactPerson?: string;
+  typeOfSupply?: string;
+  servicesOffered?: string;
+  pricing?: string;
   serviceType: string;
+  price?: number | null;
   eventId?: string;
   email?: string;
   contactNumber?: string;
   availabilityStatus?: string;
+  lastEventHandled?: string;
+  notes?: string;
 }
 
 export interface UpdateVendorPayload extends Partial<CreateVendorPayload> {}
@@ -41,7 +57,14 @@ interface BackendVendor {
   eventId?: string;
   vendorName?: string;
   name?: string;
+  contactPerson?: string;
+  typeOfSupply?: string;
+  servicesOffered?: string;
+  pricing?: string;
   serviceType?: string;
+  price?: number | null;
+  lastEventHandled?: string;
+  notes?: string;
   contactNumber?: string;
   email?: string;
   availabilityStatus?: string;
@@ -53,9 +76,7 @@ interface BackendVendor {
 }
 
 function mapVendorStatus(status?: string): VendorStatus {
-  const normalized = String(status || '')
-    .trim()
-    .toLowerCase();
+  const normalized = String(status || '').trim().toLowerCase();
   return normalized === 'active' ? 'Active' : 'Inactive';
 }
 
@@ -75,11 +96,22 @@ function mapVendor(vendor: BackendVendor): EventManagerVendor {
 
 function mapVendorEntity(vendor: BackendVendor): Vendor {
   const status = vendor.availabilityStatus || vendor.status;
+  const vendorName = vendor.vendorName || vendor.name || 'Unnamed vendor';
+
   return {
     id: vendor.id,
     eventId: vendor.eventId || '',
-    name: vendor.vendorName || vendor.name || 'Unnamed vendor',
+    vendorName,
+    name: vendorName,
+    contactPerson: vendor.contactPerson || '',
     serviceType: vendor.serviceType || '',
+    typeOfSupply: vendor.typeOfSupply || '',
+    servicesOffered: vendor.servicesOffered || '',
+    pricing: vendor.pricing || '',
+    price: vendor.price ?? null,
+    availabilityStatus: String(vendor.availabilityStatus || status || 'inactive'),
+    lastEventHandled: vendor.lastEventHandled || '',
+    notes: vendor.notes || '',
     contactEmail: vendor.email || vendor.contactEmail || '',
     contactPhone: vendor.contactNumber || vendor.contactPhone || '',
     status: String(status || 'inactive'),
@@ -106,10 +138,7 @@ export async function getVendorById(vendorId: string): Promise<Vendor> {
   return mapVendorEntity(response.data.vendor || {});
 }
 
-export async function updateVendor(
-  vendorId: string,
-  payload: UpdateVendorPayload
-): Promise<Vendor> {
+export async function updateVendor(vendorId: string, payload: UpdateVendorPayload): Promise<Vendor> {
   const response = await axiosInstance.put(`/vendors/${vendorId}`, payload);
   return mapVendorEntity(response.data.vendor || {});
 }

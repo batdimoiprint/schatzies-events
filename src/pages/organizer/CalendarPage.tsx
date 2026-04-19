@@ -261,6 +261,7 @@ export function CalendarPage() {
     Meeting: true,
     Reminder: true,
   });
+  const [showOnlyMarkedDates, setShowOnlyMarkedDates] = useState(false);
   const [customLabels, setCustomLabels] = useState<string[]>([]);
   const [isAddingCustomLabel, setIsAddingCustomLabel] = useState(false);
   const [customLabelDraft, setCustomLabelDraft] = useState('');
@@ -296,6 +297,13 @@ export function CalendarPage() {
       document.removeEventListener('mousedown', handlePointerDown);
     };
   }, [isFilterMenuOpen]);
+
+  useEffect(() => {
+    setDraftEntry((previous) => ({
+      ...previous,
+      startDateKey: selectedDateKey,
+    }));
+  }, [selectedDateKey]);
 
   const selectedDate = useMemo(() => parseDateKey(selectedDateKey), [selectedDateKey]);
 
@@ -340,6 +348,15 @@ export function CalendarPage() {
 
     return map;
   }, [filteredEntries]);
+
+  const visibleDaysToRender = useMemo(() => {
+    if (!showOnlyMarkedDates) return visibleDays;
+    return visibleDays.filter((d) => {
+      const key = toDateKey(d);
+      const list = entriesByDate[key];
+      return Array.isArray(list) && list.length > 0;
+    });
+  }, [visibleDays, showOnlyMarkedDates, entriesByDate]);
 
   const selectedDateEntries = entriesByDate[selectedDateKey] ?? [];
 
@@ -496,587 +513,591 @@ export function CalendarPage() {
   };
 
   return (
-    <section className="mx-auto flex w-full max-w-[1260px] flex-col gap-4 pb-2 text-[#302c39]">
-      <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_320px]">
-        <div className="rounded-2xl border border-[#ddd8e8] bg-white p-3 shadow-[0_8px_20px_rgba(46,22,76,0.07)] sm:p-4 md:p-5">
-          <div className="flex flex-col gap-3 border-b border-[#ece7f2] pb-4 lg:flex-row lg:items-center lg:justify-between">
-            <div>
-              <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.12em] text-[#9b92a9]">
-                <CalendarDays className="size-3.5" />
-                Calendar Overview
+    <section className="w-full pb-2">
+      <div className="flex w-full min-w-0 flex-col gap-4 text-[#302c39]">
+        <div className="grid items-start grid-cols-[minmax(0,1fr)_320px] gap-4">
+          <div className="self-start rounded-2xl border border-[#ddd8e8] bg-white p-5 shadow-[0_8px_20px_rgba(46,22,76,0.07)]">
+            <div className="flex items-center justify-between gap-3 border-b border-[#ece7f2] pb-4">
+              <div>
+                <div className="mt-1 flex flex-wrap items-center gap-2">
+                  <h2 className="text-2xl font-black text-[#2f2b39]">{periodLabel}</h2>
+                  <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-1">
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon-sm"
+                        onClick={handleNavigatePrevious}
+                        className="rounded-full bg-linear-to-r from-[#8f1fd1] to-[#be8de4] text-white shadow-[0_8px_18px_rgba(143,31,209,0.18)] hover:opacity-95"
+                        aria-label="Previous period"
+                      >
+                        <ChevronLeft className="size-4" />
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon-sm"
+                        onClick={handleNavigateNext}
+                        className="rounded-full bg-linear-to-r from-[#8f1fd1] to-[#be8de4] text-white shadow-[0_8px_18px_rgba(143,31,209,0.18)] hover:opacity-95"
+                        aria-label="Next period"
+                      >
+                        <ChevronRight className="size-4" />
+                      </Button>
+                    </div>
+
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={handleGoToToday}
+                      className="h-8 rounded-full border-2 border-[#f347a5] bg-white px-3 text-xs font-bold text-[#8f2bd2] hover:bg-[#fff8fb]"
+                    >
+                      Today
+                    </Button>
+                  </div>
+                </div>
+                <p className="text-xs font-semibold text-[#8f879f]">
+                  {markedDateCount} marked dates
+                </p>
               </div>
-              <div className="mt-1 flex flex-wrap items-center gap-2">
-                <h2 className="text-xl font-black text-[#2f2b39] sm:text-2xl">{periodLabel}</h2>
-                <div className="flex items-center gap-1">
+
+              <div className="flex flex-wrap items-center justify-end gap-2">
+                <div className="inline-flex items-center rounded-xl border border-[#ddd8e8] bg-[#faf9fd] p-1">
+                  <button
+                    type="button"
+                    onClick={() => setViewMode('monthly')}
+                    className={[
+                      'rounded-lg px-3 py-1.5 text-xs font-bold transition-colors',
+                      viewMode === 'monthly'
+                        ? 'bg-linear-to-r from-[#f347a5] to-[#8f1fd1] text-white shadow-[0_8px_14px_rgba(169,42,188,0.3)]'
+                        : 'text-[#655d75] hover:text-[#3c3650]',
+                    ].join(' ')}
+                  >
+                    Monthly
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setViewMode('weekly')}
+                    className={[
+                      'rounded-lg px-3 py-1.5 text-xs font-bold transition-colors',
+                      viewMode === 'weekly'
+                        ? 'bg-linear-to-r from-[#f347a5] to-[#8f1fd1] text-white shadow-[0_8px_14px_rgba(169,42,188,0.3)]'
+                        : 'text-[#655d75] hover:text-[#3c3650]',
+                    ].join(' ')}
+                  >
+                    Weekly
+                  </button>
+                </div>
+
+                <div className="relative" ref={filterMenuRef}>
                   <Button
                     type="button"
-                    variant="ghost"
-                    size="icon-sm"
-                    onClick={handleNavigatePrevious}
-                    className="rounded-full border border-[#ddd8e8] text-[#5e5670] hover:bg-[#f4effa]"
-                    aria-label="Previous period"
+                    variant="outline"
+                    onClick={() => setIsFilterMenuOpen((open) => !open)}
+                    className="h-8 rounded-full border-[#ddd8e8] px-3 text-xs font-bold text-[#655d75] hover:bg-[#f4effa]"
                   >
-                    <ChevronLeft className="size-4" />
+                    <Filter className="size-3.5" />
+                    Filter
                   </Button>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon-sm"
-                    onClick={handleNavigateNext}
-                    className="rounded-full border border-[#ddd8e8] text-[#5e5670] hover:bg-[#f4effa]"
-                    aria-label="Next period"
-                  >
-                    <ChevronRight className="size-4" />
-                  </Button>
+
+                  {isFilterMenuOpen ? (
+                    <div className="absolute right-0 z-20 mt-2 w-60 rounded-xl border border-[#e3deec] bg-white p-3 shadow-[0_14px_24px_rgba(49,25,77,0.16)]">
+                      <div>
+                        <p className="text-[11px] font-black uppercase tracking-[0.12em] text-[#958ea3]">
+                          View
+                        </p>
+                        <div className="mt-2 grid grid-cols-2 gap-2">
+                          <button
+                            type="button"
+                            onClick={() => setViewMode('monthly')}
+                            className={[
+                              'rounded-lg border px-2 py-1.5 text-xs font-bold transition-colors',
+                              viewMode === 'monthly'
+                                ? 'border-[#be8de4] bg-[#f7eeff] text-[#712ca9]'
+                                : 'border-[#e5e0ed] text-[#6c6580] hover:bg-[#f8f5fd]',
+                            ].join(' ')}
+                          >
+                            Monthly
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setViewMode('weekly')}
+                            className={[
+                              'rounded-lg border px-2 py-1.5 text-xs font-bold transition-colors',
+                              viewMode === 'weekly'
+                                ? 'border-[#be8de4] bg-[#f7eeff] text-[#712ca9]'
+                                : 'border-[#e5e0ed] text-[#6c6580] hover:bg-[#f8f5fd]',
+                            ].join(' ')}
+                          >
+                            Weekly
+                          </button>
+                        </div>
+                      </div>
+
+                      <div className="mt-3 border-t border-[#ede8f4] pt-3">
+                        <p className="text-[11px] font-black uppercase tracking-[0.12em] text-[#958ea3]">
+                          Labels
+                        </p>
+                        <div className="mt-2 space-y-2">
+                          {calendarLabels.map((label) => (
+                            <label
+                              key={label}
+                              className="flex cursor-pointer items-center justify-between rounded-lg border border-[#ece7f2] px-2 py-1.5 text-xs font-semibold text-[#5c556f] hover:bg-[#f9f6fd]"
+                            >
+                              <span className="flex items-center gap-2">
+                                <span className={`size-2 rounded-full ${labelStyles[label].dot}`} />
+                                {label}
+                              </span>
+                              <input
+                                type="checkbox"
+                                checked={labelFilters[label]}
+                                onChange={() => handleToggleLabelFilter(label)}
+                                className="size-3.5 rounded border border-[#cbc3d9] accent-[#8f1fd1]"
+                              />
+                            </label>
+                          ))}
+                        </div>
+                        <div className="mt-3 flex items-center justify-between text-[11px] font-semibold text-[#7d7690]">
+                          <span>{enabledFilterCount} active</span>
+                          <button
+                            type="button"
+                            onClick={handleResetFilters}
+                            className="text-[#8b22ca] hover:text-[#6d1e9d]"
+                          >
+                            Reset
+                          </button>
+                        </div>
+                      </div>
+
+                      <div className="mt-3 border-t border-[#ede8f4] pt-3">
+                        <label className="flex cursor-pointer items-center justify-between rounded-lg px-2 py-1.5 text-xs font-semibold text-[#5c556f] hover:bg-[#f9f6fd]">
+                          <span className="truncate">Show only dates with events</span>
+                          <input
+                            type="checkbox"
+                            checked={showOnlyMarkedDates}
+                            onChange={() => setShowOnlyMarkedDates((prev) => !prev)}
+                            className="size-3.5 rounded border border-[#cbc3d9] accent-[#8f1fd1]"
+                          />
+                        </label>
+                      </div>
+                    </div>
+                  ) : null}
                 </div>
               </div>
-              <p className="text-xs font-semibold text-[#8f879f]">{markedDateCount} marked dates</p>
             </div>
 
-            <div className="flex w-full flex-wrap items-center gap-2 lg:w-auto lg:justify-end">
-              <div className="inline-flex items-center rounded-xl border border-[#ddd8e8] bg-[#faf9fd] p-1">
-                <button
-                  type="button"
-                  onClick={() => setViewMode('monthly')}
-                  className={[
-                    'rounded-lg px-3 py-1.5 text-xs font-bold transition-colors',
-                    viewMode === 'monthly'
-                      ? 'bg-linear-to-r from-[#f347a5] to-[#8f1fd1] text-white shadow-[0_8px_14px_rgba(169,42,188,0.3)]'
-                      : 'text-[#655d75] hover:text-[#3c3650]',
-                  ].join(' ')}
-                >
-                  Monthly
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setViewMode('weekly')}
-                  className={[
-                    'rounded-lg px-3 py-1.5 text-xs font-bold transition-colors',
-                    viewMode === 'weekly'
-                      ? 'bg-linear-to-r from-[#f347a5] to-[#8f1fd1] text-white shadow-[0_8px_14px_rgba(169,42,188,0.3)]'
-                      : 'text-[#655d75] hover:text-[#3c3650]',
-                  ].join(' ')}
-                >
-                  Weekly
-                </button>
-              </div>
-
-              <Button
-                type="button"
-                variant="outline"
-                onClick={handleGoToToday}
-                className="h-8 rounded-full border-[#ddd8e8] px-3 text-xs font-bold text-[#655d75] hover:bg-[#f4effa]"
-              >
-                Today
-              </Button>
-
-              <div className="relative" ref={filterMenuRef}>
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => setIsFilterMenuOpen((open) => !open)}
-                  className="h-8 rounded-full border-[#ddd8e8] px-3 text-xs font-bold text-[#655d75] hover:bg-[#f4effa]"
-                >
-                  <Filter className="size-3.5" />
-                  Filter
-                </Button>
-
-                {isFilterMenuOpen ? (
-                  <div className="absolute right-0 z-20 mt-2 w-60 rounded-xl border border-[#e3deec] bg-white p-3 shadow-[0_14px_24px_rgba(49,25,77,0.16)]">
-                    <div>
-                      <p className="text-[11px] font-black uppercase tracking-[0.12em] text-[#958ea3]">
-                        View
-                      </p>
-                      <div className="mt-2 grid grid-cols-2 gap-2">
-                        <button
-                          type="button"
-                          onClick={() => setViewMode('monthly')}
-                          className={[
-                            'rounded-lg border px-2 py-1.5 text-xs font-bold transition-colors',
-                            viewMode === 'monthly'
-                              ? 'border-[#be8de4] bg-[#f7eeff] text-[#712ca9]'
-                              : 'border-[#e5e0ed] text-[#6c6580] hover:bg-[#f8f5fd]',
-                          ].join(' ')}
-                        >
-                          Monthly
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setViewMode('weekly')}
-                          className={[
-                            'rounded-lg border px-2 py-1.5 text-xs font-bold transition-colors',
-                            viewMode === 'weekly'
-                              ? 'border-[#be8de4] bg-[#f7eeff] text-[#712ca9]'
-                              : 'border-[#e5e0ed] text-[#6c6580] hover:bg-[#f8f5fd]',
-                          ].join(' ')}
-                        >
-                          Weekly
-                        </button>
-                      </div>
-                    </div>
-
-                    <div className="mt-3 border-t border-[#ede8f4] pt-3">
-                      <p className="text-[11px] font-black uppercase tracking-[0.12em] text-[#958ea3]">
-                        Labels
-                      </p>
-                      <div className="mt-2 space-y-2">
-                        {calendarLabels.map((label) => (
-                          <label
-                            key={label}
-                            className="flex cursor-pointer items-center justify-between rounded-lg border border-[#ece7f2] px-2 py-1.5 text-xs font-semibold text-[#5c556f] hover:bg-[#f9f6fd]"
-                          >
-                            <span className="flex items-center gap-2">
-                              <span className={`size-2 rounded-full ${labelStyles[label].dot}`} />
-                              {label}
-                            </span>
-                            <input
-                              type="checkbox"
-                              checked={labelFilters[label]}
-                              onChange={() => handleToggleLabelFilter(label)}
-                              className="size-3.5 rounded border border-[#cbc3d9] accent-[#8f1fd1]"
-                            />
-                          </label>
-                        ))}
-                      </div>
-                      <div className="mt-3 flex items-center justify-between text-[11px] font-semibold text-[#7d7690]">
-                        <span>{enabledFilterCount} active</span>
-                        <button
-                          type="button"
-                          onClick={handleResetFilters}
-                          className="text-[#8b22ca] hover:text-[#6d1e9d]"
-                        >
-                          Reset
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                ) : null}
-              </div>
-            </div>
-          </div>
-
-          <div className="mt-4 overflow-x-auto">
-            <div className="min-w-[560px] sm:min-w-[680px] lg:min-w-0">
-              <div className="grid grid-cols-7 gap-1 sm:gap-2">
-                {weekdayLabels.map((weekday) => (
-                  <div
-                    key={weekday}
-                    className="rounded-lg border border-[#ece7f2] bg-[#f9f7fc] py-1.5 text-center text-[10px] font-bold uppercase tracking-wide text-[#8f879f] sm:py-2 sm:text-xs"
-                  >
-                    <span className="sm:hidden">{weekday.slice(0, 1)}</span>
-                    <span className="hidden sm:inline">{weekday}</span>
-                  </div>
-                ))}
-              </div>
-
-              <div className="mt-2 grid grid-cols-7 gap-1 sm:gap-2">
-                {visibleDays.map((date) => {
-                  const dateKey = toDateKey(date);
-                  const dayEntries = entriesByDate[dateKey] ?? [];
-                  const isToday = dateKey === todayKey;
-                  const isSelected = dateKey === selectedDateKey;
-                  const isCurrentMonth =
-                    date.getMonth() === displayMonth.getMonth() &&
-                    date.getFullYear() === displayMonth.getFullYear();
-
-                  return (
-                    <button
-                      key={dateKey}
-                      type="button"
-                      onClick={() => handleSelectDate(date)}
-                      className={[
-                        'min-h-20 rounded-lg border p-1 text-left transition-all sm:min-h-26 sm:rounded-xl sm:p-2',
-                        viewMode === 'monthly' ? 'h-22 sm:h-28' : 'h-28 sm:h-36',
-                        isSelected
-                          ? 'border-[#be8de4] bg-[#fbf5ff] shadow-[0_8px_18px_rgba(165,62,191,0.18)]'
-                          : 'border-[#ece7f2] bg-white hover:border-[#d7cbe7] hover:bg-[#fcf9ff]',
-                        viewMode === 'monthly' && !isCurrentMonth ? 'opacity-55' : '',
-                      ].join(' ')}
+            <div className="mt-4">
+              <div className="min-w-0">
+                <div className="grid grid-cols-7 gap-2">
+                  {weekdayLabels.map((weekday) => (
+                    <div
+                      key={weekday}
+                      className="rounded-lg border border-[#ece7f2] bg-[#f9f7fc] py-2 text-center text-xs font-bold uppercase tracking-wide text-[#8f879f]"
                     >
-                      <div className="flex items-center justify-between">
-                        <span
-                          className={[
-                            'inline-flex h-5 min-w-5 items-center justify-center rounded-full px-1 text-[10px] font-black sm:h-6 sm:min-w-6 sm:px-1.5 sm:text-xs',
-                            isToday
-                              ? 'bg-linear-to-r from-[#f347a5] to-[#8f1fd1] text-white'
-                              : 'text-[#4a445a]',
-                          ].join(' ')}
-                        >
-                          {String(date.getDate()).padStart(2, '0')}
-                        </span>
+                      <span>{weekday}</span>
+                    </div>
+                  ))}
+                </div>
 
-                        {dayEntries.length > 0 ? (
-                          <span className="text-[9px] font-bold text-[#8f879f] sm:text-[10px]">
-                            {dayEntries.length}
-                          </span>
-                        ) : null}
-                      </div>
-
-                      <div className="mt-1 flex items-center gap-1 sm:hidden">
-                        {dayEntries.slice(0, 3).map((entry) => (
-                          <span
-                            key={`${entry.id}-dot`}
-                            className={`size-1.5 rounded-full ${getLabelStyle(entry.label).dot}`}
-                          />
-                        ))}
-                        {dayEntries.length > 3 ? (
-                          <span className="text-[9px] font-semibold text-[#8f879f]">
-                            +{dayEntries.length - 3}
-                          </span>
-                        ) : null}
-                      </div>
-
-                      <div className="mt-2 hidden space-y-1 sm:block">
-                        {dayEntries.slice(0, 3).map((entry) => (
-                          <span
-                            key={entry.id}
-                            className={`block truncate rounded-md border px-1.5 py-1 text-[10px] font-semibold ${getLabelStyle(entry.label).chip}`}
-                            title={`${entry.startTime} - ${entry.endTime} ${entry.title}`}
-                          >
-                            {entry.startTime}-{entry.endTime} {entry.title}
-                          </span>
-                        ))}
-                        {dayEntries.length > 3 ? (
-                          <span className="block text-[10px] font-semibold text-[#8f879f]">
-                            +{dayEntries.length - 3} more
-                          </span>
-                        ) : null}
-                      </div>
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-          </div>
-
-          <div className="mt-4 flex flex-wrap items-center gap-2">
-            {selectableLabels.map((label) => (
-              <span
-                key={label}
-                className={`inline-flex items-center gap-1 rounded-full px-2 py-1 text-[11px] font-bold ${getLabelStyle(label).badge}`}
-              >
-                <span className={`size-2 rounded-full ${getLabelStyle(label).dot}`} />
-                {label}
-              </span>
-            ))}
-          </div>
-        </div>
-
-        <aside className="space-y-4">
-          <section className="rounded-2xl border border-[#ddd8e8] bg-white p-4 shadow-[0_8px_20px_rgba(46,22,76,0.07)]">
-            <h3 className="text-sm font-black uppercase tracking-[0.12em] text-[#8f879f]">
-              Add Marker
-            </h3>
-            <p className="mt-1 text-xs font-semibold text-[#7e768f]">
-              Plot tasks, meetings, and reminders in your calendar.
-            </p>
-
-            <form className="mt-4 space-y-3" onSubmit={handleAddMarker}>
-              <div className="space-y-1.5">
-                <Label className="text-[11px] font-bold text-[#6a627c]">For *</Label>
-                <div className="flex flex-wrap gap-2">
-                  {selectableLabels.map((label) => {
-                    const isSelected = draftEntry.label === label;
+                <div className="mt-2 grid grid-cols-7 gap-2">
+                  {visibleDaysToRender.map((date) => {
+                    const dateKey = toDateKey(date);
+                    const dayEntries = entriesByDate[dateKey] ?? [];
+                    const isToday = dateKey === todayKey;
+                    const isSelected = dateKey === selectedDateKey;
+                    const isCurrentMonth =
+                      date.getMonth() === displayMonth.getMonth() &&
+                      date.getFullYear() === displayMonth.getFullYear();
 
                     return (
                       <button
-                        key={label}
+                        key={dateKey}
                         type="button"
-                        onClick={() => {
-                          setDraftEntry((previous) => ({
-                            ...previous,
-                            label,
-                          }));
-                        }}
+                        onClick={() => handleSelectDate(date)}
                         className={[
-                          'rounded-2xl border px-4 py-2 text-xs font-black transition-all sm:px-6 sm:text-sm',
-                          getLabelPickerStyle(label),
+                          'min-h-26 rounded-xl border p-2 text-left transition-all',
+                          viewMode === 'monthly' ? 'h-28' : 'h-36',
                           isSelected
-                            ? 'border-[#9d4bd6] shadow-[0_8px_14px_rgba(127,34,185,0.2)]'
-                            : 'border-transparent opacity-85 hover:opacity-100',
+                            ? 'border-[#be8de4] bg-[#fbf5ff] shadow-[0_8px_18px_rgba(165,62,191,0.18)]'
+                            : 'border-[#ece7f2] bg-white hover:border-[#d7cbe7] hover:bg-[#fcf9ff]',
+                          viewMode === 'monthly' && !isCurrentMonth ? 'opacity-55' : '',
                         ].join(' ')}
-                        aria-pressed={isSelected}
                       >
-                        {label}
+                        <div className="flex items-center justify-between">
+                          <span
+                            className={[
+                              'inline-flex h-6 min-w-6 items-center justify-center rounded-full px-1.5 text-xs font-black',
+                              isToday
+                                ? 'bg-linear-to-r from-[#f347a5] to-[#8f1fd1] text-white'
+                                : 'text-[#4a445a]',
+                            ].join(' ')}
+                          >
+                            {String(date.getDate()).padStart(2, '0')}
+                          </span>
+
+                          {dayEntries.length > 0 ? (
+                            <span className="text-[10px] font-bold text-[#8f879f]">
+                              {dayEntries.length}
+                            </span>
+                          ) : null}
+                        </div>
+
+                        <div className="mt-2 space-y-1">
+                          {dayEntries.slice(0, 3).map((entry) => (
+                            <span
+                              key={entry.id}
+                              className={`block truncate rounded-md border px-1.5 py-1 text-[10px] font-semibold ${getLabelStyle(entry.label).chip}`}
+                              title={`${entry.startTime} - ${entry.endTime} ${entry.title}`}
+                            >
+                              {entry.startTime}-{entry.endTime} {entry.title}
+                            </span>
+                          ))}
+                          {dayEntries.length > 3 ? (
+                            <span className="block text-[10px] font-semibold text-[#8f879f]">
+                              +{dayEntries.length - 3} more
+                            </span>
+                          ) : null}
+                        </div>
                       </button>
                     );
                   })}
                 </div>
+              </div>
+            </div>
 
-                <button
-                  type="button"
-                  onClick={() => {
-                    setIsAddingCustomLabel((previous) => !previous);
-                    setCustomLabelError('');
-                  }}
-                  className="inline-flex size-14 items-center justify-center rounded-xl border border-dashed border-[#a648df] text-[#8f2bd2] transition-colors hover:bg-[#f8efff]"
-                  aria-label="Add custom label"
+            <div className="mt-4 flex flex-wrap items-center gap-2">
+              {selectableLabels.map((label) => (
+                <span
+                  key={label}
+                  className={`inline-flex items-center gap-1 rounded-full px-2 py-1 text-[11px] font-bold ${getLabelStyle(label).badge}`}
                 >
-                  <Plus className="size-5" />
-                </button>
+                  <span className={`size-2 rounded-full ${getLabelStyle(label).dot}`} />
+                  {label}
+                </span>
+              ))}
+            </div>
+          </div>
 
-                {isAddingCustomLabel ? (
-                  <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-                    <Input
-                      value={customLabelDraft}
-                      onChange={(event) => {
-                        setCustomLabelDraft(event.target.value);
-                        if (customLabelError) {
-                          setCustomLabelError('');
-                        }
-                      }}
-                      onKeyDown={(event) => {
-                        if (event.key === 'Enter') {
-                          event.preventDefault();
-                          handleCreateCustomLabel();
-                        }
-                      }}
-                      placeholder="Add label"
-                      className="h-9 rounded-lg border-[#ddd8e8] bg-white px-3 text-sm text-[#4c455e]"
-                    />
-                    <Button
-                      type="button"
-                      variant="outline"
-                      onClick={handleCreateCustomLabel}
-                      className="h-9 rounded-lg border-[#d7c9e7] px-3 text-xs font-black text-[#7b2bb8] hover:bg-[#f5ecff]"
-                    >
-                      Add
-                    </Button>
+          <aside className="w-[320px] self-start space-y-4">
+            <section className="rounded-2xl border border-[#ddd8e8] bg-white p-4 shadow-[0_8px_20px_rgba(46,22,76,0.07)]">
+              <h3 className="text-sm font-black uppercase tracking-[0.12em] text-[#8f879f]">
+                Add Marker
+              </h3>
+              <p className="mt-1 text-xs font-semibold text-[#7e768f]">
+                Plot tasks, meetings, and reminders in your calendar.
+              </p>
+
+              <form className="mt-4 space-y-3" onSubmit={handleAddMarker}>
+                <div className="space-y-1.5">
+                  <Label className="text-[11px] font-bold text-[#6a627c]">For *</Label>
+                  <div className="flex flex-wrap gap-2">
+                    {selectableLabels.map((label) => {
+                      const isSelected = draftEntry.label === label;
+
+                      return (
+                        <button
+                          key={label}
+                          type="button"
+                          onClick={() => {
+                            setDraftEntry((previous) => ({
+                              ...previous,
+                              label,
+                            }));
+                          }}
+                          className={[
+                            'rounded-2xl border px-6 py-2 text-sm font-black transition-all',
+                            getLabelPickerStyle(label),
+                            isSelected
+                              ? 'border-[#9d4bd6] shadow-[0_8px_14px_rgba(127,34,185,0.2)]'
+                              : 'border-transparent opacity-85 hover:opacity-100',
+                          ].join(' ')}
+                          aria-pressed={isSelected}
+                        >
+                          {label}
+                        </button>
+                      );
+                    })}
                   </div>
-                ) : null}
 
-                {customLabelError ? (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsAddingCustomLabel((previous) => !previous);
+                      setCustomLabelError('');
+                    }}
+                    className="inline-flex size-14 items-center justify-center rounded-xl border border-dashed border-[#a648df] text-[#8f2bd2] transition-colors hover:bg-[#f8efff]"
+                    aria-label="Add custom label"
+                  >
+                    <Plus className="size-5" />
+                  </button>
+
+                  {isAddingCustomLabel ? (
+                    <div className="flex items-center gap-2">
+                      <Input
+                        value={customLabelDraft}
+                        onChange={(event) => {
+                          setCustomLabelDraft(event.target.value);
+                          if (customLabelError) {
+                            setCustomLabelError('');
+                          }
+                        }}
+                        onKeyDown={(event) => {
+                          if (event.key === 'Enter') {
+                            event.preventDefault();
+                            handleCreateCustomLabel();
+                          }
+                        }}
+                        placeholder="Add label"
+                        className="h-9 rounded-lg border-[#ddd8e8] bg-white px-3 text-sm text-[#4c455e]"
+                      />
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={handleCreateCustomLabel}
+                        className="h-9 rounded-lg border-[#d7c9e7] px-3 text-xs font-black text-[#7b2bb8] hover:bg-[#f5ecff]"
+                      >
+                        Add
+                      </Button>
+                    </div>
+                  ) : null}
+
+                  {customLabelError ? (
+                    <p className="text-xs font-semibold text-[#c33274]" role="alert">
+                      {customLabelError}
+                    </p>
+                  ) : null}
+                </div>
+
+                <div className="space-y-1.5">
+                  <Label htmlFor="calendar-title" className="text-[11px] font-bold text-[#6a627c]">
+                    Title
+                  </Label>
+                  <Input
+                    id="calendar-title"
+                    value={draftEntry.title}
+                    onChange={(event) => {
+                      setDraftEntry((previous) => ({
+                        ...previous,
+                        title: event.target.value,
+                      }));
+                    }}
+                    placeholder="Enter title"
+                    className="h-9 rounded-lg border-[#ddd8e8] bg-white px-3 text-sm text-[#4c455e]"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label className="text-[11px] font-bold text-[#6a627c]">Date and Time *</Label>
+
+                  <div className="space-y-1.5">
+                    <Label
+                      htmlFor="calendar-start-date"
+                      className="text-[11px] font-bold text-[#6a627c]"
+                    >
+                      Start Date *
+                    </Label>
+                    <div className="flex overflow-hidden rounded-lg border border-[#ddd8e8] bg-white">
+                      <Input
+                        id="calendar-start-date"
+                        type="date"
+                        value={draftEntry.startDateKey}
+                        onChange={(event) => {
+                          const nextDate = event.target.value;
+
+                          setDraftEntry((previous) => ({
+                            ...previous,
+                            startDateKey: nextDate,
+                          }));
+
+                          if (nextDate) {
+                            const parsedDate = parseDateKey(nextDate);
+                            setSelectedDateKey(nextDate);
+                            setDisplayMonth(
+                              new Date(parsedDate.getFullYear(), parsedDate.getMonth(), 1)
+                            );
+                          }
+                        }}
+                        className="h-9 rounded-none border-0 bg-transparent px-2 text-xs text-[#4c455e] focus-visible:ring-0"
+                      />
+                      <div className="h-auto w-px bg-[#ddd8e8]" />
+                      <Input
+                        type="time"
+                        value={draftEntry.startTime}
+                        onChange={(event) => {
+                          setDraftEntry((previous) => ({
+                            ...previous,
+                            startTime: event.target.value,
+                          }));
+                        }}
+                        aria-label="Start time"
+                        className="h-9 rounded-none border-0 bg-transparent px-2 text-xs text-[#4c455e] focus-visible:ring-0"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <Label
+                      htmlFor="calendar-end-date"
+                      className="text-[11px] font-bold text-[#6a627c]"
+                    >
+                      End Date *
+                    </Label>
+                    <div className="flex overflow-hidden rounded-lg border border-[#ddd8e8] bg-white">
+                      <Input
+                        id="calendar-end-date"
+                        type="date"
+                        value={draftEntry.endDateKey}
+                        onChange={(event) => {
+                          setDraftEntry((previous) => ({
+                            ...previous,
+                            endDateKey: event.target.value,
+                          }));
+                        }}
+                        className="h-9 rounded-none border-0 bg-transparent px-2 text-xs text-[#4c455e] focus-visible:ring-0"
+                      />
+                      <div className="h-auto w-px bg-[#ddd8e8]" />
+                      <Input
+                        type="time"
+                        value={draftEntry.endTime}
+                        onChange={(event) => {
+                          setDraftEntry((previous) => ({
+                            ...previous,
+                            endTime: event.target.value,
+                          }));
+                        }}
+                        aria-label="End time"
+                        className="h-9 rounded-none border-0 bg-transparent px-2 text-xs text-[#4c455e] focus-visible:ring-0"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="space-y-1.5">
+                  <Label htmlFor="calendar-type" className="text-[11px] font-bold text-[#6a627c]">
+                    Event
+                  </Label>
+                  <select
+                    id="calendar-type"
+                    value={draftEntry.eventType}
+                    onChange={(event) => {
+                      setDraftEntry((previous) => ({
+                        ...previous,
+                        eventType: event.target.value,
+                      }));
+                    }}
+                    className="h-9 w-full rounded-lg border border-[#ddd8e8] bg-white px-2 text-xs font-semibold text-[#4c455e] outline-none focus:border-[#be8de4]"
+                  >
+                    <option value="General">General</option>
+                    <option value="Booking">Booking</option>
+                    <option value="Client">Client</option>
+                    <option value="Supplier">Supplier</option>
+                  </select>
+                </div>
+
+                <div className="space-y-1.5">
+                  <Label
+                    htmlFor="calendar-location"
+                    className="text-[11px] font-bold text-[#6a627c]"
+                  >
+                    Location
+                  </Label>
+                  <Input
+                    id="calendar-location"
+                    value={draftEntry.location}
+                    onChange={(event) => {
+                      setDraftEntry((previous) => ({
+                        ...previous,
+                        location: event.target.value,
+                      }));
+                    }}
+                    placeholder="Optional location"
+                    className="h-9 rounded-lg border-[#ddd8e8] bg-white px-3 text-sm text-[#4c455e]"
+                  />
+                </div>
+
+                <div className="space-y-1.5">
+                  <Label
+                    htmlFor="calendar-description"
+                    className="text-[11px] font-bold text-[#6a627c]"
+                  >
+                    Description
+                  </Label>
+                  <textarea
+                    id="calendar-description"
+                    value={draftEntry.description}
+                    onChange={(event) => {
+                      setDraftEntry((previous) => ({
+                        ...previous,
+                        description: event.target.value,
+                      }));
+                    }}
+                    placeholder="Optional notes"
+                    className="h-20 w-full resize-none rounded-lg border border-[#ddd8e8] bg-white px-3 py-2 text-sm text-[#4c455e] outline-none placeholder:text-[#a49cb3] focus:border-[#be8de4]"
+                  />
+                </div>
+
+                {formError ? (
                   <p className="text-xs font-semibold text-[#c33274]" role="alert">
-                    {customLabelError}
+                    {formError}
                   </p>
                 ) : null}
-              </div>
 
-              <div className="space-y-1.5">
-                <Label htmlFor="calendar-title" className="text-[11px] font-bold text-[#6a627c]">
-                  Title
-                </Label>
-                <Input
-                  id="calendar-title"
-                  value={draftEntry.title}
-                  onChange={(event) => {
-                    setDraftEntry((previous) => ({
-                      ...previous,
-                      title: event.target.value,
-                    }));
-                  }}
-                  placeholder="Enter title"
-                  className="h-9 rounded-lg border-[#ddd8e8] bg-white px-3 text-sm text-[#4c455e]"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label className="text-[11px] font-bold text-[#6a627c]">Date and Time *</Label>
-
-                <div className="space-y-1.5">
-                  <Label
-                    htmlFor="calendar-start-date"
-                    className="text-[11px] font-bold text-[#6a627c]"
-                  >
-                    Start Date *
-                  </Label>
-                  <div className="flex flex-col overflow-hidden rounded-lg border border-[#ddd8e8] bg-white sm:flex-row">
-                    <Input
-                      id="calendar-start-date"
-                      type="date"
-                      value={draftEntry.startDateKey}
-                      onChange={(event) => {
-                        const nextDate = event.target.value;
-
-                        setDraftEntry((previous) => ({
-                          ...previous,
-                          startDateKey: nextDate,
-                        }));
-
-                        if (nextDate) {
-                          const parsedDate = parseDateKey(nextDate);
-                          setSelectedDateKey(nextDate);
-                          setDisplayMonth(
-                            new Date(parsedDate.getFullYear(), parsedDate.getMonth(), 1)
-                          );
-                        }
-                      }}
-                      className="h-9 rounded-none border-0 bg-transparent px-2 text-xs text-[#4c455e] focus-visible:ring-0"
-                    />
-                    <div className="h-px bg-[#ddd8e8] sm:h-auto sm:w-px" />
-                    <Input
-                      type="time"
-                      value={draftEntry.startTime}
-                      onChange={(event) => {
-                        setDraftEntry((previous) => ({
-                          ...previous,
-                          startTime: event.target.value,
-                        }));
-                      }}
-                      aria-label="Start time"
-                      className="h-9 rounded-none border-0 bg-transparent px-2 text-xs text-[#4c455e] focus-visible:ring-0"
-                    />
-                  </div>
-                </div>
-
-                <div className="space-y-1.5">
-                  <Label
-                    htmlFor="calendar-end-date"
-                    className="text-[11px] font-bold text-[#6a627c]"
-                  >
-                    End Date *
-                  </Label>
-                  <div className="flex flex-col overflow-hidden rounded-lg border border-[#ddd8e8] bg-white sm:flex-row">
-                    <Input
-                      id="calendar-end-date"
-                      type="date"
-                      value={draftEntry.endDateKey}
-                      onChange={(event) => {
-                        setDraftEntry((previous) => ({
-                          ...previous,
-                          endDateKey: event.target.value,
-                        }));
-                      }}
-                      className="h-9 rounded-none border-0 bg-transparent px-2 text-xs text-[#4c455e] focus-visible:ring-0"
-                    />
-                    <div className="h-px bg-[#ddd8e8] sm:h-auto sm:w-px" />
-                    <Input
-                      type="time"
-                      value={draftEntry.endTime}
-                      onChange={(event) => {
-                        setDraftEntry((previous) => ({
-                          ...previous,
-                          endTime: event.target.value,
-                        }));
-                      }}
-                      aria-label="End time"
-                      className="h-9 rounded-none border-0 bg-transparent px-2 text-xs text-[#4c455e] focus-visible:ring-0"
-                    />
-                  </div>
-                </div>
-              </div>
-
-              <div className="space-y-1.5">
-                <Label htmlFor="calendar-type" className="text-[11px] font-bold text-[#6a627c]">
-                  Event
-                </Label>
-                <select
-                  id="calendar-type"
-                  value={draftEntry.eventType}
-                  onChange={(event) => {
-                    setDraftEntry((previous) => ({
-                      ...previous,
-                      eventType: event.target.value,
-                    }));
-                  }}
-                  className="h-9 w-full rounded-lg border border-[#ddd8e8] bg-white px-2 text-xs font-semibold text-[#4c455e] outline-none focus:border-[#be8de4]"
+                <Button
+                  type="submit"
+                  className="h-9 w-full rounded-full bg-linear-to-r from-[#f347a5] to-[#8f1fd1] text-sm font-black text-white hover:brightness-105"
                 >
-                  <option value="General">General</option>
-                  <option value="Booking">Booking</option>
-                  <option value="Client">Client</option>
-                  <option value="Supplier">Supplier</option>
-                </select>
+                  <Plus className="size-3.5" />
+                  Add Marker
+                </Button>
+              </form>
+            </section>
+
+            <section className="rounded-2xl border border-[#ddd8e8] bg-white p-4 shadow-[0_8px_20px_rgba(46,22,76,0.07)]">
+              <h3 className="text-sm font-black text-[#4e465f]">
+                {longDateFormatter.format(selectedDate)}
+              </h3>
+              <p className="mt-1 text-xs font-semibold text-[#8f879f]">
+                {selectedDateEntries.length} markers for this date
+              </p>
+
+              <div className="mt-3 space-y-2">
+                {selectedDateEntries.length > 0 ? (
+                  selectedDateEntries.map((entry) => (
+                    <article
+                      key={entry.id}
+                      className="rounded-lg border border-[#ece7f2] bg-[#fcfbfe] p-2.5 text-xs"
+                    >
+                      <div className="flex items-center justify-between gap-2">
+                        <p className="truncate font-bold text-[#3f3950]">{entry.title}</p>
+                        <span
+                          className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-black ${getLabelStyle(entry.label).badge}`}
+                        >
+                          {entry.label}
+                        </span>
+                      </div>
+                      <p className="mt-1 text-[11px] font-semibold text-[#6d667e]">
+                        {entry.startDateKey === entry.endDateKey
+                          ? `${entry.startTime} - ${entry.endTime} • ${entry.eventType}`
+                          : `${formatDateKeyShort(entry.startDateKey)} ${entry.startTime} - ${formatDateKeyShort(entry.endDateKey)} ${entry.endTime} • ${entry.eventType}`}
+                      </p>
+                      {entry.location ? (
+                        <p className="mt-1 text-[11px] text-[#8f879f]">
+                          Location: {entry.location}
+                        </p>
+                      ) : null}
+                      {entry.description ? (
+                        <p className="mt-1 text-[11px] text-[#8f879f]">{entry.description}</p>
+                      ) : null}
+                    </article>
+                  ))
+                ) : (
+                  <div className="rounded-lg border border-dashed border-[#ddd8e8] bg-[#fcfbfe] p-3 text-xs text-[#8f879f]">
+                    No marker found for this date. Create one using the form above.
+                  </div>
+                )}
               </div>
-
-              <div className="space-y-1.5">
-                <Label htmlFor="calendar-location" className="text-[11px] font-bold text-[#6a627c]">
-                  Location
-                </Label>
-                <Input
-                  id="calendar-location"
-                  value={draftEntry.location}
-                  onChange={(event) => {
-                    setDraftEntry((previous) => ({
-                      ...previous,
-                      location: event.target.value,
-                    }));
-                  }}
-                  placeholder="Optional location"
-                  className="h-9 rounded-lg border-[#ddd8e8] bg-white px-3 text-sm text-[#4c455e]"
-                />
-              </div>
-
-              <div className="space-y-1.5">
-                <Label
-                  htmlFor="calendar-description"
-                  className="text-[11px] font-bold text-[#6a627c]"
-                >
-                  Description
-                </Label>
-                <textarea
-                  id="calendar-description"
-                  value={draftEntry.description}
-                  onChange={(event) => {
-                    setDraftEntry((previous) => ({
-                      ...previous,
-                      description: event.target.value,
-                    }));
-                  }}
-                  placeholder="Optional notes"
-                  className="h-20 w-full resize-none rounded-lg border border-[#ddd8e8] bg-white px-3 py-2 text-sm text-[#4c455e] outline-none placeholder:text-[#a49cb3] focus:border-[#be8de4]"
-                />
-              </div>
-
-              {formError ? (
-                <p className="text-xs font-semibold text-[#c33274]" role="alert">
-                  {formError}
-                </p>
-              ) : null}
-
-              <Button
-                type="submit"
-                className="h-9 w-full rounded-full bg-linear-to-r from-[#f347a5] to-[#8f1fd1] text-sm font-black text-white hover:brightness-105"
-              >
-                <Plus className="size-3.5" />
-                Add Marker
-              </Button>
-            </form>
-          </section>
-
-          <section className="rounded-2xl border border-[#ddd8e8] bg-white p-4 shadow-[0_8px_20px_rgba(46,22,76,0.07)]">
-            <h3 className="text-sm font-black text-[#4e465f]">
-              {longDateFormatter.format(selectedDate)}
-            </h3>
-            <p className="mt-1 text-xs font-semibold text-[#8f879f]">
-              {selectedDateEntries.length} markers for this date
-            </p>
-
-            <div className="mt-3 space-y-2">
-              {selectedDateEntries.length > 0 ? (
-                selectedDateEntries.map((entry) => (
-                  <article
-                    key={entry.id}
-                    className="rounded-lg border border-[#ece7f2] bg-[#fcfbfe] p-2.5 text-xs"
-                  >
-                    <div className="flex items-center justify-between gap-2">
-                      <p className="truncate font-bold text-[#3f3950]">{entry.title}</p>
-                      <span
-                        className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-black ${getLabelStyle(entry.label).badge}`}
-                      >
-                        {entry.label}
-                      </span>
-                    </div>
-                    <p className="mt-1 text-[11px] font-semibold text-[#6d667e]">
-                      {entry.startDateKey === entry.endDateKey
-                        ? `${entry.startTime} - ${entry.endTime} • ${entry.eventType}`
-                        : `${formatDateKeyShort(entry.startDateKey)} ${entry.startTime} - ${formatDateKeyShort(entry.endDateKey)} ${entry.endTime} • ${entry.eventType}`}
-                    </p>
-                    {entry.location ? (
-                      <p className="mt-1 text-[11px] text-[#8f879f]">Location: {entry.location}</p>
-                    ) : null}
-                    {entry.description ? (
-                      <p className="mt-1 text-[11px] text-[#8f879f]">{entry.description}</p>
-                    ) : null}
-                  </article>
-                ))
-              ) : (
-                <div className="rounded-lg border border-dashed border-[#ddd8e8] bg-[#fcfbfe] p-3 text-xs text-[#8f879f]">
-                  No marker found for this date. Create one using the form above.
-                </div>
-              )}
-            </div>
-          </section>
-        </aside>
+            </section>
+          </aside>
+        </div>
       </div>
     </section>
   );

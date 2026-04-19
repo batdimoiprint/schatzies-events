@@ -23,7 +23,6 @@ const adminNavItems = [
   { label: 'Event Planner', to: '/admin/event-planner', icon: NotebookPen },
   { label: 'User Management', to: '/admin/users', icon: UsersRound },
   { label: 'Calendar', to: '/admin/calendar', icon: Calendar },
-  { label: 'RSVP', to: '/admin/rsvp', icon: Users },
   { label: 'Cost Breakdown', to: '/admin/costs', icon: Wallet },
   { label: 'Vendor Pool', to: '/admin/vendors', icon: Briefcase },
 ];

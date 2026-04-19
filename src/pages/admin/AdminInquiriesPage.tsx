@@ -1,27 +1,14 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Badge } from '@/components/ui/badge';
-import { Calendar as CalendarIcon, CheckCircle2, Clock3, MessageSquareText } from 'lucide-react';
+import { Calendar as CalendarIcon, Check, CheckCircle2, Clock3, Copy, Eye, EyeOff, MessageSquareText } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { getInquiries, updateInquiryStatus, scheduleInquiryMeeting } from '@/api/inquiries';
-import { getOrganizerUsers } from '@/api/users';
+import { createUser, getOrganizerUsers } from '@/api/users';
 
 export function AdminInquiriesPage() {
   const [inquiries, setInquiries] = useState<any[]>([]);
@@ -37,6 +24,12 @@ export function AdminInquiriesPage() {
   const [scheduleError, setScheduleError] = useState('');
   const [selectedMeetingOrganizerId, setSelectedMeetingOrganizerId] = useState('');
   const [isUpdatingMeetingOrganizer, setIsUpdatingMeetingOrganizer] = useState(false);
+  const [isCreatingAccount, setIsCreatingAccount] = useState(false);
+  const [accountCreateError, setAccountCreateError] = useState('');
+  const [accountCreateSuccess, setAccountCreateSuccess] = useState('');
+  const [createdAccounts, setCreatedAccounts] = useState<Record<string, { password: string; createdAt: string }>>({});
+  const [showPasswordByInquiry, setShowPasswordByInquiry] = useState<Record<string, boolean>>({});
+  const [copiedInquiryId, setCopiedInquiryId] = useState('');
 
   const todayKey = new Date().toISOString().split('T')[0];
   const [draftEntry, setDraftEntry] = useState({
@@ -122,8 +115,7 @@ export function AdminInquiriesPage() {
   const getStatusRank = (statusValue?: string) => {
     const status = String(statusValue || '').toLowerCase();
 
-    if (!status || status === 'new' || status === 'pending review' || status === 'pending')
-      return 1;
+    if (!status || status === 'new' || status === 'pending review' || status === 'pending') return 1;
     if (status === 'in progress' || status === 'requires clarification') return 2;
     if (status === 'meeting scheduled') return 3;
     if (status === 'approved' || status === 'resolved') return 4;
@@ -188,8 +180,14 @@ export function AdminInquiriesPage() {
   const handleViewDetails = (inquiry: any) => {
     setSelectedInquiry(inquiry);
     setSelectedMeetingOrganizerId(inquiry?.meetingDetails?.organizerId || '');
+    setAccountCreateError('');
+    setAccountCreateSuccess('');
+    setCopiedInquiryId('');
     setIsDialogOpen(true);
   };
+
+  const getInquiryKey = (inquiry: any) =>
+    String(inquiry?.id || inquiry?._id || inquiry?.email || '').trim();
 
   const getOrganizerLabel = (organizerId: string) => {
     if (!organizerId) return 'Unassigned';
@@ -214,9 +212,7 @@ export function AdminInquiriesPage() {
     try {
       await updateInquiryStatus(id, newStatus);
       setSelectedInquiry({ ...selectedInquiry, status: newStatus });
-      setInquiries(
-        inquiries.map((inq) => ((inq.id || inq._id) === id ? { ...inq, status: newStatus } : inq))
-      );
+      setInquiries(inquiries.map(inq => (inq.id || inq._id) === id ? { ...inq, status: newStatus } : inq));
     } catch (error) {
       console.error('Failed to update status', error);
     }
@@ -240,7 +236,7 @@ export function AdminInquiriesPage() {
         location: draftEntry.location,
         organizerId: draftEntry.organizerId,
       });
-
+      
       // Update UI state reflecting new status and meeting details globally
       const newStatus = 'Meeting Scheduled';
       const meetingDetails = {
@@ -249,23 +245,13 @@ export function AdminInquiriesPage() {
         location: draftEntry.location,
         organizerId: draftEntry.organizerId,
       };
-
+      
       setSelectedInquiry({ ...selectedInquiry, status: newStatus, meetingDetails });
-      setInquiries(
-        inquiries.map((inq) =>
-          (inq.id || inq._id) === id ? { ...inq, status: newStatus, meetingDetails } : inq
-        )
-      );
-
+      setInquiries(inquiries.map(inq => (inq.id || inq._id) === id ? { ...inq, status: newStatus, meetingDetails } : inq));
+      
       setIsScheduleModalOpen(false);
       // Reset form properly
-      setDraftEntry((prev) => ({
-        ...prev,
-        title: '',
-        location: '',
-        description: '',
-        organizerId: '',
-      }));
+      setDraftEntry(prev => ({ ...prev, title: '', location: '', description: '', organizerId: '' }));
     } catch (error) {
       console.error('Failed to schedule meeting and assign organizer', error);
       setScheduleError('Unable to schedule meeting right now. Please try again.');
@@ -324,6 +310,88 @@ export function AdminInquiriesPage() {
     }
   };
 
+  const generateRandomPassword = (length = 12) => {
+    const charset = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789!@#$%';
+    const randomValues = new Uint32Array(length);
+    crypto.getRandomValues(randomValues);
+
+    return Array.from(randomValues, (value) => charset[value % charset.length]).join('');
+  };
+
+  const handleCreateUserAccount = async () => {
+    if (!selectedInquiry) return;
+
+    const inquiryKey = getInquiryKey(selectedInquiry);
+    if (inquiryKey && createdAccounts[inquiryKey]) {
+      setAccountCreateError('');
+      setAccountCreateSuccess('An account for this inquiry was already created in this session.');
+      return;
+    }
+
+    const email = String(selectedInquiry.email || '').trim();
+    if (!email) {
+      setAccountCreateError('Inquiry has no email address to use for account creation.');
+      setAccountCreateSuccess('');
+      return;
+    }
+
+    const generatedPassword = generateRandomPassword();
+
+    try {
+      setIsCreatingAccount(true);
+      setAccountCreateError('');
+      setAccountCreateSuccess('');
+
+      await createUser({
+        firstName: selectedInquiry.firstName || 'Client',
+        lastName: selectedInquiry.lastName || 'User',
+        email,
+        password: generatedPassword,
+        contactNumber: selectedInquiry.contactNumber || '',
+        role: 'CLIENT',
+      });
+
+      if (inquiryKey) {
+        setCreatedAccounts((prev) => ({
+          ...prev,
+          [inquiryKey]: {
+            password: generatedPassword,
+            createdAt: new Date().toISOString(),
+          },
+        }));
+        setShowPasswordByInquiry((prev) => ({ ...prev, [inquiryKey]: false }));
+      }
+
+      setAccountCreateSuccess('Account created successfully.');
+    } catch (error: any) {
+      const serverMessage =
+        error?.response?.data?.error ||
+        error?.response?.data?.message ||
+        'Unable to create account right now. Please try again.';
+      setAccountCreateError(String(serverMessage));
+      setAccountCreateSuccess('');
+    } finally {
+      setIsCreatingAccount(false);
+    }
+  };
+
+  const handleCopyPassword = async (inquiryKey: string, password: string) => {
+    try {
+      await navigator.clipboard.writeText(password);
+      setCopiedInquiryId(inquiryKey);
+      setTimeout(() => {
+        setCopiedInquiryId((current) => (current === inquiryKey ? '' : current));
+      }, 1500);
+    } catch {
+      setAccountCreateError('Unable to copy password. Please copy it manually.');
+    }
+  };
+
+  const selectedInquiryKey = selectedInquiry ? getInquiryKey(selectedInquiry) : '';
+  const createdAccount = selectedInquiryKey ? createdAccounts[selectedInquiryKey] : null;
+  const isPasswordVisible = selectedInquiryKey ? Boolean(showPasswordByInquiry[selectedInquiryKey]) : false;
+  const isCopied = selectedInquiryKey ? copiedInquiryId === selectedInquiryKey : false;
+
   return (
     <div className="space-y-6 p-4 ">
       <section className="relative overflow-hidden rounded-2xl border border-[#efe6f6] bg-linear-to-r from-[#fff8fc] via-[#fef9ff] to-[#f4f7ff] p-5 md:p-7">
@@ -332,12 +400,9 @@ export function AdminInquiriesPage() {
 
         <div className="relative flex flex-wrap items-start justify-between gap-4">
           <div>
-            <h1 className="mt-3 text-2xl font-black text-[#2e2837] md:text-3xl">
-              Client Inquiries
-            </h1>
+            <h1 className="mt-3 text-2xl font-black text-[#2e2837] md:text-3xl">Client Inquiries</h1>
             <p className="mt-1 max-w-2xl text-lg font-semibold text-[#8f879f] md:text-[15px]">
-              Review incoming requests, schedule discovery meetings, and move clients through your
-              booking pipeline.
+              Review incoming requests, schedule discovery meetings, and move clients through your booking pipeline.
             </p>
           </div>
         </div>
@@ -371,10 +436,7 @@ export function AdminInquiriesPage() {
       <div className="overflow-hidden rounded-2xl border border-[#eee7f4] bg-white shadow-[0_8px_30px_rgba(53,36,71,0.06)]">
         <div className="flex flex-col gap-3 border-b border-[#f1eaf7] bg-[#fcf9ff] p-4 md:flex-row md:items-end md:justify-between">
           <div className="w-full md:max-w-sm">
-            <Label
-              htmlFor="inquiry-search"
-              className="mb-1 block text-[11px] font-black uppercase tracking-[0.08em] text-[#857a98]"
-            >
+            <Label htmlFor="inquiry-search" className="mb-1 block text-[11px] font-black uppercase tracking-[0.08em] text-[#857a98]">
               Search
             </Label>
             <Input
@@ -406,10 +468,7 @@ export function AdminInquiriesPage() {
               <Label className="mb-1 block text-[11px] font-black uppercase tracking-[0.08em] text-[#857a98]">
                 Order
               </Label>
-              <Select
-                value={sortOrder}
-                onValueChange={(value: 'asc' | 'desc') => setSortOrder(value)}
-              >
+              <Select value={sortOrder} onValueChange={(value: 'asc' | 'desc') => setSortOrder(value)}>
                 <SelectTrigger className="h-9 w-full min-w-[150px] border-[#e5ddee] bg-white sm:w-[170px]">
                   <SelectValue />
                 </SelectTrigger>
@@ -440,40 +499,23 @@ export function AdminInquiriesPage() {
           <Table>
             <TableHeader className="bg-[#faf7fd]">
               <TableRow className="border-b border-[#efe7f6]">
-                <TableHead className="h-12 text-lg font-black uppercase tracking-[0.06em] text-[#7c7390]">
-                  Sender
-                </TableHead>
-                <TableHead className="h-12 text-lg font-black uppercase tracking-[0.06em] text-[#7c7390]">
-                  Email
-                </TableHead>
-                <TableHead className="h-12 text-lg font-black uppercase tracking-[0.06em] text-[#7c7390]">
-                  Event Type
-                </TableHead>
-                <TableHead className="h-12 text-lg font-black uppercase tracking-[0.06em] text-[#7c7390]">
-                  Date
-                </TableHead>
-                <TableHead className="h-12 text-lg font-black uppercase tracking-[0.06em] text-[#7c7390]">
-                  Status
-                </TableHead>
+                <TableHead className="h-12 text-lg font-black uppercase tracking-[0.06em] text-[#7c7390]">Sender</TableHead>
+                <TableHead className="h-12 text-lg font-black uppercase tracking-[0.06em] text-[#7c7390]">Email</TableHead>
+                <TableHead className="h-12 text-lg font-black uppercase tracking-[0.06em] text-[#7c7390]">Event Type</TableHead>
+                <TableHead className="h-12 text-lg font-black uppercase tracking-[0.06em] text-[#7c7390]">Date</TableHead>
+                <TableHead className="h-12 text-lg font-black uppercase tracking-[0.06em] text-[#7c7390]">Status</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {filteredAndSortedInquiries.map((inquiry: any) => (
-                <TableRow
-                  key={inquiry.id || inquiry._id}
-                  className="border-b border-[#f3edf8] hover:bg-[#fcf9ff]"
-                >
+                <TableRow key={inquiry.id || inquiry._id} className="border-b border-[#f3edf8] hover:bg-[#fcf9ff]">
                   <TableCell className="py-3.5 font-semibold text-lg text-[#2e2837]">
                     {inquiry.firstName} {inquiry.lastName}
                   </TableCell>
                   <TableCell className="text-lg text-[#635a73]">{inquiry.email}</TableCell>
-                  <TableCell className="font-semibold text-lg text-[#4e4560]">
-                    {inquiry.eventType || inquiry.subject || 'Inquiry'}
-                  </TableCell>
-                  <TableCell className="font-semibold text-lg text-[#4e4560]">
-                    {new Date(inquiry.date || inquiry.createdAt).toLocaleDateString()}
-                  </TableCell>
+                  <TableCell className="font-semibold text-lg text-[#4e4560]">{inquiry.eventType || inquiry.subject || 'Inquiry'}</TableCell>
+                  <TableCell className="font-semibold text-lg text-[#4e4560]">{new Date(inquiry.date || inquiry.createdAt).toLocaleDateString()}</TableCell>
                   <TableCell>
                     <Badge className={getStatusBadgeClass(inquiry.status)}>
                       {inquiry.status || 'New'}
@@ -505,12 +547,8 @@ export function AdminInquiriesPage() {
             <div className="pt-4 md:flex md:gap-4">
               <div className="space-y-4 md:w-1/2">
                 <div className="rounded-xl border border-[#efe8f6] bg-[#fcfaff] p-4">
-                  <h4 className="text-[11px] font-black uppercase tracking-[0.08em] text-[#857a98]">
-                    Sender
-                  </h4>
-                  <p className="text-[#2e2837] font-medium">
-                    {selectedInquiry.firstName} {selectedInquiry.lastName}
-                  </p>
+                  <h4 className="text-[11px] font-black uppercase tracking-[0.08em] text-[#857a98]">Sender</h4>
+                  <p className="text-[#2e2837] font-medium">{selectedInquiry.firstName} {selectedInquiry.lastName}</p>
                   <p className="text-lg text-[#7a708d]">{selectedInquiry.email}</p>
                   {selectedInquiry.contactNumber && (
                     <p className="text-lg text-[#7a708d]">{selectedInquiry.contactNumber}</p>
@@ -518,82 +556,50 @@ export function AdminInquiriesPage() {
                 </div>
                 <div className="grid grid-cols-2 gap-3">
                   <div className="rounded-xl border border-[#efe8f6] bg-white p-3">
-                    <h4 className="text-[11px] font-black uppercase tracking-[0.08em] text-[#857a98]">
-                      Event Format
-                    </h4>
-                    <p className="text-[#2e2837] font-medium">
-                      {selectedInquiry.eventType || selectedInquiry.subject || 'N/A'}
-                    </p>
+                    <h4 className="text-[11px] font-black uppercase tracking-[0.08em] text-[#857a98]">Event Format</h4>
+                    <p className="text-[#2e2837] font-medium">{selectedInquiry.eventType || selectedInquiry.subject || 'N/A'}</p>
                   </div>
                   <div className="rounded-xl border border-[#efe8f6] bg-white p-3">
-                    <h4 className="text-[11px] font-black uppercase tracking-[0.08em] text-[#857a98]">
-                      Planned Date
-                    </h4>
-                    <p className="text-[#2e2837] font-medium">
-                      {new Date(
-                        selectedInquiry.date || selectedInquiry.createdAt
-                      ).toLocaleDateString()}
-                    </p>
+                    <h4 className="text-[11px] font-black uppercase tracking-[0.08em] text-[#857a98]">Planned Date</h4>
+                    <p className="text-[#2e2837] font-medium">{new Date(selectedInquiry.date || selectedInquiry.createdAt).toLocaleDateString()}</p>
                   </div>
                   {selectedInquiry.eventPackage && (
                     <div className="rounded-xl border border-[#efe8f6] bg-white p-3">
-                      <h4 className="text-[11px] font-black uppercase tracking-[0.08em] text-[#857a98]">
-                        Package
-                      </h4>
+                      <h4 className="text-[11px] font-black uppercase tracking-[0.08em] text-[#857a98]">Package</h4>
                       <p className="text-[#2e2837] font-medium">{selectedInquiry.eventPackage}</p>
                     </div>
                   )}
                   {selectedInquiry.eventPax && (
                     <div className="rounded-xl border border-[#efe8f6] bg-white p-3">
-                      <h4 className="text-[11px] font-black uppercase tracking-[0.08em] text-[#857a98]">
-                        Expected Pax
-                      </h4>
+                      <h4 className="text-[11px] font-black uppercase tracking-[0.08em] text-[#857a98]">Expected Pax</h4>
                       <p className="text-[#2e2837] font-medium">{selectedInquiry.eventPax}</p>
                     </div>
                   )}
                 </div>
                 <div className="flex items-center gap-4 pt-1">
                   <div className="w-full">
-                    <h4 className="mb-1 text-lg font-black uppercase tracking-[0.08em] text-[#857a98]">
-                      Status
-                    </h4>
-                    <Select
-                      value={selectedInquiry.status || 'New'}
-                      onValueChange={handleStatusChange}
-                    >
+                    <h4 className="mb-1 text-lg font-black uppercase tracking-[0.08em] text-[#857a98]">Status</h4>
+                    <Select value={selectedInquiry.status || 'New'} onValueChange={handleStatusChange}>
                       <SelectTrigger className="w-full border-[#e5ddee] bg-white">
                         <SelectValue placeholder="Update status" />
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="Pending Review">Pending Review</SelectItem>
-                        <SelectItem value="Requires Clarification">
-                          Requires Clarification
-                        </SelectItem>
+                        <SelectItem value="Requires Clarification">Requires Clarification</SelectItem>
                         <SelectItem value="Meeting Scheduled">Meeting Scheduled</SelectItem>
                         <SelectItem value="Approved">Approved</SelectItem>
                         <SelectItem value="Declined">Declined</SelectItem>
-                        {[
-                          'New',
-                          'In Progress',
-                          'Resolved',
-                          'pending',
-                          'approved',
-                          'declined',
-                        ].includes(selectedInquiry.status) && (
-                          <SelectItem value={selectedInquiry.status} disabled className="hidden">
-                            {selectedInquiry.status}
-                          </SelectItem>
+                        {['New', 'In Progress', 'Resolved', 'pending', 'approved', 'declined'].includes(selectedInquiry.status) && (
+                          <SelectItem value={selectedInquiry.status} disabled className="hidden">{selectedInquiry.status}</SelectItem>
                         )}
                       </SelectContent>
                     </Select>
                   </div>
                 </div>
                 <div>
-                  <h4 className="text-[11px] font-black uppercase tracking-[0.08em] text-[#857a98]">
-                    Message
-                  </h4>
+                  <h4 className="text-[11px] font-black uppercase tracking-[0.08em] text-[#857a98]">Message</h4>
                   <div className="mt-1 min-h-[100px] whitespace-pre-wrap rounded-xl border border-[#ece4f5] bg-[#faf7ff] p-4 text-[#2e2837]">
-                    {selectedInquiry.message || 'No additional message provided.'}
+                    {selectedInquiry.message || "No additional message provided."}
                   </div>
                 </div>
               </div>
@@ -615,8 +621,7 @@ export function AdminInquiriesPage() {
                         Location: {selectedInquiry.meetingDetails.location || 'TBD'}
                       </p>
                       <p className="mt-1 text-xs text-[#6a5a83]">
-                        Organizer:{' '}
-                        {getOrganizerLabel(selectedInquiry.meetingDetails.organizerId || '')}
+                        Organizer: {getOrganizerLabel(selectedInquiry.meetingDetails.organizerId || '')}
                       </p>
                     </div>
 
@@ -644,11 +649,7 @@ export function AdminInquiriesPage() {
                       <Button
                         type="button"
                         onClick={handleUpdateMeetingOrganizer}
-                        disabled={
-                          isUpdatingMeetingOrganizer ||
-                          organizersLoading ||
-                          !selectedMeetingOrganizerId
-                        }
+                        disabled={isUpdatingMeetingOrganizer || organizersLoading || !selectedMeetingOrganizerId}
                         className="bg-linear-to-r from-[#f347a5] to-[#8f1fd1] text-white hover:brightness-105"
                       >
                         {isUpdatingMeetingOrganizer ? 'Updating...' : 'Update Organizer'}
@@ -663,15 +664,11 @@ export function AdminInquiriesPage() {
                     <Button
                       className="w-full bg-linear-to-r from-[#f347a5] to-[#8f1fd1] text-white hover:brightness-105"
                       onClick={() => {
-                        setDraftEntry((prev) => ({
+                        setDraftEntry(prev => ({
                           ...prev,
                           title: `Meeting with ${selectedInquiry?.firstName} ${selectedInquiry?.lastName}`,
-                          startDateKey: selectedInquiry?.date
-                            ? new Date(selectedInquiry.date).toISOString().split('T')[0]
-                            : prev.startDateKey,
-                          endDateKey: selectedInquiry?.date
-                            ? new Date(selectedInquiry.date).toISOString().split('T')[0]
-                            : prev.endDateKey,
+                          startDateKey: selectedInquiry?.date ? new Date(selectedInquiry.date).toISOString().split('T')[0] : prev.startDateKey,
+                          endDateKey: selectedInquiry?.date ? new Date(selectedInquiry.date).toISOString().split('T')[0] : prev.endDateKey,
                           organizerId: prev.organizerId || organizers[0]?.user_id || '',
                         }));
                         setScheduleError('');
@@ -683,6 +680,69 @@ export function AdminInquiriesPage() {
                     </Button>
                   </div>
                 )}
+
+                <div className="mt-4 rounded-lg border border-[#eadcf7] bg-white p-3">
+                  <p className="text-xs font-black uppercase tracking-[0.08em] text-[#6f2ea8]">
+                    Client Account
+                  </p>
+                  <p className="mt-1 text-xs text-[#6a5a83]">
+                    Create a login account for this inquiry using the submitted email.
+                  </p>
+                  <Button
+                    type="button"
+                    onClick={handleCreateUserAccount}
+                    disabled={isCreatingAccount || !selectedInquiry?.email || Boolean(createdAccount)}
+                    className="mt-3 w-full bg-linear-to-r from-[#f347a5] to-[#8f1fd1] text-white hover:brightness-105"
+                  >
+                    {isCreatingAccount ? 'Creating Account...' : createdAccount ? 'Account Created' : 'Create User Account'}
+                  </Button>
+
+                  {createdAccount ? (
+                    <div className="mt-3 space-y-2 rounded-md border border-[#e5dbef] bg-[#faf7ff] p-2.5">
+                      <p className="text-xs font-semibold text-[#5b4f71]">Temporary Password</p>
+                      <div className="flex items-center gap-2">
+                        <Input
+                          readOnly
+                          value={isPasswordVisible ? createdAccount.password : '•'.repeat(Math.max(createdAccount.password.length, 8))}
+                          className="h-9 border-[#ddd8e8] bg-white text-xs font-semibold text-[#4c455e]"
+                        />
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={() =>
+                            setShowPasswordByInquiry((prev) => ({
+                              ...prev,
+                              [selectedInquiryKey]: !isPasswordVisible,
+                            }))
+                          }
+                          className="h-9 border-[#ddd8e8] px-2"
+                        >
+                          {isPasswordVisible ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={() => handleCopyPassword(selectedInquiryKey, createdAccount.password)}
+                          className="h-9 border-[#ddd8e8] px-2"
+                        >
+                          {isCopied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                        </Button>
+                      </div>
+                    </div>
+                  ) : null}
+
+                  {accountCreateError ? (
+                    <p className="mt-2 text-xs font-semibold text-[#c33274]" role="alert">
+                      {accountCreateError}
+                    </p>
+                  ) : null}
+
+                  {accountCreateSuccess ? (
+                    <p className="mt-2 text-xs font-semibold text-emerald-700" role="status">
+                      {accountCreateSuccess}
+                    </p>
+                  ) : null}
+                </div>
               </div>
             </div>
           )}
@@ -693,17 +753,12 @@ export function AdminInquiriesPage() {
       <Dialog open={isScheduleModalOpen} onOpenChange={setIsScheduleModalOpen}>
         <DialogContent className="sm:max-w-[760px]">
           <DialogHeader>
-            <DialogTitle className="text-xl font-black text-[#2e2837]">
-              Schedule Meeting
-            </DialogTitle>
+            <DialogTitle className="text-xl font-black text-[#2e2837]">Schedule Meeting</DialogTitle>
           </DialogHeader>
           <p className="mt-1 text-xs font-semibold text-[#7e768f]">
             Plot tasks, meetings, and reminders in your calendar.
           </p>
-          <form
-            onSubmit={handleScheduleSubmit}
-            className="mt-2 flex flex-col gap-4 md:flex-row md:items-start"
-          >
+          <form onSubmit={handleScheduleSubmit} className="mt-2 flex flex-col gap-4 md:flex-row md:items-start">
             <div className="w-full space-y-3 md:w-1/2">
               <div className="space-y-1.5">
                 <Label htmlFor="calendar-title" className="text-[11px] font-bold text-[#6a627c]">
@@ -727,9 +782,7 @@ export function AdminInquiriesPage() {
                   onChange={(e) => setDraftEntry({ ...draftEntry, organizerId: e.target.value })}
                   className="h-9 w-full rounded-lg border border-[#ddd8e8] bg-white px-2 text-xs font-semibold text-[#4c455e] outline-none focus:border-[#be8de4]"
                 >
-                  <option value="">
-                    {organizersLoading ? 'Loading organizers...' : 'Select organizer'}
-                  </option>
+                  <option value="">{organizersLoading ? 'Loading organizers...' : 'Select organizer'}</option>
                   {organizers.map((organizer) => (
                     <option key={organizer.user_id} value={organizer.user_id}>
                       {[organizer.firstName, organizer.middleName, organizer.lastName]
@@ -740,9 +793,7 @@ export function AdminInquiriesPage() {
                   ))}
                 </select>
                 {!organizersLoading && organizers.length === 0 ? (
-                  <p className="text-xs font-semibold text-[#c33274]">
-                    No organizer accounts available.
-                  </p>
+                  <p className="text-xs font-semibold text-[#c33274]">No organizer accounts available.</p>
                 ) : null}
               </div>
 
@@ -848,11 +899,7 @@ export function AdminInquiriesPage() {
               ) : null}
 
               <div className="pt-2 flex justify-end gap-2">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => setIsScheduleModalOpen(false)}
-                >
+                <Button type="button" variant="outline" onClick={() => setIsScheduleModalOpen(false)}>
                   Cancel
                 </Button>
                 <Button

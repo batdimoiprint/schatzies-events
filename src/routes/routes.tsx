@@ -35,6 +35,7 @@ import { EventManagerPage } from '@/pages/organizer/EventManagerPage';
 import { RSVPPage } from '@/pages/client/RSVPPage';
 import { RSVPPage as OrganizerRSVPPage } from '@/pages/organizer/RSVPPage';
 import { CostBreakdownPage } from '@/pages/organizer/CostBreakdownPage';
+import { RSVPPage } from '@/pages/client/RSVPPage';
 import { InvitationPage } from '@/pages/public/InvitationPage';
 
 const router = createBrowserRouter([
