@@ -137,7 +137,7 @@ function getVendorStatusBadgeClasses(status: VendorStatus) {
 }
 
 export function EventManagerPage() {
-  const location = useLocation();
+    const location = useLocation();
   const { searchTerm } = useOutletContext<OrganizerLayoutOutletContext>();
   const [activeTab, setActiveTab] = useState<'Events' | 'Vendor'>(
     location.state?.activeTab || 'Events'
@@ -161,10 +161,10 @@ export function EventManagerPage() {
       // setEvents(eventsData);
       // setVendors(vendorsData);
     }
-
     fetchDashboardData();
   }, []);
   */
+
 
   const filteredData = useMemo(() => {
     const normalizedSearchTerm = searchTerm.trim().toLowerCase();
