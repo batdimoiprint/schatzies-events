@@ -91,40 +91,144 @@ const activeVendors: ListEntry[] = [
   },
 ];
 
-const kpiCards: KpiCardData[] = [
-  {
-    title: 'Events Completed',
-    value: '4',
-    caption: '(Events)',
-    gradientClassName: 'from-[#cf6ef6] to-[#a536e4]',
-    iconBgClassName: 'bg-white/25',
-    iconImage: '/Pictures/organizerpics/Event completed.png',
-  },
-  {
-    title: 'Total Revenue',
-    value: 'PHP 50,000',
-    caption: '(Overall)',
-    gradientClassName: 'from-[#f48db3] to-[#e75691]',
-    iconBgClassName: 'bg-white/25',
-    iconImage: '/Pictures/organizerpics/TotalRevenue.png',
-  },
-  {
-    title: 'Active Vendors',
-    value: '4',
-    caption: '(Outsourced vendors)',
-    gradientClassName: 'from-[#f0df72] to-[#ddc447]',
-    iconBgClassName: 'bg-black/10',
-    iconImage: '/Pictures/organizerpics/ActiveVendors.png',
-  },
-  {
-    title: 'Total Profit',
-    value: 'PHP 50,000',
-    caption: '(Overall profit per month)',
-    gradientClassName: 'from-[#8cb2f7] to-[#4c7fe3]',
-    iconBgClassName: 'bg-white/25',
-    iconImage: '/Pictures/organizerpics/TotalProfit.png',
-  },
-];
+const kpiDataSets: Record<string, KpiCardData[]> = {
+  Weekly: [
+    {
+      title: 'Events Completed',
+      value: '1',
+      caption: '(This week)',
+      gradientClassName: 'from-[#cf6ef6] to-[#a536e4]',
+      iconBgClassName: 'bg-white/25',
+      iconImage: '/Pictures/organizerpics/Event completed.png',
+    },
+    {
+      title: 'Total Revenue',
+      value: 'PHP 15,000',
+      caption: '(This week)',
+      gradientClassName: 'from-[#f48db3] to-[#e75691]',
+      iconBgClassName: 'bg-white/25',
+      iconImage: '/Pictures/organizerpics/TotalRevenue.png',
+    },
+    {
+      title: 'Active Vendors',
+      value: '2',
+      caption: '(Currently active)',
+      gradientClassName: 'from-[#f0df72] to-[#ddc447]',
+      iconBgClassName: 'bg-black/10',
+      iconImage: '/Pictures/organizerpics/ActiveVendors.png',
+    },
+    {
+      title: 'Total Profit',
+      value: 'PHP 8,000',
+      caption: '(This week profit)',
+      gradientClassName: 'from-[#8cb2f7] to-[#4c7fe3]',
+      iconBgClassName: 'bg-white/25',
+      iconImage: '/Pictures/organizerpics/TotalProfit.png',
+    },
+  ],
+  Monthly: [
+    {
+      title: 'Events Completed',
+      value: '4',
+      caption: '(Events)',
+      gradientClassName: 'from-[#cf6ef6] to-[#a536e4]',
+      iconBgClassName: 'bg-white/25',
+      iconImage: '/Pictures/organizerpics/Event completed.png',
+    },
+    {
+      title: 'Total Revenue',
+      value: 'PHP 50,000',
+      caption: '(Overall)',
+      gradientClassName: 'from-[#f48db3] to-[#e75691]',
+      iconBgClassName: 'bg-white/25',
+      iconImage: '/Pictures/organizerpics/TotalRevenue.png',
+    },
+    {
+      title: 'Active Vendors',
+      value: '4',
+      caption: '(Outsourced vendors)',
+      gradientClassName: 'from-[#f0df72] to-[#ddc447]',
+      iconBgClassName: 'bg-black/10',
+      iconImage: '/Pictures/organizerpics/ActiveVendors.png',
+    },
+    {
+      title: 'Total Profit',
+      value: 'PHP 50,000',
+      caption: '(Overall profit per month)',
+      gradientClassName: 'from-[#8cb2f7] to-[#4c7fe3]',
+      iconBgClassName: 'bg-white/25',
+      iconImage: '/Pictures/organizerpics/TotalProfit.png',
+    },
+  ],
+  'Semi-Annually': [
+    {
+      title: 'Events Completed',
+      value: '18',
+      caption: '(Past 6 months)',
+      gradientClassName: 'from-[#cf6ef6] to-[#a536e4]',
+      iconBgClassName: 'bg-white/25',
+      iconImage: '/Pictures/organizerpics/Event completed.png',
+    },
+    {
+      title: 'Total Revenue',
+      value: 'PHP 350,000',
+      caption: '(Past 6 months)',
+      gradientClassName: 'from-[#f48db3] to-[#e75691]',
+      iconBgClassName: 'bg-white/25',
+      iconImage: '/Pictures/organizerpics/TotalRevenue.png',
+    },
+    {
+      title: 'Active Vendors',
+      value: '12',
+      caption: '(Total engaged)',
+      gradientClassName: 'from-[#f0df72] to-[#ddc447]',
+      iconBgClassName: 'bg-black/10',
+      iconImage: '/Pictures/organizerpics/ActiveVendors.png',
+    },
+    {
+      title: 'Total Profit',
+      value: 'PHP 180,000',
+      caption: '(Past 6 months profit)',
+      gradientClassName: 'from-[#8cb2f7] to-[#4c7fe3]',
+      iconBgClassName: 'bg-white/25',
+      iconImage: '/Pictures/organizerpics/TotalProfit.png',
+    },
+  ],
+  Annually: [
+    {
+      title: 'Events Completed',
+      value: '42',
+      caption: '(This year)',
+      gradientClassName: 'from-[#cf6ef6] to-[#a536e4]',
+      iconBgClassName: 'bg-white/25',
+      iconImage: '/Pictures/organizerpics/Event completed.png',
+    },
+    {
+      title: 'Total Revenue',
+      value: 'PHP 850,000',
+      caption: '(This year)',
+      gradientClassName: 'from-[#f48db3] to-[#e75691]',
+      iconBgClassName: 'bg-white/25',
+      iconImage: '/Pictures/organizerpics/TotalRevenue.png',
+    },
+    {
+      title: 'Active Vendors',
+      value: '25',
+      caption: '(Total engaged)',
+      gradientClassName: 'from-[#f0df72] to-[#ddc447]',
+      iconBgClassName: 'bg-black/10',
+      iconImage: '/Pictures/organizerpics/ActiveVendors.png',
+    },
+    {
+      title: 'Total Profit',
+      value: 'PHP 450,000',
+      caption: '(This year profit)',
+      gradientClassName: 'from-[#8cb2f7] to-[#4c7fe3]',
+      iconBgClassName: 'bg-white/25',
+      iconImage: '/Pictures/organizerpics/TotalProfit.png',
+    },
+  ],
+};
 
 const calendarDays = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
 
@@ -307,6 +411,9 @@ export function OrganizerDashboard() {
   const [viewDate, setViewDate] = useState(
     () => new Date(today.getFullYear(), today.getMonth(), 1)
   );
+  const [kpiFilter, setKpiFilter] = useState('Monthly');
+  const [isKpiDropdownOpen, setIsKpiDropdownOpen] = useState(false);
+  const currentKpiCards = kpiDataSets[kpiFilter] || kpiDataSets['Monthly'];
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
@@ -625,18 +732,40 @@ export function OrganizerDashboard() {
                   Evaluation of events, vendors, and resources
                 </p>
               </div>
-              <Button className="rounded-[10px] border-0 bg-white px-4 py-1.5 text-xs font-semibold text-[#717171] shadow-[0_4px_4px_rgba(0,0,0,0.05)] hover:bg-white/95 flex items-center gap-1">
-                Monthly
-                <img
-                  src="/Pictures/organizerpics/dropdown.png"
-                  alt="dropdown"
-                  className="w-1.5 h-1.5"
-                />
-              </Button>
+              <div className="relative">
+                <Button
+                  onClick={() => setIsKpiDropdownOpen(!isKpiDropdownOpen)}
+                  className="flex w-28 items-center justify-between rounded-[10px] border-0 bg-white px-4 py-1.5 text-xs font-semibold text-[#717171] shadow-[0_4px_4px_rgba(0,0,0,0.05)] transition-colors hover:bg-white/95"
+                >
+                  {kpiFilter}
+                  <img
+                    src="/Pictures/organizerpics/dropdown.png"
+                    alt="dropdown"
+                    className={`h-1.5 w-1.5 transition-transform duration-200 ${isKpiDropdownOpen ? 'rotate-180' : ''}`}
+                  />
+                </Button>
+                {isKpiDropdownOpen && (
+                  <div className="absolute right-0 top-full z-50 mt-1 w-32 overflow-hidden rounded-lg border border-[#e2deea] bg-white py-1 shadow-lg animate-in fade-in slide-in-from-top-1">
+                    {['Weekly', 'Monthly', 'Semi-Annually', 'Annually'].map((option) => (
+                      <button
+                        key={option}
+                        type="button"
+                        onClick={() => {
+                          setKpiFilter(option);
+                          setIsKpiDropdownOpen(false);
+                        }}
+                        className={`w-full px-4 py-2 text-left text-xs font-semibold transition-colors hover:bg-[#f6f5f8] ${kpiFilter === option ? 'text-[#df2b80]' : 'text-[#717171]'}`}
+                      >
+                        {option}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
 
             <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
-              {kpiCards.map((item) => (
+              {currentKpiCards.map((item) => (
                 <DashboardMetricCard key={item.title} {...item} />
               ))}
             </div>
