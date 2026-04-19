@@ -161,7 +161,6 @@ export function EventManagerPage() {
       // setEvents(eventsData);
       // setVendors(vendorsData);
     }
-
     fetchDashboardData();
   }, []);
   */
