@@ -29,6 +29,9 @@ import { ClientDashboardPage } from '@/pages/client/ClientDashboardPage';
 import { EventPlanViewingPage } from '@/pages/client/EventPlanViewingPage';
 import { MessagePage } from '@/pages/client/MessagePage';
 import { QrCodePage } from '@/pages/client/QrCodePage';
+import { NotificationsPage } from '@/pages/client/NotificationsPage';
+import { ProfilePage } from '@/pages/client/ProfilePage';
+import { SettingsPage } from '@/pages/client/SettingsPage';
 import { CalendarPage } from '@/pages/organizer/CalendarPage';
 import { EventPlannerPage } from '@/pages/organizer/EventPlannerPage';
 import { EventManagerPage } from '@/pages/organizer/EventManagerPage';
@@ -175,6 +178,18 @@ const router = createBrowserRouter([
       {
         path: 'qr-code',
         Component: QrCodePage,
+      },
+      {
+        path: 'notifications',
+        Component: NotificationsPage,
+      },
+      {
+        path: 'profile',
+        Component: ProfilePage,
+      },
+      {
+        path: 'settings',
+        Component: SettingsPage,
       },
       // Add more client routes here as needed
     ],
