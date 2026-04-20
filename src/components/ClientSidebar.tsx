@@ -1,8 +1,10 @@
 import { useState } from 'react';
-import { Menu } from 'lucide-react';
+import { Menu, LogOut } from 'lucide-react';
 import { SquaresFour, ClipboardText, QrCode, Chat } from '@phosphor-icons/react';
-import { NavLink } from 'react-router-dom';
+import { NavLink, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
+import { useAuth } from '@/hooks/useAuth';
+import { logout } from '@/api/auth';
 
 const logoImagePath = '/Pictures/business-logo.png';
 
@@ -15,6 +17,22 @@ const clientNavItems = [
 
 export function ClientSidebar() {
   const [expanded, setExpanded] = useState(false);
+  const navigate = useNavigate();
+  const { setAuthenticatedUser } = useAuth();
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
+
+  const handleLogout = async () => {
+    if (isLoggingOut) return;
+
+    setIsLoggingOut(true);
+    try {
+      await logout();
+    } finally {
+      setAuthenticatedUser(null);
+      navigate('/login', { replace: true });
+      setIsLoggingOut(false);
+    }
+  };
 
   return (
     <aside
@@ -86,6 +104,28 @@ export function ClientSidebar() {
           </NavLink>
         ))}
       </nav>
+
+      {/* ── Logout Button ── */}
+      <div className={`mt-auto mb-4 w-full px-3 ${expanded ? '' : 'flex justify-center'}`}>
+        <Button
+          type="button"
+          onClick={handleLogout}
+          disabled={isLoggingOut}
+          variant="ghost"
+          className={`flex items-center gap-3 rounded-xl bg-[#fdf2f8] text-[#df2b80] hover:bg-[#fae7f2] hover:text-[#c41e6d] ${
+            expanded ? 'w-full justify-start px-4 py-3' : 'size-10 justify-center p-0'
+          }`}
+          title={!expanded ? 'Logout' : undefined}
+          aria-label="Logout"
+        >
+          <LogOut className="size-5 shrink-0" />
+          {expanded && (
+            <span className="font-semibold text-[15px]">
+              {isLoggingOut ? 'Logging out...' : 'Logout'}
+            </span>
+          )}
+        </Button>
+      </div>
     </aside>
   );
 }
