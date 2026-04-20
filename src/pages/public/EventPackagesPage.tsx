@@ -49,7 +49,13 @@ function PackageCarousel({
         className="flex gap-6 overflow-x-auto scroll-smooth pb-6 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:gap-8"
       >
         {packages.map((pkg, i) => (
-          <PackageCard key={pkg.id} pkg={pkg} onView={() => onView(i)} />
+          <div
+            key={pkg.id}
+            className="animate-fade-in-up"
+            style={{ animationDelay: `${i * 100}ms` }}
+          >
+            <PackageCard pkg={pkg} onView={() => onView(i)} />
+          </div>
         ))}
       </div>
 
@@ -119,7 +125,7 @@ export default function EventPackagesPage() {
             {/* Centered content */}
             <div className="relative z-10 flex flex-1 flex-col items-center justify-center px-4 text-center sm:px-6 animate-fade-in-up">
               <h1
-                className="font-heading text-[clamp(2.5rem,6vw,5rem)] font-bold leading-tight bg-gradient-to-r from-[#FF0066] via-[#FF0066] to-[#4A1053] text-transparent bg-clip-text animate-fade-in"
+                className="font-heading text-[clamp(2.5rem,6vw,5rem)] font-bold leading-tight bg-gradient-to-r from-[#FF0066] via-[#FF0066] to-[#4A1053] text-transparent bg-clip-text animate-fade-in animation-delay-200"
                 style={{
                   backgroundImage:
                     'linear-gradient(to right, #FF0066 0%, #FF0066 46%, #4A1053 100%)',
@@ -130,7 +136,7 @@ export default function EventPackagesPage() {
                 All-In-One.
               </h1>
 
-              <p className="mt-4 max-w-[40rem] text-[clamp(0.9rem,1.5vw,1.2rem)] leading-[1.7] text-black sm:mt-6 animate-slide-in-left animation-delay-200">
+              <p className="mt-4 max-w-[40rem] text-[clamp(0.9rem,1.5vw,1.2rem)] leading-[1.7] text-black sm:mt-6 animate-slide-in-left animation-delay-400">
                 We&apos;ve spent 15 years perfecting the art of the hassle-free milestone. Explore
                 our curated wedding and debut collections designed to handle every detail from your
                 first photo to your final dance.
@@ -139,9 +145,10 @@ export default function EventPackagesPage() {
               <div className="mt-6 flex flex-col gap-4 sm:mt-8 sm:flex-row sm:gap-5">
                 <Button
                   onClick={scrollToWedding}
-                  className="h-12 min-w-[140px] rounded-full bg-white px-8 font-sans text-sm font-bold uppercase tracking-wide shadow-[0_10px_20px_rgba(39,21,57,0.2)] hover:bg-gray-100 hover:shadow-lg sm:h-14 sm:min-w-[160px] sm:text-base lg:h-16 lg:min-w-[180px] lg:text-lg animate-slide-in-left animation-delay-400"
+                  className="group h-12 min-w-[140px] rounded-full bg-white px-8 font-sans text-sm font-bold uppercase tracking-wide shadow-[0_10px_20px_rgba(39,21,57,0.2)] hover:shadow-lg sm:h-14 sm:min-w-[160px] sm:text-base lg:h-16 lg:min-w-[180px] lg:text-lg animate-slide-in-left animation-delay-600 transition-all duration-300 hover:bg-gradient-to-r hover:from-[#FF0066] hover:to-[#4A1053] overflow-hidden"
                 >
                   <span
+                    className="transition-all duration-300"
                     style={{
                       backgroundImage: 'linear-gradient(to right, #FF0066 0%, #4A1053 100%)',
                       backgroundClip: 'text',
@@ -151,19 +158,32 @@ export default function EventPackagesPage() {
                   >
                     Wedding
                   </span>
+                  <span
+                    className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+                    style={{ color: 'white' }}
+                  >
+                    Wedding
+                  </span>
                 </Button>
 
                 <Button
                   onClick={scrollToDebut}
-                  className="h-12 min-w-[140px] rounded-full bg-white px-8 font-sans text-sm font-bold uppercase tracking-wide shadow-[0_10px_20px_rgba(39,21,57,0.2)] hover:bg-gray-100 hover:shadow-lg sm:h-14 sm:min-w-[160px] sm:text-base lg:h-16 lg:min-w-[180px] lg:text-lg animate-slide-in-left animation-delay-600"
+                  className="group h-12 min-w-[140px] rounded-full bg-white px-8 font-sans text-sm font-bold uppercase tracking-wide shadow-[0_10px_20px_rgba(39,21,57,0.2)] hover:shadow-lg sm:h-14 sm:min-w-[160px] sm:text-base lg:h-16 lg:min-w-[180px] lg:text-lg animate-slide-in-left animation-delay-800 transition-all duration-300 hover:bg-gradient-to-r hover:from-[#FF0066] hover:to-[#4A1053] overflow-hidden"
                 >
                   <span
+                    className="transition-all duration-300"
                     style={{
                       backgroundImage: 'linear-gradient(to right, #FF0066 0%, #4A1053 100%)',
                       backgroundClip: 'text',
                       WebkitBackgroundClip: 'text',
                       color: 'transparent',
                     }}
+                  >
+                    Debut
+                  </span>
+                  <span
+                    className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+                    style={{ color: 'white' }}
                   >
                     Debut
                   </span>
@@ -177,7 +197,7 @@ export default function EventPackagesPage() {
             <section className="bg-white px-4 py-10 sm:px-6 sm:py-16 lg:px-20 lg:py-20">
               <div className="mb-6 text-center sm:mb-8 lg:mb-10">
                 <h2
-                  className="font-heading text-[clamp(2rem,5vw,4rem)] font-bold bg-gradient-to-r text-transparent bg-clip-text"
+                  className="font-heading text-[clamp(2rem,5vw,4rem)] font-bold bg-gradient-to-r text-transparent bg-clip-text animate-fade-in-up"
                   style={{
                     backgroundImage:
                       'linear-gradient(to right, #FF0066 0%, #FF0066 46%, #4A1053 100%)',
@@ -185,10 +205,10 @@ export default function EventPackagesPage() {
                 >
                   Wedding Packages
                 </h2>
-                <p className="mt-2 text-[clamp(1rem,1.8vw,1.5rem)] font-bold font-sans text-[#4A1053] sm:mt-3">
+                <p className="mt-2 text-[clamp(1rem,1.8vw,1.5rem)] font-bold font-sans text-[#4A1053] sm:mt-3 animate-fade-in-up animation-delay-200">
                   Your Dream Day, Defined by Your Style.
                 </p>
-                <p className="mt-1 text-[clamp(0.85rem,1.5vw,1.2rem)] leading-relaxed text-[#4a4a4a] sm:mt-2">
+                <p className="mt-1 text-[clamp(0.85rem,1.5vw,1.2rem)] leading-relaxed text-[#4a4a4a] sm:mt-2 animate-fade-in-up animation-delay-400">
                   From intimate gatherings to grand estate celebrations, discover
                   <br className="hidden sm:block" />
                   the curated package that perfectly mirrors your love story.
@@ -209,7 +229,7 @@ export default function EventPackagesPage() {
             <section className="bg-white px-4 py-10 sm:px-6 sm:py-16 lg:px-20 lg:py-20">
               <div className="mb-6 text-center sm:mb-8 lg:mb-10">
                 <h2
-                  className="font-heading text-[clamp(2rem,5vw,4rem)] font-bold bg-gradient-to-r text-transparent bg-clip-text"
+                  className="font-heading text-[clamp(2rem,5vw,4rem)] font-bold bg-gradient-to-r text-transparent bg-clip-text animate-fade-in-up"
                   style={{
                     backgroundImage:
                       'linear-gradient(to right, #FF0066 0%, #FF0066 46%, #4A1053 100%)',
@@ -217,10 +237,10 @@ export default function EventPackagesPage() {
                 >
                   Debut Packages
                 </h2>
-                <p className="mt-2 text-[clamp(1rem,1.8vw,1.5rem)] font-bold font-sans text-[#4A1053] sm:mt-3">
+                <p className="mt-2 text-[clamp(1rem,1.8vw,1.5rem)] font-bold font-sans text-[#4A1053] sm:mt-3 animate-fade-in-up animation-delay-200">
                   Celebrate Your Glow-Up in Grand Style.
                 </p>
-                <p className="mt-1 text-[clamp(0.85rem,1.5vw,1.2rem)] leading-relaxed text-[#4a4a4a] sm:mt-2">
+                <p className="mt-1 text-[clamp(0.85rem,1.5vw,1.2rem)] leading-relaxed text-[#4a4a4a] sm:mt-2 animate-fade-in-up animation-delay-400">
                   From chic intimate parties to high-fashion galas, discover the
                   <br className="hidden sm:block" />
                   package that perfectly captures your journey into adulthood.
@@ -269,10 +289,11 @@ export default function EventPackagesPage() {
                   title: 'Full Coordination',
                   body: 'A reliable team that manages the program flow from preparation to the actual day, ensuring everything runs smoothly.',
                 },
-              ].map(({ Icon, title, body }) => (
+              ].map(({ Icon, title, body }, index) => (
                 <div
                   key={title}
-                  className="flex flex-col items-center text-center transition-all duration-300 hover:-translate-y-1 sm:hover:-translate-y-2"
+                  className="flex flex-col items-center text-center transition-all duration-300 hover:-translate-y-1 sm:hover:-translate-y-2 animate-fade-in-up"
+                  style={{ animationDelay: `${index * 150}ms` }}
                 >
                   <div className="flex h-20 w-20 items-center justify-center rounded-xl border-2 border-[#FF0066]/30 bg-white shadow-md transition-all duration-300 hover:shadow-lg sm:h-28 sm:w-28 sm:rounded-2xl lg:h-32 lg:w-32">
                     <Icon

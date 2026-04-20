@@ -97,10 +97,9 @@ export function InvitationPage() {
     );
   }
 
-  // Parse event title to separate names
-  const names = event.title.split('&');
-  const name1 = names[0]?.trim() || event.couple?.name1 || 'Partner';
-  const name2 = names[1]?.trim() || event.couple?.name2 || 'Partner';
+  // ✅ FIXED: Get names from the couple object, not from title
+  const name1 = event.couple?.name1 || 'Partner';
+  const name2 = event.couple?.name2 || 'Partner';
 
   // Parse date string e.g. "February 25, 2024"
   const parsedDate = new Date(event.date);

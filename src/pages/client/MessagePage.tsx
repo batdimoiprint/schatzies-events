@@ -21,15 +21,6 @@ export function MessagePage() {
   return (
     <div className="flex h-full flex-col">
       {/* ── Header ─────────────────────────────────────────────────────────── */}
-      <div className="flex shrink-0 items-start justify-between">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight text-[#2d2834]">Message</h1>
-          <p className="mt-1 text-sm font-medium text-[#696373]">
-            Directly message your organizer to discuss details and ensure your celebration is
-            perfectly managed.
-          </p>
-        </div>
-      </div>
 
       {/* ── Two-column grid ────────────────────────────────────────────────── */}
       <div className="mt-6 grid min-h-0 flex-1 gap-6 lg:grid-cols-3">

@@ -105,18 +105,31 @@ export function RSVPFormPage({
               <Label htmlFor="contactNumber" className="text-xs font-medium text-gray-700">
                 Contact Number
               </Label>
-              <Input
-                id="contactNumber"
-                placeholder="0909 000 0000"
-                value={formData.contactNumber}
-                onChange={(e) => onFormChange({ ...formData, contactNumber: e.target.value })}
-                className={`mt-1 bg-gray-100 border-0 rounded-lg text-sm ${formErrors.contactNumber ? 'ring-1 ring-red-500' : ''}`}
-              />
+              <div className="relative mt-1 flex">
+                {/* Country Code Prefix */}
+                <div className="inline-flex items-center rounded-l-lg border border-r-0 border-gray-200 bg-gray-100 px-3 text-sm text-gray-600">
+                  +63
+                </div>
+                <Input
+                  id="contactNumber"
+                  type="tel"
+                  placeholder="912 345 6789"
+                  value={formData.contactNumber}
+                  onChange={(e) => {
+                    // Only allow numbers and limit to 10 digits (PH mobile number length)
+                    const value = e.target.value.replace(/\D/g, '').slice(0, 10);
+                    onFormChange({ ...formData, contactNumber: value });
+                  }}
+                  className={`mt-0 rounded-l-none bg-gray-100 border-0 rounded-r-lg text-sm ${formErrors.contactNumber ? 'ring-1 ring-red-500' : ''}`}
+                />
+              </div>
+              <p className="text-[10px] text-gray-400 mt-1.5 ml-1">
+                Enter 10-digit mobile number (e.g., 912 345 6789)
+              </p>
               {formErrors.contactNumber && (
                 <p className="text-xs text-red-500 mt-0.5">{formErrors.contactNumber}</p>
               )}
             </div>
-
             {/* Attendance */}
             <div>
               <p className="text-xs font-medium text-gray-700 mb-2">

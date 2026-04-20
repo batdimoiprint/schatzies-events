@@ -470,7 +470,43 @@ export function EventPlanViewingPage() {
         /* ── Flow: Timeline Calendar ───────────────────────────────────────── */
         <div>
           {/* Controls row */}
-          <div className="mb-4 flex items-center justify-end gap-2">
+          <div className="mb-4 flex items-center justify-between gap-2">
+            {/* Export Button */}
+            <button
+              onClick={() => {
+                // Simple JSON export of calendar events
+                const events = [
+                  { title: 'Example', time: '7AM-9AM', color: 'gray', description: 'Description' },
+                  { title: 'Example', time: '8AM-9AM', color: 'green', description: 'Description' },
+                  {
+                    title: 'Example',
+                    time: '10AM-11AM',
+                    color: 'purple',
+                    description: 'Description',
+                  },
+                ];
+
+                const dataStr = JSON.stringify(events, null, 2);
+                const dataUri =
+                  'data:application/json;charset=utf-8,' + encodeURIComponent(dataStr);
+                const link = document.createElement('a');
+                link.setAttribute('href', dataUri);
+                link.setAttribute('download', 'calendar-schedule.json');
+                link.click();
+              }}
+              className="flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-sm font-medium text-gray-600 transition-all hover:bg-gray-50 hover:border-gray-300"
+            >
+              <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
+                />
+              </svg>
+              Export
+            </button>
+
             <label className="flex cursor-pointer items-center gap-2 text-sm text-gray-500">
               Hide empty time slots
               <input type="checkbox" className="h-4 w-4 rounded border-gray-300 accent-pink-500" />
@@ -492,7 +528,7 @@ export function EventPlanViewingPage() {
               ))}
 
               {/* ── Event blocks (absolute positioned over the grid) ── */}
-              {/* Block 1: 7AM–9AM, gray (starts at row 2 = 2×80=160px, height 2×80=160px) */}
+              {/* Block 1: 7AM–9AM, gray */}
               <div
                 className="absolute border-l-4 border-gray-400 bg-gray-200/50 p-2"
                 style={{ top: '160px', left: '56px', width: '220px', height: '160px' }}
@@ -501,7 +537,7 @@ export function EventPlanViewingPage() {
                 <p className="mt-1 text-[10px] text-gray-700">Description</p>
               </div>
 
-              {/* Block 2: 8AM–9AM, green (starts at row 3 = 3×80=240px, height 1×80=80px), offset right */}
+              {/* Block 2: 8AM–9AM, green */}
               <div
                 className="absolute border-l-4 border-green-500 bg-green-200/50 p-2"
                 style={{ top: '240px', left: '290px', width: '220px', height: '80px' }}
@@ -510,7 +546,7 @@ export function EventPlanViewingPage() {
                 <p className="mt-1 text-[10px] text-gray-700">Description</p>
               </div>
 
-              {/* Block 3: 10AM–11AM, purple (starts at row 5 = 5×80=400px, height 1×80=80px) */}
+              {/* Block 3: 10AM–11AM, purple */}
               <div
                 className="absolute border-l-4 border-purple-500 bg-purple-200/50 p-2"
                 style={{ top: '400px', left: '56px', width: '220px', height: '80px' }}

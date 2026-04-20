@@ -1,5 +1,14 @@
 import { useState } from 'react';
-import { Bell, CheckCheck, Calendar, ClipboardList, UserCheck, MessageSquare } from 'lucide-react';
+import {
+  Bell,
+  CheckCheck,
+  Calendar,
+  ClipboardList,
+  UserCheck,
+  MessageSquare,
+  ArrowLeft,
+} from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 const ICON_MAP: Record<string, typeof Bell> = {
   event: Calendar,
@@ -78,6 +87,7 @@ const INITIAL_NOTIFICATIONS = [
 type FilterType = 'all' | 'event' | 'task' | 'rsvp' | 'message';
 
 export function NotificationsPage() {
+  const navigate = useNavigate();
   const [notifications, setNotifications] = useState(INITIAL_NOTIFICATIONS);
   const [filter, setFilter] = useState<FilterType>('all');
 
@@ -93,6 +103,10 @@ export function NotificationsPage() {
     setNotifications((prev) => prev.map((n) => (n.id === id ? { ...n, unread: false } : n)));
   };
 
+  const handleGoBack = () => {
+    navigate(-1); // Go back to previous page
+  };
+
   const filters: { label: string; value: FilterType }[] = [
     { label: 'All', value: 'all' },
     { label: 'Events', value: 'event' },
@@ -103,14 +117,25 @@ export function NotificationsPage() {
 
   return (
     <div className="mx-auto max-w-3xl">
-      {/* Header */}
+      {/* Header with Back Button */}
       <div className="mb-6">
-        <h1 className="text-3xl font-black tracking-tight text-[#2d2834] md:text-4xl">
-          Notifications
-        </h1>
-        <p className="mt-1 text-sm font-medium text-[#696373]">
-          Stay updated on your event progress and responses.
-        </p>
+        <div className="flex items-center gap-3">
+          <button
+            onClick={handleGoBack}
+            className="flex h-9 w-9 items-center justify-center rounded-full border border-[#ece7f2] bg-white text-[#696373] transition-all duration-200 hover:bg-[#fdf2f8] hover:text-[#df2b80] hover:border-[#df2b80]"
+            aria-label="Go back"
+          >
+            <ArrowLeft className="size-4" />
+          </button>
+          <div>
+            <h1 className="text-3xl font-black tracking-tight text-[#2d2834] md:text-4xl">
+              Notifications
+            </h1>
+            <p className="mt-1 text-sm font-medium text-[#696373]">
+              Stay updated on your event progress and responses.
+            </p>
+          </div>
+        </div>
       </div>
 
       {/* Filters + Mark all */}

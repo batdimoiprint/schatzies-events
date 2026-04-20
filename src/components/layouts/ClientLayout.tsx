@@ -15,7 +15,7 @@ export function ClientLayout() {
   }
 
   if (!isAuthenticated || !user) {
-    return <Navigate to="/login" replace />;
+  return <Navigate to="/login" replace />;
   }
 
   return (
