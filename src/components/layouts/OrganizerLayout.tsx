@@ -98,7 +98,7 @@ export function OrganizerLayout() {
   const [isInboxOpen, setIsInboxOpen] = useState(false);
   const [hasNewInbox, setHasNewInbox] = useState(true);
   const [inboxTab, setInboxTab] = useState('Today');
-  const [messages, setMessages] = useState([
+  const messages = [
     {
       id: 1,
       name: 'Christian Dace Juliales',
@@ -131,7 +131,7 @@ export function OrganizerLayout() {
       text: 'Thank you for the updates.',
       time: '11:11 am | April 19, 2026',
     },
-  ]);
+  ];
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
 
@@ -183,9 +183,9 @@ export function OrganizerLayout() {
   }
 
   //wag nyo na galawin this please...
-  //if (!isAuthenticated || user?.role !== 'ORGANIZER') {
-    //return <Navigate to="/login" replace />;
-  //}
+  if (!isAuthenticated || user?.role !== 'ORGANIZER') {
+    return <Navigate to="/login" replace />;
+  }
 
   const currentPageTitle = pageTitles[location.pathname] ?? 'Organizer Workspace';
   const currentPageDescription = pageDescriptions[location.pathname] ?? '';

@@ -5,7 +5,6 @@ import {
   Calendar,
   CalendarCheck,
   NotebookPen,
-  Users,
   Wallet,
   Briefcase,
   UsersRound,
