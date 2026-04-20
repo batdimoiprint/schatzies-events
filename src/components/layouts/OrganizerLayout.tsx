@@ -5,6 +5,7 @@ import { NavLink, Outlet, useLocation, useNavigate, Navigate } from 'react-route
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useAuth } from '@/hooks/useAuth';
+import { logout } from '@/api/auth';
 
 const organizerNavItems = [
   { label: 'Dashboard', to: '/organizer', icon: '/Pictures/organizerpics/dashboard 2.png' },
@@ -132,12 +133,27 @@ export function OrganizerLayout() {
     },
   ]);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
 
   const navigate = useNavigate();
   const location = useLocation();
   const showHeaderSearch = ['/organizer/event-planner', '/organizer/event-manager'].includes(
     location.pathname
   );
+
+  const handleLogout = async () => {
+    if (isLoggingOut) return;
+
+    setIsLoggingOut(true);
+    setIsSettingsOpen(false);
+    try {
+      await logout();
+    } finally {
+      setAuthenticatedUser(null);
+      navigate('/login', { replace: true });
+      setIsLoggingOut(false);
+    }
+  };
 
   const markAsRead = (id: number) => {
     setNotifications((prev) =>
@@ -501,13 +517,10 @@ export function OrganizerLayout() {
                       <button
                         type="button"
                         className="cursor-pointer hover:bg-[#f6f5f8] text-sm font-semibold text-[#df2b80] px-4 py-2 w-full text-left transition-colors"
-                        onClick={() => {
-                          setIsSettingsOpen(false);
-                          setAuthenticatedUser(null);
-                          navigate('/login');
-                        }}
+                        disabled={isLoggingOut}
+                        onClick={handleLogout}
                       >
-                        Logout
+                        {isLoggingOut ? 'Logging out...' : 'Logout'}
                       </button>
                     </div>
                   ) : null}
