@@ -95,7 +95,9 @@ function formatTimeRange(startDate?: string, endDate?: string): string {
 }
 
 function mapEventStatus(status?: string): EventStatus {
-  const normalized = String(status || '').trim().toLowerCase();
+  const normalized = String(status || '')
+    .trim()
+    .toLowerCase();
 
   if (normalized === 'completed' || normalized === 'confirmed') {
     return 'Completed';
@@ -108,7 +110,10 @@ function mapEventStatus(status?: string): EventStatus {
   return 'Pending';
 }
 
-function mapToManagerRow(baseEvent: BackendEvent, details?: BackendEventDetails): EventManagerEvent {
+function mapToManagerRow(
+  baseEvent: BackendEvent,
+  details?: BackendEventDetails
+): EventManagerEvent {
   const startDate = details?.dateStart || baseEvent.startDate || baseEvent.eventDate;
   const endDate = details?.dateEnd || baseEvent.endDate;
   const packageName = details?.package?.name || baseEvent.eventPackage || '-';
@@ -162,7 +167,10 @@ export async function createEvent(payload: CreateEventPayload): Promise<BackendE
   return response.data.event;
 }
 
-export async function updateEvent(eventId: string, payload: UpdateEventPayload): Promise<BackendEvent> {
+export async function updateEvent(
+  eventId: string,
+  payload: UpdateEventPayload
+): Promise<BackendEvent> {
   const response = await axiosInstance.put(`/events/${eventId}`, payload);
   return response.data.event;
 }

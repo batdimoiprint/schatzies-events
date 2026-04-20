@@ -76,7 +76,9 @@ interface BackendVendor {
 }
 
 function mapVendorStatus(status?: string): VendorStatus {
-  const normalized = String(status || '').trim().toLowerCase();
+  const normalized = String(status || '')
+    .trim()
+    .toLowerCase();
   return normalized === 'active' ? 'Active' : 'Inactive';
 }
 
@@ -138,7 +140,10 @@ export async function getVendorById(vendorId: string): Promise<Vendor> {
   return mapVendorEntity(response.data.vendor || {});
 }
 
-export async function updateVendor(vendorId: string, payload: UpdateVendorPayload): Promise<Vendor> {
+export async function updateVendor(
+  vendorId: string,
+  payload: UpdateVendorPayload
+): Promise<Vendor> {
   const response = await axiosInstance.put(`/vendors/${vendorId}`, payload);
   return mapVendorEntity(response.data.vendor || {});
 }

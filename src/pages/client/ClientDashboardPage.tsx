@@ -1,6 +1,10 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { X, User, Calendar, MapPin, Bell, Settings } from 'lucide-react';
+import { X, User, Calendar, MapPin } from 'lucide-react';
+import { ServiceRequirementsModal } from '@/components/client/ServiceRequirementsModal';
+import { AllocationResourcesModal } from '@/components/client/AllocationResourcesModal';
+import { ChecklistMeetingModal } from '@/components/client/ChecklistMeetingModal';
+import { ProgramFlowModal } from '@/components/client/ProgramFlowModal';
 
 // ── Static mock data ──────────────────────────────────────────────────────────
 const EVENT = {
@@ -31,6 +35,10 @@ const GUESTS = [
 
 export function ClientDashboardPage() {
   const [showWelcome, setShowWelcome] = useState(true);
+  const [showServiceReq, setShowServiceReq] = useState(false);
+  const [showAllocationRes, setShowAllocationRes] = useState(false);
+  const [showChecklist, setShowChecklist] = useState(false);
+  const [showProgramFlow, setShowProgramFlow] = useState(false);
 
   return (
     <div className="relative">
@@ -44,22 +52,6 @@ export function ClientDashboardPage() {
             Here's a summary of the upcoming event you're planning.
           </p>
         </div>
-        <div className="flex items-center gap-3 pt-1">
-          <button
-            aria-label="Notifications"
-            className="text-[#696373] transition hover:text-[#2d2834]"
-          >
-            <Bell className="size-5" />
-          </button>
-          <img
-            src="/Pictures/organizerpics/Profile Picture.png"
-            alt="User avatar"
-            className="size-8 rounded-full object-cover"
-          />
-          <button aria-label="Settings" className="text-[#696373] transition hover:text-[#2d2834]">
-            <Settings className="size-5" />
-          </button>
-        </div>
       </div>
 
       {/* ── Asymmetric dashboard grid ─────────────────────────────────────── */}
@@ -67,35 +59,41 @@ export function ClientDashboardPage() {
         {/* ── LEFT COLUMN (2 / 3) ─────────────────────────────────────────── */}
         <div className="flex flex-col gap-6 lg:col-span-2">
           {/* Days To Go card */}
-          <div className="flex items-center justify-between rounded-xl bg-white p-6 shadow-md">
+          <div className="flex flex-col items-center gap-4 rounded-xl bg-white p-5 shadow-md sm:flex-row sm:items-center sm:justify-between sm:p-6">
             {/* Left: countdown + event details */}
             <div className="flex flex-col gap-4">
               <div className="flex items-baseline gap-3">
-                <span className="text-7xl font-black leading-none text-pink-500">
+                <span className="text-5xl font-black leading-none text-pink-500 sm:text-7xl">
                   {EVENT.daysToGo}
                 </span>
                 <div>
-                  <p className="text-2xl font-extrabold text-[#2d2834]">Days To Go!</p>
+                  <p className="text-xl font-extrabold text-[#2d2834] sm:text-2xl">Days To Go!</p>
                   <p className="text-xs text-[#696373]">
                     Your dream event is being crafted with precision and care.
                   </p>
                 </div>
               </div>
               <div className="flex flex-col gap-2 text-sm">
-                <div className="flex items-center gap-3 rounded-lg border border-[#e8e4ee] px-4 py-2">
+                <div className="flex items-center gap-3 rounded-lg border border-[#e8e4ee] px-3 py-2 sm:px-4">
                   <User className="size-4 shrink-0 text-pink-500" />
-                  <span className="font-medium text-[#df2b80]">{EVENT.organizer}</span>
-                  <span className="ml-auto text-xs text-[#696373]">(Assigned Organizer)</span>
+                  <span className="truncate font-medium text-[#df2b80]">{EVENT.organizer}</span>
+                  <span className="ml-auto hidden text-xs text-[#696373] sm:inline">
+                    (Assigned Organizer)
+                  </span>
                 </div>
-                <div className="flex items-center gap-3 rounded-lg border border-[#e8e4ee] px-4 py-2">
+                <div className="flex items-center gap-3 rounded-lg border border-[#e8e4ee] px-3 py-2 sm:px-4">
                   <Calendar className="size-4 shrink-0 text-pink-500" />
-                  <span className="font-medium text-[#df2b80]">{EVENT.eventDate}</span>
-                  <span className="ml-auto text-xs text-[#696373]">(Event Date)</span>
+                  <span className="truncate font-medium text-[#df2b80]">{EVENT.eventDate}</span>
+                  <span className="ml-auto hidden text-xs text-[#696373] sm:inline">
+                    (Event Date)
+                  </span>
                 </div>
-                <div className="flex items-center gap-3 rounded-lg border border-[#e8e4ee] px-4 py-2">
+                <div className="flex items-center gap-3 rounded-lg border border-[#e8e4ee] px-3 py-2 sm:px-4">
                   <MapPin className="size-4 shrink-0 text-pink-500" />
-                  <span className="font-medium text-[#df2b80]">{EVENT.venue}</span>
-                  <span className="ml-auto text-xs text-[#696373]">(Event Venue)</span>
+                  <span className="truncate font-medium text-[#df2b80]">{EVENT.venue}</span>
+                  <span className="ml-auto hidden text-xs text-[#696373] sm:inline">
+                    (Event Venue)
+                  </span>
                 </div>
               </div>
             </div>
@@ -136,12 +134,15 @@ export function ClientDashboardPage() {
             <h3 className="mb-4 mt-4 text-sm font-semibold text-[#2d2834]">Event Plan Status</h3>
 
             {/* 2 × 2 inner grid */}
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               {/* Service Requirements */}
               <div className="rounded-lg border border-[#e8e4ee] bg-white p-4">
                 <div className="mb-2 flex items-center justify-between">
                   <span className="text-xs font-semibold text-[#2d2834]">Service Requirements</span>
-                  <button className="rounded-lg bg-pink-500 px-3 py-1 text-xs font-bold text-white hover:bg-pink-600">
+                  <button
+                    onClick={() => setShowServiceReq(true)}
+                    className="rounded-lg bg-pink-500 px-3 py-1 text-xs font-bold text-white hover:bg-pink-600"
+                  >
                     View
                   </button>
                 </div>
@@ -160,7 +161,10 @@ export function ClientDashboardPage() {
               <div className="rounded-lg border border-[#e8e4ee] bg-white p-4">
                 <div className="mb-2 flex items-center justify-between">
                   <span className="text-xs font-semibold text-[#2d2834]">Allocation Resources</span>
-                  <button className="rounded-lg bg-pink-500 px-3 py-1 text-xs font-bold text-white hover:bg-pink-600">
+                  <button
+                    onClick={() => setShowAllocationRes(true)}
+                    className="rounded-lg bg-pink-500 px-3 py-1 text-xs font-bold text-white hover:bg-pink-600"
+                  >
                     View
                   </button>
                 </div>
@@ -182,7 +186,10 @@ export function ClientDashboardPage() {
               <div className="rounded-lg border border-[#e8e4ee] bg-white p-4">
                 <div className="mb-2 flex items-center justify-between">
                   <span className="text-xs font-semibold text-[#2d2834]">Checklist & Meeting</span>
-                  <button className="rounded-lg bg-pink-500 px-3 py-1 text-xs font-bold text-white hover:bg-pink-600">
+                  <button
+                    onClick={() => setShowChecklist(true)}
+                    className="rounded-lg bg-pink-500 px-3 py-1 text-xs font-bold text-white hover:bg-pink-600"
+                  >
                     View
                   </button>
                 </div>
@@ -199,7 +206,10 @@ export function ClientDashboardPage() {
               <div className="rounded-lg border border-[#e8e4ee] bg-white p-4">
                 <div className="mb-2 flex items-center justify-between">
                   <span className="text-xs font-semibold text-[#2d2834]">Program Flow</span>
-                  <button className="rounded-lg bg-pink-500 px-3 py-1 text-xs font-bold text-white hover:bg-pink-600">
+                  <button
+                    onClick={() => setShowProgramFlow(true)}
+                    className="rounded-lg bg-pink-500 px-3 py-1 text-xs font-bold text-white hover:bg-pink-600"
+                  >
                     View
                   </button>
                 </div>
@@ -255,10 +265,10 @@ export function ClientDashboardPage() {
             {/* Guest rows */}
             <ul className="max-h-64 space-y-2.5 overflow-y-auto pr-1">
               {GUESTS.map((guest) => (
-                <li key={guest.name} className="flex items-center justify-between text-sm">
-                  <span className="text-[#2d2834]">{guest.name}</span>
+                <li key={guest.name} className="flex items-center justify-between gap-2 text-sm">
+                  <span className="min-w-0 truncate text-[#2d2834]">{guest.name}</span>
                   <span
-                    className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${
+                    className={`shrink-0 rounded-full px-2.5 py-0.5 text-xs font-semibold ${
                       guest.status === 'Confirmed'
                         ? 'bg-green-100 text-green-800'
                         : 'bg-red-200 text-red-700'
@@ -272,6 +282,13 @@ export function ClientDashboardPage() {
           </div>
         </div>
       </div>
+
+      {showServiceReq && <ServiceRequirementsModal onClose={() => setShowServiceReq(false)} />}
+      {showAllocationRes && (
+        <AllocationResourcesModal onClose={() => setShowAllocationRes(false)} />
+      )}
+      {showChecklist && <ChecklistMeetingModal onClose={() => setShowChecklist(false)} />}
+      {showProgramFlow && <ProgramFlowModal onClose={() => setShowProgramFlow(false)} />}
 
       {/* ── Welcome modal overlay ─────────────────────────────────────────── */}
       {showWelcome && (
