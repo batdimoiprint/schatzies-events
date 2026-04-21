@@ -42,10 +42,9 @@ export default function ContactPage() {
             </p>
           </div>
         </section>
-      </ScrollReveal>
 
-      {/* ── Bottom section with overlapping cards ── */}
-      <ScrollReveal>
+        {/* ── Bottom section with overlapping cards ── */}
+
         <section className="bg-gradient-to-b from-white via-[#fce4ef] to-[#f9b8d4] pb-12 sm:pb-20 lg:pb-28">
           {/* Cards container — negative top margin pulls into hero */}
           <div className="relative z-10 mx-auto -mt-12 flex max-w-[80rem] flex-col gap-5 px-4 sm:-mt-24 sm:max-w-[85rem] sm:gap-8 sm:px-6 md:flex-row lg:-mt-32 lg:max-w-[90rem] lg:gap-10 lg:px-20">
@@ -61,7 +60,12 @@ export default function ContactPage() {
 
               <div className="mt-6 flex flex-col gap-4 sm:mt-8 sm:gap-6 lg:mt-10">
                 {/* QC Branch */}
-                <div className="flex items-center gap-3 sm:gap-4 lg:gap-5">
+                <a
+                  href="https://maps.google.com/?q=27+Novaliches+Mendoza+Village+Project+8+Quezon+City"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="flex items-center gap-3 sm:gap-4 lg:gap-5 transition-all hover:opacity-75"
+                >
                   <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-[#FF0066]/10 to-[#4A1053]/10 sm:h-12 sm:w-12 lg:h-14 lg:w-14">
                     <svg
                       viewBox="0 0 24 24"
@@ -88,12 +92,15 @@ export default function ContactPage() {
                     <p className="mt-0.5 text-[0.75rem] text-[#4A1053] sm:text-[0.85rem] lg:text-[0.9rem]">
                       27, Novaliches, Mendoza Village, Project 8, Quezon City, Metro Manila
                     </p>
-                  </div>{' '}
-                  {/* closes inner flex container */}
-                </div>{' '}
-                {/* closes Contact Information card */}
+                  </div>
+                </a>
                 {/* Tagaytay Branch */}
-                <div className="flex items-center gap-3 sm:gap-4 lg:gap-5">
+                <a
+                  href="https://maps.google.com/?q=Tagaytay+Cavite+Philippines"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="flex items-center gap-3 sm:gap-4 lg:gap-5 transition-all hover:opacity-75"
+                >
                   <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-[#FF0066]/10 to-[#4A1053]/10 sm:h-12 sm:w-12 lg:h-14 lg:w-14">
                     <svg
                       viewBox="0 0 24 24"
@@ -116,7 +123,7 @@ export default function ContactPage() {
                       City, 4120 Cavite
                     </p>
                   </div>
-                </div>
+                </a>
               </div>
             </div>
 
@@ -155,12 +162,18 @@ export default function ContactPage() {
                     <p className="text-[0.9rem] font-bold text-[#FF0066] sm:text-[1rem] lg:text-[1.1rem]">
                       Phone Numbers
                     </p>
-                    <p className="mt-0.5 text-[0.75rem] text-[#4A1053] sm:text-[0.85rem] lg:text-[0.9rem]">
-                      0933 380 7868
-                    </p>
-                    <p className="text-[0.75rem] text-[#4A1053] sm:text-[0.85rem] lg:text-[0.9rem]">
-                      0917 502 3538
-                    </p>
+                    <a
+                      href="tel:+639333807868"
+                      className="mt-0.5 block text-[0.75rem] text-[#4A1053] sm:text-[0.85rem] lg:text-[0.9rem] hover:text-[#FF0066] transition-colors"
+                    >
+                      +63 933 380 7868
+                    </a>
+                    <a
+                      href="tel:+639175023538"
+                      className="text-[0.75rem] text-[#4A1053] sm:text-[0.85rem] lg:text-[0.9rem] hover:text-[#FF0066] transition-colors"
+                    >
+                      +63 917 502 3538
+                    </a>
                   </div>
                 </div>
 
@@ -186,14 +199,22 @@ export default function ContactPage() {
                     <p className="text-[0.9rem] font-bold text-[#FF0066] sm:text-[1rem] lg:text-[1.1rem]">
                       Email
                     </p>
-                    <p className="mt-0.5 text-[0.75rem] text-[#4A1053] sm:text-[0.85rem] lg:text-[0.9rem]">
+                    <a
+                      href="mailto:schatziesevents@gmail.com"
+                      className="mt-0.5 block text-[0.75rem] text-[#4A1053] sm:text-[0.85rem] lg:text-[0.9rem] hover:text-[#FF0066] transition-colors"
+                    >
                       schatziesevents@gmail.com
-                    </p>
+                    </a>
                   </div>
                 </div>
 
                 {/* Facebook */}
-                <div className="flex items-center gap-3 sm:gap-4 lg:gap-5">
+                <a
+                  href="https://www.facebook.com/debutandweddingpackage"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="flex items-center gap-3 sm:gap-4 lg:gap-5 transition-all hover:opacity-75"
+                >
                   <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-[#FF0066]/10 to-[#4A1053]/10 sm:h-12 sm:w-12 lg:h-14 lg:w-14">
                     <svg
                       viewBox="0 0 24 24"
@@ -221,7 +242,7 @@ export default function ContactPage() {
                       Schatzies Events PH
                     </p>
                   </div>
-                </div>
+                </a>
               </div>
             </div>
           </div>

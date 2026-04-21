@@ -5,9 +5,6 @@ import {
   ChartBar,
   Download,
   Link as LinkIcon,
-  Bell,
-  Gear,
-  ChatCircle,
 } from '@phosphor-icons/react';
 import { generateRSVPQRCode, downloadQRCode } from '@/lib/qrCodeGenerator';
 import { getAllEvents } from '@/lib/rsvpStorage';
@@ -105,6 +102,7 @@ export function QrCodePage() {
   const [qrCode, setQrCode] = useState<string>('');
   const [currentQRId, setCurrentQRId] = useState<string>('');
   const [isLoading, setIsLoading] = useState(false); // Changed from 'loading' to 'isLoading' to match the pattern
+  const [isDoneLoading, setIsDoneLoading] = useState(false);
   const [selectedEventId, setSelectedEventId] = useState<string>('');
   const [copied, setCopied] = useState(false);
 
@@ -133,6 +131,14 @@ export function QrCodePage() {
     }
   };
 
+  const handleDone = () => {
+    setIsDoneLoading(true);
+    setTimeout(() => {
+      setIsDoneLoading(false);
+      setState('active');
+    }, 1500);
+  };
+
   const handleDownloadQR = () => {
     if (qrCode) {
       downloadQRCode(qrCode, 'wedding-invitation.png');
@@ -149,7 +155,7 @@ export function QrCodePage() {
   return (
     <div className="flex h-full flex-col">
       {/* Reusable Loading Screen - same as InquiryForm */}
-      <LoadingScreen isLoading={isLoading} />
+      <LoadingScreen isLoading={isLoading || isDoneLoading} />
 
       {/* ── Header row: title + icons ── */}
       <div className="flex min-h-[6rem] items-start justify-between">
@@ -158,16 +164,6 @@ export function QrCodePage() {
           <p className="mt-1 text-sm text-[#696373]">
             Oversee your invitations and monitor attendance in real-time.
           </p>
-        </div>
-
-        <div className="flex items-center gap-4 text-gray-600">
-          <Bell size={22} />
-          <img
-            src="/Pictures/organizerpics/Profile Picture.png"
-            alt="User avatar"
-            className="size-8 rounded-full object-cover"
-          />
-          <Gear size={22} />
         </div>
       </div>
 
@@ -234,7 +230,7 @@ export function QrCodePage() {
               QR Code Secured. Share this link to begin receiving guest responses.
             </p>
             <button
-              onClick={() => setState('active')}
+              onClick={handleDone}
               className="mt-2 w-full rounded-full bg-green-500 py-3 text-base font-bold text-white shadow-md transition hover:bg-green-600 active:scale-95"
             >
               Done
@@ -246,7 +242,7 @@ export function QrCodePage() {
       {/* ── STATE: Active — Overview ── */}
       {state === 'active' && activeTab === 'overview' && (
         <div className="rounded-xl border border-gray-100 bg-white p-8 shadow-sm">
-          <div className="grid grid-cols-1 gap-10 md:grid-cols-[auto_1fr]">
+          <div className="grid grid-cols-1 gap-10 lg:grid-cols-[auto_1fr]">
             {/* ── QR Code column ── */}
             <div className="flex flex-col items-center rounded-2xl bg-white p-6 shadow-lg">
               <p className="text-base font-bold text-[#df2b80]">Schatzies Events</p>
@@ -354,55 +350,96 @@ export function QrCodePage() {
 
       {/* ── STATE: Active – Guest List ── */}
       {state === 'active' && activeTab === 'guest-list' && (
-        <div className="rounded-xl bg-white shadow-md p-6">
+        <div className="animate-[fadeIn_0.3s_ease-out] rounded-xl bg-white shadow-md">
           {/* Container header */}
-          <div className="mb-4 flex items-center justify-between">
-            <h3 className="text-base font-bold text-[#2d2834]">Guest List Responses</h3>
-            <span className="text-sm font-bold text-gray-400">60/150</span>
-          </div>
-
-          {/* Column headers */}
-          <div className="mb-1 grid grid-cols-[80px_1fr_160px_230px_170px] gap-4 border-b border-gray-100 px-4 pb-3 text-xs font-semibold text-gray-500">
-            <span>Guest Code</span>
-            <span>Guest Name</span>
-            <span>Contact Number</span>
-            <span>Date Responded</span>
-            <span>Response</span>
-          </div>
-
-          {/* Rows */}
-          {guestList.map((guest, i) => (
-            <div
-              key={guest.code}
-              className={[
-                'grid grid-cols-[80px_1fr_160px_230px_170px] gap-4 px-4 py-3 items-center text-sm',
-                guest.highlighted
-                  ? 'relative z-10 rounded-md bg-white shadow-lg'
-                  : i % 2 === 0
-                    ? 'bg-white'
-                    : 'bg-[#FFF5F8]',
-              ].join(' ')}
-            >
-              <span className="text-gray-500">{guest.code}</span>
-              <span className="font-medium text-[#2d2834]">{guest.name}</span>
-              <span className="text-gray-600">{guest.contact}</span>
-              <span className="text-gray-600">{guest.date}</span>
-              <div className="flex items-center gap-2">
-                <span
-                  className={`rounded-full px-4 py-1 text-xs font-semibold ${
-                    guest.status === 'Confirmed'
-                      ? 'bg-green-100 text-green-800'
-                      : 'bg-red-200 text-red-700'
-                  }`}
-                >
-                  {guest.status}
-                </span>
-                {guest.note && <ChatCircle size={16} className="text-gray-400" />}
-              </div>
+          <div className="flex items-center justify-between border-b border-gray-100 px-5 py-4 sm:px-6">
+            <div>
+              <h3 className="text-base font-bold text-[#2d2834]">Guest List Responses</h3>
+              <p className="mt-0.5 text-xs text-[#696373]">Track who's coming to your event</p>
             </div>
-          ))}
+            <div className="flex items-center gap-3">
+              <span className="rounded-full bg-green-100 px-3 py-1 text-xs font-bold text-green-700">
+                {guestList.filter((g) => g.status === 'Confirmed').length} Confirmed
+              </span>
+              <span className="rounded-full bg-red-100 px-3 py-1 text-xs font-bold text-red-600">
+                {guestList.filter((g) => g.status === 'Declined').length} Declined
+              </span>
+              <span className="text-sm font-bold text-[#696373]">60/150</span>
+            </div>
+          </div>
+
+          {/* Scrollable table */}
+          <div className="overflow-x-auto px-2 pb-2 sm:px-4 sm:pb-4">
+            <table className="mt-2 w-full min-w-[700px] text-sm">
+              <thead>
+                <tr className="border-b border-gray-100 text-left text-xs font-semibold uppercase tracking-wider text-[#696373]">
+                  <th className="px-4 py-3 font-semibold">#</th>
+                  <th className="px-4 py-3 font-semibold">Guest Name</th>
+                  <th className="px-4 py-3 font-semibold">Contact</th>
+                  <th className="px-4 py-3 font-semibold">Date Responded</th>
+                  <th className="px-4 py-3 text-center font-semibold">Response</th>
+                </tr>
+              </thead>
+              <tbody>
+                {guestList.map((guest, i) => (
+                  <tr
+                    key={guest.code}
+                    className="border-b border-gray-50 bg-white transition-all duration-200 hover:bg-pink-50/50"
+                    style={{ animation: `slideUp 0.35s ease-out ${i * 0.04}s both` }}
+                  >
+                    <td className="px-4 py-3.5 text-xs font-medium text-[#696373]">{guest.code}</td>
+                    <td className="px-4 py-3.5">
+                      <div className="flex items-center gap-2.5">
+                        <div className="flex size-8 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-pink-400 to-purple-500 text-xs font-bold text-white">
+                          {guest.name.charAt(0)}
+                        </div>
+                        <span className="font-medium text-[#2d2834]">{guest.name}</span>
+                      </div>
+                    </td>
+                    <td className="px-4 py-3.5 text-[#696373]">{guest.contact}</td>
+                    <td className="px-4 py-3.5 text-[#696373]">{guest.date}</td>
+                    <td className="px-4 py-3.5 text-center">
+                      <span
+                        className={`inline-flex items-center gap-1.5 rounded-full px-3.5 py-1 text-xs font-semibold transition-all ${
+                          guest.status === 'Confirmed'
+                            ? 'bg-green-100 text-green-700'
+                            : 'bg-red-100 text-red-600'
+                        }`}
+                      >
+                        <span
+                          className={`inline-block size-1.5 rounded-full ${guest.status === 'Confirmed' ? 'bg-green-500' : 'bg-red-500'}`}
+                        />
+                        {guest.status}
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Footer */}
+          <div className="flex items-center justify-between border-t border-gray-100 px-5 py-3 sm:px-6">
+            <p className="text-xs text-[#696373]">
+              Showing <span className="font-semibold">{guestList.length}</span> of{' '}
+              <span className="font-semibold">150</span> guests
+            </p>
+            <p className="text-xs italic text-[#696373]">Last updated: 2 mins ago</p>
+          </div>
         </div>
       )}
+
+      {/* Keyframe animations */}
+      <style>{`
+        @keyframes fadeIn {
+          from { opacity: 0; transform: translateY(8px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes slideUp {
+          from { opacity: 0; transform: translateY(12px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+      `}</style>
     </div>
   );
 }

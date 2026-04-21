@@ -15,9 +15,8 @@ export function RSVPInvitationPage({
   transitioning,
   onProceed,
 }: RSVPInvitationPageProps) {
-  const names = selectedEvent.title.split('&');
-  const name1 = names[0]?.trim() || selectedEvent.couple?.name1 || 'Partner';
-  const name2 = names[1]?.trim() || selectedEvent.couple?.name2 || 'Partner';
+  const name1 = selectedEvent.couple?.name1 || 'Partner';
+  const name2 = selectedEvent.couple?.name2 || 'Partner';
   const parsedDate = new Date(selectedEvent.date);
   const isValidDate = !isNaN(parsedDate.getTime());
   const dayOfWeek = isValidDate ? parsedDate.toLocaleDateString('en-US', { weekday: 'long' }) : '';

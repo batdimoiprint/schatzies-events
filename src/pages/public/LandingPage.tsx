@@ -2,7 +2,6 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { useEffect, useState } from 'react';
 import { InquiryForm } from '@/components/InquiryForm';
-import { ChatWidget } from '@/components/ChatWidget';
 import LoadingScreen from '@/components/ui/LoadingScreen';
 import ScrollReveal from '@/components/ui/ScrollReveal';
 
@@ -87,8 +86,13 @@ export function LandingPage() {
         {/* Modern gradient overlay - animated */}
         <div className="absolute inset-0 bg-gradient-to-br from-[#FF589C]/40 via-[#FD78AD]/20 to-transparent animate-gradient-slow" />
 
-        {/* Subtle animated noise overlay */}
-        <div className="absolute inset-0 bg-gradient-to-r from-white/80 via-white/40 to-transparent" />
+        {/* White blur overlay on left side that fades to middle */}
+        <div
+          className="absolute inset-0"
+          style={{
+            background: 'linear-gradient(to right, white 0%, white 25%, transparent 100%)',
+          }}
+        />
 
         {/* Subtle vignette effect */}
         <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-black/10" />
@@ -152,7 +156,6 @@ export function LandingPage() {
         <TestimonialsSection />
       </ScrollReveal>
 
-      <ChatWidget />
       {inquiryOpen && <InquiryForm onClose={() => setInquiryOpen(false)} />}
     </>
   );

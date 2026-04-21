@@ -195,7 +195,7 @@ export default function AboutUsPage() {
               </p>
             </div>
 
-            {/* Card 2 — The Overseas Choice */}
+            {/* Card 2 — The Local One */}
             <div className="flex flex-col items-center text-center transition-all duration-300 hover:-translate-y-2">
               <div className="flex h-20 w-20 items-center justify-center rounded-xl bg-white shadow-md transition-all duration-300 hover:shadow-lg sm:h-28 sm:w-28 sm:rounded-2xl lg:h-32 lg:w-32">
                 <svg
@@ -203,27 +203,21 @@ export default function AboutUsPage() {
                   className="h-10 w-10 sm:h-14 sm:w-14 lg:h-16 lg:w-16"
                   fill="none"
                 >
-                  <circle cx="32" cy="32" r="24" fill="url(#wcsGrad)" />
-                  <ellipse
-                    cx="32"
-                    cy="32"
-                    rx="13"
-                    ry="24"
-                    stroke="white"
-                    strokeWidth="1.8"
-                    fill="none"
+                  {/* Map pin shape */}
+                  <path
+                    d="M32 8C22 8 14 16 14 26C14 38 32 54 32 54C32 54 50 38 50 26C50 16 42 8 32 8Z"
+                    fill="url(#wcsGrad)"
                   />
-                  <line x1="8" y1="32" x2="56" y2="32" stroke="white" strokeWidth="1.8" />
-                  <path d="M11 20 Q32 26 53 20" stroke="white" strokeWidth="1.4" fill="none" />
-                  <path d="M11 44 Q32 38 53 44" stroke="white" strokeWidth="1.4" fill="none" />
+                  {/* Inner circle (dot) */}
+                  <circle cx="32" cy="26" r="6" fill="white" />
                 </svg>
               </div>
               <h3 className="mt-3 text-[1rem] font-bold text-[#FF0066] sm:mt-4 sm:text-[1.2rem] lg:mt-5 lg:text-[1.3rem]">
-                The Overseas Choice
+                The Local One
               </h3>
               <p className="mt-2 text-[0.85rem] leading-[1.6] text-justify font-sans text-[#4A1053] max-w-[240px] sm:mt-3 sm:text-[0.9rem] lg:mt-4 lg:text-[0.95rem]">
-                A trusted partner for overseas brides and busy couples who need a reliable team to
-                take over the preparations and coordination.
+                Your trusted partner right here in the Philippines. We handle every detail of your
+                local celebration so you can focus on enjoying your special day with loved ones.
               </p>
             </div>
 

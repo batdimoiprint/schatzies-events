@@ -40,8 +40,8 @@ export function Navbar() {
                 : location.pathname.startsWith(item.href) && item.href !== '#';
 
             const classes = isActive
-              ? 'text-[1.05rem] font-semibold text-[#e61f83]'
-              : 'text-[1.05rem] font-semibold text-[#1a1a1a] transition-colors hover:text-[#e61f83]';
+              ? 'relative pb-1 text-[1.05rem] font-semibold text-[#FF0066] after:content-[""] after:absolute after:bottom-0 after:left-0 after:w-full after:h-0.5 after:bg-[#FF0066] after:origin-left after:scale-x-100 transition-all duration-300'
+              : 'relative pb-1 text-[1.05rem] font-semibold text-[#4A1053] after:content-[""] after:absolute after:bottom-0 after:left-0 after:w-full after:h-0.5 after:bg-[#FF0066] after:origin-left after:scale-x-0 hover:text-[#FF0066] hover:after:scale-x-100 after:transition-transform after:duration-300 transition-colors duration-300';
 
             return item.href === '#' ? (
               <span key={item.label} className={classes}>
@@ -128,10 +128,10 @@ export function Navbar() {
                 key={item.label}
                 to={item.href}
                 onClick={() => setMobileOpen(false)}
-                className={`rounded-lg px-4 py-3 text-[1rem] font-semibold transition ${
+                className={`rounded-lg px-4 py-3 text-[1rem] font-semibold border-l-4 transition-all duration-300 ${
                   isActive
-                    ? 'bg-[#fff0f6] text-[#e61f83]'
-                    : 'text-[#1a1a1a] hover:bg-gray-50 hover:text-[#e61f83]'
+                    ? 'bg-[#fff0f6] text-[#FF0066] border-[#FF0066]'
+                    : 'text-[#4A1053] border-transparent hover:bg-gray-50 hover:text-[#FF0066] hover:border-[#FF0066]'
                 }`}
               >
                 {item.label}
