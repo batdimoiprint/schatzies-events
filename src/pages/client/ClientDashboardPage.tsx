@@ -168,22 +168,30 @@ export function ClientDashboardPage() {
                   </h2>
                   <p className="text-xs text-[#696373] mt-1">Event Title</p>
                 </div>
-                <div className="flex items-center gap-3 flex-1 min-w-[300px]">
+                <div className="group flex items-center gap-3 flex-1 min-w-[300px]">
                   <span className="text-sm font-semibold text-[#2d2834] shrink-0">
                     {EVENT.completion}% complete
                   </span>
-                  <div className="h-3 flex-1 overflow-hidden rounded-full bg-gray-200">
+                  {/* Progress bar — overflow visible so the tooltip isn't clipped */}
+                  <div className="relative flex-1" style={{ paddingBottom: '1.5rem' }}>
+                    <div className="h-3 w-full overflow-hidden rounded-full bg-gray-200 cursor-pointer">
+                      <div
+                        className="h-full rounded-full transition-all"
+                        style={{
+                          width: `${EVENT.completion}%`,
+                          backgroundImage: 'linear-gradient(to right, #FF0066 0%, #700F81 100%)',
+                        }}
+                      />
+                    </div>
+                    {/* Tooltip anchored at the end of the fill */}
                     <div
-                      className="h-full rounded-full transition-all"
-                      style={{
-                        width: `${EVENT.completion}%`,
-                        backgroundImage: 'linear-gradient(to right, #FF0066 0%, #700F81 100%)',
-                      }}
-                    />
+                      className="pointer-events-none absolute top-5 -translate-x-1/2 whitespace-nowrap rounded border border-[#e8e4ee] bg-white px-3 py-1 text-xs font-medium text-[#696373] shadow-md opacity-0 scale-95 transition-all duration-200 group-hover:opacity-100 group-hover:scale-100"
+                      style={{ left: `${EVENT.completion}%` }}
+                    >
+                      {EVENT.eventStatus}
+                      <span className="absolute bottom-full left-1/2 -translate-x-1/2 border-4 border-transparent border-b-[#e8e4ee]" />
+                    </div>
                   </div>
-                  <span className="rounded border border-[#e8e4ee] px-3 py-1 text-xs font-medium text-[#696373] shrink-0">
-                    {EVENT.eventStatus}
-                  </span>
                 </div>
               </div>
 
@@ -389,26 +397,8 @@ export function ClientDashboardPage() {
             style={{ maxHeight: '85vh', fontFamily: 'Source Sans Pro, sans-serif' }}
           >
             {/* Header */}
-            <div className="flex items-center justify-between border-b border-gray-200 px-6 py-4 shrink-0">
+            <div className="flex items-center border-b border-gray-200 px-6 py-4 shrink-0">
               <h3 className="text-3xl font-bold text-[#1a1225]">Guest List</h3>
-              <button
-                onClick={() => setShowGuestListModal(false)}
-                className="flex h-7 w-7 items-center justify-center rounded-full text-gray-400 transition hover:text-gray-600"
-              >
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  className="h-5 w-5"
-                >
-                  <line x1="18" y1="6" x2="6" y2="18" />
-                  <line x1="6" y1="6" x2="18" y2="18" />
-                </svg>
-              </button>
             </div>
 
             {/* Scrollable Content */}

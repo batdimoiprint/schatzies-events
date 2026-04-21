@@ -15,7 +15,6 @@ export function RSVPInvitationPage({
   transitioning,
   onProceed,
 }: RSVPInvitationPageProps) {
-  
   const name1 = selectedEvent.couple?.name1 || 'Partner';
   const name2 = selectedEvent.couple?.name2 || 'Partner';
   const parsedDate = new Date(selectedEvent.date);

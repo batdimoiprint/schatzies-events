@@ -46,12 +46,12 @@ function PackageCarousel({
       {/* Scrollable track */}
       <div
         ref={trackRef}
-        className="flex gap-6 overflow-x-auto scroll-smooth pb-6 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:gap-8"
+        className="flex items-stretch gap-6 overflow-x-auto scroll-smooth pb-6 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:gap-8"
       >
         {packages.map((pkg, i) => (
           <div
             key={pkg.id}
-            className="animate-fade-in-up"
+            className="animate-fade-in-up flex shrink-0 flex-col w-[280px] sm:w-[320px] md:w-[340px] lg:w-[360px] xl:w-[380px]"
             style={{ animationDelay: `${i * 100}ms` }}
           >
             <PackageCard pkg={pkg} onView={() => onView(i)} />

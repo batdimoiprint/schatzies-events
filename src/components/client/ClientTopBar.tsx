@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { Bell, Settings, LogOut, ChevronDown, User, X } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import LoadingScreen from '@/components/ui/LoadingScreen';
 
 const AVATAR_SRC = '/Pictures/organizerpics/Profile Picture.png';
 
@@ -32,6 +33,7 @@ export function ClientTopBar() {
   const [profileOpen, setProfileOpen] = useState(false);
   const [notifOpen, setNotifOpen] = useState(false);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
 
   const profileRef = useRef<HTMLDivElement>(null);
   const notifRef = useRef<HTMLDivElement>(null);
@@ -62,11 +64,15 @@ export function ClientTopBar() {
 
   const handleLogout = () => {
     setShowLogoutModal(false);
-    navigate('/'); // Navigates to http://localhost:5173/
+    setIsLoggingOut(true);
+    setTimeout(() => {
+      navigate('/');
+    }, 1500);
   };
 
   return (
     <>
+      <LoadingScreen isLoading={isLoggingOut} />
       <div className="flex shrink-0 items-center justify-end gap-1 border-b border-[#ece7f2] bg-white px-4 py-3 pl-14 sm:px-6 md:pl-6">
         {/* ── Bell / Notifications ── */}
         <div ref={notifRef} className="relative">
