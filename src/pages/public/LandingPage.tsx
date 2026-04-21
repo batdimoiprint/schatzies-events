@@ -2,7 +2,6 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { useEffect, useState } from 'react';
 import { InquiryForm } from '@/components/InquiryForm';
-import { ChatWidget } from '@/components/ChatWidget';
 import LoadingScreen from '@/components/ui/LoadingScreen';
 import ScrollReveal from '@/components/ui/ScrollReveal';
 
@@ -157,7 +156,6 @@ export function LandingPage() {
         <TestimonialsSection />
       </ScrollReveal>
 
-      <ChatWidget />
       {inquiryOpen && <InquiryForm onClose={() => setInquiryOpen(false)} />}
     </>
   );

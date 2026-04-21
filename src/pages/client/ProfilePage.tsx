@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Camera, Mail, Phone, MapPin, Calendar, Save, X } from 'lucide-react';
+import LoadingScreen from '@/components/ui/LoadingScreen';
 
 const AVATAR_SRC = '/Pictures/organizerpics/Profile Picture.png';
 
@@ -17,6 +18,7 @@ export function ProfilePage() {
   const [originalProfile, setOriginalProfile] = useState(INITIAL_PROFILE);
   const [editing, setEditing] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [emailError, setEmailError] = useState('');
   const [phoneError, setPhoneError] = useState('');
@@ -115,11 +117,15 @@ export function ProfilePage() {
   };
 
   const handleSave = () => {
-    setOriginalProfile(profile);
-    setEditing(false);
     setShowConfirmModal(false);
-    setSaved(true);
-    setTimeout(() => setSaved(false), 2000);
+    setIsSaving(true);
+    setTimeout(() => {
+      setOriginalProfile(profile);
+      setEditing(false);
+      setIsSaving(false);
+      setSaved(true);
+      setTimeout(() => setSaved(false), 2000);
+    }, 1500);
   };
 
   const handleCancel = () => {
@@ -186,6 +192,7 @@ export function ProfilePage() {
 
   return (
     <>
+      <LoadingScreen isLoading={isSaving} />
       <div className="mx-auto max-w-2xl">
         {/* Header */}
         <div className="mb-6">

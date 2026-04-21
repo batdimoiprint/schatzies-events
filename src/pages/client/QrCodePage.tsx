@@ -102,6 +102,7 @@ export function QrCodePage() {
   const [qrCode, setQrCode] = useState<string>('');
   const [currentQRId, setCurrentQRId] = useState<string>('');
   const [isLoading, setIsLoading] = useState(false); // Changed from 'loading' to 'isLoading' to match the pattern
+  const [isDoneLoading, setIsDoneLoading] = useState(false);
   const [selectedEventId, setSelectedEventId] = useState<string>('');
   const [copied, setCopied] = useState(false);
 
@@ -130,6 +131,14 @@ export function QrCodePage() {
     }
   };
 
+  const handleDone = () => {
+    setIsDoneLoading(true);
+    setTimeout(() => {
+      setIsDoneLoading(false);
+      setState('active');
+    }, 1500);
+  };
+
   const handleDownloadQR = () => {
     if (qrCode) {
       downloadQRCode(qrCode, 'wedding-invitation.png');
@@ -146,7 +155,7 @@ export function QrCodePage() {
   return (
     <div className="flex h-full flex-col">
       {/* Reusable Loading Screen - same as InquiryForm */}
-      <LoadingScreen isLoading={isLoading} />
+      <LoadingScreen isLoading={isLoading || isDoneLoading} />
 
       {/* ── Header row: title + icons ── */}
       <div className="flex min-h-[6rem] items-start justify-between">
@@ -221,7 +230,7 @@ export function QrCodePage() {
               QR Code Secured. Share this link to begin receiving guest responses.
             </p>
             <button
-              onClick={() => setState('active')}
+              onClick={handleDone}
               className="mt-2 w-full rounded-full bg-green-500 py-3 text-base font-bold text-white shadow-md transition hover:bg-green-600 active:scale-95"
             >
               Done
