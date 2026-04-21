@@ -181,7 +181,6 @@ export function EventManagerPage() {
     [fetchEvents]
   );
 
-
   const filteredData = useMemo(() => {
     const normalizedSearchTerm = searchTerm.trim().toLowerCase();
 
@@ -233,7 +232,9 @@ export function EventManagerPage() {
     <div className="space-y-5 p-6 font-sans">
       <Card className="border-0 bg-linear-to-r from-[#fff6fb] via-[#f7f3ff] to-[#eef8ff] shadow-md ring-1 ring-[#efe6f6]">
         <CardHeader>
-          <CardTitle className="text-xl font-black tracking-tight text-[#2e2837]">Event Manager</CardTitle>
+          <CardTitle className="text-xl font-black tracking-tight text-[#2e2837]">
+            Event Manager
+          </CardTitle>
           <CardDescription className="text-[#685f79]">
             Track events and vendors in one polished workspace.
           </CardDescription>
@@ -241,15 +242,21 @@ export function EventManagerPage() {
         <CardContent>
           <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
             <div className="rounded-xl bg-white/85 p-3 ring-1 ring-[#ece2f6] backdrop-blur-sm">
-              <p className="text-[11px] font-semibold uppercase tracking-wide text-[#8d82a0]">Events</p>
+              <p className="text-[11px] font-semibold uppercase tracking-wide text-[#8d82a0]">
+                Events
+              </p>
               <p className="text-2xl font-black text-[#2e2837]">{events.length}</p>
             </div>
             <div className="rounded-xl bg-white/85 p-3 ring-1 ring-[#ece2f6] backdrop-blur-sm">
-              <p className="text-[11px] font-semibold uppercase tracking-wide text-[#8d82a0]">Vendors</p>
+              <p className="text-[11px] font-semibold uppercase tracking-wide text-[#8d82a0]">
+                Vendors
+              </p>
               <p className="text-2xl font-black text-[#2e2837]">{vendors.length}</p>
             </div>
             <div className="rounded-xl bg-white/85 p-3 ring-1 ring-[#ece2f6] backdrop-blur-sm">
-              <p className="text-[11px] font-semibold uppercase tracking-wide text-[#8d82a0]">Search</p>
+              <p className="text-[11px] font-semibold uppercase tracking-wide text-[#8d82a0]">
+                Search
+              </p>
               <p className="truncate text-sm font-semibold text-[#2e2837]">
                 {searchTerm.trim() || 'No active search'}
               </p>
@@ -295,11 +302,7 @@ export function EventManagerPage() {
             variant="outline"
             className="h-9 rounded-xl border-[#dacde8] bg-white px-4 text-[#4f4462] hover:bg-[#f8f5fc] disabled:opacity-60"
           >
-            <img
-              src="/Pictures/organizerpics/All Status.png"
-              alt="Refresh"
-              className="h-3 w-3"
-            />
+            <img src="/Pictures/organizerpics/All Status.png" alt="Refresh" className="h-3 w-3" />
             Refresh
           </Button>
         </div>
@@ -353,138 +356,106 @@ export function EventManagerPage() {
         </CardHeader>
         <CardContent>
           <Table className="text-sm">
-              <TableHeader>
-                {activeTab === 'Events' ? (
-                  <TableRow className="border-[#efe8f6] bg-[#fcfbff]">
-                    <TableHead className="px-3 font-semibold text-[#5c536d]">
-                      Title
-                    </TableHead>
-                    <TableHead className="px-3 font-semibold text-[#5c536d]">
-                      Date
-                    </TableHead>
-                    <TableHead className="px-3 font-semibold text-[#5c536d]">
-                      Time
-                    </TableHead>
-                    <TableHead className="px-3 font-semibold text-[#5c536d]">
-                      Client
-                    </TableHead>
-                    <TableHead className="px-3 font-semibold text-[#5c536d]">
-                      Type
-                    </TableHead>
-                    <TableHead className="px-3 font-semibold text-[#5c536d]">
-                      Package
-                    </TableHead>
-                    <TableHead className="px-3 font-semibold text-[#5c536d]">
-                      Venue
-                    </TableHead>
-                    <TableHead className="px-3 font-semibold text-[#5c536d]">
-                      RSVP
-                    </TableHead>
-                    <TableHead className="px-3 font-semibold text-[#5c536d]">
-                      Status
-                    </TableHead>
-                    <TableHead className="px-3 font-semibold text-[#5c536d]">
-                      Actions
-                    </TableHead>
-                  </TableRow>
-                ) : (
-                  <TableRow className="border-[#efe8f6] bg-[#fcfbff]">
-                    <TableHead className="px-3 font-semibold text-[#5c536d]">
-                      Name
-                    </TableHead>
-                    <TableHead className="px-3 font-semibold text-[#5c536d]">
-                      Contact Person
-                    </TableHead>
-                    <TableHead className="px-3 font-semibold text-[#5c536d]">
-                      Email
-                    </TableHead>
-                    <TableHead className="px-3 font-semibold text-[#5c536d]">
-                      Phone
-                    </TableHead>
-                    <TableHead className="px-3 font-semibold text-[#5c536d]">
-                      Service
-                    </TableHead>
-                    <TableHead className="px-3 font-semibold text-[#5c536d]">
-                      Status
-                    </TableHead>
-                  </TableRow>
-                )}
-              </TableHeader>
-              <TableBody>
-                {filteredData.activeTab === 'Events'
-                  ? filteredData.data.map((event) => (
-                      <TableRow
-                        key={event.id}
-                        className="border-[#f2edf8]"
-                      >
-                        <TableCell className="px-3 font-medium text-[#2e2837]">{event.title}</TableCell>
-                        <TableCell className="px-3 text-[#514a61]">{event.date}</TableCell>
-                        <TableCell className="px-3 text-[#514a61]">{event.timeSlot}</TableCell>
-                        <TableCell className="px-3 text-[#514a61]">{event.client}</TableCell>
-                        <TableCell className="px-3 text-[#514a61]">{event.type}</TableCell>
-                        <TableCell className="px-3 text-[#514a61]">{event.package}</TableCell>
-                        <TableCell className="px-3 text-[#514a61]">{event.venue}</TableCell>
-                        <TableCell className="px-3 text-[#514a61]">{event.rsvp}</TableCell>
-                        <TableCell className="px-3">
-                          <Badge className={getStatusBadgeClasses(event.status)}>
-                            {event.status}
-                          </Badge>
-                        </TableCell>
-                        <TableCell className="px-3">
-                          <div className="flex gap-2">
-                            <Button
-                              type="button"
-                              size="sm"
-                              variant="outline"
-                              disabled={isMutating}
-                              onClick={() => void handleUpdateEventTitle(event)}
-                              className="h-7 rounded-lg border-[#d6cee2] px-3"
-                            >
-                              Edit
-                            </Button>
-                            <Button
-                              type="button"
-                              size="sm"
-                              disabled={isMutating}
-                              onClick={() => void handleDeleteEvent(event)}
-                              className="h-7 rounded-lg bg-[#ffe5ee] px-3 text-[#8f1f4a] hover:bg-[#ffd8e7]"
-                            >
-                              Delete
-                            </Button>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    ))
-                  : filteredData.data.map((vendor) => (
-                      <TableRow
-                        key={vendor.id}
-                        className="border-[#f2edf8]"
-                      >
-                        <TableCell className="px-3 font-medium text-[#2e2837]">{vendor.name}</TableCell>
-                        <TableCell className="px-3 text-[#514a61]">{vendor.contactPerson}</TableCell>
-                        <TableCell className="px-3 text-[#514a61]">{vendor.email}</TableCell>
-                        <TableCell className="px-3 text-[#514a61]">{vendor.phone}</TableCell>
-                        <TableCell className="px-3 text-[#514a61]">{vendor.service}</TableCell>
-                        <TableCell className="px-3">
-                          <Badge className={getVendorStatusBadgeClasses(vendor.status)}>
-                            {vendor.status}
-                          </Badge>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                {filteredData.data.length === 0 ? (
-                  <TableRow>
-                    <TableCell
-                      colSpan={activeTab === 'Events' ? 10 : 6}
-                      className="py-12 text-center text-sm text-[#8f879f]"
-                    >
-                      {isLoading
-                        ? 'Loading data...'
-                        : `No ${activeTab.toLowerCase()} found for "${searchTerm.trim()}".`}
-                    </TableCell>
-                  </TableRow>
-                ) : null}
-              </TableBody>
+            <TableHeader>
+              {activeTab === 'Events' ? (
+                <TableRow className="border-[#efe8f6] bg-[#fcfbff]">
+                  <TableHead className="px-3 font-semibold text-[#5c536d]">Title</TableHead>
+                  <TableHead className="px-3 font-semibold text-[#5c536d]">Date</TableHead>
+                  <TableHead className="px-3 font-semibold text-[#5c536d]">Time</TableHead>
+                  <TableHead className="px-3 font-semibold text-[#5c536d]">Client</TableHead>
+                  <TableHead className="px-3 font-semibold text-[#5c536d]">Type</TableHead>
+                  <TableHead className="px-3 font-semibold text-[#5c536d]">Package</TableHead>
+                  <TableHead className="px-3 font-semibold text-[#5c536d]">Venue</TableHead>
+                  <TableHead className="px-3 font-semibold text-[#5c536d]">RSVP</TableHead>
+                  <TableHead className="px-3 font-semibold text-[#5c536d]">Status</TableHead>
+                  <TableHead className="px-3 font-semibold text-[#5c536d]">Actions</TableHead>
+                </TableRow>
+              ) : (
+                <TableRow className="border-[#efe8f6] bg-[#fcfbff]">
+                  <TableHead className="px-3 font-semibold text-[#5c536d]">Name</TableHead>
+                  <TableHead className="px-3 font-semibold text-[#5c536d]">
+                    Contact Person
+                  </TableHead>
+                  <TableHead className="px-3 font-semibold text-[#5c536d]">Email</TableHead>
+                  <TableHead className="px-3 font-semibold text-[#5c536d]">Phone</TableHead>
+                  <TableHead className="px-3 font-semibold text-[#5c536d]">Service</TableHead>
+                  <TableHead className="px-3 font-semibold text-[#5c536d]">Status</TableHead>
+                </TableRow>
+              )}
+            </TableHeader>
+            <TableBody>
+              {filteredData.activeTab === 'Events'
+                ? filteredData.data.map((event) => (
+                    <TableRow key={event.id} className="border-[#f2edf8]">
+                      <TableCell className="px-3 font-medium text-[#2e2837]">
+                        {event.title}
+                      </TableCell>
+                      <TableCell className="px-3 text-[#514a61]">{event.date}</TableCell>
+                      <TableCell className="px-3 text-[#514a61]">{event.timeSlot}</TableCell>
+                      <TableCell className="px-3 text-[#514a61]">{event.client}</TableCell>
+                      <TableCell className="px-3 text-[#514a61]">{event.type}</TableCell>
+                      <TableCell className="px-3 text-[#514a61]">{event.package}</TableCell>
+                      <TableCell className="px-3 text-[#514a61]">{event.venue}</TableCell>
+                      <TableCell className="px-3 text-[#514a61]">{event.rsvp}</TableCell>
+                      <TableCell className="px-3">
+                        <Badge className={getStatusBadgeClasses(event.status)}>
+                          {event.status}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="px-3">
+                        <div className="flex gap-2">
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant="outline"
+                            disabled={isMutating}
+                            onClick={() => void handleUpdateEventTitle(event)}
+                            className="h-7 rounded-lg border-[#d6cee2] px-3"
+                          >
+                            Edit
+                          </Button>
+                          <Button
+                            type="button"
+                            size="sm"
+                            disabled={isMutating}
+                            onClick={() => void handleDeleteEvent(event)}
+                            className="h-7 rounded-lg bg-[#ffe5ee] px-3 text-[#8f1f4a] hover:bg-[#ffd8e7]"
+                          >
+                            Delete
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                : filteredData.data.map((vendor) => (
+                    <TableRow key={vendor.id} className="border-[#f2edf8]">
+                      <TableCell className="px-3 font-medium text-[#2e2837]">
+                        {vendor.name}
+                      </TableCell>
+                      <TableCell className="px-3 text-[#514a61]">{vendor.contactPerson}</TableCell>
+                      <TableCell className="px-3 text-[#514a61]">{vendor.email}</TableCell>
+                      <TableCell className="px-3 text-[#514a61]">{vendor.phone}</TableCell>
+                      <TableCell className="px-3 text-[#514a61]">{vendor.service}</TableCell>
+                      <TableCell className="px-3">
+                        <Badge className={getVendorStatusBadgeClasses(vendor.status)}>
+                          {vendor.status}
+                        </Badge>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+              {filteredData.data.length === 0 ? (
+                <TableRow>
+                  <TableCell
+                    colSpan={activeTab === 'Events' ? 10 : 6}
+                    className="py-12 text-center text-sm text-[#8f879f]"
+                  >
+                    {isLoading
+                      ? 'Loading data...'
+                      : `No ${activeTab.toLowerCase()} found for "${searchTerm.trim()}".`}
+                  </TableCell>
+                </TableRow>
+              ) : null}
+            </TableBody>
           </Table>
         </CardContent>
       </Card>
