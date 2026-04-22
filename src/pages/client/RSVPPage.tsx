@@ -19,6 +19,7 @@ export function RSVPPage() {
   const [rsvpResponse, setRsvpResponse] = useState<RSVPResponse | null>(null);
   const [qrCode, setQrCode] = useState<string>('');
   const [loading, setLoading] = useState(false);
+  const [qrCodeGenerating, setQrCodeGenerating] = useState(false);
   const [transitioning, setTransitioning] = useState(false);
   const [navigating, setNavigating] = useState(false);
 
@@ -79,10 +80,7 @@ export function RSVPPage() {
     await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
 
     try {
-      // Generate QR code first
-      const tempQrCode = await generateRSVPQRCode(`temp-${Date.now()}`, selectedEvent.id);
-
-      // Add RSVP response to storage
+      // Add RSVP response to storage first
       const response = addOrUpdateRSVP(
         selectedEvent.id,
         formData.firstName,
@@ -91,17 +89,22 @@ export function RSVPPage() {
         formData.contactNumber,
         formData.attending,
         formData.message || undefined,
-        tempQrCode
+        ''
       );
+
+      // Show QR code generation loader
+      setQrCodeGenerating(true);
 
       // Generate final QR code with actual RSVP ID
       const finalQrCode = await generateRSVPQRCode(response.id, selectedEvent.id);
       setRsvpResponse({ ...response, qrCode: finalQrCode });
       setQrCode(finalQrCode);
+      setQrCodeGenerating(false);
       setCurrentStep('success');
     } catch (error) {
       console.error('Error submitting RSVP:', error);
       setFormErrors({ submit: 'Failed to submit RSVP. Please try again.' });
+      setQrCodeGenerating(false);
     } finally {
       setLoading(false);
     }
@@ -159,6 +162,7 @@ export function RSVPPage() {
     return (
       <RSVPSuccessPage
         loading={loading}
+        qrCodeGenerating={qrCodeGenerating}
         navigating={navigating}
         onDownloadQR={handleDownloadQR}
         onVisitHome={handleVisitHome}

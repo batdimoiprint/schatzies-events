@@ -6,6 +6,7 @@ import { Check, Download, Home } from 'lucide-react';
 
 interface RSVPSuccessPageProps {
   loading: boolean;
+  qrCodeGenerating?: boolean;
   navigating: boolean;
   onDownloadQR: () => void;
   onVisitHome: () => void;
@@ -13,13 +14,14 @@ interface RSVPSuccessPageProps {
 
 export function RSVPSuccessPage({
   loading,
+  qrCodeGenerating,
   navigating,
   onDownloadQR,
   onVisitHome,
 }: RSVPSuccessPageProps) {
   return (
     <>
-      <LoadingScreen isLoading={loading || navigating} />
+      <LoadingScreen isLoading={loading || qrCodeGenerating || navigating} />
       <div className="min-h-screen w-full flex flex-col items-center bg-gradient-to-b from-pink-100 via-white to-pink-300 px-6 pt-8 pb-12">
         {/* Logo */}
         <div className="mb-2">
