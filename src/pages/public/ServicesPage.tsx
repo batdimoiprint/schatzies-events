@@ -14,7 +14,7 @@ const galleryData = [
     id: 'event-planning',
     title: 'Event Planning & Coordination',
     folder: '_EventPics',
-    images: ['PC.jpg', 'PC2.jpg', 'PC3.jpg', 'PC4.jpg', 'PC5.jpg'],
+    images: ['EPC.jpg', 'EPC1.jpg', 'EPC2.jpg', 'EPC3.jpg', 'EPC4.jpg'],
   },
   {
     id: 'venue-styling',
@@ -26,7 +26,7 @@ const galleryData = [
     id: 'catering',
     title: 'Buffet Catering',
     folder: '_EventPics',
-    images: ['C.jpg', 'C2.jpg', 'C3.jpg', 'C4.jpg', 'C5.jpg'],
+    images: ['BnC.jpg', 'BnC2.jpg', 'BnC3.jpg', 'BnC4.jpg', 'BnC5.jpg'],
   },
   {
     id: 'photo-video',
@@ -38,13 +38,13 @@ const galleryData = [
     id: 'ceiling-design',
     title: 'Ceiling Treatment & Venue Design',
     folder: '_EventPics',
-    images: ['V.jpg', 'V2.jpg', 'V3.jpg', 'V4.jpg', 'V5.jpg'],
+    images: ['C1.jpg', 'C2.jpg', 'C3.jpg', 'C4.jpg', 'C5.jpg'],
   },
   {
     id: 'full-coordination',
     title: 'Full Event Coordination',
     folder: '_EventPics',
-    images: ['BnC.jpg', 'BnC2.jpg', 'BnC3.jpg', 'BnC4.jpg', 'BnC5.jpg'],
+    images: ['FEC.jpg', 'FEC1.jpg', 'FEC2.jpg', 'FEC3.jpg', 'FEC4.jpg'],
   },
 ];
 
