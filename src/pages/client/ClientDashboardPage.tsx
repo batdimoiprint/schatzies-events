@@ -62,10 +62,10 @@ export function ClientDashboardPage() {
       {/* ── Page heading ─────────────────────────────────────────────────── */}
       <div className="mb-6 flex items-start justify-between">
         <div>
-          <h1 className="text-3xl font-black tracking-tight text-[#2d2834] md:text-4xl">
+          <h1 className="text-2xl font-black tracking-tight text-[#2d2834] sm:text-3xl md:text-4xl">
             Overview
           </h1>
-          <p className="mt-1 text-sm font-medium text-[#696373]">
+          <p className="mt-1 text-xs font-medium text-[#696373] sm:text-sm">
             Here's a summary of the upcoming event you're planning.
           </p>
         </div>
@@ -116,8 +116,8 @@ export function ClientDashboardPage() {
                     <span className="truncate font-medium text-[#df2b80] text-sm sm:text-base">
                       {EVENT.organizer}
                     </span>
-                    <span className="ml-auto hidden text-xs text-[#696373] sm:inline">
-                      (Assigned Organizer)
+                    <span className="ml-auto shrink-0 text-[10px] text-[#696373] sm:text-xs">
+                      (Organizer)
                     </span>
                   </div>
                   <div className="flex items-center gap-3 rounded-lg border border-[#e8e4ee] px-3 py-2 sm:px-4 shadow-md bg-white">
@@ -125,8 +125,8 @@ export function ClientDashboardPage() {
                     <span className="truncate font-medium text-[#df2b80] text-sm sm:text-base">
                       {EVENT.eventDate}
                     </span>
-                    <span className="ml-auto hidden text-xs text-[#696373] sm:inline">
-                      (Event Date)
+                    <span className="ml-auto shrink-0 text-[10px] text-[#696373] sm:text-xs">
+                      (Date)
                     </span>
                   </div>
                   <div className="flex items-center gap-3 rounded-lg border border-[#e8e4ee] px-3 py-2 sm:px-4 shadow-md bg-white">
@@ -134,8 +134,8 @@ export function ClientDashboardPage() {
                     <span className="truncate font-medium text-[#df2b80] text-sm sm:text-base">
                       {EVENT.venue}
                     </span>
-                    <span className="ml-auto hidden text-xs text-[#696373] sm:inline">
-                      (Event Venue)
+                    <span className="ml-auto shrink-0 text-[10px] text-[#696373] sm:text-xs">
+                      (Venue)
                     </span>
                   </div>
                 </div>
@@ -153,10 +153,10 @@ export function ClientDashboardPage() {
             {/* Event Plan Status card */}
             <div className="rounded-xl bg-white p-6 shadow-md">
               {/* Header row */}
-              <div className="flex items-center justify-between gap-6">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-6">
                 <div className="flex-shrink-0">
                   <h2
-                    className="text-2xl sm:text-3xl font-bold leading-tight"
+                    className="text-xl sm:text-2xl lg:text-3xl font-bold leading-tight"
                     style={{
                       backgroundImage: 'linear-gradient(to right, #FF0066 0%, #700F81 100%)',
                       backgroundClip: 'text',
@@ -168,7 +168,7 @@ export function ClientDashboardPage() {
                   </h2>
                   <p className="text-xs text-[#696373] mt-1">Event Title</p>
                 </div>
-                <div className="group flex items-center gap-3 flex-1 min-w-[300px]">
+                <div className="group flex items-center gap-3 sm:flex-1">
                   <span className="text-sm font-semibold text-[#2d2834] shrink-0">
                     {EVENT.completion}% complete
                   </span>
@@ -195,12 +195,12 @@ export function ClientDashboardPage() {
                 </div>
               </div>
 
-              <h3 className="mb-4 mt-2 text-base sm:text-lg font-semibold text-[#2d2834]">
+              <h3 className="mb-3 mt-3 text-sm font-semibold text-[#2d2834] sm:text-base lg:text-lg">
                 Event Plan Status
               </h3>
 
               {/* 2 × 2 inner grid */}
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4">
                 {/* Service Requirements */}
                 <div className="rounded-lg border border-[#e8e4ee] bg-white p-4">
                   <div className="mb-2 flex items-center justify-between">
@@ -331,7 +331,7 @@ export function ClientDashboardPage() {
 
             {/* Guest List card */}
             <div
-              className="rounded-xl bg-white p-6 shadow-md flex flex-col flex-1 transition-all duration-300 hover:shadow-xl hover:scale-105 hover:-translate-y-1 cursor-pointer"
+              className="rounded-xl bg-white p-6 shadow-md flex flex-col min-h-[320px] lg:flex-1 transition-all duration-300 hover:shadow-xl hover:scale-105 hover:-translate-y-1 cursor-pointer"
               style={{ fontFamily: 'Montserrat, sans-serif' }}
             >
               <div className="mb-3 flex items-center justify-between shrink-0">
@@ -349,7 +349,7 @@ export function ClientDashboardPage() {
                 <span>Status</span>
               </div>
               {/* Guest rows - scrollable with fade effect */}
-              <div className="flex-1 relative">
+              <div className="relative" style={{ minHeight: '200px', flex: 1 }}>
                 <ul className="absolute inset-0 space-y-3 overflow-y-auto pr-2">
                   {GUESTS.map((guest) => (
                     <li
