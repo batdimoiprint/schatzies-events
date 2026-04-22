@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { FormEvent } from 'react';
 import { ChevronLeft, ChevronRight, Filter, Plus } from 'lucide-react';
+import { getCalendarEntries, createCalendarEntry } from '@/api/calendar';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -199,52 +200,6 @@ function createEntryId(): string {
   return `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 }
 
-function buildInitialEntries(): CalendarEntry[] {
-  const today = new Date();
-  const first = addDays(today, 1);
-  const second = addDays(today, 3);
-  const third = addDays(today, 7);
-
-  return [
-    {
-      id: createEntryId(),
-      title: 'Client discovery call',
-      startDateKey: toDateKey(first),
-      startTime: '09:00',
-      endDateKey: toDateKey(first),
-      endTime: '10:00',
-      label: 'Meeting',
-      location: 'Coffee Shop',
-      description: 'Discuss event goals and expected timeline.',
-      eventType: 'Planning',
-    },
-    {
-      id: createEntryId(),
-      title: 'Finalize supplier checklist',
-      startDateKey: toDateKey(second),
-      startTime: '13:00',
-      endDateKey: toDateKey(second),
-      endTime: '15:00',
-      label: 'Task',
-      location: 'Office',
-      description: 'Review catering and decor partner commitments.',
-      eventType: 'Operations',
-    },
-    {
-      id: createEntryId(),
-      title: 'Send payment reminder',
-      startDateKey: toDateKey(third),
-      startTime: '16:00',
-      endDateKey: toDateKey(third),
-      endTime: '16:30',
-      label: 'Reminder',
-      location: 'Online',
-      description: 'Follow up with the client about reservation fee.',
-      eventType: 'Finance',
-    },
-  ];
-}
-
 export function CalendarPage() {
   const todayKey = useMemo(() => toDateKey(new Date()), []);
   const filterMenuRef = useRef<HTMLDivElement | null>(null);
@@ -255,7 +210,7 @@ export function CalendarPage() {
     return new Date(now.getFullYear(), now.getMonth(), 1);
   });
   const [selectedDateKey, setSelectedDateKey] = useState(todayKey);
-  const [entries, setEntries] = useState<CalendarEntry[]>(() => buildInitialEntries());
+  const [entries, setEntries] = useState<CalendarEntry[]>([]);
   const [labelFilters, setLabelFilters] = useState<Record<BaseCalendarLabel, boolean>>({
     Task: true,
     Meeting: true,
@@ -304,6 +259,33 @@ export function CalendarPage() {
       startDateKey: selectedDateKey,
     }));
   }, [selectedDateKey]);
+
+  useEffect(() => {
+    const loadEntries = async () => {
+      try {
+        const data = await getCalendarEntries();
+        if (data && Array.isArray(data)) {
+          const formattedEntries: CalendarEntry[] = data.map((item: any) => ({
+            id: item.id || createEntryId(),
+            title: item.title,
+            startDateKey: item.startDateKey,
+            startTime: item.startTime,
+            endDateKey: item.endDateKey,
+            endTime: item.endTime,
+            label: item.label as CalendarLabel,
+            location: item.location || '',
+            description: item.description || '',
+            eventType: item.eventType || 'General',
+          }));
+          setEntries(formattedEntries);
+        }
+      } catch (error) {
+        console.error('Failed to load calendar entries:', error);
+      }
+    };
+
+    loadEntries();
+  }, []);
 
   const selectedDate = useMemo(() => parseDateKey(selectedDateKey), [selectedDateKey]);
 
@@ -453,7 +435,7 @@ export function CalendarPage() {
     setIsAddingCustomLabel(false);
   };
 
-  const handleAddMarker = (event: FormEvent<HTMLFormElement>) => {
+  const handleAddMarker = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
     if (!draftEntry.title.trim()) {
@@ -481,8 +463,7 @@ export function CalendarPage() {
 
     setFormError('');
 
-    const newEntry: CalendarEntry = {
-      id: createEntryId(),
+    const payload = {
       title: draftEntry.title.trim(),
       startDateKey: normalizedStartDateKey,
       startTime: normalizedStartTime,
@@ -494,22 +475,35 @@ export function CalendarPage() {
       eventType: draftEntry.eventType,
     };
 
-    setEntries((previous) => [...previous, newEntry]);
-    setSelectedDateKey(normalizedStartDateKey);
+    try {
+      const createdItem = await createCalendarEntry(payload);
 
-    const markerDate = parseDateKey(normalizedStartDateKey);
-    setDisplayMonth(new Date(markerDate.getFullYear(), markerDate.getMonth(), 1));
+      // Add to local state using the ID from the backend if available
+      const newEntry: CalendarEntry = {
+        ...payload,
+        id: createdItem?.id || createEntryId(),
+      };
 
-    setDraftEntry((previous) => ({
-      ...previous,
-      title: '',
-      location: '',
-      description: '',
-      startDateKey: normalizedStartDateKey,
-      startTime: normalizedStartTime,
-      endDateKey: normalizedStartDateKey,
-      endTime: normalizedStartTime,
-    }));
+      setEntries((previous) => [...previous, newEntry]);
+      setSelectedDateKey(normalizedStartDateKey);
+
+      const markerDate = parseDateKey(normalizedStartDateKey);
+      setDisplayMonth(new Date(markerDate.getFullYear(), markerDate.getMonth(), 1));
+
+      setDraftEntry((previous) => ({
+        ...previous,
+        title: '',
+        location: '',
+        description: '',
+        startDateKey: normalizedStartDateKey,
+        startTime: normalizedStartTime,
+        endDateKey: normalizedStartDateKey,
+        endTime: normalizedStartTime,
+      }));
+    } catch (error) {
+      console.error('Failed to create entry:', error);
+      setFormError('Failed to save to database. Please try again.');
+    }
   };
 
   return (

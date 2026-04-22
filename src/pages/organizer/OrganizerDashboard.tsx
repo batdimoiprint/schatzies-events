@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState, type ChangeEvent } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { fetchDashboardSummary } from '@/api/organizer-dashboard';
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -399,6 +400,94 @@ function ScheduleListCard({
 
 export function OrganizerDashboard() {
   const navigate = useNavigate();
+  const [semiAnnualData, setSemiAnnualData] = useState<MonthlyValue[]>(semiAnnualCompletions);
+  const [monthlyStatusData, setMonthlyStatusData] = useState<StatusSlice[]>(monthlyStatus);
+  const [upcomingEventsData, setUpcomingEventsData] = useState<ListEntry[]>(upcomingEvents);
+
+  useEffect(() => {
+    const loadDashboardData = async () => {
+      const data = await fetchDashboardSummary();
+
+      if (data) {
+        // 1. Map Semi-Annual Graph
+        if (data.semiAnnual && data.semiAnnual.monthlyGraph) {
+          const mappedSemiAnnual = Object.entries(data.semiAnnual.monthlyGraph).map(
+            ([monthNum, value]) => {
+              const monthNames = [
+                'Jan',
+                'Feb',
+                'Mar',
+                'Apr',
+                'May',
+                'Jun',
+                'Jul',
+                'Aug',
+                'Sep',
+                'Oct',
+                'Nov',
+                'Dec',
+              ];
+              const monthIndex = parseInt(monthNum, 10) - 1;
+              return {
+                month: monthNames[monthIndex] || monthNum,
+                value: value as number,
+              };
+            }
+          );
+          setSemiAnnualData(mappedSemiAnnual);
+        }
+
+        // 2. Map Monthly Status Donut Chart
+        if (data.status && data.status.month) {
+          const monthData = data.status.month;
+          const total = monthData.planning + monthData.execution + monthData.completed || 1;
+          setMonthlyStatusData([
+            {
+              label: 'Completed',
+              value: Math.round((monthData.completed / total) * 100) || 0,
+              eventCount: monthData.completed,
+              color: '#b964ef',
+            },
+            {
+              label: 'Execution',
+              value: Math.round((monthData.execution / total) * 100) || 0,
+              eventCount: monthData.execution,
+              color: '#ef79b3',
+            },
+            {
+              label: 'Planning',
+              value: Math.round((monthData.planning / total) * 100) || 0,
+              eventCount: monthData.planning,
+              color: '#f4d03f',
+            },
+          ]);
+        }
+
+        // 3. Map Upcoming Events List
+        if (data.upcomingEvents && Array.isArray(data.upcomingEvents)) {
+          const badgeColors = ['bg-[#db37b4]', 'bg-[#bb2ec4]', 'bg-[#9b24cd]'];
+          const mappedEvents = data.upcomingEvents.map((event: any, index: number) => {
+            // Format date to MM/DD
+            const dateObj = new Date(event.date);
+            const formattedDate = isNaN(dateObj.getTime())
+              ? 'TBA'
+              : `${dateObj.getMonth() + 1}/${dateObj.getDate()}`;
+
+            return {
+              rank: index + 1,
+              title: event.title,
+              subtitle: `Status: ${event.status}`,
+              date: formattedDate,
+              badgeColor: badgeColors[index % badgeColors.length],
+            };
+          });
+          setUpcomingEventsData(mappedEvents);
+        }
+      }
+    };
+
+    loadDashboardData();
+  }, []);
 
   const today = useMemo(() => {
     const now = new Date();
@@ -429,8 +518,8 @@ export function OrganizerDashboard() {
 
   const calendarGrid = useMemo(() => buildCalendarGrid(viewDate), [viewDate]);
   const totalEvents = useMemo(
-    () => monthlyStatus.reduce((sum, slice) => sum + slice.eventCount, 0),
-    []
+    () => monthlyStatusData.reduce((sum, slice) => sum + slice.eventCount, 0),
+    [monthlyStatusData]
   );
 
   const yearOptions = useMemo(() => {
@@ -545,7 +634,7 @@ export function OrganizerDashboard() {
 
                       {/* Bars container */}
                       <div className="absolute inset-0 flex items-end justify-between px-2">
-                        {semiAnnualCompletions.map((monthData, index) => (
+                        {semiAnnualData.map((monthData, index) => (
                           <div
                             key={`bar-${monthData.month}`}
                             className="flex-1 h-full flex justify-center items-end px-1 sm:px-2 relative group"
@@ -569,7 +658,7 @@ export function OrganizerDashboard() {
 
                     {/* Month labels */}
                     <div className="flex justify-between gap-2 px-2 pt-2 text-center">
-                      {semiAnnualCompletions.map((monthData) => (
+                      {semiAnnualData.map((monthData) => (
                         <span
                           key={`label-${monthData.month}`}
                           className="flex-1 text-xs font-bold text-[#706980]"
@@ -582,7 +671,7 @@ export function OrganizerDashboard() {
                 </div>
 
                 <div className="sr-only" aria-hidden="true">
-                  {semiAnnualCompletions.map((monthData) => (
+                  {semiAnnualData.map((monthData) => (
                     <span key={`value-${monthData.month}`}>
                       {monthData.month}: {monthData.value}
                     </span>
@@ -631,7 +720,7 @@ export function OrganizerDashboard() {
                       (() => {
                         let cumulativePercent = 0;
 
-                        return monthlyStatus.map((slice) => {
+                        return monthlyStatusData.map((slice) => {
                           const sliceLength = (slice.value / 100) * donutCircumference;
                           const strokeDasharray = `${sliceLength} ${donutCircumference - sliceLength}`;
                           const strokeDashoffset =
@@ -696,7 +785,7 @@ export function OrganizerDashboard() {
                 </div>
 
                 <div className="grid grid-cols-3 gap-2 pt-1 text-center">
-                  {monthlyStatus.map((slice) => (
+                  {monthlyStatusData.map((slice) => (
                     <div
                       key={slice.label}
                       className="transition-transform duration-200 hover:scale-105 cursor-default"
@@ -923,7 +1012,7 @@ export function OrganizerDashboard() {
 
           <ScheduleListCard
             title="Upcoming Events"
-            entries={upcomingEvents}
+            entries={upcomingEventsData}
             onViewListClick={() =>
               navigate('/organizer/event-manager', {
                 state: { activeTab: 'Events' },

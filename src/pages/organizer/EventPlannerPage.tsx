@@ -1491,7 +1491,7 @@ export function EventPlannerPage() {
   };
 
   return (
-    <div className="mx-auto flex w-full max-w-[1260px] flex-col gap-4 pb-2 text-[#302c39]">
+    <div className="flex w-full flex-col gap-4 pb-2 text-[#302c39]">
       <div className="grid gap-4 xl:grid-cols-[250px_minmax(0,1fr)]">
         <aside className="space-y-4">
           <section className="rounded-2xl border border-[#ddd8e8] bg-white p-3 shadow-[0_6px_14px_rgba(31,18,54,0.06)]">
