@@ -103,10 +103,16 @@ export function RSVPPage() {
   const [showDetails, setShowDetails] = useState(false);
   const [conversations, setConversations] = useState(initialConversations);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const activeChat = dummyChats.find((c) => c.id === activeChatId) || dummyChats[0];
   const currentMessages = conversations[activeChatId] || [];
+  const filteredChats = dummyChats.filter(
+    (chat) =>
+      chat.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      chat.lastMsg.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
   // API-ready handler: replace local update with API call when backend is connected.
   const handleSendMessage = () => {
@@ -152,48 +158,56 @@ export function RSVPPage() {
             <input
               type="text"
               placeholder="Search here..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
               className="w-full rounded-xl border border-[#ddd8e8] bg-[#f6f5f8] py-2.5 pl-10 pr-4 text-sm text-[#4f4a56] outline-none focus:border-[#df2b80]"
             />
           </div>
         </div>
 
         <div className="scrollbar-thin flex-1 overflow-y-auto">
-          {dummyChats.map((chat) => (
-            <div
-              key={chat.id}
-              onClick={() => setActiveChatId(chat.id)}
-              className={`flex cursor-pointer items-center gap-3 border-b border-[#f0edf4] p-4 transition-colors ${
-                activeChatId === chat.id
-                  ? 'border-l-4 border-l-[#df2b80] bg-[#fafafa]'
-                  : 'border-l-4 border-l-transparent hover:bg-[#fafafa]'
-              }`}
-            >
+          {filteredChats.length > 0 ? (
+            filteredChats.map((chat) => (
               <div
-                className={`relative flex size-12 shrink-0 items-center justify-center rounded-full text-lg font-bold text-white ${chat.color}`}
+                key={chat.id}
+                onClick={() => setActiveChatId(chat.id)}
+                className={`flex cursor-pointer items-center gap-3 border-b border-[#f0edf4] p-4 transition-colors ${
+                  activeChatId === chat.id
+                    ? 'border-l-4 border-l-[#df2b80] bg-[#fafafa]'
+                    : 'border-l-4 border-l-transparent hover:bg-[#fafafa]'
+                }`}
               >
-                {chat.initial}
-                {chat.online && (
-                  <span className="absolute bottom-0 right-0 size-3 rounded-full border-2 border-white bg-[#4bc783]"></span>
-                )}
-              </div>
-              <div className="min-w-0 flex-1">
-                <div className="mb-1 flex items-center justify-between">
-                  <h4 className="truncate text-sm font-bold text-[#2d2834]">{chat.name}</h4>
-                  <span className="ml-2 whitespace-nowrap text-[10px] font-semibold text-[#a49cb3]">
-                    {chat.time}
-                  </span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <p className="truncate text-xs font-medium text-[#696373]">{chat.lastMsg}</p>
-                  {chat.unread > 0 && (
-                    <span className="ml-2 flex size-4 items-center justify-center rounded-full bg-[#df2b80] text-[9px] font-bold text-white">
-                      {chat.unread}
-                    </span>
+                <div
+                  className={`relative flex size-12 shrink-0 items-center justify-center rounded-full text-lg font-bold text-white ${chat.color}`}
+                >
+                  {chat.initial}
+                  {chat.online && (
+                    <span className="absolute bottom-0 right-0 size-3 rounded-full border-2 border-white bg-[#4bc783]"></span>
                   )}
                 </div>
+                <div className="min-w-0 flex-1">
+                  <div className="mb-1 flex items-center justify-between">
+                    <h4 className="truncate text-sm font-bold text-[#2d2834]">{chat.name}</h4>
+                    <span className="ml-2 whitespace-nowrap text-[10px] font-semibold text-[#a49cb3]">
+                      {chat.time}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <p className="truncate text-xs font-medium text-[#696373]">{chat.lastMsg}</p>
+                    {chat.unread > 0 && (
+                      <span className="ml-2 flex size-4 items-center justify-center rounded-full bg-[#df2b80] text-[9px] font-bold text-white">
+                        {chat.unread}
+                      </span>
+                    )}
+                  </div>
+                </div>
               </div>
+            ))
+          ) : (
+            <div className="p-8 text-center text-sm font-medium text-[#a49cb3]">
+              No conversations found.
             </div>
-          ))}
+          )}
         </div>
       </div>
 

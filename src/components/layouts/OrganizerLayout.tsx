@@ -560,7 +560,12 @@ export function OrganizerLayout() {
           </header>
 
           <main className="min-h-0 flex-1 overflow-y-auto px-4 py-6 md:px-8">
-            <Outlet context={{ searchTerm }} />
+            <div
+              key={location.pathname}
+              className="animate-in fade-in slide-in-from-bottom-4 duration-500 ease-out fill-mode-both"
+            >
+              <Outlet context={{ searchTerm }} />
+            </div>
           </main>
         </div>
       </div>
