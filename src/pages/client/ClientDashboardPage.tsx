@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { User, Calendar, MapPin } from 'lucide-react';
 import ScrollReveal from '@/components/ui/ScrollReveal';
 import { ServiceRequirementsModal } from '@/components/client/ServiceRequirementsModal';
@@ -42,6 +43,7 @@ const GUESTS = [
 ];
 
 export function ClientDashboardPage() {
+  const navigate = useNavigate();
   const [showWelcome, setShowWelcome] = useState(() => {
     const hasSeenWelcome = localStorage.getItem('clientWelcomeSeen');
     return !hasSeenWelcome; // Show welcome if not seen before
@@ -110,32 +112,38 @@ export function ClientDashboardPage() {
                     </p>
                   </div>
                 </div>
-                <div className="flex flex-col gap-2">
-                  <div className="flex items-center gap-3 rounded-lg border border-[#e8e4ee] px-3 py-2 sm:px-4 shadow-md bg-white">
-                    <User className="size-5 shrink-0" style={{ color: '#FF0066' }} />
-                    <span className="truncate font-medium text-[#df2b80] text-sm sm:text-base">
-                      {EVENT.organizer}
-                    </span>
-                    <span className="ml-auto shrink-0 text-[10px] text-[#696373] sm:text-xs">
-                      (Organizer)
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-3 rounded-lg border border-[#e8e4ee] px-3 py-2 sm:px-4 shadow-md bg-white">
-                    <Calendar className="size-5 shrink-0" style={{ color: '#700F81' }} />
-                    <span className="truncate font-medium text-[#df2b80] text-sm sm:text-base">
-                      {EVENT.eventDate}
-                    </span>
-                    <span className="ml-auto shrink-0 text-[10px] text-[#696373] sm:text-xs">
-                      (Date)
+                <div className="flex flex-col">
+                  <div className="bg-white border border-gray-200 shadow-sm rounded-md px-3 py-2 mb-2 flex justify-between items-center">
+                    <div className="flex items-center gap-3">
+                      <User className="size-5 shrink-0" style={{ color: '#FF0066' }} />
+                      <span className="truncate font-medium text-[#df2b80] text-sm sm:text-base">
+                        {EVENT.organizer}
+                      </span>
+                    </div>
+                    <span className="shrink-0 text-[10px] text-[#696373] sm:text-xs">
+                      (Assigned Organizer)
                     </span>
                   </div>
-                  <div className="flex items-center gap-3 rounded-lg border border-[#e8e4ee] px-3 py-2 sm:px-4 shadow-md bg-white">
-                    <MapPin className="size-5 shrink-0" style={{ color: '#FF0066' }} />
-                    <span className="truncate font-medium text-[#df2b80] text-sm sm:text-base">
-                      {EVENT.venue}
+                  <div className="bg-white border border-gray-200 shadow-sm rounded-md px-3 py-2 mb-2 flex justify-between items-center">
+                    <div className="flex items-center gap-3">
+                      <Calendar className="size-5 shrink-0" style={{ color: '#700F81' }} />
+                      <span className="truncate font-medium text-[#df2b80] text-sm sm:text-base">
+                        {EVENT.eventDate}
+                      </span>
+                    </div>
+                    <span className="shrink-0 text-[10px] text-[#696373] sm:text-xs">
+                      (Event Date)
                     </span>
-                    <span className="ml-auto shrink-0 text-[10px] text-[#696373] sm:text-xs">
-                      (Venue)
+                  </div>
+                  <div className="bg-white border border-gray-200 shadow-sm rounded-md px-3 py-2 mb-2 flex justify-between items-center">
+                    <div className="flex items-center gap-3">
+                      <MapPin className="size-5 shrink-0" style={{ color: '#FF0066' }} />
+                      <span className="truncate font-medium text-[#df2b80] text-sm sm:text-base">
+                        {EVENT.venue}
+                      </span>
+                    </div>
+                    <span className="shrink-0 text-[10px] text-[#696373] sm:text-xs">
+                      (Event Venue)
                     </span>
                   </div>
                 </div>
@@ -153,7 +161,7 @@ export function ClientDashboardPage() {
             {/* Event Plan Status card */}
             <div className="rounded-xl bg-white p-6 shadow-md">
               {/* Header row */}
-              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-6">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between sm:gap-6">
                 <div className="flex-shrink-0">
                   <h2
                     className="text-xl sm:text-2xl lg:text-3xl font-bold leading-tight"
@@ -168,51 +176,49 @@ export function ClientDashboardPage() {
                   </h2>
                   <p className="text-xs text-[#696373] mt-1">Event Title</p>
                 </div>
-                <div className="group flex items-center gap-3 sm:flex-1">
-                  <span className="text-sm font-semibold text-[#2d2834] shrink-0">
-                    {EVENT.completion}% complete
-                  </span>
-                  {/* Progress bar — overflow visible so the tooltip isn't clipped */}
-                  <div className="relative flex-1" style={{ paddingBottom: '1.5rem' }}>
-                    <div className="h-3 w-full overflow-hidden rounded-full bg-gray-200 cursor-pointer">
+                <div className="flex flex-col gap-1 sm:flex-1">
+                  <div className="group/bar flex items-center gap-3">
+                    <span className="text-sm font-semibold text-[#2d2834] shrink-0">
+                      {EVENT.completion}% complete
+                    </span>
+                    <div className="relative flex-1">
+                      <div className="h-3 overflow-hidden rounded-full bg-gray-200 cursor-pointer">
+                        <div
+                          className="h-full rounded-full transition-all"
+                          style={{
+                            width: `${EVENT.completion}%`,
+                            backgroundImage: 'linear-gradient(to right, #FF0066 0%, #700F81 100%)',
+                          }}
+                        />
+                      </div>
+                      {/* Hover tooltip — Contract Signing */}
                       <div
-                        className="h-full rounded-full transition-all"
-                        style={{
-                          width: `${EVENT.completion}%`,
-                          backgroundImage: 'linear-gradient(to right, #FF0066 0%, #700F81 100%)',
-                        }}
-                      />
+                        className="pointer-events-none absolute -bottom-7 -translate-x-1/2 whitespace-nowrap rounded-full border border-gray-200 bg-white px-2 py-0.5 text-[10px] text-gray-400 shadow-sm opacity-0 scale-90 transition-all duration-200 group-hover/bar:opacity-100 group-hover/bar:scale-100"
+                        style={{ left: `${EVENT.completion}%` }}
+                      >
+                        {EVENT.eventStatus}
+                      </div>
                     </div>
-                    {/* Tooltip anchored at the end of the fill */}
-                    <div
-                      className="pointer-events-none absolute top-5 -translate-x-1/2 whitespace-nowrap rounded border border-[#e8e4ee] bg-white px-3 py-1 text-xs font-medium text-[#696373] shadow-md opacity-0 scale-95 transition-all duration-200 group-hover:opacity-100 group-hover:scale-100"
-                      style={{ left: `${EVENT.completion}%` }}
+                  </div>
+                  <div className="flex justify-end mt-4">
+                    <button
+                      onClick={() => navigate('/client/event-plan')}
+                      className="bg-pink-400 text-white rounded-full px-4 py-2.5 text-xs font-bold shadow-sm hover:bg-pink-500 transition-colors"
                     >
-                      {EVENT.eventStatus}
-                      <span className="absolute bottom-full left-1/2 -translate-x-1/2 border-4 border-transparent border-b-[#e8e4ee]" />
-                    </div>
+                      View Event Plan
+                    </button>
                   </div>
                 </div>
               </div>
-
-              <h3 className="mb-3 mt-3 text-sm font-semibold text-[#2d2834] sm:text-base lg:text-lg">
-                Event Plan Status
-              </h3>
 
               {/* 2 × 2 inner grid */}
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4">
                 {/* Service Requirements */}
                 <div className="rounded-lg border border-[#e8e4ee] bg-white p-4">
-                  <div className="mb-2 flex items-center justify-between">
+                  <div className="mb-2">
                     <span className="text-sm font-semibold text-[#2d2834]">
                       Service Requirements
                     </span>
-                    <button
-                      onClick={() => setShowServiceReq(true)}
-                      className="rounded-lg bg-pink-500 px-4 py-2 text-sm font-bold text-white hover:bg-pink-600 transition"
-                    >
-                      View
-                    </button>
                   </div>
                   <ul className="space-y-0.5 text-xs text-[#696373]">
                     <li className="font-medium text-[#2d2834]">• Food</li>
@@ -227,16 +233,10 @@ export function ClientDashboardPage() {
 
                 {/* Allocation Resources */}
                 <div className="rounded-lg border border-[#e8e4ee] bg-white p-4">
-                  <div className="mb-2 flex items-center justify-between">
+                  <div className="mb-2">
                     <span className="text-sm font-semibold text-[#2d2834]">
                       Allocation Resources
                     </span>
-                    <button
-                      onClick={() => setShowAllocationRes(true)}
-                      className="rounded-lg bg-pink-500 px-4 py-2 text-sm font-bold text-white hover:bg-pink-600 transition"
-                    >
-                      View
-                    </button>
                   </div>
                   <ul className="space-y-2 text-xs">
                     <li>
@@ -254,16 +254,10 @@ export function ClientDashboardPage() {
 
                 {/* Checklist & Meeting */}
                 <div className="rounded-lg border border-[#e8e4ee] bg-white p-4">
-                  <div className="mb-2 flex items-center justify-between">
+                  <div className="mb-2">
                     <span className="text-sm font-semibold text-[#2d2834]">
                       Checklist & Meeting
                     </span>
-                    <button
-                      onClick={() => setShowChecklist(true)}
-                      className="rounded-lg bg-pink-500 px-4 py-2 text-sm font-bold text-white hover:bg-pink-600 transition"
-                    >
-                      View
-                    </button>
                   </div>
                   <ul className="space-y-0.5 text-xs">
                     <li className="font-medium text-pink-500">• Meetings</li>
@@ -276,14 +270,8 @@ export function ClientDashboardPage() {
 
                 {/* Program Flow */}
                 <div className="rounded-lg border border-[#e8e4ee] bg-white p-4">
-                  <div className="mb-2 flex items-center justify-between">
+                  <div className="mb-2">
                     <span className="text-sm font-semibold text-[#2d2834]">Program Flow</span>
-                    <button
-                      onClick={() => setShowProgramFlow(true)}
-                      className="rounded-lg bg-pink-500 px-4 py-2 text-sm font-bold text-white hover:bg-pink-600 transition"
-                    >
-                      View
-                    </button>
                   </div>
                   <ul className="space-y-1 text-xs">
                     <li>
@@ -350,7 +338,7 @@ export function ClientDashboardPage() {
               </div>
               {/* Guest rows - scrollable with fade effect */}
               <div className="relative" style={{ minHeight: '200px', flex: 1 }}>
-                <ul className="absolute inset-0 space-y-3 overflow-y-auto pr-2">
+                <ul className="absolute inset-0 space-y-3 overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent">
                   {GUESTS.map((guest) => (
                     <li
                       key={guest.name}
