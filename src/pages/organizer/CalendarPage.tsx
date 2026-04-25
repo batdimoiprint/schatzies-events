@@ -124,12 +124,13 @@ function toDateKey(date: Date): string {
   return `${year}-${month}-${day}`;
 }
 
-function parseDateKey(dateKey: string): Date {
-  const [year, month, day] = dateKey.split('-').map((value) => Number(value));
+function parseDateKey(dateKey?: string): Date {
+  if (!dateKey) return new Date();
+  const parts = dateKey.split('-');
+  if (parts.length !== 3) return new Date();
 
-  if (!year || !month || !day) {
-    return new Date();
-  }
+  const [year, month, day] = parts.map(Number);
+  if (!year || !month || !day) return new Date();
 
   return new Date(year, month - 1, day);
 }
@@ -162,7 +163,9 @@ function buildWeeklyViewDays(anchorDate: Date): Date[] {
 }
 
 function compareEntriesByTime(a: CalendarEntry, b: CalendarEntry): number {
-  return a.startTime.localeCompare(b.startTime);
+  const timeA = a.startTime || '';
+  const timeB = b.startTime || '';
+  return timeA.localeCompare(timeB);
 }
 
 function toDateTimeValue(dateKey: string, time: string): number {
@@ -172,9 +175,10 @@ function toDateTimeValue(dateKey: string, time: string): number {
   return new Date(date.getFullYear(), date.getMonth(), date.getDate(), hours, minutes).getTime();
 }
 
-function getDateKeysInRange(startDateKey: string, endDateKey: string): string[] {
+function getDateKeysInRange(startDateKey?: string, endDateKey?: string): string[] {
+  if (!startDateKey) return [];
   const start = parseDateKey(startDateKey);
-  const end = parseDateKey(endDateKey);
+  const end = parseDateKey(endDateKey || startDateKey);
 
   if (end < start) {
     return [startDateKey];
@@ -265,14 +269,15 @@ export function CalendarPage() {
       try {
         const data = await getCalendarEntries();
         if (data && Array.isArray(data)) {
+          const currentTodayKey = toDateKey(new Date());
           const formattedEntries: CalendarEntry[] = data.map((item: any) => ({
             id: item.id || createEntryId(),
-            title: item.title,
-            startDateKey: item.startDateKey,
-            startTime: item.startTime,
-            endDateKey: item.endDateKey,
-            endTime: item.endTime,
-            label: item.label as CalendarLabel,
+            title: item.title || 'Untitled',
+            startDateKey: item.startDateKey || currentTodayKey,
+            startTime: item.startTime || '00:00',
+            endDateKey: item.endDateKey || item.startDateKey || currentTodayKey,
+            endTime: item.endTime || '00:00',
+            label: (item.label as CalendarLabel) || 'Task',
             location: item.location || '',
             description: item.description || '',
             eventType: item.eventType || 'General',
