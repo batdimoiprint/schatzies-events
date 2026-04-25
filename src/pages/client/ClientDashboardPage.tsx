@@ -19,7 +19,7 @@ const EVENT = {
   pax: 150,
   cost: 'Php 585,000',
   eventTitle: 'Kring and Dave Wedding',
-  completion: 70,
+  completion: 89,
   eventStatus: 'Contract Signing',
 };
 
@@ -213,7 +213,7 @@ export function ClientDashboardPage() {
               </div>
 
               {/* 2 × 2 inner grid */}
-              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4">
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4 mt-4">
                 {/* Service Requirements */}
                 <div className="rounded-lg border border-[#e8e4ee] bg-white p-4">
                   <div className="mb-2">
