@@ -74,7 +74,6 @@ function formatDate(dateValue?: string): string {
 function formatTimeRange(startDate?: string, endDate?: string): string {
   const start = startDate ? new Date(startDate) : null;
   const end = endDate ? new Date(endDate) : null;
-
   if (!start || Number.isNaN(start.getTime())) return '-';
 
   const startLabel = start.toLocaleTimeString('en-US', {
