@@ -1,5 +1,3 @@
-'use client';
-
 import { useState } from 'react';
 import LoadingScreen from '@/components/ui/LoadingScreen';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
@@ -37,7 +35,7 @@ export function RSVPInvitationPage({
     : selectedEvent.date;
   const dayNum = isValidDate ? parsedDate.getDate() : '';
   const yearNum = isValidDate ? parsedDate.getFullYear() : '';
-  const atTime = `at ${selectedEvent.time.replace(/:00(?=\s|$)/, '').trim()}`;
+  const atTime = `at ${(selectedEvent.time || 'TBA').replace(/:00(?=\s|$)/, '').trim()}`;
 
   return (
     <>

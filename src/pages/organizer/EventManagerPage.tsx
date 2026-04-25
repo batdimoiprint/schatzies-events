@@ -386,63 +386,63 @@ export function EventManagerPage() {
             <TableBody>
               {filteredData.activeTab === 'Events'
                 ? filteredData.data.map((event) => (
-                    <TableRow key={event.id} className="border-[#f2edf8]">
-                      <TableCell className="px-3 font-medium text-[#2e2837]">
-                        {event.title}
-                      </TableCell>
-                      <TableCell className="px-3 text-[#514a61]">{event.date}</TableCell>
-                      <TableCell className="px-3 text-[#514a61]">{event.timeSlot}</TableCell>
-                      <TableCell className="px-3 text-[#514a61]">{event.client}</TableCell>
-                      <TableCell className="px-3 text-[#514a61]">{event.type}</TableCell>
-                      <TableCell className="px-3 text-[#514a61]">{event.package}</TableCell>
-                      <TableCell className="px-3 text-[#514a61]">{event.venue}</TableCell>
-                      <TableCell className="px-3 text-[#514a61]">{event.rsvp}</TableCell>
-                      <TableCell className="px-3">
-                        <Badge className={getStatusBadgeClasses(event.status)}>
-                          {event.status}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="px-3">
-                        <div className="flex gap-2">
-                          <Button
-                            type="button"
-                            size="sm"
-                            variant="outline"
-                            disabled={isMutating}
-                            onClick={() => void handleUpdateEventTitle(event)}
-                            className="h-7 rounded-lg border-[#d6cee2] px-3"
-                          >
-                            Edit
-                          </Button>
-                          <Button
-                            type="button"
-                            size="sm"
-                            disabled={isMutating}
-                            onClick={() => void handleDeleteEvent(event)}
-                            className="h-7 rounded-lg bg-[#ffe5ee] px-3 text-[#8f1f4a] hover:bg-[#ffd8e7]"
-                          >
-                            Delete
-                          </Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))
+                  <TableRow key={event.id} className="border-[#f2edf8]">
+                    <TableCell className="px-3 font-medium text-[#2e2837]">
+                      {event.title}
+                    </TableCell>
+                    <TableCell className="px-3 text-[#514a61]">{event.date}</TableCell>
+                    <TableCell className="px-3 text-[#514a61]">{event.timeSlot}</TableCell>
+                    <TableCell className="px-3 text-[#514a61]">{event.client}</TableCell>
+                    <TableCell className="px-3 text-[#514a61]">{event.type}</TableCell>
+                    <TableCell className="px-3 text-[#514a61]">{event.package}</TableCell>
+                    <TableCell className="px-3 text-[#514a61]">{event.venue}</TableCell>
+                    <TableCell className="px-3 text-[#514a61]">{event.rsvp}</TableCell>
+                    <TableCell className="px-3">
+                      <Badge className={getStatusBadgeClasses(event.status)}>
+                        {event.status}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="px-3">
+                      <div className="flex gap-2">
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="outline"
+                          disabled={isMutating}
+                          onClick={() => void handleUpdateEventTitle(event)}
+                          className="h-7 rounded-lg border-[#d6cee2] px-3"
+                        >
+                          Edit
+                        </Button>
+                        <Button
+                          type="button"
+                          size="sm"
+                          disabled={isMutating}
+                          onClick={() => void handleDeleteEvent(event)}
+                          className="h-7 rounded-lg bg-[#ffe5ee] px-3 text-[#8f1f4a] hover:bg-[#ffd8e7]"
+                        >
+                          Delete
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))
                 : filteredData.data.map((vendor) => (
-                    <TableRow key={vendor.id} className="border-[#f2edf8]">
-                      <TableCell className="px-3 font-medium text-[#2e2837]">
-                        {vendor.name}
-                      </TableCell>
-                      <TableCell className="px-3 text-[#514a61]">{vendor.contactPerson}</TableCell>
-                      <TableCell className="px-3 text-[#514a61]">{vendor.email}</TableCell>
-                      <TableCell className="px-3 text-[#514a61]">{vendor.phone}</TableCell>
-                      <TableCell className="px-3 text-[#514a61]">{vendor.service}</TableCell>
-                      <TableCell className="px-3">
-                        <Badge className={getVendorStatusBadgeClasses(vendor.status)}>
-                          {vendor.status}
-                        </Badge>
-                      </TableCell>
-                    </TableRow>
-                  ))}
+                  <TableRow key={vendor.id} className="border-[#f2edf8]">
+                    <TableCell className="px-3 font-medium text-[#2e2837]">
+                      {vendor.name}
+                    </TableCell>
+                    <TableCell className="px-3 text-[#514a61]">{vendor.contactPerson}</TableCell>
+                    <TableCell className="px-3 text-[#514a61]">{vendor.email}</TableCell>
+                    <TableCell className="px-3 text-[#514a61]">{vendor.phone}</TableCell>
+                    <TableCell className="px-3 text-[#514a61]">{vendor.service}</TableCell>
+                    <TableCell className="px-3">
+                      <Badge className={getVendorStatusBadgeClasses(vendor.status)}>
+                        {vendor.status}
+                      </Badge>
+                    </TableCell>
+                  </TableRow>
+                ))}
               {filteredData.data.length === 0 ? (
                 <TableRow>
                   <TableCell

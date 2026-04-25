@@ -13,6 +13,7 @@ export interface EventManagerEvent {
   venue: string;
   rsvp: number;
   status: EventStatus;
+  clientId: string;
 }
 
 interface BackendEvent {
@@ -130,6 +131,7 @@ function mapToManagerRow(
     venue: baseEvent.venue || '-',
     rsvp: Number(details?.headcount?.expectedAttendee || 0),
     status: mapEventStatus(baseEvent.status),
+    clientId: baseEvent.clientId || '',
   };
 }
 

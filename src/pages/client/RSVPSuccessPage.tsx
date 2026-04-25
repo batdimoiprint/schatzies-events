@@ -1,5 +1,3 @@
-'use client';
-
 import LoadingScreen from '@/components/ui/LoadingScreen';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { Check, Download, Home } from 'lucide-react';
@@ -8,6 +6,7 @@ interface RSVPSuccessPageProps {
   loading: boolean;
   qrCodeGenerating?: boolean;
   navigating: boolean;
+  qrCode: string;
   onDownloadQR: () => void;
   onVisitHome: () => void;
 }
@@ -16,12 +15,13 @@ export function RSVPSuccessPage({
   loading,
   qrCodeGenerating,
   navigating,
+  qrCode,
   onDownloadQR,
   onVisitHome,
 }: RSVPSuccessPageProps) {
   return (
     <>
-      <LoadingScreen isLoading={loading || qrCodeGenerating || navigating} />
+      <LoadingScreen isLoading={loading || !!qrCodeGenerating || navigating} />
       <div className="min-h-screen w-full flex flex-col items-center bg-gradient-to-b from-pink-100 via-white to-pink-300 px-6 pt-8 pb-12">
         {/* Logo */}
         <div className="mb-2">
@@ -51,6 +51,14 @@ export function RSVPSuccessPage({
           <p className="text-sm text-gray-600 text-center max-w-xs leading-relaxed mb-16">
             We've successfully updated your attendance status. Thank you for celebrating with us!
           </p>
+
+          {/* QR Code Preview */}
+          {qrCode && (
+            <div className="mb-6 rounded-2xl bg-white p-4 shadow-xl border border-pink-100 flex flex-col items-center animate-in zoom-in duration-500">
+              <img src={qrCode} alt="Guest QR Code" className="w-40 h-40 sm:w-48 sm:h-48 mb-2" />
+              <p className="text-[10px] font-bold text-gray-400 tracking-widest uppercase">Your Digital Pass</p>
+            </div>
+          )}
 
           {/* Action Buttons */}
           <div className="flex gap-3 w-full mb-4">

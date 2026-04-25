@@ -1,11 +1,10 @@
-'use client';
-
 import { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 
 import type { EventData, RSVPResponse } from '@/types/rsvp';
-import { getAllEvents, getEventById, addOrUpdateRSVP } from '@/lib/rsvpStorage';
-import { generateRSVPQRCode, downloadQRCode } from '@/lib/qrCodeGenerator';
+import axiosInstance from '@/api/axios-instance'; // Added for API calls
+import { downloadQRCode } from '@/lib/qrCodeGenerator';
+import { getEventById } from '@/lib/rsvpStorage';
 import { RSVPInvitationPage } from './RSVPInvitationPage';
 import { RSVPFormPage } from './RSVPFormPage';
 import { RSVPSuccessPage } from './RSVPSuccessPage';
@@ -19,7 +18,6 @@ export function RSVPPage() {
   const [rsvpResponse, setRsvpResponse] = useState<RSVPResponse | null>(null);
   const [qrCode, setQrCode] = useState<string>('');
   const [loading, setLoading] = useState(false);
-  const [qrCodeGenerating, setQrCodeGenerating] = useState(false);
   const [transitioning, setTransitioning] = useState(false);
   const [navigating, setNavigating] = useState(false);
 
@@ -37,19 +35,39 @@ export function RSVPPage() {
 
   useEffect(() => {
     const eventIdParam = searchParams.get('eventId');
-    const loadedEvents = getAllEvents();
 
-    let found: EventData | undefined;
-    if (eventIdParam) {
-      found = getEventById(eventIdParam) ?? loadedEvents.find((e) => e.id === eventIdParam);
-    }
-    if (!found) {
-      found = loadedEvents.find((e) => e.id === 'evt-001') ?? loadedEvents[0];
-    }
-    if (found) {
-      setSelectedEvent(found);
-      setCurrentStep('invitation');
-    }
+    // Fetch event details from backend to ensure capacity and existence
+    const fetchEvent = async () => {
+      if (!eventIdParam) return;
+      try {
+        const response = await axiosInstance.get(`/events/${eventIdParam}`);
+        const eventData = response.data.event || response.data;
+        
+        // Map backend fields to the format the invitation page expects
+        setSelectedEvent({
+          id: eventData.id,
+          title: eventData.title || 'Wedding Celebration',
+          date: eventData.dateStart || eventData.startDate || eventData.eventDate || '',
+          time: eventData.dateStart ? new Date(eventData.dateStart).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'TBA',
+          location: eventData.venue || eventData.location || 'TBA',
+          couple: {
+            name1: eventData.title?.split('&')[0]?.trim() || 'Partner 1',
+            name2: eventData.title?.split('&')[1]?.trim() || 'Partner 2',
+          },
+          organizerName: eventData.clientName || 'Schatzies Events',
+          description: eventData.eventType || '',
+        });
+      } catch (error) {
+        console.error('Error fetching event from API, trying local storage:', error);
+        // Fallback to local storage for demo events like evt-001
+        const localEvent = getEventById(eventIdParam);
+        if (localEvent) {
+          setSelectedEvent(localEvent);
+        }
+      }
+    };
+
+    fetchEvent();
   }, [searchParams]);
 
   const validateForm = (): boolean => {
@@ -75,36 +93,57 @@ export function RSVPPage() {
     if (!validateForm() || !selectedEvent) return;
 
     setLoading(true);
-
-    // Yield to browser so the loading state paints before heavy async work starts
-    await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
+    setFormErrors({});
 
     try {
-      // Add RSVP response to storage first
-      const response = addOrUpdateRSVP(
-        selectedEvent.id,
-        formData.firstName,
-        formData.lastName,
-        formData.middleName || undefined,
-        formData.contactNumber,
-        formData.attending,
-        formData.message || undefined,
-        ''
-      );
+      // Map frontend state to backend expected snake_case payload
+      const payload = {
+        event_id: selectedEvent.id,
+        first_name: formData.firstName,
+        last_name: formData.lastName,
+        middle_name: formData.middleName || undefined,
+        contact_number: formData.contactNumber,
+        status: formData.attending ? 'ATTENDING' : 'NOT_ATTENDING',
+        message: formData.message || undefined,
+      };
 
-      // Show QR code generation loader
-      setQrCodeGenerating(true);
+      // POST to backend RSVP endpoint
+      const response = await axiosInstance.post('/rsvp', payload);
+      
+      // Swagger says it returns "RSVP submitted successfully" (a string)
+      // So we generate a QR code locally for the guest
+      const { generateRSVPQRCode } = await import('@/lib/qrCodeGenerator');
+      
+      // Use a combination of eventId and name/contact to create a stable unique ID if possible
+      // or just a timestamp for now
+      // Get the REAL ID from the backend response
+      const createdGuest = response.data.guest || response.data;
+      const guestId = createdGuest.guestId || createdGuest.id || createdGuest.SK?.split('#')[1] || `guest-${Date.now()}`;
+      
+      const invitationUrl = `${window.location.origin}/invitation/${selectedEvent.id}/${guestId}`;
+      const qrCodeUrl = await generateRSVPQRCode(invitationUrl, selectedEvent.id);
 
-      // Generate final QR code with actual RSVP ID
-      const finalQrCode = await generateRSVPQRCode(response.id, selectedEvent.id);
-      setRsvpResponse({ ...response, qrCode: finalQrCode });
-      setQrCode(finalQrCode);
-      setQrCodeGenerating(false);
+      setRsvpResponse({
+        id: guestId,
+        eventId: selectedEvent.id,
+        firstName: formData.firstName,
+        lastName: formData.lastName,
+        contactNumber: formData.contactNumber,
+        attending: formData.attending,
+        status: formData.attending ? 'Attending' : 'Not Attending',
+        isScanned: false,
+        qrCode: qrCodeUrl,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      });
+
+      setQrCode(qrCodeUrl);
       setCurrentStep('success');
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error submitting RSVP:', error);
-      setFormErrors({ submit: 'Failed to submit RSVP. Please try again.' });
-      setQrCodeGenerating(false);
+      // Capture backend error messages like "Event capacity has been reached"
+      const message = error.response?.data?.message || 'Failed to submit RSVP. Please try again.';
+      setFormErrors({ submit: message });
     } finally {
       setLoading(false);
     }
@@ -133,7 +172,6 @@ export function RSVPPage() {
     });
   };
 
-  // Invitation Screen
   if (currentStep === 'invitation' && selectedEvent) {
     return (
       <RSVPInvitationPage
@@ -144,7 +182,6 @@ export function RSVPPage() {
     );
   }
 
-  // RSVP Form Screen
   if (currentStep === 'form' && selectedEvent) {
     return (
       <RSVPFormPage
@@ -157,12 +194,11 @@ export function RSVPPage() {
     );
   }
 
-  // Success Screen
   if (currentStep === 'success' && selectedEvent && rsvpResponse) {
     return (
       <RSVPSuccessPage
         loading={loading}
-        qrCodeGenerating={qrCodeGenerating}
+        qrCode={qrCode}
         navigating={navigating}
         onDownloadQR={handleDownloadQR}
         onVisitHome={handleVisitHome}
