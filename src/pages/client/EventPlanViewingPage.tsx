@@ -108,7 +108,7 @@ export function EventPlanViewingPage() {
                 />
               </div>
             </div>
-            <div className="text-xs text-white/80 leading-relaxed">
+            <div className="text-xs text-white/80 leading-relaxed self-end text-right">
               <p>Organizer Name: {EVENT.organizer}</p>
               <p>Email | Contact Number</p>
             </div>
@@ -117,7 +117,7 @@ export function EventPlanViewingPage() {
       </div>
 
       {/* ── 3. Mini-Cards + 2×2 Grid (always visible, no tabs) ────────────── */}
-      <div className="flex flex-col gap-6">
+      <div className="flex flex-col gap-6 mt-4">
         {/* Top Row: 4 Mini-Cards */}
         <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
           {/* Event Package */}
