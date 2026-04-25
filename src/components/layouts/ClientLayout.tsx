@@ -14,9 +14,9 @@ export function ClientLayout() {
     );
   }
 
-  //if (!isAuthenticated || !user) {
-    //return <Navigate to="/login" replace />;
-  //}
+  if (!isAuthenticated || !user) {
+    return <Navigate to="/login" replace />;
+  }
 
   return (
     <div className="h-screen bg-[#f6f5f8]">
