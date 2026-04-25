@@ -11,15 +11,18 @@ export async function generateRSVPQRCode(rsvpId: string, eventId: string): Promi
     // Get the current origin (localhost:5173, production domain, etc.)
     const origin = typeof window !== 'undefined' ? window.location.origin : 'http://localhost:5173';
 
-    // Create a URL that will redirect to the RSVP page with event and RSVP info
-    const qrUrl = `${origin}/rsvp?eventId=${eventId}&rsvpId=${rsvpId}`;
+    // If the first argument is already a full URL, use it directly
+    // Otherwise, construct the standard invitation URL
+    const qrUrl = rsvpId.startsWith('http') 
+      ? rsvpId 
+      : `${origin}/invitation/${eventId}/${rsvpId}`;
 
     // Generate QR code as data URL
     const qrCodeDataUrl = await QRCode.toDataURL(qrUrl, {
-      errorCorrectionLevel: 'H',
+      errorCorrectionLevel: 'M', // Medium error correction makes the code less dense and easier to scan
       type: 'image/png',
-      width: 300,
-      margin: 2,
+      width: 400, // Slightly larger for better resolution
+      margin: 4, // Larger margin helps scanners detect the edges
       color: {
         dark: '#000000',
         light: '#FFFFFF',

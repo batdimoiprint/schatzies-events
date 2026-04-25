@@ -176,7 +176,7 @@ const router = createBrowserRouter([
         Component: MessagePage,
       },
       {
-        path: 'qr-code',
+        path: 'rsvp',
         Component: QrCodePage,
       },
       {

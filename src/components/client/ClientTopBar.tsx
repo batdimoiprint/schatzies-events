@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import { Bell, Settings, LogOut, ChevronDown, User, X } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import LoadingScreen from '@/components/ui/LoadingScreen';
+import { useAuth } from '@/hooks/useAuth';
 
 const AVATAR_SRC = '/Pictures/organizerpics/Profile Picture.png';
 
@@ -39,6 +40,10 @@ export function ClientTopBar() {
   const notifRef = useRef<HTMLDivElement>(null);
 
   const navigate = useNavigate();
+  const { user } = useAuth();
+
+  const displayName = user ? `${user.firstName} ${user.lastName}` : 'User';
+  const displayRole = user?.role || 'Client';
 
   const unreadCount = NOTIFICATIONS.filter((n) => n.unread).length;
 
@@ -166,8 +171,8 @@ export function ClientTopBar() {
                   className="size-9 rounded-full object-cover"
                 />
                 <div className="min-w-0">
-                  <p className="truncate text-sm font-semibold text-[#2d2834]">Cj Herminigildo</p>
-                  <p className="truncate text-xs text-[#696373]">Client</p>
+                  <p className="truncate text-sm font-semibold text-[#2d2834]">{displayName}</p>
+                  <p className="truncate text-xs text-[#696373]">{displayRole}</p>
                 </div>
               </div>
               <div className="p-1.5">

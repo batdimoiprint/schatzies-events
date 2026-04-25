@@ -1,27 +1,156 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { Camera, Mail, Phone, MapPin, Calendar, Save, X } from 'lucide-react';
 import LoadingScreen from '@/components/ui/LoadingScreen';
+import { useAuth } from '@/hooks/useAuth';
+import { getUserById, updateUser } from '@/api/users';
 
 const AVATAR_SRC = '/Pictures/organizerpics/Profile Picture.png';
 
-const INITIAL_PROFILE = {
-  firstName: 'Cj',
-  lastName: 'Herminigildo',
-  email: 'cjherminigildo@gmail.com',
-  phone: '9171234567',
-  address: 'Quezon City, Metro Manila',
-  birthday: '1998-06-15',
+// Fallback image in case the main avatar fails to load
+const FALLBACK_AVATAR = '/Pictures/business-logo.png';
+
+const EMPTY_PROFILE = {
+  firstName: '',
+  lastName: '',
+  email: '',
+  phone: '',
+  address: '',
+  birthday: '',
 };
 
+// Simple in-memory cache so repeat visits don't re-fetch
+let profileCache: { userId: string; data: typeof EMPTY_PROFILE } | null = null;
+
+function mapUserToProfile(fetchedUser: {
+  firstName: string;
+  lastName: string;
+  email: string;
+  contactNumber?: string;
+  houseNumber?: string;
+  street?: string;
+  barangay?: string;
+  city?: string;
+  country?: string;
+  birthDate?: string;
+}) {
+  let phone = fetchedUser.contactNumber || '';
+  if (phone.startsWith('+63')) phone = phone.slice(3).trim();
+  if (phone.startsWith('63')) phone = phone.slice(2);
+  if (phone.startsWith('0')) phone = phone.slice(1);
+  phone = phone.replace(/\D/g, '').slice(0, 10);
+
+  return {
+    firstName: fetchedUser.firstName,
+    lastName: fetchedUser.lastName,
+    email: fetchedUser.email,
+    phone,
+    address: [
+      fetchedUser.houseNumber,
+      fetchedUser.street,
+      fetchedUser.barangay,
+      fetchedUser.city,
+      fetchedUser.country,
+    ]
+      .filter(Boolean)
+      .join(', '),
+    birthday: fetchedUser.birthDate || '',
+  };
+}
+
 export function ProfilePage() {
-  const [profile, setProfile] = useState(INITIAL_PROFILE);
-  const [originalProfile, setOriginalProfile] = useState(INITIAL_PROFILE);
+  const [profile, setProfile] = useState(EMPTY_PROFILE);
+  const [originalProfile, setOriginalProfile] = useState(EMPTY_PROFILE);
   const [editing, setEditing] = useState(false);
   const [saved, setSaved] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [emailError, setEmailError] = useState('');
   const [phoneError, setPhoneError] = useState('');
+  const [isLoading, setIsLoading] = useState(true);
+  const [avatarSrc, setAvatarSrc] = useState(AVATAR_SRC);
+  const [avatarLoading, setAvatarLoading] = useState(true);
+  const [fetchError, setFetchError] = useState<string | null>(null);
+
+  const { user } = useAuth();
+
+  // Track which user ID we've already loaded to prevent duplicate fetches
+  const loadedUserIdRef = useRef<string | null>(null);
+  const abortControllerRef = useRef<AbortController | null>(null);
+
+  const loadProfileData = useCallback(
+    async (userId: string) => {
+      // Already loaded for this user — use cache
+      if (loadedUserIdRef.current === userId && profileCache?.userId === userId) {
+        setProfile(profileCache.data);
+        setOriginalProfile(profileCache.data);
+        setIsLoading(false);
+        return;
+      }
+
+      // If there's an in-flight request, abort it
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
+      abortControllerRef.current = new AbortController();
+
+      setIsLoading(true);
+      setFetchError(null);
+
+      try {
+        const fetchedUser = await getUserById(userId);
+        const mapped = mapUserToProfile(fetchedUser);
+
+        // Update cache
+        profileCache = { userId, data: mapped };
+        loadedUserIdRef.current = userId;
+
+        setProfile(mapped);
+        setOriginalProfile(mapped);
+      } catch (error: unknown) {
+        // Don't update state if aborted
+        if (error instanceof DOMException && error.name === 'AbortError') return;
+
+        console.error('Failed to load profile:', error);
+
+        // On rate-limit (429) or server error, show a user-friendly message
+        // but do NOT reset loadedUserIdRef — prevent retry loops
+        const status =
+          typeof error === 'object' && error !== null && 'response' in error
+            ? (error as { response?: { status?: number } }).response?.status
+            : undefined;
+
+        if (status === 429) {
+          setFetchError('Too many requests. Please wait a moment and try again.');
+        } else {
+          setFetchError('Failed to load profile data. Please try again later.');
+        }
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    []
+  );
+
+  // Single effect: react to user changes (covers both initial mount and user switch)
+  useEffect(() => {
+    if (user?.user_id) {
+      loadProfileData(user.user_id);
+    } else {
+      // User logged out — reset everything
+      loadedUserIdRef.current = null;
+      profileCache = null;
+      setProfile(EMPTY_PROFILE);
+      setOriginalProfile(EMPTY_PROFILE);
+      setIsLoading(false);
+    }
+
+    // Cleanup: abort in-flight fetch if component unmounts or user changes
+    return () => {
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
+    };
+  }, [user?.user_id, loadProfileData]);
 
   const validateEmail = (email: string): boolean => {
     const emailRegex = /^[^\s@]+@([^\s@.,]+\.)+[^\s@.,]{2,}$/;
@@ -116,16 +245,33 @@ export function ProfilePage() {
     setShowConfirmModal(false);
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
+    const currentUserId = user?.user_id;
+    if (!currentUserId) return;
     setShowConfirmModal(false);
     setIsSaving(true);
-    setTimeout(() => {
+    try {
+      await updateUser(currentUserId, {
+        firstName: profile.firstName,
+        lastName: profile.lastName,
+        email: profile.email,
+        contactNumber: `+63${profile.phone}`,
+        birthDate: profile.birthday || undefined,
+      });
       setOriginalProfile(profile);
+
+      // Update cache with saved data
+      profileCache = { userId: currentUserId, data: profile };
+
       setEditing(false);
-      setIsSaving(false);
       setSaved(true);
       setTimeout(() => setSaved(false), 2000);
-    }, 1500);
+    } catch (error) {
+      console.error('Failed to update profile:', error);
+      // Handle error, perhaps show error message
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const handleCancel = () => {
@@ -134,6 +280,15 @@ export function ProfilePage() {
     setShowConfirmModal(false);
     setEmailError('');
     setPhoneError('');
+  };
+
+  const handleRetry = () => {
+    if (user?.user_id) {
+      // Clear cache so it actually re-fetches
+      loadedUserIdRef.current = null;
+      profileCache = null;
+      loadProfileData(user.user_id);
+    }
   };
 
   // Get changed fields
@@ -190,6 +345,53 @@ export function ProfilePage() {
     return `+63 ${phone.slice(0, 3)} ${phone.slice(3, 6)} ${phone.slice(6)}`;
   };
 
+  if (isLoading) {
+    return (
+      <div className="mx-auto max-w-2xl">
+        <div className="mb-6">
+          <div className="h-9 w-40 animate-pulse rounded-lg bg-gray-200" />
+          <div className="mt-2 h-4 w-64 animate-pulse rounded bg-gray-100" />
+        </div>
+        <div className="overflow-hidden rounded-xl border border-[#ece7f2] bg-white shadow-sm">
+          <div className="h-28 animate-pulse bg-gradient-to-r from-pink-200 to-purple-200" />
+          <div className="px-6 pt-14 pb-6 space-y-4">
+            <div className="h-6 w-48 animate-pulse rounded bg-gray-200" />
+            <div className="grid gap-5 sm:grid-cols-2 mt-6">
+              {[...Array(6)].map((_, i) => (
+                <div key={i}>
+                  <div className="h-3 w-20 animate-pulse rounded bg-gray-200 mb-2" />
+                  <div className="h-5 w-36 animate-pulse rounded bg-gray-100" />
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Show error state with retry button
+  if (fetchError) {
+    return (
+      <div className="mx-auto max-w-2xl">
+        <div className="mb-6">
+          <h1 className="text-3xl font-black tracking-tight text-[#2d2834] md:text-4xl">
+            My Profile
+          </h1>
+        </div>
+        <div className="overflow-hidden rounded-xl border border-[#ece7f2] bg-white shadow-sm p-8 text-center">
+          <p className="text-[#696373] mb-4">{fetchError}</p>
+          <button
+            onClick={handleRetry}
+            className="rounded-lg bg-[#df2b80] px-5 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-[#c41e6d]"
+          >
+            Retry
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <>
       <LoadingScreen isLoading={isSaving} />
@@ -205,20 +407,34 @@ export function ProfilePage() {
         </div>
 
         {/* Profile card */}
-        <div
-          className="overflow-hidden rounded-xl border border-[#ece7f2] bg-white shadow-sm"
-          style={{ animation: 'fadeIn 0.3s ease-out' }}
-        >
+        <div className="overflow-hidden rounded-xl border border-[#ece7f2] bg-white shadow-sm">
           {/* Banner */}
           <div className="relative h-28 bg-gradient-to-r from-pink-400 to-purple-500">
             {/* Avatar */}
             <div className="absolute -bottom-12 left-6">
               <div className="relative">
-                <img
-                  src={AVATAR_SRC}
-                  alt="Profile"
-                  className="size-24 rounded-full border-4 border-white object-cover shadow-lg"
-                />
+                <div className="relative">
+                  {avatarLoading && (
+                    <div className="absolute inset-0 flex items-center justify-center bg-gray-100 rounded-full">
+                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#df2b80]"></div>
+                    </div>
+                  )}
+                  <img
+                    src={avatarSrc}
+                    alt="Profile"
+                    className={`size-24 rounded-full border-4 border-white object-cover shadow-lg transition-opacity duration-300 ${
+                      avatarLoading ? 'opacity-0' : 'opacity-100'
+                    }`}
+                    onError={() => {
+                      console.warn('Profile image failed to load, using fallback');
+                      setAvatarSrc(FALLBACK_AVATAR);
+                      setAvatarLoading(false);
+                    }}
+                    onLoad={() => {
+                      setAvatarLoading(false);
+                    }}
+                  />
+                </div>
                 <button
                   className="absolute bottom-0 right-0 flex size-8 items-center justify-center rounded-full bg-[#df2b80] text-white shadow-md transition hover:bg-[#c41e6d]"
                   aria-label="Change photo"
@@ -273,10 +489,7 @@ export function ProfilePage() {
 
           {/* Success toast */}
           {saved && (
-            <div
-              className="mx-6 mb-4 rounded-lg bg-green-50 px-4 py-2.5 text-sm font-medium text-green-700"
-              style={{ animation: 'fadeIn 0.2s ease-out' }}
-            >
+            <div className="mx-6 mb-4 rounded-lg bg-green-50 px-4 py-2.5 text-sm font-medium text-green-700">
               Profile updated successfully!
             </div>
           )}
@@ -408,24 +621,19 @@ export function ProfilePage() {
                   />
                 ) : (
                   <p className="text-sm font-medium text-[#2d2834]">
-                    {new Date(profile.birthday).toLocaleDateString('en-US', {
-                      year: 'numeric',
-                      month: 'long',
-                      day: 'numeric',
-                    })}
+                    {profile.birthday
+                      ? new Date(profile.birthday).toLocaleDateString('en-US', {
+                          year: 'numeric',
+                          month: 'long',
+                          day: 'numeric',
+                        })
+                      : '—'}
                   </p>
                 )}
               </div>
             </div>
           </div>
         </div>
-
-        <style>{`
-          @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(8px); }
-            to { opacity: 1; transform: translateY(0); }
-          }
-        `}</style>
       </div>
 
       {/* Confirmation Modal */}

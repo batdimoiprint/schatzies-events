@@ -171,11 +171,10 @@ export function RSVPPage() {
               <div
                 key={chat.id}
                 onClick={() => setActiveChatId(chat.id)}
-                className={`flex cursor-pointer items-center gap-3 border-b border-[#f0edf4] p-4 transition-colors ${
-                  activeChatId === chat.id
-                    ? 'border-l-4 border-l-[#df2b80] bg-[#fafafa]'
-                    : 'border-l-4 border-l-transparent hover:bg-[#fafafa]'
-                }`}
+                className={`flex cursor-pointer items-center gap-3 border-b border-[#f0edf4] p-4 transition-colors ${activeChatId === chat.id
+                  ? 'border-l-4 border-l-[#df2b80] bg-[#fafafa]'
+                  : 'border-l-4 border-l-transparent hover:bg-[#fafafa]'
+                  }`}
               >
                 <div
                   className={`relative flex size-12 shrink-0 items-center justify-center rounded-full text-lg font-bold text-white ${chat.color}`}
@@ -249,18 +248,16 @@ export function RSVPPage() {
               >
                 <div className="flex max-w-[70%] flex-col gap-1">
                   <div
-                    className={`rounded-2xl px-4 py-3 text-sm ${
-                      msg.isMe
-                        ? 'rounded-br-none bg-gradient-to-r from-[#df2b80] to-[#8f1fd1] text-white'
-                        : 'rounded-bl-none border border-[#e2deea] bg-white text-[#4f4a56] shadow-sm'
-                    }`}
+                    className={`rounded-2xl px-4 py-3 text-sm ${msg.isMe
+                      ? 'rounded-br-none bg-gradient-to-r from-[#df2b80] to-[#8f1fd1] text-white'
+                      : 'rounded-bl-none border border-[#e2deea] bg-white text-[#4f4a56] shadow-sm'
+                      }`}
                   >
                     {msg.text}
                   </div>
                   <span
-                    className={`text-[10px] font-semibold text-[#a49cb3] ${
-                      msg.isMe ? 'text-right' : 'text-left'
-                    }`}
+                    className={`text-[10px] font-semibold text-[#a49cb3] ${msg.isMe ? 'text-right' : 'text-left'
+                      }`}
                   >
                     {msg.time}
                   </span>

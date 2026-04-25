@@ -1,16 +1,15 @@
 import { useState, useEffect } from 'react';
-import { Menu, X } from 'lucide-react';
-import { SquaresFour, ClipboardText, QrCode, Chat } from '@phosphor-icons/react';
+import { Menu, X, LayoutDashboard, ClipboardList, UserCheck, MessageSquare } from 'lucide-react';
 import { NavLink, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 
 const logoImagePath = '/Pictures/business-logo.png';
 
 const clientNavItems = [
-  { label: 'Overview', to: '/client', Icon: SquaresFour },
-  { label: 'Event Plan Viewing', to: '/client/event-plan', Icon: ClipboardText },
-  { label: 'QR CODE', to: '/client/qr-code', Icon: QrCode },
-  { label: 'Message', to: '/client/message', Icon: Chat },
+  { label: 'Overview', to: '/client', Icon: LayoutDashboard },
+  { label: 'Event Plan Viewing', to: '/client/event-plan', Icon: ClipboardList },
+  { label: 'RSVP', to: '/client/rsvp', Icon: UserCheck },
+  { label: 'Message', to: '/client/message', Icon: MessageSquare },
 ];
 
 export function ClientSidebar() {
@@ -84,7 +83,7 @@ export function ClientSidebar() {
                   ].join(' ')
             }
           >
-            <Icon weight="fill" size={20} className="shrink-0" />
+            <Icon size={20} className="shrink-0" />
             {(isMobile || expanded) && <span className="whitespace-nowrap">{label}</span>}
           </NavLink>
         ))}

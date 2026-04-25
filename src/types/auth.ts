@@ -1,19 +1,18 @@
 export interface User {
-  id?: string;
+  user_id: string;
   client_id?: string;
-  username: string;
-  fname: string;
-  mname?: string;
-  lname: string;
+  firstName: string;
+  middleName?: string;
+  lastName: string;
   suffix?: string;
-  birthdate?: string;
-  house_no?: string;
-  street_name?: string;
+  birthDate?: string;
+  houseNumber?: string;
+  street?: string;
   barangay?: string;
   city?: string;
   country?: string;
   gender?: string;
-  contact_number?: string;
+  contactNumber?: string;
   email: string;
   role: string;
   created_at?: string;
@@ -25,6 +24,6 @@ export interface AuthContextType {
   isLoading: boolean;
   error: string | null;
   login: (email: string, password: string) => Promise<User | null>;
-  verifyToken: () => Promise<void>;
+  verifyToken: () => Promise<User | null>;
   setAuthenticatedUser: (user: User | null) => void;
 }

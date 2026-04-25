@@ -1,15 +1,19 @@
 export interface RSVPResponse {
   id: string;
-  eventId: string;
+  guestId?: string;
+  SK?: string;
   firstName: string;
-  lastName: string;
   middleName?: string;
+  lastName: string;
   contactNumber: string;
-  attending: boolean;
   message?: string;
-  qrCode: string;
-  createdAt: string;
-  updatedAt: string;
+  status: 'Attending' | 'Not Attending' | 'CONFIRMED' | 'TRUE' | string;
+  isScanned: boolean;
+  qrCode?: string;
+  eventId?: string;
+  createdAt?: string;
+  updatedAt?: string;
+  attending?: boolean; // For legacy storage support
 }
 
 export interface EventData {
