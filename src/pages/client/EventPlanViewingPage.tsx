@@ -23,7 +23,7 @@ const EVENT = {
 function PackageIllustration() {
   return (
     <img
-      src="/Pictures/organizerpics/package-illustration.png"
+      src="/Pictures/event-package-icon.png"
       className="w-16 h-auto object-contain"
       alt="Event Package"
     />
@@ -32,7 +32,7 @@ function PackageIllustration() {
 function PaxIllustration() {
   return (
     <img
-      src="/Pictures/organizerpics/pax-illustration.png"
+      src="/Pictures/event-pax-icon.png"
       className="w-16 h-auto object-contain"
       alt="Event Pax"
     />
@@ -41,7 +41,7 @@ function PaxIllustration() {
 function TypeIllustration() {
   return (
     <img
-      src="/Pictures/organizerpics/type-illustration.png"
+      src="/Pictures/event-type-icon.png"
       className="w-16 h-auto object-contain"
       alt="Event Type"
     />
@@ -50,7 +50,7 @@ function TypeIllustration() {
 function CostIllustration() {
   return (
     <img
-      src="/Pictures/organizerpics/cost-illustration.png"
+      src="/Pictures/event-cost-icon.png"
       className="w-16 h-auto object-contain"
       alt="Event Cost"
     />
@@ -96,12 +96,12 @@ export function EventPlanViewingPage() {
           </div>
 
           {/* Right: progress + organizer */}
-          <div className="flex flex-col items-start gap-2 sm:shrink-0 sm:items-end sm:text-right">
-            <div className="flex items-center gap-2">
+          <div className="flex flex-col items-start gap-2 w-full sm:w-[60%]">
+            <div className="flex items-center gap-2 w-full">
               <span className="text-sm font-semibold whitespace-nowrap">
                 {EVENT.completion}% complete
               </span>
-              <div className="h-2.5 w-32 shrink-0 overflow-hidden rounded-full bg-white/30">
+              <div className="h-6 flex-1 overflow-hidden rounded-full bg-white/30">
                 <div
                   className="h-full rounded-full bg-white transition-all"
                   style={{ width: `${EVENT.completion}%` }}
@@ -258,14 +258,19 @@ export function EventPlanViewingPage() {
                 </button>
               </div>
             </div>
-            <div className="text-xs">
-              <p className="font-medium text-[#2d2834]">DATE AND TIME</p>
-              <p className="text-[#8a8697]">00:00 – 00:00</p>
-              <p className="mt-1 font-medium text-[#2d2834]">Description Here</p>
-              <p className="mt-0.5 line-clamp-3 text-[11px] text-[#8a8697]">
-                Lorem ipsum dolor sit amet, consectetur adipiscing elit. In tincidunt justo quis
-                viverra bibendum. Curabitur ipsum mi, bibendum ut dictum non, commodo a purus.
-              </p>
+            <div>
+              <p className="font-bold text-lg text-[#2d2834] mb-3">DATE AND TIME</p>
+              <div className="flex gap-4 items-start">
+                <p className="text-xs text-[#8a8697] shrink-0">00:00</p>
+                <div className="w-px bg-gray-200 self-stretch"></div>
+                <div className="flex-1">
+                  <p className="font-medium text-[#2d2834] text-sm">Description Here</p>
+                  <p className="line-clamp-3 text-[11px] text-[#8a8697] mt-1 leading-relaxed">
+                    Lorem ipsum dolor sit amet, consectetur adipiscing elit. In tincidunt justo quis
+                    viverra bibendum. Curabitur ipsum mi, bibendum ut dictum non, commodo a purus.
+                  </p>
+                </div>
+              </div>
             </div>
           </div>
         </div>

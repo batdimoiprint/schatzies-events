@@ -45,26 +45,26 @@ export function ProgramFlowModal({ onClose }: Props) {
 
         {/* Scrollable body */}
         <div className="overflow-y-auto p-6">
-          <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
-            {/* Column headers */}
-            <div className="mb-4 grid grid-cols-[120px_1fr] gap-4 border-b border-gray-100 pb-2">
-              <p className="text-xs font-bold uppercase tracking-wide text-gray-500">
-                Date and Time
-              </p>
-              <p className="text-xs font-bold uppercase tracking-wide text-gray-500">Details</p>
-            </div>
+          <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm space-y-6">
             {/* Rows */}
-            <div className="flex flex-col divide-y divide-gray-100">
-              {FLOW_ITEMS.map((item, i) => (
-                <div key={i} className="grid grid-cols-[120px_1fr] gap-4 py-4 first:pt-0 last:pb-0">
-                  <p className="text-sm text-gray-600">{item.time}</p>
-                  <div>
-                    <p className="text-sm font-semibold text-gray-800">Description Here</p>
-                    <p className="mt-1 text-xs leading-relaxed text-gray-500">{item.description}</p>
+            {FLOW_ITEMS.map((item, i) => (
+              <div
+                key={i}
+                className={`pb-6 ${i !== FLOW_ITEMS.length - 1 ? 'border-b border-gray-100' : ''}`}
+              >
+                <p className="font-bold text-lg text-[#2d2834] leading-tight mb-3">DATE AND TIME</p>
+                <div className="flex gap-4 items-start">
+                  <p className="text-xs text-[#8a8697] shrink-0">{item.time}</p>
+                  <div className="w-px bg-gray-200 self-stretch"></div>
+                  <div className="flex-1">
+                    <p className="font-semibold text-[#2d2834] text-sm">Description Here</p>
+                    <p className="text-xs leading-relaxed text-[#8a8697] mt-1">
+                      {item.description}
+                    </p>
                   </div>
                 </div>
-              ))}
-            </div>
+              </div>
+            ))}
           </div>
         </div>
       </div>
