@@ -6,6 +6,7 @@ import { ServiceRequirementsModal } from '@/components/client/ServiceRequirement
 import { AllocationResourcesModal } from '@/components/client/AllocationResourcesModal';
 import { ChecklistMeetingModal } from '@/components/client/ChecklistMeetingModal';
 import { ProgramFlowModal } from '@/components/client/ProgramFlowModal';
+import { GuestListModal } from '@/components/client/GuestListModal';
 
 // ── Static mock data ──────────────────────────────────────────────────────────
 const EVENT = {
@@ -182,7 +183,7 @@ export function ClientDashboardPage() {
                       {EVENT.completion}% complete
                     </span>
                     <div className="relative flex-1">
-                      <div className="h-3 overflow-hidden rounded-full bg-gray-200 cursor-pointer">
+                      <div className="h-6 overflow-hidden rounded-full bg-gray-200 cursor-pointer">
                         <div
                           className="h-full rounded-full transition-all"
                           style={{
@@ -200,10 +201,10 @@ export function ClientDashboardPage() {
                       </div>
                     </div>
                   </div>
-                  <div className="flex justify-end mt-4">
+                  <div className="flex justify-end mt-6">
                     <button
                       onClick={() => navigate('/client/event-plan')}
-                      className="bg-pink-400 text-white rounded-full px-4 py-2.5 text-xs font-bold shadow-sm hover:bg-pink-500 transition-colors"
+                      className="bg-pink-400 text-white rounded-full px-6 py-2.5 text-xs font-bold shadow-sm hover:bg-pink-500 transition-colors"
                     >
                       View Event Plan
                     </button>
@@ -232,7 +233,7 @@ export function ClientDashboardPage() {
                 </div>
 
                 {/* Allocation Resources */}
-                <div className="rounded-lg border border-[#e8e4ee] bg-white p-4">
+                <div className="rounded-lg border border-[#e8e4ee] bg-white p-4 mb-8">
                   <div className="mb-2">
                     <span className="text-sm font-semibold text-[#2d2834]">
                       Allocation Resources
@@ -269,23 +270,26 @@ export function ClientDashboardPage() {
                 </div>
 
                 {/* Program Flow */}
-                <div className="rounded-lg border border-[#e8e4ee] bg-white p-4">
-                  <div className="mb-2">
+                <div className="rounded-lg border border-[#e8e4ee] bg-white p-5">
+                  <div className="mb-4">
                     <span className="text-sm font-semibold text-[#2d2834]">Program Flow</span>
                   </div>
-                  <ul className="space-y-1 text-xs">
-                    <li>
-                      <p className="font-medium text-[#2d2834]">DATE AND TIME</p>
-                      <p className="text-[#8a8697]">00:00 – 00:00</p>
-                    </li>
-                    <li>
-                      <p className="font-medium text-[#2d2834]">Description Here</p>
-                      <p className="line-clamp-3 text-[11px] text-[#8a8697]">
-                        Lorem ipsum dolor sit amet, consectetur adipiscing elit, in constituent pads
-                        quis...
-                      </p>
-                    </li>
-                  </ul>
+                  <div className="flex flex-col gap-3">
+                    {/* Header: DATE AND TIME */}
+                    <p className="text-lg font-bold text-[#2d2834] leading-tight">DATE AND TIME</p>
+                    {/* Row: Time | Divider | Description */}
+                    <div className="flex gap-4 items-start">
+                      <p className="text-xs text-[#8a8697] shrink-0">00:00</p>
+                      <div className="w-px bg-gray-200 self-stretch"></div>
+                      <div className="flex-1">
+                        <p className="font-semibold text-[#2d2834] text-sm">Description Here</p>
+                        <p className="line-clamp-3 text-[11px] text-[#8a8697] mt-1 leading-relaxed">
+                          Lorem ipsum dolor sit amet, consectetur adipiscing elit, in tincidunt
+                          justo quis...
+                        </p>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
@@ -376,57 +380,7 @@ export function ClientDashboardPage() {
       )}
       {showChecklist && <ChecklistMeetingModal onClose={() => setShowChecklist(false)} />}
       {showProgramFlow && <ProgramFlowModal onClose={() => setShowProgramFlow(false)} />}
-
-      {/* ── Guest List Modal ─────────────────────────────────────────────── */}
-      {showGuestListModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
-          <div
-            className="flex w-full max-w-2xl flex-col rounded-2xl bg-white shadow-2xl"
-            style={{ maxHeight: '85vh', fontFamily: 'Source Sans Pro, sans-serif' }}
-          >
-            {/* Header */}
-            <div className="flex items-center border-b border-gray-200 px-6 py-4 shrink-0">
-              <h3 className="text-3xl font-bold text-[#1a1225]">Guest List</h3>
-            </div>
-
-            {/* Scrollable Content */}
-            <div className="flex-1 overflow-y-auto px-6 py-6">
-              {/* Column headers */}
-              <div className="mb-4 flex items-center justify-between border-b border-gray-200 pb-3 text-base font-semibold text-[#696373]">
-                <span>Guest Name</span>
-                <span>Status</span>
-              </div>
-              {/* Guest rows */}
-              <ul className="space-y-3">
-                {GUESTS.map((guest) => (
-                  <li key={guest.name} className="flex items-center justify-between gap-2">
-                    <span className="text-lg text-[#2d2834]">{guest.name}</span>
-                    <span
-                      className={`rounded-full px-3 py-1 text-base font-semibold ${
-                        guest.status === 'Confirmed'
-                          ? 'bg-green-100 text-green-800'
-                          : 'bg-red-200 text-red-700'
-                      }`}
-                    >
-                      {guest.status}
-                    </span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-
-            {/* Footer */}
-            <div className="border-t border-gray-200 px-6 py-4 shrink-0">
-              <button
-                onClick={() => setShowGuestListModal(false)}
-                className="w-full h-10 rounded-full bg-gradient-to-r from-[#FF0066] to-[#700F81] text-white font-bold transition hover:brightness-110"
-              >
-                Close
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      {showGuestListModal && <GuestListModal onClose={() => setShowGuestListModal(false)} />}
 
       {/* ── Welcome modal overlay ─────────────────────────────────────────── */}
       {showWelcome && (

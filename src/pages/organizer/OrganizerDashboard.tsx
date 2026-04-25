@@ -498,28 +498,32 @@ export function OrganizerDashboard() {
             <CardContent className="relative overflow-hidden rounded-3xl bg-linear-to-r from-[#f051a3] via-[#de3bc5] to-[#8f1fd0] p-8 text-white min-h-[220px] flex flex-col justify-center md:pr-72 lg:pr-80">
               <div className="max-w-md relative z-10">
                 <h3
-                  className={`font-heading text-4xl md:text-5xl font-bold leading-[1.1] transition-all duration-700 ease-out ${isChartMounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
-                    }`}
+                  className={`font-heading text-4xl md:text-5xl font-bold leading-[1.1] transition-all duration-700 ease-out ${
+                    isChartMounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
+                  }`}
                 >
                   Welcome, Kring!
                 </h3>
                 <p
-                  className={`mt-3 text-base font-semibold text-white/90 transition-all duration-700 delay-150 ease-out ${isChartMounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
-                    }`}
+                  className={`mt-3 text-base font-semibold text-white/90 transition-all duration-700 delay-150 ease-out ${
+                    isChartMounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
+                  }`}
                 >
                   You have a lot of work today, so keep it up.
                 </p>
                 <p
-                  className={`text-base font-semibold text-white/90 transition-all duration-700 delay-[250ms] ease-out ${isChartMounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
-                    }`}
+                  className={`text-base font-semibold text-white/90 transition-all duration-700 delay-[250ms] ease-out ${
+                    isChartMounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
+                  }`}
                 >
                   Shall we start?
                 </p>
                 <Button
                   variant="secondary"
                   onClick={() => navigate('/organizer/calendar')}
-                  className={`mt-6 rounded-full bg-white px-6 py-2 text-xs font-black uppercase tracking-wide text-[#6b2a87] hover:bg-white/90 hover:scale-105 hover:shadow-lg transition-all duration-700 delay-[350ms] ease-out ${isChartMounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
-                    }`}
+                  className={`mt-6 rounded-full bg-white px-6 py-2 text-xs font-black uppercase tracking-wide text-[#6b2a87] hover:bg-white/90 hover:scale-105 hover:shadow-lg transition-all duration-700 delay-[350ms] ease-out ${
+                    isChartMounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
+                  }`}
                 >
                   View Calendar
                 </Button>
@@ -641,10 +645,11 @@ export function OrganizerDashboard() {
               </CardHeader>
               <CardContent className="space-y-6 pb-6">
                 <div
-                  className={`relative mx-auto size-64 transition-all duration-[1500ms] ease-out ${isChartMounted
+                  className={`relative mx-auto size-64 transition-all duration-[1500ms] ease-out ${
+                    isChartMounted
                       ? 'opacity-100 scale-100 rotate-0'
                       : 'opacity-0 scale-75 -rotate-45'
-                    }`}
+                  }`}
                 >
                   <svg viewBox="0 0 100 100" className="size-64 -rotate-90">
                     {totalEvents === 0 ? (
@@ -814,11 +819,11 @@ export function OrganizerDashboard() {
                   <p className="mt-1 text-xs font-semibold text-[#c5bdd1] text-center">
                     {selectedDate
                       ? selectedDate.toLocaleDateString('en-US', {
-                        weekday: 'long',
-                        month: 'short',
-                        day: 'numeric',
-                        year: 'numeric',
-                      })
+                          weekday: 'long',
+                          month: 'short',
+                          day: 'numeric',
+                          year: 'numeric',
+                        })
                       : 'No Date Selected'}
                   </p>
                 </div>
