@@ -126,6 +126,8 @@ export function addOrUpdateRSVP(
     middleName,
     contactNumber,
     attending,
+    status: attending ? 'Attending' : 'Not Attending',
+    isScanned: existingIndex >= 0 ? data.responses[existingIndex].isScanned : false,
     message,
     qrCode,
     createdAt: existingIndex >= 0 ? data.responses[existingIndex].createdAt : now,

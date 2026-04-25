@@ -51,7 +51,6 @@ export function EventManagerPage() {
         if (current && eventRows.some((event) => event.id === current)) {
           return current;
         }
-
         return eventRows[0]?.id || '';
       });
     } catch {
@@ -146,7 +145,6 @@ export function EventManagerPage() {
           event.status,
           String(event.rsvp),
         ];
-
         return searchableFields.some((field) => field.toLowerCase().includes(normalizedSearchTerm));
       });
 
@@ -167,7 +165,6 @@ export function EventManagerPage() {
           vendor.service,
           vendor.status,
         ];
-
         return searchableFields.some((field) => field.toLowerCase().includes(normalizedSearchTerm));
       });
 
@@ -384,33 +381,28 @@ export function EventManagerPage() {
                     <TableRow
                       key={event.id}
                       onClick={() => setSelectedEventId(event.id)}
-                      className={`group transition-colors border-b border-[#f6f4f9] ${selectedEventId === event.id ? 'bg-[#faf9fc] ring-1 ring-inset ring-[#e1d5eb]' : 'hover:bg-[#faf9fc]'}`}
+                      className={`group transition-colors border-b border-[#f6f4f9] ${
+                        selectedEventId === event.id
+                          ? 'bg-[#faf9fc] ring-1 ring-inset ring-[#e1d5eb]'
+                          : 'hover:bg-[#faf9fc]'
+                      }`}
                     >
                       <TableCell className="py-4 font-bold text-[#5c546a]">{event.title}</TableCell>
-                      <TableCell className="py-4 font-semibold text-[#5c546a]">
-                        {event.date}
-                      </TableCell>
-                      <TableCell className="py-4 font-semibold text-[#5c546a]">
-                        {event.timeSlot}
-                      </TableCell>
-                      <TableCell className="py-4 font-semibold text-[#5c546a]">
-                        {event.client}
-                      </TableCell>
-                      <TableCell className="py-4 font-semibold text-[#5c546a]">
-                        {event.type}
-                      </TableCell>
-                      <TableCell className="py-4 font-semibold text-[#5c546a]">
-                        {event.package}
-                      </TableCell>
-                      <TableCell className="py-4 font-semibold text-[#5c546a]">
-                        {event.venue}
-                      </TableCell>
+                      <TableCell className="py-4 font-semibold text-[#5c546a]">{event.date}</TableCell>
+                      <TableCell className="py-4 font-semibold text-[#5c546a]">{event.timeSlot}</TableCell>
+                      <TableCell className="py-4 font-semibold text-[#5c546a]">{event.client}</TableCell>
+                      <TableCell className="py-4 font-semibold text-[#5c546a]">{event.type}</TableCell>
+                      <TableCell className="py-4 font-semibold text-[#5c546a]">{event.package}</TableCell>
+                      <TableCell className="py-4 font-semibold text-[#5c546a]">{event.venue}</TableCell>
                       <TableCell className="py-4 font-bold text-[#5c546a]">
                         <div className="flex items-center gap-1.5">
                           {event.rsvp}
                           <button
                             type="button"
-                            onClick={() => setRsvpModalEvent(event)}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setRsvpModalEvent(event);
+                            }}
                             className="text-[9px] font-bold uppercase tracking-wider text-[#760CB4] hover:brightness-125 hover:underline"
                           >
                             View RSVP
@@ -447,21 +439,11 @@ export function EventManagerPage() {
                         key={vendor.id}
                         className="border-b border-[#f6f4f9] hover:bg-[#faf9fc]"
                       >
-                        <TableCell className="py-4 font-bold text-[#5c546a]">
-                          {vendor.name}
-                        </TableCell>
-                        <TableCell className="py-4 font-semibold text-[#5c546a]">
-                          {vendor.contactPerson}
-                        </TableCell>
-                        <TableCell className="py-4 font-semibold text-[#5c546a]">
-                          {vendor.email}
-                        </TableCell>
-                        <TableCell className="py-4 font-semibold text-[#5c546a]">
-                          {vendor.phone}
-                        </TableCell>
-                        <TableCell className="py-4 font-semibold text-[#5c546a]">
-                          {vendor.service}
-                        </TableCell>
+                        <TableCell className="py-4 font-bold text-[#5c546a]">{vendor.name}</TableCell>
+                        <TableCell className="py-4 font-semibold text-[#5c546a]">{vendor.contactPerson}</TableCell>
+                        <TableCell className="py-4 font-semibold text-[#5c546a]">{vendor.email}</TableCell>
+                        <TableCell className="py-4 font-semibold text-[#5c546a]">{vendor.phone}</TableCell>
+                        <TableCell className="py-4 font-semibold text-[#5c546a]">{vendor.service}</TableCell>
                         <TableCell className="py-4">
                           <Badge className={getVendorStatusBadgeClasses(vendor.status)}>
                             {vendor.status}
