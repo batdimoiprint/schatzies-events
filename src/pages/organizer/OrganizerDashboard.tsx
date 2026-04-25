@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type ChangeEvent } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { fetchDashboardSummary } from '@/api/organizer-dashboard';
@@ -35,62 +35,6 @@ type KpiCardData = {
   textClassName?: string;
   iconImage: string;
 };
-
-const semiAnnualCompletions: MonthlyValue[] = [
-  { month: 'Jan', value: 21 },
-  { month: 'Feb', value: 27 },
-  { month: 'Mar', value: 30 },
-  { month: 'Apr', value: 32 },
-  { month: 'May', value: 37 },
-  { month: 'Jun', value: 39 },
-];
-
-const monthlyStatus: StatusSlice[] = [
-  { label: 'Completed', value: 75, eventCount: 15, color: '#b964ef' },
-  { label: 'Execution', value: 20, eventCount: 4, color: '#ef79b3' },
-  { label: 'Planning', value: 5, eventCount: 1, color: '#f4d03f' },
-];
-
-const upcomingEvents: ListEntry[] = [
-  {
-    rank: 1,
-    title: "Juliana Rox's 18th Birthday",
-    subtitle: 'Package | Client name | Contact',
-    date: '11/21',
-    badgeColor: 'bg-[#db37b4]',
-  },
-  {
-    rank: 2,
-    title: 'AngelaFoundHerRaytone',
-    subtitle: 'Package | Client name | Contact',
-    date: '11/21',
-    badgeColor: 'bg-[#bb2ec4]',
-  },
-  {
-    rank: 3,
-    title: 'AngelaFoundHerRaytone',
-    subtitle: 'Package | Client name | Contact',
-    date: '11/21',
-    badgeColor: 'bg-[#9b24cd]',
-  },
-];
-
-const activeVendors: ListEntry[] = [
-  {
-    rank: 1,
-    title: 'Nice Print Photography',
-    subtitle: 'Contact person | Email | Contact number',
-    date: '11/21',
-    badgeColor: 'bg-[#29bf4c]',
-  },
-  {
-    rank: 2,
-    title: "Sam's Catering Services",
-    subtitle: 'Contact person | Email | Contact number',
-    date: '11/21',
-    badgeColor: 'bg-[#1aa73a]',
-  },
-];
 
 const kpiDataSets: Record<string, KpiCardData[]> = {
   Weekly: [
@@ -400,9 +344,10 @@ function ScheduleListCard({
 
 export function OrganizerDashboard() {
   const navigate = useNavigate();
-  const [semiAnnualData, setSemiAnnualData] = useState<MonthlyValue[]>(semiAnnualCompletions);
-  const [monthlyStatusData, setMonthlyStatusData] = useState<StatusSlice[]>(monthlyStatus);
-  const [upcomingEventsData, setUpcomingEventsData] = useState<ListEntry[]>(upcomingEvents);
+  const [semiAnnualData, setSemiAnnualData] = useState<MonthlyValue[]>([]);
+  const [monthlyStatusData, setMonthlyStatusData] = useState<StatusSlice[]>([]);
+  const [upcomingEventsData, setUpcomingEventsData] = useState<ListEntry[]>([]);
+  const [activeVendorsData, setActiveVendorsData] = useState<ListEntry[]>([]);
 
   useEffect(() => {
     const loadDashboardData = async () => {
@@ -483,6 +428,21 @@ export function OrganizerDashboard() {
           });
           setUpcomingEventsData(mappedEvents);
         }
+
+        // Map Active Vendors List (if provided by the summary API)
+        if (data.activeVendors && Array.isArray(data.activeVendors)) {
+          const badgeColors = ['bg-[#29bf4c]', 'bg-[#1aa73a]', 'bg-[#158f31]'];
+          const mappedVendors = data.activeVendors.map((vendor: any, index: number) => {
+            return {
+              rank: index + 1,
+              title: vendor.name || 'Unknown Vendor',
+              subtitle: `${vendor.contactPerson || 'No Contact'} | ${vendor.service || 'Service'}`,
+              date: vendor.status || 'Active',
+              badgeColor: badgeColors[index % badgeColors.length],
+            };
+          });
+          setActiveVendorsData(mappedVendors);
+        }
       }
     };
 
@@ -521,21 +481,6 @@ export function OrganizerDashboard() {
     () => monthlyStatusData.reduce((sum, slice) => sum + slice.eventCount, 0),
     [monthlyStatusData]
   );
-
-  const yearOptions = useMemo(() => {
-    const centerYear = viewDate.getFullYear();
-    return Array.from({ length: 11 }, (_, index) => centerYear - 5 + index);
-  }, [viewDate]);
-
-  const handleMonthChange = (event: ChangeEvent<HTMLSelectElement>) => {
-    const nextMonth = Number(event.target.value);
-    setViewDate((prev) => new Date(prev.getFullYear(), nextMonth, 1));
-  };
-
-  const handleYearChange = (event: ChangeEvent<HTMLSelectElement>) => {
-    const nextYear = Number(event.target.value);
-    setViewDate((prev) => new Date(nextYear, prev.getMonth(), 1));
-  };
 
   const goToPreviousMonth = () => {
     setViewDate((prev) => new Date(prev.getFullYear(), prev.getMonth() - 1, 1));
@@ -866,31 +811,10 @@ export function OrganizerDashboard() {
             <CardHeader className="py-4 px-6">
               <div className="flex items-center justify-between gap-6">
                 <div className="flex flex-col items-center justify-center w-fit">
-                  <div className="flex items-center gap-2">
-                    <select
-                      aria-label="Select month"
-                      value={viewDate.getMonth()}
-                      onChange={handleMonthChange}
-                      className="rounded-md border border-transparent bg-transparent px-2 py-1 text-lg font-black leading-none text-[#393341] outline-none transition-colors hover:bg-[#f5eff9] focus:border-[#e3d8ed] focus:bg-white"
-                    >
-                      {calendarMonths.map((monthLabel, monthIndex) => (
-                        <option key={monthLabel} value={monthIndex}>
-                          {monthLabel}
-                        </option>
-                      ))}
-                    </select>
-                    <select
-                      aria-label="Select year"
-                      value={viewDate.getFullYear()}
-                      onChange={handleYearChange}
-                      className="rounded-md border border-transparent bg-transparent px-2 py-1 text-lg font-black leading-none text-[#393341] outline-none transition-colors hover:bg-[#f5eff9] focus:border-[#e3d8ed] focus:bg-white"
-                    >
-                      {yearOptions.map((yearValue) => (
-                        <option key={yearValue} value={yearValue}>
-                          {yearValue}
-                        </option>
-                      ))}
-                    </select>
+                  <div className="flex items-center gap-2 px-2">
+                    <span className="text-lg font-black leading-none text-[#393341]">
+                      {calendarMonths[viewDate.getMonth()]} {viewDate.getFullYear()}
+                    </span>
                   </div>
                   <p className="mt-1 text-xs font-semibold text-[#c5bdd1] text-center">
                     {selectedDate
@@ -1021,7 +945,7 @@ export function OrganizerDashboard() {
           />
           <ScheduleListCard
             title="Active Outsourced Vendors"
-            entries={activeVendors}
+            entries={activeVendorsData}
             onViewListClick={() =>
               navigate('/organizer/event-manager', {
                 state: { activeTab: 'Vendor' },

@@ -1,15 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useLocation, useOutletContext } from 'react-router-dom';
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+import { Card, CardContent } from '@/components/ui/card';
 import {
   Table,
   TableBody,
@@ -20,7 +12,6 @@ import {
 } from '@/components/ui/table';
 import type { OrganizerLayoutOutletContext } from '@/components/layouts/OrganizerLayout';
 import {
-  createEvent,
   deleteEvent,
   getEventManagerEvents,
   updateEvent,
@@ -28,35 +19,18 @@ import {
 } from '@/api/events';
 import { getVendorsByEventId, type EventManagerVendor } from '@/api/vendors';
 
-type EventStatus = EventManagerEvent['status'];
 type VendorStatus = EventManagerVendor['status'];
-
-const tabs: Array<'Events' | 'Vendor'> = ['Events', 'Vendor'];
-
-function getStatusBadgeClasses(status: EventStatus) {
-  if (status === 'Completed') return 'bg-[#e8d5f2] text-[#7c3aed]';
-  if (status === 'Pending') return 'bg-[#fff5db] text-[#7a5a11]';
-  return 'bg-[#ffe8ef] text-[#8f1f4a]';
-}
 
 function getVendorStatusBadgeClasses(status: VendorStatus) {
   if (status === 'Active') return 'bg-[#e6f4ea] text-[#1e7e34]';
   return 'bg-[#fce8e6] text-[#c5221f]';
 }
 
-function getTabButtonClasses(isActive: boolean) {
-  if (isActive) {
-    return 'bg-white text-[#2e2837] shadow-sm ring-1 ring-[#e9e1f1]';
-  }
-
-  return 'bg-transparent text-[#786e89] hover:bg-white/70';
-}
-
 export function EventManagerPage() {
   const location = useLocation();
   const outletContext = useOutletContext<OrganizerLayoutOutletContext | undefined>();
   const searchTerm = outletContext?.searchTerm ?? '';
-  const [activeTab, setActiveTab] = useState<'Events' | 'Vendor'>(
+  const [activeTab, setActiveTab] = useState<'Events' | 'Vendor' | 'Workers'>(
     location.state?.activeTab || 'Events'
   );
   const [events, setEvents] = useState<EventManagerEvent[]>([]);
@@ -77,11 +51,11 @@ export function EventManagerPage() {
         if (current && eventRows.some((event) => event.id === current)) {
           return current;
         }
-
         return eventRows[0]?.id || '';
       });
     } catch {
       setError('Unable to load events right now.');
+      setEvents([]);
     } finally {
       setIsLoading(false);
     }
@@ -108,36 +82,6 @@ export function EventManagerPage() {
   useEffect(() => {
     void fetchVendors(selectedEventId);
   }, [fetchVendors, selectedEventId]);
-
-  const handleCreateEvent = useCallback(async () => {
-    const title = window.prompt('Enter event title');
-    if (!title?.trim()) {
-      return;
-    }
-
-    const startDateInput = window.prompt('Enter start date and time (YYYY-MM-DDTHH:mm)', '');
-    if (!startDateInput?.trim()) {
-      return;
-    }
-
-    const startDate = startDateInput.includes('T')
-      ? `${startDateInput}:00.000Z`
-      : `${startDateInput}T09:00:00.000Z`;
-
-    setIsMutating(true);
-    setError('');
-    try {
-      await createEvent({
-        title: title.trim(),
-        startDate,
-      });
-      await fetchEvents();
-    } catch {
-      setError('Unable to create event. Check required fields and permissions.');
-    } finally {
-      setIsMutating(false);
-    }
-  }, [fetchEvents]);
 
   const handleUpdateEventTitle = useCallback(
     async (event: EventManagerEvent) => {
@@ -201,133 +145,41 @@ export function EventManagerPage() {
           event.status,
           String(event.rsvp),
         ];
-
         return searchableFields.some((field) => field.toLowerCase().includes(normalizedSearchTerm));
       });
 
       return { activeTab: 'Events' as const, data };
     }
 
-    if (!normalizedSearchTerm) {
-      return { activeTab: 'Vendor' as const, data: vendors };
+    if (activeTab === 'Vendor') {
+      if (!normalizedSearchTerm) {
+        return { activeTab: 'Vendor' as const, data: vendors };
+      }
+
+      const data = vendors.filter((vendor) => {
+        const searchableFields = [
+          vendor.name,
+          vendor.contactPerson,
+          vendor.email,
+          vendor.phone,
+          vendor.service,
+          vendor.status,
+        ];
+        return searchableFields.some((field) => field.toLowerCase().includes(normalizedSearchTerm));
+      });
+
+      return { activeTab: 'Vendor' as const, data };
     }
 
-    const data = vendors.filter((vendor) => {
-      const searchableFields = [
-        vendor.name,
-        vendor.contactPerson,
-        vendor.email,
-        vendor.phone,
-        vendor.service,
-        vendor.status,
-      ];
-
-      return searchableFields.some((field) => field.toLowerCase().includes(normalizedSearchTerm));
-    });
-
-    return { activeTab: 'Vendor' as const, data };
+    return { activeTab: 'Workers' as const, data: [] as never[] };
   }, [activeTab, events, searchTerm, vendors]);
 
+  const [rsvpModalEvent, setRsvpModalEvent] = useState<EventManagerEvent | null>(null);
+  const [isActionsOpen, setIsActionsOpen] = useState(false);
+  const [isStatusOpen, setIsStatusOpen] = useState(false);
+
   return (
-    <div className="space-y-5 p-6 font-sans">
-      <Card className="border-0 bg-linear-to-r from-[#fff6fb] via-[#f7f3ff] to-[#eef8ff] shadow-md ring-1 ring-[#efe6f6]">
-        <CardHeader>
-          <CardTitle className="text-xl font-black tracking-tight text-[#2e2837]">
-            Event Manager
-          </CardTitle>
-          <CardDescription className="text-[#685f79]">
-            Track events and vendors in one polished workspace.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
-            <div className="rounded-xl bg-white/85 p-3 ring-1 ring-[#ece2f6] backdrop-blur-sm">
-              <p className="text-[11px] font-semibold uppercase tracking-wide text-[#8d82a0]">
-                Events
-              </p>
-              <p className="text-2xl font-black text-[#2e2837]">{events.length}</p>
-            </div>
-            <div className="rounded-xl bg-white/85 p-3 ring-1 ring-[#ece2f6] backdrop-blur-sm">
-              <p className="text-[11px] font-semibold uppercase tracking-wide text-[#8d82a0]">
-                Vendors
-              </p>
-              <p className="text-2xl font-black text-[#2e2837]">{vendors.length}</p>
-            </div>
-            <div className="rounded-xl bg-white/85 p-3 ring-1 ring-[#ece2f6] backdrop-blur-sm">
-              <p className="text-[11px] font-semibold uppercase tracking-wide text-[#8d82a0]">
-                Search
-              </p>
-              <p className="truncate text-sm font-semibold text-[#2e2837]">
-                {searchTerm.trim() || 'No active search'}
-              </p>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      <div className="flex items-center justify-between">
-        <h2 className="text-lg font-bold text-[#2e2837]">Table List</h2>
-      </div>
-
-      <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl bg-[#f5f1fa] p-2 ring-1 ring-[#ece4f4]">
-        <div className="flex flex-wrap gap-2 rounded-xl bg-[#ede6f6] p-1">
-          {tabs.map((tab) => {
-            const isActive = tab === activeTab;
-            return (
-              <Button
-                key={tab}
-                type="button"
-                size="sm"
-                variant="ghost"
-                onClick={() => setActiveTab(tab)}
-                className={`rounded-lg px-4 transition-all ${getTabButtonClasses(isActive)}`}
-              >
-                {tab}
-              </Button>
-            );
-          })}
-        </div>
-        <div className="flex gap-2">
-          <Button
-            disabled={isMutating}
-            onClick={() => void handleCreateEvent()}
-            className="h-9 rounded-xl bg-linear-to-r from-[#f051a3] to-[#8f1fd0] px-4 text-white shadow-md shadow-[#c26adf4d] transition-shadow hover:shadow-lg disabled:opacity-60"
-          >
-            <img src="/Pictures/organizerpics/Actions.png" alt="Actions" className="h-3 w-3" />
-            Add Event
-          </Button>
-          <Button
-            disabled={isLoading}
-            onClick={() => void fetchEvents()}
-            variant="outline"
-            className="h-9 rounded-xl border-[#dacde8] bg-white px-4 text-[#4f4462] hover:bg-[#f8f5fc] disabled:opacity-60"
-          >
-            <img src="/Pictures/organizerpics/All Status.png" alt="Refresh" className="h-3 w-3" />
-            Refresh
-          </Button>
-        </div>
-      </div>
-
-      {activeTab === 'Vendor' && events.length > 0 ? (
-        <div className="flex items-center gap-3 rounded-xl bg-[#f8f4fc] px-3 py-2 ring-1 ring-[#ece4f4]">
-          <label htmlFor="event-vendor-filter" className="text-sm font-semibold text-[#5f556f]">
-            Selected event
-          </label>
-          <Select value={selectedEventId} onValueChange={setSelectedEventId}>
-            <SelectTrigger id="event-vendor-filter" className="h-8 min-w-64 bg-white">
-              <SelectValue placeholder="Pick event" />
-            </SelectTrigger>
-            <SelectContent>
-              {events.map((event) => (
-                <SelectItem key={event.id} value={event.id}>
-                  {event.title}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-      ) : null}
-
+    <div className="relative space-y-4 bg-transparent font-sans">
       {error ? (
         <Card className="border-0 bg-[#fff1f2] py-3 ring-1 ring-[#fecdd3]">
           <CardContent>
@@ -336,129 +188,390 @@ export function EventManagerPage() {
         </Card>
       ) : null}
 
-      <Card className="border-0 bg-white shadow-md ring-1 ring-[#ebe6f1]">
-        <CardHeader className="border-b border-[#f0eaf6]">
-          <div className="flex items-center justify-between">
-            <div>
-              <CardTitle className="text-sm font-bold text-[#2e2837]">
-                {activeTab === 'Events' ? 'Events Overview' : 'Vendor Directory'}
-              </CardTitle>
-              <CardDescription>
-                {activeTab === 'Events'
-                  ? 'Manage event details, status, and quick actions.'
-                  : 'Monitor assigned vendors for the selected event.'}
-              </CardDescription>
-            </div>
-            <Badge className="bg-[#f3edfc] text-[#6f4eb8] ring-1 ring-[#e5d7fa]">
-              {filteredData.data.length} records
-            </Badge>
+      {/* Main Content Area */}
+      <div className="flex-1 flex flex-col rounded-xl border border-[#eef0f4] bg-white p-6 shadow-sm overflow-hidden min-h-[calc(100vh-260px)]">
+        {/* Controls Row */}
+        <div className="mb-4 flex flex-wrap items-center justify-between border-b border-[#f1eef5] pb-0">
+          {/* Folder Tabs */}
+          <div className="flex gap-1">
+            {['Events', 'Vendor', 'Workers'].map((tabLabel) => {
+              const internalTab = tabLabel as 'Events' | 'Vendor' | 'Workers';
+              const isActive = activeTab === internalTab;
+
+              return (
+                <button
+                  key={tabLabel}
+                  type="button"
+                  onClick={() => setActiveTab(internalTab)}
+                  className={`relative top-px z-10 rounded-t-lg px-6 py-2.5 text-sm font-bold transition-colors ${
+                    isActive
+                      ? 'border border-[#f1eef5] border-b-white bg-white text-[#302a3a]'
+                      : 'border border-transparent bg-[#faf9fc] text-[#a49db4] hover:bg-[#f3f0f7]'
+                  }`}
+                >
+                  {tabLabel}
+                </button>
+              );
+            })}
           </div>
-        </CardHeader>
-        <CardContent>
-          <Table className="text-sm">
+
+          {/* Actions & Status Buttons */}
+          <div className="mb-2 flex items-center gap-3">
+            {/* Custom Actions Dropdown */}
+            <div className="relative">
+              <button
+                type="button"
+                disabled={isMutating}
+                onClick={() => {
+                  setIsActionsOpen(!isActionsOpen);
+                  setIsStatusOpen(false);
+                }}
+                className="flex h-9 items-center gap-2 rounded-full bg-linear-to-r from-[#df1b8b] to-[#9f1baf] px-5 font-sans text-xs font-bold text-white shadow-sm transition-all hover:shadow-md disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                Actions
+                <svg
+                  width="10"
+                  height="10"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="3"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <path d="m6 9 6 6 6-6" />
+                </svg>
+              </button>
+              {isActionsOpen && (
+                <div className="absolute right-0 z-20 mt-2 w-36 overflow-hidden rounded-xl border border-[#f1eef5] bg-white py-1 shadow-lg">
+                  {activeTab === 'Events' && selectedEventId && (
+                    <>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setIsActionsOpen(false);
+                          const targetEvent = events.find((e) => e.id === selectedEventId);
+                          if (targetEvent) void handleUpdateEventTitle(targetEvent);
+                        }}
+                        className="w-full px-4 py-2.5 text-left text-xs font-bold text-[#5c546a] transition-colors hover:bg-[#faf9fc] hover:text-[#df1b8b]"
+                      >
+                        Edit Event
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setIsActionsOpen(false);
+                          const targetEvent = events.find((e) => e.id === selectedEventId);
+                          if (targetEvent) void handleDeleteEvent(targetEvent);
+                        }}
+                        className="w-full px-4 py-2.5 text-left text-xs font-bold text-[#5c546a] transition-colors hover:bg-[#faf9fc] hover:text-[#c33274]"
+                      >
+                        Archive Event
+                      </button>
+                    </>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsActionsOpen(false);
+                      void fetchEvents();
+                    }}
+                    className="w-full px-4 py-2.5 text-left text-xs font-bold text-[#5c546a] transition-colors hover:bg-[#faf9fc] hover:text-[#df1b8b]"
+                  >
+                    Refresh Data
+                  </button>
+                </div>
+              )}
+            </div>
+
+            {/* Custom Status Dropdown */}
+            <div className="relative">
+              <button
+                type="button"
+                onClick={() => {
+                  setIsStatusOpen(!isStatusOpen);
+                  setIsActionsOpen(false);
+                }}
+                className="flex h-9 items-center gap-2 rounded-full bg-[#9f1baf] px-5 font-sans text-xs font-bold text-white shadow-sm transition-all hover:shadow-md"
+              >
+                Status
+                <svg
+                  width="10"
+                  height="10"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="3"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <path d="m6 9 6 6 6-6" />
+                </svg>
+              </button>
+              {isStatusOpen && (
+                <div className="absolute right-0 z-20 mt-2 w-32 overflow-hidden rounded-xl border border-[#f1eef5] bg-white py-1 shadow-lg">
+                  <button
+                    type="button"
+                    onClick={() => setIsStatusOpen(false)}
+                    className="flex w-full items-center gap-2 px-4 py-2.5 text-left text-xs font-bold text-[#5c546a] hover:bg-[#faf9fc] hover:text-[#df1b8b]"
+                  >
+                    <span className="h-1.5 w-1.5 rounded-full bg-[#e2b020]"></span>
+                    Planning
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setIsStatusOpen(false)}
+                    className="flex w-full items-center gap-2 px-4 py-2.5 text-left text-xs font-bold text-[#5c546a] hover:bg-[#faf9fc] hover:text-[#df1b8b]"
+                  >
+                    <span className="h-1.5 w-1.5 rounded-full bg-[#df1b8b]"></span>
+                    Execution
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setIsStatusOpen(false)}
+                    className="flex w-full items-center gap-2 px-4 py-2.5 text-left text-xs font-bold text-[#5c546a] hover:bg-[#faf9fc] hover:text-[#df1b8b]"
+                  >
+                    <span className="h-1.5 w-1.5 rounded-full bg-[#8637c3]"></span>
+                    Completed
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Table */}
+        <div className="flex-1 overflow-auto rounded-lg">
+          <Table className="w-full text-xs relative">
             <TableHeader>
               {activeTab === 'Events' ? (
-                <TableRow className="border-[#efe8f6] bg-[#fcfbff]">
-                  <TableHead className="px-3 font-semibold text-[#5c536d]">Title</TableHead>
-                  <TableHead className="px-3 font-semibold text-[#5c536d]">Date</TableHead>
-                  <TableHead className="px-3 font-semibold text-[#5c536d]">Time</TableHead>
-                  <TableHead className="px-3 font-semibold text-[#5c536d]">Client</TableHead>
-                  <TableHead className="px-3 font-semibold text-[#5c536d]">Type</TableHead>
-                  <TableHead className="px-3 font-semibold text-[#5c536d]">Package</TableHead>
-                  <TableHead className="px-3 font-semibold text-[#5c536d]">Venue</TableHead>
-                  <TableHead className="px-3 font-semibold text-[#5c536d]">RSVP</TableHead>
-                  <TableHead className="px-3 font-semibold text-[#5c536d]">Status</TableHead>
-                  <TableHead className="px-3 font-semibold text-[#5c536d]">Actions</TableHead>
+                <TableRow className="border-b-2 border-[#f1eef5] hover:bg-transparent">
+                  <TableHead className="h-10 font-black text-[#211a2f]">Title</TableHead>
+                  <TableHead className="h-10 font-black text-[#211a2f]">Date</TableHead>
+                  <TableHead className="h-10 font-black text-[#211a2f]">Time</TableHead>
+                  <TableHead className="h-10 font-black text-[#211a2f]">Client</TableHead>
+                  <TableHead className="h-10 font-black text-[#211a2f]">Type</TableHead>
+                  <TableHead className="h-10 font-black text-[#211a2f]">Package</TableHead>
+                  <TableHead className="h-10 font-black text-[#211a2f]">Venue</TableHead>
+                  <TableHead className="h-10 font-black text-[#211a2f]">RSVP</TableHead>
+                  <TableHead className="h-10 font-black text-[#211a2f]">Status</TableHead>
+                </TableRow>
+              ) : activeTab === 'Vendor' ? (
+                <TableRow className="border-b-2 border-[#f1eef5] hover:bg-transparent">
+                  <TableHead className="h-10 font-black text-[#211a2f]">Name</TableHead>
+                  <TableHead className="h-10 font-black text-[#211a2f]">Contact Person</TableHead>
+                  <TableHead className="h-10 font-black text-[#211a2f]">Email</TableHead>
+                  <TableHead className="h-10 font-black text-[#211a2f]">Phone</TableHead>
+                  <TableHead className="h-10 font-black text-[#211a2f]">Service</TableHead>
+                  <TableHead className="h-10 font-black text-[#211a2f]">Status</TableHead>
                 </TableRow>
               ) : (
-                <TableRow className="border-[#efe8f6] bg-[#fcfbff]">
-                  <TableHead className="px-3 font-semibold text-[#5c536d]">Name</TableHead>
-                  <TableHead className="px-3 font-semibold text-[#5c536d]">
-                    Contact Person
-                  </TableHead>
-                  <TableHead className="px-3 font-semibold text-[#5c536d]">Email</TableHead>
-                  <TableHead className="px-3 font-semibold text-[#5c536d]">Phone</TableHead>
-                  <TableHead className="px-3 font-semibold text-[#5c536d]">Service</TableHead>
-                  <TableHead className="px-3 font-semibold text-[#5c536d]">Status</TableHead>
+                <TableRow className="border-b-2 border-[#f1eef5] hover:bg-transparent">
+                  <TableHead className="h-10 font-black text-[#211a2f]">Worker Name</TableHead>
+                  <TableHead className="h-10 font-black text-[#211a2f]">Role</TableHead>
+                  <TableHead className="h-10 font-black text-[#211a2f]">Contact</TableHead>
+                  <TableHead className="h-10 font-black text-[#211a2f]">Email</TableHead>
+                  <TableHead className="h-10 font-black text-[#211a2f]">Status</TableHead>
                 </TableRow>
               )}
             </TableHeader>
             <TableBody>
               {filteredData.activeTab === 'Events'
                 ? filteredData.data.map((event) => (
-                  <TableRow key={event.id} className="border-[#f2edf8]">
-                    <TableCell className="px-3 font-medium text-[#2e2837]">
-                      {event.title}
-                    </TableCell>
-                    <TableCell className="px-3 text-[#514a61]">{event.date}</TableCell>
-                    <TableCell className="px-3 text-[#514a61]">{event.timeSlot}</TableCell>
-                    <TableCell className="px-3 text-[#514a61]">{event.client}</TableCell>
-                    <TableCell className="px-3 text-[#514a61]">{event.type}</TableCell>
-                    <TableCell className="px-3 text-[#514a61]">{event.package}</TableCell>
-                    <TableCell className="px-3 text-[#514a61]">{event.venue}</TableCell>
-                    <TableCell className="px-3 text-[#514a61]">{event.rsvp}</TableCell>
-                    <TableCell className="px-3">
-                      <Badge className={getStatusBadgeClasses(event.status)}>
-                        {event.status}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="px-3">
-                      <div className="flex gap-2">
-                        <Button
-                          type="button"
-                          size="sm"
-                          variant="outline"
-                          disabled={isMutating}
-                          onClick={() => void handleUpdateEventTitle(event)}
-                          className="h-7 rounded-lg border-[#d6cee2] px-3"
+                    <TableRow
+                      key={event.id}
+                      onClick={() => setSelectedEventId(event.id)}
+                      className={`group transition-colors border-b border-[#f6f4f9] ${
+                        selectedEventId === event.id
+                          ? 'bg-[#faf9fc] ring-1 ring-inset ring-[#e1d5eb]'
+                          : 'hover:bg-[#faf9fc]'
+                      }`}
+                    >
+                      <TableCell className="py-4 font-bold text-[#5c546a]">{event.title}</TableCell>
+                      <TableCell className="py-4 font-semibold text-[#5c546a]">{event.date}</TableCell>
+                      <TableCell className="py-4 font-semibold text-[#5c546a]">{event.timeSlot}</TableCell>
+                      <TableCell className="py-4 font-semibold text-[#5c546a]">{event.client}</TableCell>
+                      <TableCell className="py-4 font-semibold text-[#5c546a]">{event.type}</TableCell>
+                      <TableCell className="py-4 font-semibold text-[#5c546a]">{event.package}</TableCell>
+                      <TableCell className="py-4 font-semibold text-[#5c546a]">{event.venue}</TableCell>
+                      <TableCell className="py-4 font-bold text-[#5c546a]">
+                        <div className="flex items-center gap-1.5">
+                          {event.rsvp}
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setRsvpModalEvent(event);
+                            }}
+                            className="text-[9px] font-bold uppercase tracking-wider text-[#760CB4] hover:brightness-125 hover:underline"
+                          >
+                            View RSVP
+                          </button>
+                        </div>
+                      </TableCell>
+                      <TableCell className="py-4">
+                        <span
+                          className={`inline-flex items-center gap-1.5 rounded-sm px-3 py-1 text-[10px] font-black tracking-wide ${
+                            event.status === 'Completed'
+                              ? 'bg-[#f4e6fc] text-[#8637c3]'
+                              : event.status === 'Pending'
+                                ? 'bg-[#fff5d3] text-[#b68c17]'
+                                : 'bg-[#ffe6f1] text-[#c62876]'
+                          }`}
                         >
-                          Edit
-                        </Button>
-                        <Button
-                          type="button"
-                          size="sm"
-                          disabled={isMutating}
-                          onClick={() => void handleDeleteEvent(event)}
-                          className="h-7 rounded-lg bg-[#ffe5ee] px-3 text-[#8f1f4a] hover:bg-[#ffd8e7]"
-                        >
-                          Delete
-                        </Button>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))
-                : filteredData.data.map((vendor) => (
-                  <TableRow key={vendor.id} className="border-[#f2edf8]">
-                    <TableCell className="px-3 font-medium text-[#2e2837]">
-                      {vendor.name}
-                    </TableCell>
-                    <TableCell className="px-3 text-[#514a61]">{vendor.contactPerson}</TableCell>
-                    <TableCell className="px-3 text-[#514a61]">{vendor.email}</TableCell>
-                    <TableCell className="px-3 text-[#514a61]">{vendor.phone}</TableCell>
-                    <TableCell className="px-3 text-[#514a61]">{vendor.service}</TableCell>
-                    <TableCell className="px-3">
-                      <Badge className={getVendorStatusBadgeClasses(vendor.status)}>
-                        {vendor.status}
-                      </Badge>
-                    </TableCell>
-                  </TableRow>
-                ))}
+                          <span
+                            className={`h-1.5 w-1.5 rounded-full ${
+                              event.status === 'Completed'
+                                ? 'bg-[#8637c3]'
+                                : event.status === 'Pending'
+                                  ? 'bg-[#e2b020]'
+                                  : 'bg-[#df1b8b]'
+                            }`}
+                          ></span>
+                          {event.status === 'Pending' ? 'PLANNING' : event.status.toUpperCase()}
+                        </span>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                : filteredData.activeTab === 'Vendor'
+                  ? filteredData.data.map((vendor) => (
+                      <TableRow
+                        key={vendor.id}
+                        className="border-b border-[#f6f4f9] hover:bg-[#faf9fc]"
+                      >
+                        <TableCell className="py-4 font-bold text-[#5c546a]">{vendor.name}</TableCell>
+                        <TableCell className="py-4 font-semibold text-[#5c546a]">{vendor.contactPerson}</TableCell>
+                        <TableCell className="py-4 font-semibold text-[#5c546a]">{vendor.email}</TableCell>
+                        <TableCell className="py-4 font-semibold text-[#5c546a]">{vendor.phone}</TableCell>
+                        <TableCell className="py-4 font-semibold text-[#5c546a]">{vendor.service}</TableCell>
+                        <TableCell className="py-4">
+                          <Badge className={getVendorStatusBadgeClasses(vendor.status)}>
+                            {vendor.status}
+                          </Badge>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  : null}
               {filteredData.data.length === 0 ? (
                 <TableRow>
                   <TableCell
-                    colSpan={activeTab === 'Events' ? 10 : 6}
+                    colSpan={activeTab === 'Events' ? 9 : activeTab === 'Vendor' ? 6 : 5}
                     className="py-12 text-center text-sm text-[#8f879f]"
                   >
                     {isLoading
                       ? 'Loading data...'
-                      : `No ${activeTab.toLowerCase()} found for "${searchTerm.trim()}".`}
+                      : activeTab === 'Events'
+                        ? 'No events found.'
+                        : activeTab === 'Vendor'
+                          ? 'No vendors found.'
+                          : 'No workers found.'}
                   </TableCell>
                 </TableRow>
               ) : null}
             </TableBody>
           </Table>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
+
+      {/* RSVP Modal Overlay */}
+      {rsvpModalEvent && (
+        <div className="fixed inset-0 z-1000 flex min-h-full items-center justify-center bg-[#1a1423]/60 backdrop-blur-md p-4 overflow-auto">
+          <div className="relative w-full max-w-md animate-in zoom-in-95 fade-in rounded-2xl bg-white p-6 shadow-2xl duration-200">
+            {/* Close Button */}
+            <button
+              type="button"
+              onClick={() => setRsvpModalEvent(null)}
+              className="absolute right-4 top-4 text-[#a69eb5] hover:text-[#2d2834]"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="20"
+                height="20"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <line x1="18" y1="6" x2="6" y2="18"></line>
+                <line x1="6" y1="6" x2="18" y2="18"></line>
+              </svg>
+            </button>
+
+            <div className="mb-6 text-center">
+              <h2 className="text-2xl font-black text-[#2e2837]">RSVP</h2>
+              <p className="text-xs font-semibold text-[#7c758d]">Live counts of attendees</p>
+            </div>
+
+            <div className="mb-6 flex gap-4">
+              {/* Left Box */}
+              <div className="flex-1 rounded-xl border border-[#e1d5eb] bg-[#F6E7FF] p-4 text-center">
+                <p className="mb-2 text-[10px] font-black uppercase tracking-widest text-[#2e2837]">
+                  Live Headcount
+                </p>
+                <div className="mb-3 flex justify-center gap-1.5">
+                  {String(rsvpModalEvent.rsvp)
+                    .padStart(3, '0')
+                    .split('')
+                    .map((digit, i) => (
+                      <div
+                        key={i}
+                        className="flex h-14 w-10 items-center justify-center rounded border border-[#d4c5e3] bg-white text-4xl font-black text-[#1a1423] shadow-sm"
+                      >
+                        {digit}
+                      </div>
+                    ))}
+                </div>
+                <p className="text-[11px] font-bold text-[#625974]">
+                  Expected Attendees: <span className="font-semibold text-[#8b839c]">80 pax</span>
+                </p>
+              </div>
+
+              {/* Right Info */}
+              <div className="flex flex-1 flex-col justify-center gap-1 text-[11px] font-bold text-[#352f44]">
+                <p>DETAILS:</p>
+                <p className="font-semibold text-[#716885]">
+                  FINAL HEADCOUNT: {rsvpModalEvent.rsvp}
+                </p>
+                <p className="font-semibold text-[#716885]">ABSENTEES: 0</p>
+              </div>
+            </div>
+
+            <div className="overflow-hidden rounded-xl border border-[#eae4f1]">
+              <h3 className="border-b border-[#eae4f1] bg-white py-2 text-center text-[10px] font-black uppercase tracking-widest text-[#2e2837]">
+                Names of Present Attendees
+              </h3>
+              <div className="max-h-48 overflow-y-auto bg-white p-4">
+                <table className="w-full text-[11px]">
+                  <thead>
+                    <tr className="border-b border-[#f3eff7] text-left font-semibold text-[#8e879c]">
+                      <th className="pb-2 font-semibold">Name</th>
+                      <th className="pb-2 text-right font-semibold">Time</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {[
+                      'Jeremy Urmenita',
+                      'Diana Rose Urmenita',
+                      'Meryl C. Alcantra',
+                      'Stefani Vienne R. Carcer',
+                      'Aleah Missy Cabria',
+                    ].map((name, i) => (
+                      <tr key={i} className="border-b border-[#f9f7fb] last:border-0">
+                        <td className="py-2.5 font-bold text-[#453e54]">
+                          {i + 1}. {name}
+                        </td>
+                        <td className="py-2.5 text-right font-semibold text-[#8e879c]">00:00 AM</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
