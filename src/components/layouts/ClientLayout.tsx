@@ -1,6 +1,7 @@
 import { Outlet, Navigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { ClientSidebar } from '@/components/ClientSidebar';
+import { ClientTopBar } from '@/components/client/ClientTopBar';
 
 export function ClientLayout() {
   const { user, isAuthenticated, isLoading } = useAuth();
@@ -23,6 +24,7 @@ export function ClientLayout() {
         <ClientSidebar />
 
         <div className="flex min-h-0 flex-1 flex-col">
+          <ClientTopBar />
           <main className="min-h-0 flex-1 overflow-y-auto px-4 py-6 md:px-8">
             <Outlet />
           </main>

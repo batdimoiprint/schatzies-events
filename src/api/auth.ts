@@ -1,13 +1,17 @@
 import axiosInstance from './axios-instance';
 import type { User } from '@/types/auth';
 
-export const login = async (email: string, password: string): Promise<number> => {
+export const login = async (email: string, password: string): Promise<User | null> => {
   const response = await axiosInstance.post('/auth/login', {
     email,
     password,
   });
 
-  return response.status;
+  if (response.data && response.data.user) {
+    return response.data.user;
+  }
+
+  return null;
 };
 
 export const verifyToken = async (): Promise<User | null> => {

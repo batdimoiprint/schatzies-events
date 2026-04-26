@@ -13,6 +13,7 @@ export interface EventManagerEvent {
   venue: string;
   rsvp: number;
   status: EventStatus;
+  clientId: string;
 }
 
 interface BackendEvent {
@@ -74,7 +75,6 @@ function formatDate(dateValue?: string): string {
 function formatTimeRange(startDate?: string, endDate?: string): string {
   const start = startDate ? new Date(startDate) : null;
   const end = endDate ? new Date(endDate) : null;
-
   if (!start || Number.isNaN(start.getTime())) return '-';
 
   const startLabel = start.toLocaleTimeString('en-US', {
@@ -95,7 +95,9 @@ function formatTimeRange(startDate?: string, endDate?: string): string {
 }
 
 function mapEventStatus(status?: string): EventStatus {
-  const normalized = String(status || '').trim().toLowerCase();
+  const normalized = String(status || '')
+    .trim()
+    .toLowerCase();
 
   if (normalized === 'completed' || normalized === 'confirmed') {
     return 'Completed';
@@ -108,7 +110,10 @@ function mapEventStatus(status?: string): EventStatus {
   return 'Pending';
 }
 
-function mapToManagerRow(baseEvent: BackendEvent, details?: BackendEventDetails): EventManagerEvent {
+function mapToManagerRow(
+  baseEvent: BackendEvent,
+  details?: BackendEventDetails
+): EventManagerEvent {
   const startDate = details?.dateStart || baseEvent.startDate || baseEvent.eventDate;
   const endDate = details?.dateEnd || baseEvent.endDate;
   const packageName = details?.package?.name || baseEvent.eventPackage || '-';
@@ -125,6 +130,7 @@ function mapToManagerRow(baseEvent: BackendEvent, details?: BackendEventDetails)
     venue: baseEvent.venue || '-',
     rsvp: Number(details?.headcount?.expectedAttendee || 0),
     status: mapEventStatus(baseEvent.status),
+    clientId: baseEvent.clientId || '',
   };
 }
 
@@ -162,7 +168,10 @@ export async function createEvent(payload: CreateEventPayload): Promise<BackendE
   return response.data.event;
 }
 
-export async function updateEvent(eventId: string, payload: UpdateEventPayload): Promise<BackendEvent> {
+export async function updateEvent(
+  eventId: string,
+  payload: UpdateEventPayload
+): Promise<BackendEvent> {
   const response = await axiosInstance.put(`/events/${eventId}`, payload);
   return response.data.event;
 }

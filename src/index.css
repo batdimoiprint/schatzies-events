@@ -5,6 +5,10 @@
 
 @custom-variant dark (&:is(.dark *));
 
+html {
+  scroll-behavior: smooth;
+}
+
 html,
 body {
   overflow-x: hidden;
@@ -442,6 +446,17 @@ body {
   }
 }
 
+@keyframes underline-slide {
+  from {
+    transform: scaleX(0);
+    transform-origin: left;
+  }
+  to {
+    transform: scaleX(1);
+    transform-origin: left;
+  }
+}
+
 @keyframes gradient-slow {
   0% {
     opacity: 0.4;
@@ -452,6 +467,19 @@ body {
   100% {
     opacity: 0.4;
   }
+}
+
+@keyframes stroke-animation {
+  0% {
+    stroke-dashoffset: 150;
+  }
+  100% {
+    stroke-dashoffset: -480;
+  }
+}
+
+.animate-stroke {
+  animation: stroke-animation 1s ease-in-out forwards;
 }
 
 .animate-fade-in {
@@ -496,6 +524,10 @@ body {
 
 .animation-delay-600 {
   animation-delay: 600ms;
+}
+
+.animation-delay-800 {
+  animation-delay: 800ms;
 }
 
 .scroll-reveal {

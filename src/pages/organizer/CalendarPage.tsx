@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { FormEvent } from 'react';
 import { ChevronLeft, ChevronRight, Filter, Plus } from 'lucide-react';
+import { getCalendarEntries, createCalendarEntry } from '@/api/calendar';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -123,12 +124,13 @@ function toDateKey(date: Date): string {
   return `${year}-${month}-${day}`;
 }
 
-function parseDateKey(dateKey: string): Date {
-  const [year, month, day] = dateKey.split('-').map((value) => Number(value));
+function parseDateKey(dateKey?: string): Date {
+  if (!dateKey) return new Date();
+  const parts = dateKey.split('-');
+  if (parts.length !== 3) return new Date();
 
-  if (!year || !month || !day) {
-    return new Date();
-  }
+  const [year, month, day] = parts.map(Number);
+  if (!year || !month || !day) return new Date();
 
   return new Date(year, month - 1, day);
 }
@@ -161,7 +163,9 @@ function buildWeeklyViewDays(anchorDate: Date): Date[] {
 }
 
 function compareEntriesByTime(a: CalendarEntry, b: CalendarEntry): number {
-  return a.startTime.localeCompare(b.startTime);
+  const timeA = a.startTime || '';
+  const timeB = b.startTime || '';
+  return timeA.localeCompare(timeB);
 }
 
 function toDateTimeValue(dateKey: string, time: string): number {
@@ -171,9 +175,10 @@ function toDateTimeValue(dateKey: string, time: string): number {
   return new Date(date.getFullYear(), date.getMonth(), date.getDate(), hours, minutes).getTime();
 }
 
-function getDateKeysInRange(startDateKey: string, endDateKey: string): string[] {
+function getDateKeysInRange(startDateKey?: string, endDateKey?: string): string[] {
+  if (!startDateKey) return [];
   const start = parseDateKey(startDateKey);
-  const end = parseDateKey(endDateKey);
+  const end = parseDateKey(endDateKey || startDateKey);
 
   if (end < start) {
     return [startDateKey];
@@ -195,54 +200,19 @@ function formatDateKeyShort(dateKey: string): string {
   return shortDateFormatter.format(parseDateKey(dateKey));
 }
 
-function createEntryId(): string {
-  return `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+function formatTime12Hour(time24?: string): string {
+  if (!time24) return '12:00 AM';
+  const [h, m] = time24.split(':');
+  let hours = parseInt(h, 10);
+  if (isNaN(hours)) return time24;
+  const ampm = hours >= 12 ? 'PM' : 'AM';
+  hours = hours % 12;
+  hours = hours || 12; // convert 0 to 12
+  return `${String(hours).padStart(2, '0')}:${m || '00'} ${ampm}`;
 }
 
-function buildInitialEntries(): CalendarEntry[] {
-  const today = new Date();
-  const first = addDays(today, 1);
-  const second = addDays(today, 3);
-  const third = addDays(today, 7);
-
-  return [
-    {
-      id: createEntryId(),
-      title: 'Client discovery call',
-      startDateKey: toDateKey(first),
-      startTime: '09:00',
-      endDateKey: toDateKey(first),
-      endTime: '10:00',
-      label: 'Meeting',
-      location: 'Coffee Shop',
-      description: 'Discuss event goals and expected timeline.',
-      eventType: 'Planning',
-    },
-    {
-      id: createEntryId(),
-      title: 'Finalize supplier checklist',
-      startDateKey: toDateKey(second),
-      startTime: '13:00',
-      endDateKey: toDateKey(second),
-      endTime: '15:00',
-      label: 'Task',
-      location: 'Office',
-      description: 'Review catering and decor partner commitments.',
-      eventType: 'Operations',
-    },
-    {
-      id: createEntryId(),
-      title: 'Send payment reminder',
-      startDateKey: toDateKey(third),
-      startTime: '16:00',
-      endDateKey: toDateKey(third),
-      endTime: '16:30',
-      label: 'Reminder',
-      location: 'Online',
-      description: 'Follow up with the client about reservation fee.',
-      eventType: 'Finance',
-    },
-  ];
+function createEntryId(): string {
+  return `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 }
 
 export function CalendarPage() {
@@ -255,7 +225,7 @@ export function CalendarPage() {
     return new Date(now.getFullYear(), now.getMonth(), 1);
   });
   const [selectedDateKey, setSelectedDateKey] = useState(todayKey);
-  const [entries, setEntries] = useState<CalendarEntry[]>(() => buildInitialEntries());
+  const [entries, setEntries] = useState<CalendarEntry[]>([]);
   const [labelFilters, setLabelFilters] = useState<Record<BaseCalendarLabel, boolean>>({
     Task: true,
     Meeting: true,
@@ -304,6 +274,70 @@ export function CalendarPage() {
       startDateKey: selectedDateKey,
     }));
   }, [selectedDateKey]);
+
+  useEffect(() => {
+    const loadEntries = async () => {
+      try {
+        const data: any = await getCalendarEntries();
+        let rawArray = [];
+        if (Array.isArray(data)) rawArray = data;
+        else if (data?.entries && Array.isArray(data.entries)) rawArray = data.entries;
+        else if (data?.data && Array.isArray(data.data)) rawArray = data.data;
+        else if (data?.data?.entries && Array.isArray(data.data.entries))
+          rawArray = data.data.entries;
+
+        // Bulletproof extraction of nested backend arrays
+        const flattenedEvents = rawArray.reduce((acc: any[], item: any) => {
+          if (Array.isArray(item)) return acc.concat(item);
+          if (item && item.entries && Array.isArray(item.entries)) return acc.concat(item.entries);
+          if (item && item.events && Array.isArray(item.events)) return acc.concat(item.events);
+          acc.push(item);
+          return acc;
+        }, []);
+
+        if (flattenedEvents.length > 0) {
+          const currentTodayKey = toDateKey(new Date());
+          const formattedEntries: CalendarEntry[] = flattenedEvents.map((item: any) => {
+            const rawLabel = String(item.type || item.label || 'Task');
+            const formattedLabel =
+              rawLabel.charAt(0).toUpperCase() + rawLabel.slice(1).toLowerCase();
+
+            let derivedStartDateKey = currentTodayKey;
+            let derivedStartTime = '00:00';
+
+            if (item.date) {
+              const d = new Date(item.date);
+              if (!isNaN(d.getTime())) {
+                derivedStartDateKey = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+                derivedStartTime = `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+              }
+            } else if (item.startDateKey) {
+              derivedStartDateKey = item.startDateKey;
+              derivedStartTime = item.startTime || '00:00';
+            }
+
+            return {
+              id: item.entryId || item.id || createEntryId(),
+              title: item.title || 'Untitled',
+              startDateKey: derivedStartDateKey,
+              startTime: derivedStartTime,
+              endDateKey: item.endDateKey || derivedStartDateKey,
+              endTime: item.endTime || derivedStartTime,
+              label: formattedLabel as CalendarLabel,
+              location: item.location || '',
+              description: item.description || '',
+              eventType: item.eventType || 'General',
+            };
+          });
+          setEntries(formattedEntries);
+        }
+      } catch (error) {
+        console.error('Failed to load calendar entries:', error);
+      }
+    };
+
+    loadEntries();
+  }, []);
 
   const selectedDate = useMemo(() => parseDateKey(selectedDateKey), [selectedDateKey]);
 
@@ -453,7 +487,7 @@ export function CalendarPage() {
     setIsAddingCustomLabel(false);
   };
 
-  const handleAddMarker = (event: FormEvent<HTMLFormElement>) => {
+  const handleAddMarker = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
     if (!draftEntry.title.trim()) {
@@ -481,35 +515,57 @@ export function CalendarPage() {
 
     setFormError('');
 
-    const newEntry: CalendarEntry = {
-      id: createEntryId(),
+    const payload = {
       title: draftEntry.title.trim(),
       startDateKey: normalizedStartDateKey,
       startTime: normalizedStartTime,
       endDateKey: normalizedEndDateKey,
       endTime: normalizedEndTime,
-      label: draftEntry.label,
+      label: draftEntry.label.toUpperCase(),
+      type: draftEntry.label.toUpperCase(), // Added for backend compatibility
       location: draftEntry.location.trim(),
       description: draftEntry.description.trim(),
       eventType: draftEntry.eventType,
+      date: new Date(startDateTime).toISOString(), // Added ISO string date for backend compatibility
     };
 
-    setEntries((previous) => [...previous, newEntry]);
-    setSelectedDateKey(normalizedStartDateKey);
+    try {
+      const createdItem = await createCalendarEntry(payload);
 
-    const markerDate = parseDateKey(normalizedStartDateKey);
-    setDisplayMonth(new Date(markerDate.getFullYear(), markerDate.getMonth(), 1));
+      // Add to local state using the ID from the backend if available
+      const newEntry: CalendarEntry = {
+        id: createdItem?.id || createEntryId(),
+        title: payload.title,
+        startDateKey: payload.startDateKey,
+        startTime: payload.startTime,
+        endDateKey: payload.endDateKey,
+        endTime: payload.endTime,
+        label: draftEntry.label, // KEEP Title Case for UI color mapping
+        location: payload.location,
+        description: payload.description,
+        eventType: payload.eventType,
+      };
 
-    setDraftEntry((previous) => ({
-      ...previous,
-      title: '',
-      location: '',
-      description: '',
-      startDateKey: normalizedStartDateKey,
-      startTime: normalizedStartTime,
-      endDateKey: normalizedStartDateKey,
-      endTime: normalizedStartTime,
-    }));
+      setEntries((previous) => [...previous, newEntry]);
+      setSelectedDateKey(normalizedStartDateKey);
+
+      const markerDate = parseDateKey(normalizedStartDateKey);
+      setDisplayMonth(new Date(markerDate.getFullYear(), markerDate.getMonth(), 1));
+
+      setDraftEntry((previous) => ({
+        ...previous,
+        title: '',
+        location: '',
+        description: '',
+        startDateKey: normalizedStartDateKey,
+        startTime: normalizedStartTime,
+        endDateKey: normalizedStartDateKey,
+        endTime: normalizedStartTime,
+      }));
+    } catch (error) {
+      console.error('Failed to create entry:', error);
+      setFormError('Failed to save to database. Please try again.');
+    }
   };
 
   return (
@@ -714,7 +770,7 @@ export function CalendarPage() {
                         type="button"
                         onClick={() => handleSelectDate(date)}
                         className={[
-                          'min-h-26 rounded-xl border p-2 text-left transition-all',
+                          'flex flex-col rounded-xl border p-2 text-left transition-all overflow-hidden relative',
                           viewMode === 'monthly' ? 'h-28' : 'h-36',
                           isSelected
                             ? 'border-[#be8de4] bg-[#fbf5ff] shadow-[0_8px_18px_rgba(165,62,191,0.18)]'
@@ -722,7 +778,7 @@ export function CalendarPage() {
                           viewMode === 'monthly' && !isCurrentMonth ? 'opacity-55' : '',
                         ].join(' ')}
                       >
-                        <div className="flex items-center justify-between">
+                        <div className="flex items-center justify-between shrink-0 mb-1">
                           <span
                             className={[
                               'inline-flex h-6 min-w-6 items-center justify-center rounded-full px-1.5 text-xs font-black',
@@ -741,14 +797,15 @@ export function CalendarPage() {
                           ) : null}
                         </div>
 
-                        <div className="mt-2 space-y-1">
+                        <div className="mt-1 w-full flex-1 space-y-1 overflow-hidden">
                           {dayEntries.slice(0, 3).map((entry) => (
                             <span
                               key={entry.id}
                               className={`block truncate rounded-md border px-1.5 py-1 text-[10px] font-semibold ${getLabelStyle(entry.label).chip}`}
-                              title={`${entry.startTime} - ${entry.endTime} ${entry.title}`}
+                              title={`${formatTime12Hour(entry.startTime)} - ${formatTime12Hour(entry.endTime)} ${entry.title}`}
                             >
-                              {entry.startTime}-{entry.endTime} {entry.title}
+                              {formatTime12Hour(entry.startTime)} -{' '}
+                              {formatTime12Hour(entry.endTime)} {entry.title}
                             </span>
                           ))}
                           {dayEntries.length > 3 ? (
@@ -1076,8 +1133,8 @@ export function CalendarPage() {
                       </div>
                       <p className="mt-1 text-[11px] font-semibold text-[#6d667e]">
                         {entry.startDateKey === entry.endDateKey
-                          ? `${entry.startTime} - ${entry.endTime} • ${entry.eventType}`
-                          : `${formatDateKeyShort(entry.startDateKey)} ${entry.startTime} - ${formatDateKeyShort(entry.endDateKey)} ${entry.endTime} • ${entry.eventType}`}
+                          ? `${formatTime12Hour(entry.startTime)} - ${formatTime12Hour(entry.endTime)} • ${entry.eventType}`
+                          : `${formatDateKeyShort(entry.startDateKey)} ${formatTime12Hour(entry.startTime)} - ${formatDateKeyShort(entry.endDateKey)} ${formatTime12Hour(entry.endTime)} • ${entry.eventType}`}
                       </p>
                       {entry.location ? (
                         <p className="mt-1 text-[11px] text-[#8f879f]">

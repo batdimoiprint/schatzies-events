@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 
@@ -15,6 +15,14 @@ const logoImagePath = '/Pictures/business-logo.png';
 export function Navbar() {
   const location = useLocation();
   const [mobileOpen, setMobileOpen] = useState(false);
+
+  // Lock body scroll when drawer is open
+  useEffect(() => {
+    document.body.style.overflow = mobileOpen ? 'hidden' : '';
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [mobileOpen]);
 
   return (
     <header className="relative z-20 w-full border-b border-transparent">
@@ -40,8 +48,8 @@ export function Navbar() {
                 : location.pathname.startsWith(item.href) && item.href !== '#';
 
             const classes = isActive
-              ? 'text-[1.05rem] font-semibold text-[#e61f83]'
-              : 'text-[1.05rem] font-semibold text-[#1a1a1a] transition-colors hover:text-[#e61f83]';
+              ? 'relative pb-1 text-[1.05rem] font-semibold text-[#FF0066] after:content-[""] after:absolute after:bottom-0 after:left-0 after:w-full after:h-0.5 after:bg-[#FF0066] after:origin-left after:scale-x-100 transition-all duration-300'
+              : 'relative pb-1 text-[1.05rem] font-semibold text-[#4A1053] after:content-[""] after:absolute after:bottom-0 after:left-0 after:w-full after:h-0.5 after:bg-[#FF0066] after:origin-left after:scale-x-0 hover:text-[#FF0066] hover:after:scale-x-100 after:transition-transform after:duration-300 transition-colors duration-300';
 
             return item.href === '#' ? (
               <span key={item.label} className={classes}>
@@ -114,9 +122,61 @@ export function Navbar() {
         </button>
       </div>
 
-      {/* Mobile menu drawer */}
-      {mobileOpen && (
-        <nav className="flex flex-col gap-1 border-t border-gray-200 bg-white px-5 pb-5 pt-3 shadow-lg lg:hidden">
+      {/* ── Right-side mobile drawer ── */}
+      {/* Backdrop */}
+      <div
+        onClick={() => setMobileOpen(false)}
+        className={`fixed inset-0 z-40 bg-black/40 backdrop-blur-sm transition-opacity duration-300 lg:hidden ${
+          mobileOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
+        }`}
+      />
+
+      {/* Drawer panel */}
+      <div
+        className={`fixed top-0 right-0 z-50 flex h-full w-[75vw] max-w-[320px] flex-col transition-transform duration-300 ease-in-out lg:hidden ${
+          mobileOpen ? 'translate-x-0' : 'translate-x-full'
+        }`}
+        style={{
+          background: 'linear-gradient(160deg, #4A1053 0%, #7B1F8C 35%, #FF0066 100%)',
+        }}
+      >
+        {/* Decorative blobs */}
+        <div className="pointer-events-none absolute -top-10 -left-10 h-40 w-40 rounded-full bg-white/5 blur-2xl" />
+        <div className="pointer-events-none absolute bottom-20 -right-8 h-52 w-52 rounded-full bg-[#FF0066]/20 blur-3xl" />
+
+        {/* Header row */}
+        <div className="flex items-center justify-between px-6 pt-6 pb-4">
+          <img
+            src={logoImagePath}
+            alt="Schatzies Events"
+            className="h-14 w-auto brightness-0 invert"
+          />
+          <button
+            onClick={() => setMobileOpen(false)}
+            aria-label="Close menu"
+            className="flex h-9 w-9 items-center justify-center rounded-full bg-white/15 text-white hover:bg-white/25 transition"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              className="h-5 w-5"
+            >
+              <line x1="18" y1="6" x2="6" y2="18" />
+              <line x1="6" y1="6" x2="18" y2="18" />
+            </svg>
+          </button>
+        </div>
+
+        {/* Divider */}
+        <div className="mx-6 h-px bg-white/20" />
+
+        {/* Nav links */}
+        <nav className="mt-4 flex flex-col gap-1 px-4">
           {navItems.map((item) => {
             const isActive =
               item.href === '/'
@@ -128,25 +188,49 @@ export function Navbar() {
                 key={item.label}
                 to={item.href}
                 onClick={() => setMobileOpen(false)}
-                className={`rounded-lg px-4 py-3 text-[1rem] font-semibold transition ${
+                className={`flex items-center gap-3 rounded-xl px-4 py-3 text-[1rem] font-semibold transition-all duration-200 ${
                   isActive
-                    ? 'bg-[#fff0f6] text-[#e61f83]'
-                    : 'text-[#1a1a1a] hover:bg-gray-50 hover:text-[#e61f83]'
+                    ? 'bg-white/20 text-white'
+                    : 'text-white/80 hover:bg-white/10 hover:text-white'
                 }`}
               >
+                {/* Active indicator dot */}
+                <span
+                  className={`h-1.5 w-1.5 rounded-full shrink-0 transition-all ${isActive ? 'bg-white' : 'bg-transparent'}`}
+                />
                 {item.label}
               </Link>
             );
           })}
+        </nav>
+
+        {/* Spacer */}
+        <div className="flex-1" />
+
+        {/* Login button */}
+        <div className="px-6 pb-10">
+          <div className="mb-3 h-px bg-white/20" />
           <Link
             to="/login"
             onClick={() => setMobileOpen(false)}
-            className="mt-2 flex h-12 items-center justify-center rounded-2xl bg-gradient-to-b from-[#FF589C] to-[#700F81] text-[1rem] font-bold tracking-wide text-white uppercase shadow-lg"
+            className="flex h-12 w-full items-center justify-center rounded-2xl bg-white text-[1rem] font-bold uppercase tracking-wide shadow-lg transition hover:bg-white/90"
+            style={{
+              backgroundImage: 'none',
+            }}
           >
-            Login
+            <span
+              style={{
+                backgroundImage: 'linear-gradient(to right, #FF0066 0%, #4A1053 100%)',
+                backgroundClip: 'text',
+                WebkitBackgroundClip: 'text',
+                color: 'transparent',
+              }}
+            >
+              Login
+            </span>
           </Link>
-        </nav>
-      )}
+        </div>
+      </div>
     </header>
   );
 }

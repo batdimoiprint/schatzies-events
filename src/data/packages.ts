@@ -265,7 +265,7 @@ export const debutPackages: PackageWithModal[] = [
     name: 'Charming',
     description:
       'Professionally styled reception backdrops, full photo and video coverage, and signature welcome treats.',
-    image: '/Pictures/debut-charming.jpg',
+    image: '/Pictures/hero-1.jpg',
     modal: {
       note: 'A chic and stylish collection designed to handle your traditions with professional grace. This package includes our full standard of service and professional coordination for up to 200 guests.',
       categories: [
@@ -317,7 +317,7 @@ export const debutPackages: PackageWithModal[] = [
     name: 'Irresistible',
     description:
       'A glamorous experience featuring LED visuals, drone coverage, and premium photography services for all angles.',
-    image: '/Pictures/debut-irresistible.jpg',
+    image: '/Pictures/hero-4.jpg',
     modal: {
       note: 'A premium visual-focused collection designed for stunning imagery. This package includes our full standard of service and professional coordination for up to 200 guests.',
       categories: [
@@ -369,7 +369,7 @@ export const debutPackages: PackageWithModal[] = [
     name: 'Elegancia',
     description:
       'An enchanted gathering with fairy-light installations, premium styling, and immersive lighting designs.',
-    image: '/Pictures/debut-elegancia.jpg',
+    image: '/Pictures/hero-5.jpg',
     modal: {
       note: 'An immersive atmosphere-focused collection designed for a magical experience. This package includes our full standard of service and professional coordination for up to 200 guests.',
       categories: [
@@ -421,7 +421,7 @@ export const debutPackages: PackageWithModal[] = [
     name: 'Flawless',
     description:
       'Premium luxury debut with Mercedes transportation, exclusive bar service, and high-definition visuals.',
-    image: '/Pictures/debut-flawless.jpg',
+    image: '/Pictures/hero-7.jpg',
     modal: {
       note: 'A high-end hospitality collection designed for a refined celebration. This package includes our full standard of service and professional coordination for up to 200 guests.',
       categories: [
@@ -473,7 +473,7 @@ export const debutPackages: PackageWithModal[] = [
     name: 'Grandiosa',
     description:
       'The ultimate luxury debut collection with premium everything - VIP service, premium bar, and luxury touches.',
-    image: '/Pictures/debut-grandiosa.jpg',
+    image: '/Pictures/hero-11.jpg',
     modal: {
       note: 'Our most premium debut collection designed for the most discerning debutantes. This ultra-luxury package includes concierge-level service and professional coordination for up to 300+ guests.',
       categories: [

@@ -14,7 +14,7 @@ interface PackageCardProps {
 
 export function PackageCard({ pkg, onView }: PackageCardProps) {
   return (
-    <div className="flex w-[280px] shrink-0 flex-col overflow-hidden rounded-2xl border-2 border-[#f0a0c8] bg-gradient-to-b from-[#ffe9f5] to-[#f9c6e3] shadow-md transition-all duration-300 hover:shadow-xl sm:w-[320px] sm:rounded-2xl md:w-[340px] lg:w-[360px] xl:w-[380px]">
+    <div className="flex h-full flex-col overflow-hidden rounded-2xl border-2 border-[#f0a0c8] bg-gradient-to-b from-[#ffe9f5] to-[#f9c6e3] shadow-md transition-all duration-300 hover:shadow-xl sm:rounded-2xl">
       {/* Photo with spacing */}
       <div className="p-3 pb-0 sm:p-4 sm:pb-0">
         <div className="h-[200px] w-full overflow-hidden rounded-xl sm:h-[240px] md:h-[260px] lg:h-[280px] xl:h-[300px]">

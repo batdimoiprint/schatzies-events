@@ -17,7 +17,13 @@ import {
 } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 
@@ -346,7 +352,9 @@ function splitFlowBodyText(bodyText: string): string[] {
     .filter((line) => line.length > 0);
 }
 
-function paletteToLegacyTheme(palette: FlowPaletteKey): 'arrival' | 'ceremony' | 'reception' | 'closing' {
+function paletteToLegacyTheme(
+  palette: FlowPaletteKey
+): 'arrival' | 'ceremony' | 'reception' | 'closing' {
   switch (palette) {
     case 'rose':
       return 'arrival';
@@ -446,7 +454,7 @@ function FlowNotesBoard({ selectedProjectTitle }: FlowNotesBoardProps) {
   );
 
   const selectedActivity = selectedActivityId
-    ? timelineBlocks.find((block) => block.id === selectedActivityId) ?? null
+    ? (timelineBlocks.find((block) => block.id === selectedActivityId) ?? null)
     : null;
 
   const formatTimeInput = (hour: number, minute = 0) => {
@@ -635,7 +643,9 @@ function FlowNotesBoard({ selectedProjectTitle }: FlowNotesBoardProps) {
         <article className="overflow-hidden rounded-xl border border-[#ded8e8] bg-[#f7f7f8]">
           <div className="flex flex-wrap items-start justify-between gap-2 px-5 py-4">
             <div>
-              <h4 className="text-[20px] font-black leading-tight text-[#2f2b39]">JANUARY 3, 2025</h4>
+              <h4 className="text-[20px] font-black leading-tight text-[#2f2b39]">
+                JANUARY 3, 2025
+              </h4>
               <p className="text-xs font-semibold text-[#6d6679]">Event Flow</p>
             </div>
 
@@ -715,7 +725,8 @@ function FlowNotesBoard({ selectedProjectTitle }: FlowNotesBoardProps) {
                         </button>
                       </div>
                       <p className="mt-0.5 truncate text-[10px] font-semibold leading-tight text-[#6d667a]">
-                        Time: {formatDisplayTime(block.from, block.startHour)} - {formatDisplayTime(block.to, block.endHour)}
+                        Time: {formatDisplayTime(block.from, block.startHour)} -{' '}
+                        {formatDisplayTime(block.to, block.endHour)}
                       </p>
                       <p className="mt-0.5 truncate text-[10px] leading-tight text-[#6c6678]">
                         {block.description}
@@ -761,7 +772,11 @@ function FlowNotesBoard({ selectedProjectTitle }: FlowNotesBoardProps) {
                 </button>
                 <div>
                   <h3 className="text-[30px] font-black leading-none tracking-tight text-[#1f1f21]">
-                    {isEditingActivity ? (selectedActivity ? 'Edit Activity' : 'New Activity') : 'Activity Info'}
+                    {isEditingActivity
+                      ? selectedActivity
+                        ? 'Edit Activity'
+                        : 'New Activity'
+                      : 'Activity Info'}
                   </h3>
                   <p className="mt-1 text-xs font-semibold uppercase tracking-[0.12em] text-[#b0a9bc]">
                     Event Flow
@@ -889,7 +904,10 @@ function FlowNotesBoard({ selectedProjectTitle }: FlowNotesBoardProps) {
                   <textarea
                     value={activityDraft.description}
                     onChange={(event) =>
-                      setActivityDraft((previous) => ({ ...previous, description: event.target.value }))
+                      setActivityDraft((previous) => ({
+                        ...previous,
+                        description: event.target.value,
+                      }))
                     }
                     placeholder="Add activity details"
                     className="mt-2 h-24 w-full resize-none rounded-lg border border-[#e5deec] bg-[#f7f5fa] px-3 py-2 text-sm text-[#4d4a54] outline-none"
@@ -918,7 +936,9 @@ function FlowNotesBoard({ selectedProjectTitle }: FlowNotesBoardProps) {
                 </div>
 
                 <div className="rounded-lg border border-[#ebe5f1] bg-[#faf8fc] px-3 py-3">
-                  <p className="text-xs font-black uppercase tracking-[0.12em] text-[#9d97a8]">Description</p>
+                  <p className="text-xs font-black uppercase tracking-[0.12em] text-[#9d97a8]">
+                    Description
+                  </p>
                   <p className="mt-2 text-[14px] italic leading-snug text-[#8e8994]">
                     {selectedActivity.description}
                   </p>
@@ -1067,9 +1087,7 @@ export function EventPlannerPage() {
       return null;
     }
 
-    return (
-      flowNotes.find((note) => note.id === selectedFlowNoteId) ?? flowNotes[0]
-    );
+    return flowNotes.find((note) => note.id === selectedFlowNoteId) ?? flowNotes[0];
   }, [flowNotes, selectedFlowNoteId]);
 
   const selectedFlowPalette = selectedFlowNote ? flowPalettes[selectedFlowNote.palette] : null;
@@ -1132,7 +1150,7 @@ export function EventPlannerPage() {
 
     const nextNote =
       typeof modeOrNote === 'string'
-        ? selectedFlowNote ?? flowNotes[0] ?? initialFlowNotes[0]
+        ? (selectedFlowNote ?? flowNotes[0] ?? initialFlowNotes[0])
         : modeOrNote;
 
     if (!nextNote) {
@@ -1198,18 +1216,14 @@ export function EventPlannerPage() {
 
     setFlowNotes((previousNotes) => {
       const nextNotes = editingFlowNoteId
-        ? previousNotes.map((note) =>
-            note.id === editingFlowNoteId ? pendingFlowNote : note
-          )
+        ? previousNotes.map((note) => (note.id === editingFlowNoteId ? pendingFlowNote : note))
         : [...previousNotes, pendingFlowNote];
 
       return nextNotes;
     });
 
     setSelectedFlowNoteId(pendingFlowNote.id);
-    setFlowNotice(
-      `${pendingFlowNote.title} has been updated, validated, and confirmed.`
-    );
+    setFlowNotice(`${pendingFlowNote.title} has been updated, validated, and confirmed.`);
     setPendingFlowNote(null);
     setEditingFlowNoteId(null);
     setIsFlowConfirmOpen(false);
@@ -1279,9 +1293,7 @@ export function EventPlannerPage() {
 
     setPlannerNotes((previousNotes) => {
       if (editingPlannerNoteId) {
-        return previousNotes.map((note) =>
-          note.id === editingPlannerNoteId ? nextNote : note
-        );
+        return previousNotes.map((note) => (note.id === editingPlannerNoteId ? nextNote : note));
       }
 
       return [nextNote, ...previousNotes];
@@ -1364,9 +1376,8 @@ export function EventPlannerPage() {
     );
   }, [plannerTaskCards]);
 
-  const overviewTaskProgress = totalTaskItems > 0
-    ? Math.round((completedTaskItems / totalTaskItems) * 100)
-    : 0;
+  const overviewTaskProgress =
+    totalTaskItems > 0 ? Math.round((completedTaskItems / totalTaskItems) * 100) : 0;
 
   const checklistTaskCard = useMemo(() => {
     return plannerTaskCards.find((card) => card.id === 'task-budget') ?? null;
@@ -1480,7 +1491,7 @@ export function EventPlannerPage() {
   };
 
   return (
-    <div className="mx-auto flex w-full max-w-[1260px] flex-col gap-4 pb-2 text-[#302c39]">
+    <div className="flex w-full flex-col gap-4 pb-2 text-[#302c39]">
       <div className="grid gap-4 xl:grid-cols-[250px_minmax(0,1fr)]">
         <aside className="space-y-4">
           <section className="rounded-2xl border border-[#ddd8e8] bg-white p-3 shadow-[0_6px_14px_rgba(31,18,54,0.06)]">
@@ -1676,7 +1687,9 @@ export function EventPlannerPage() {
                       }}
                     >
                       <div className="grid size-[56px] place-items-center rounded-full bg-white">
-                        <p className="text-[14px] font-black text-[#3c3550]">{overviewTaskProgress}%</p>
+                        <p className="text-[14px] font-black text-[#3c3550]">
+                          {overviewTaskProgress}%
+                        </p>
                       </div>
                     </div>
                     <div>
@@ -1739,7 +1752,9 @@ export function EventPlannerPage() {
                   <div className="grid gap-3 lg:grid-cols-2">
                     <article className="rounded-2xl border border-[#e3deed] bg-white p-3">
                       <h3 className="text-sm font-black text-[#4f4860]">Service Requirements</h3>
-                      <p className="mt-0.5 text-[11px] font-semibold text-[#7f7891]">Food & dietary notes</p>
+                      <p className="mt-0.5 text-[11px] font-semibold text-[#7f7891]">
+                        Food & dietary notes
+                      </p>
                       <div className="mt-2 space-y-2">
                         {serviceRequirements.map((item) => (
                           <div
@@ -1760,7 +1775,9 @@ export function EventPlannerPage() {
                             key={resource.title}
                             className="rounded-lg border border-[#e8e3f0] bg-[#fcfbfe] p-2"
                           >
-                            <p className="text-[11px] font-black text-[#5f3ed0]">{resource.title}</p>
+                            <p className="text-[11px] font-black text-[#5f3ed0]">
+                              {resource.title}
+                            </p>
                             <div className="mt-1.5 space-y-1 text-[11px] font-semibold text-[#6f687f]">
                               {resource.detail.map((line) => (
                                 <p key={line}>{line}</p>
@@ -1775,7 +1792,9 @@ export function EventPlannerPage() {
 
                 <div className="space-y-3">
                   <article className="rounded-2xl border border-[#e3deed] bg-white p-3">
-                    <h3 className="text-sm font-black text-[#4f4860]">Checklist &amp; Meeting Notes</h3>
+                    <h3 className="text-sm font-black text-[#4f4860]">
+                      Checklist &amp; Meeting Notes
+                    </h3>
                     <div className="mt-2 space-y-1.5 text-[11px] font-semibold text-[#6f687f]">
                       {meetings.map((meeting) => (
                         <p key={meeting}>{meeting}</p>
@@ -1798,14 +1817,21 @@ export function EventPlannerPage() {
                         const palette = flowPalettes[note.palette];
 
                         return (
-                          <div key={note.id} className={`rounded-lg border p-2 ${palette.panelClassName}`}>
+                          <div
+                            key={note.id}
+                            className={`rounded-lg border p-2 ${palette.panelClassName}`}
+                          >
                             <p
                               className={`inline-flex rounded-full px-2 py-0.5 text-[10px] font-black uppercase tracking-wide ${palette.chipClassName}`}
                             >
                               {palette.label}
                             </p>
-                            <p className="mt-2 text-[11px] font-black text-[#4a425e]">{note.headline}</p>
-                            <p className="mt-1 text-[11px] leading-tight text-[#6f687f]">{note.summary}</p>
+                            <p className="mt-2 text-[11px] font-black text-[#4a425e]">
+                              {note.headline}
+                            </p>
+                            <p className="mt-1 text-[11px] leading-tight text-[#6f687f]">
+                              {note.summary}
+                            </p>
                           </div>
                         );
                       })}
@@ -1817,7 +1843,9 @@ export function EventPlannerPage() {
               <article className="relative mt-3 rounded-2xl border border-[#ddd8e8] bg-white p-3">
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <div>
-                    <h3 className="text-sm font-black text-[#50495f]">Task Pulse &amp; Reminders</h3>
+                    <h3 className="text-sm font-black text-[#50495f]">
+                      Task Pulse &amp; Reminders
+                    </h3>
                     <p className="text-[11px] font-semibold text-[#6f687f]">
                       Remind owners/facilitators instantly from overview.
                     </p>
@@ -1853,7 +1881,9 @@ export function EventPlannerPage() {
                         className="rounded-xl border border-[#e8e3f1] bg-[#fcfbff] p-2.5 shadow-[0_6px_14px_rgba(30,15,50,0.06)]"
                       >
                         <p className="text-[12px] font-black text-[#463f58]">{taskCard.title}</p>
-                        <p className="mt-1 text-[10px] font-semibold text-[#7b748f]">{taskCard.due}</p>
+                        <p className="mt-1 text-[10px] font-semibold text-[#7b748f]">
+                          {taskCard.due}
+                        </p>
                         <p className="text-[10px] font-semibold text-[#6e6881]">
                           Owner/Facilitator: {facilitatorName}
                         </p>
@@ -1879,9 +1909,13 @@ export function EventPlannerPage() {
                           </button>
 
                           {reminded ? (
-                            <span className="text-[10px] font-black text-[#6e2aa5]">Reminder sent</span>
+                            <span className="text-[10px] font-black text-[#6e2aa5]">
+                              Reminder sent
+                            </span>
                           ) : (
-                            <span className="text-[10px] font-semibold text-[#a19ab0]">No reminder yet</span>
+                            <span className="text-[10px] font-semibold text-[#a19ab0]">
+                              No reminder yet
+                            </span>
                           )}
                         </div>
                       </article>
@@ -1906,8 +1940,8 @@ export function EventPlannerPage() {
                     (count, card) => count + card.items.filter((item) => item.done).length,
                     0
                   )}
-                  /
-                  {plannerTaskCards.reduce((count, card) => count + card.items.length, 0)} tasks done
+                  /{plannerTaskCards.reduce((count, card) => count + card.items.length, 0)} tasks
+                  done
                 </span>
               </div>
 
@@ -1915,78 +1949,81 @@ export function EventPlannerPage() {
                 {plannerTaskCards.map((taskCard) => {
                   const completedCount = taskCard.items.filter((item) => item.done).length;
                   const totalItems = taskCard.items.length;
-                  const progress = totalItems > 0 ? Math.round((completedCount / totalItems) * 100) : 0;
+                  const progress =
+                    totalItems > 0 ? Math.round((completedCount / totalItems) * 100) : 0;
 
                   return (
-                  <article
-                    key={taskCard.id}
-                    className={`overflow-hidden rounded-2xl border p-3 shadow-[0_2px_8px_rgba(32,20,52,0.04)] ${taskCard.frameClassName}`}
-                  >
-                    <div
-                      className={`flex h-full min-h-[260px] flex-col rounded-xl bg-linear-to-br p-4 ${taskCard.accentClassName}`}
+                    <article
+                      key={taskCard.id}
+                      className={`overflow-hidden rounded-2xl border p-3 shadow-[0_2px_8px_rgba(32,20,52,0.04)] ${taskCard.frameClassName}`}
                     >
-                      <div className="flex items-center justify-between">
-                        <h3 className="text-[15px] font-black tracking-tight">{taskCard.title}</h3>
-                        <span className="rounded-full bg-white/65 px-2 py-0.5 text-[10px] font-black uppercase tracking-wide">
-                          {taskCard.badge}
-                        </span>
-                      </div>
-
-                      <div className="mt-4 flex-1 rounded-2xl border border-white/70 bg-white/95 p-4 text-[#352f40] shadow-[0_10px_24px_rgba(32,20,52,0.08)]">
-                        <div className="flex items-center justify-between text-[11px] font-semibold text-[#7f7891]">
-                          <span>{taskCard.due}</span>
-                          <span>{taskCard.owner}</span>
+                      <div
+                        className={`flex h-full min-h-[260px] flex-col rounded-xl bg-linear-to-br p-4 ${taskCard.accentClassName}`}
+                      >
+                        <div className="flex items-center justify-between">
+                          <h3 className="text-[15px] font-black tracking-tight">
+                            {taskCard.title}
+                          </h3>
+                          <span className="rounded-full bg-white/65 px-2 py-0.5 text-[10px] font-black uppercase tracking-wide">
+                            {taskCard.badge}
+                          </span>
                         </div>
 
-                        <div className="mt-3 h-2 rounded-full bg-[#ebe6f3] p-[2px]">
-                          <div
-                            className="h-full rounded-full bg-linear-to-r from-[#f347a5] to-[#8f1fd1]"
-                            style={{ width: `${progress}%` }}
-                          />
+                        <div className="mt-4 flex-1 rounded-2xl border border-white/70 bg-white/95 p-4 text-[#352f40] shadow-[0_10px_24px_rgba(32,20,52,0.08)]">
+                          <div className="flex items-center justify-between text-[11px] font-semibold text-[#7f7891]">
+                            <span>{taskCard.due}</span>
+                            <span>{taskCard.owner}</span>
+                          </div>
+
+                          <div className="mt-3 h-2 rounded-full bg-[#ebe6f3] p-[2px]">
+                            <div
+                              className="h-full rounded-full bg-linear-to-r from-[#f347a5] to-[#8f1fd1]"
+                              style={{ width: `${progress}%` }}
+                            />
+                          </div>
+                          <p className="mt-1 text-[10px] font-bold uppercase tracking-wide text-[#8e869e]">
+                            {completedCount}/{totalItems} completed
+                          </p>
+
+                          <ul className="mt-3 space-y-2">
+                            {taskCard.items.map((item) => (
+                              <li key={item.id} className="flex items-start gap-2">
+                                <button
+                                  type="button"
+                                  onClick={() => handleToggleTaskItem(taskCard.id, item.id)}
+                                  className={[
+                                    'mt-0.5 inline-flex size-4 shrink-0 items-center justify-center rounded border text-[10px] font-black transition-all',
+                                    item.done
+                                      ? 'border-[#7c1cc9] bg-[#f4eefb] text-[#7c1cc9]'
+                                      : 'border-[#cfc7dc] bg-white text-transparent hover:border-[#7c1cc9] hover:text-[#7c1cc9]',
+                                  ].join(' ')}
+                                  aria-label={`${item.done ? 'Uncheck' : 'Check'} ${item.label}`}
+                                >
+                                  ✓
+                                </button>
+                                <span
+                                  className={[
+                                    'text-[12px] leading-relaxed',
+                                    item.done ? 'text-[#8a8397] line-through' : 'text-[#4f4960]',
+                                  ].join(' ')}
+                                >
+                                  {item.label}
+                                </span>
+                              </li>
+                            ))}
+                          </ul>
+
+                          <button
+                            type="button"
+                            onClick={() => handleCompleteTaskCard(taskCard.id)}
+                            className="mt-3 inline-flex rounded-full border border-[#d9d0e7] px-3 py-1 text-[10px] font-black uppercase tracking-wide text-[#6b637e] transition hover:bg-[#f7f3fb]"
+                          >
+                            Complete all
+                          </button>
                         </div>
-                        <p className="mt-1 text-[10px] font-bold uppercase tracking-wide text-[#8e869e]">
-                          {completedCount}/{totalItems} completed
-                        </p>
-
-                        <ul className="mt-3 space-y-2">
-                          {taskCard.items.map((item) => (
-                            <li key={item.id} className="flex items-start gap-2">
-                              <button
-                                type="button"
-                                onClick={() => handleToggleTaskItem(taskCard.id, item.id)}
-                                className={[
-                                  'mt-0.5 inline-flex size-4 shrink-0 items-center justify-center rounded border text-[10px] font-black transition-all',
-                                  item.done
-                                    ? 'border-[#7c1cc9] bg-[#f4eefb] text-[#7c1cc9]'
-                                    : 'border-[#cfc7dc] bg-white text-transparent hover:border-[#7c1cc9] hover:text-[#7c1cc9]',
-                                ].join(' ')}
-                                aria-label={`${item.done ? 'Uncheck' : 'Check'} ${item.label}`}
-                              >
-                                ✓
-                              </button>
-                              <span
-                                className={[
-                                  'text-[12px] leading-relaxed',
-                                  item.done ? 'text-[#8a8397] line-through' : 'text-[#4f4960]',
-                                ].join(' ')}
-                              >
-                                {item.label}
-                              </span>
-                            </li>
-                          ))}
-                        </ul>
-
-                        <button
-                          type="button"
-                          onClick={() => handleCompleteTaskCard(taskCard.id)}
-                          className="mt-3 inline-flex rounded-full border border-[#d9d0e7] px-3 py-1 text-[10px] font-black uppercase tracking-wide text-[#6b637e] transition hover:bg-[#f7f3fb]"
-                        >
-                          Complete all
-                        </button>
                       </div>
-                    </div>
-                  </article>
-                );
+                    </article>
+                  );
                 })}
               </div>
             </section>
@@ -2020,7 +2057,9 @@ export function EventPlannerPage() {
                   ) : null}
 
                   {noteDraftError ? (
-                    <p className="mt-2 text-[10px] font-semibold text-[#c13a74]">{noteDraftError}</p>
+                    <p className="mt-2 text-[10px] font-semibold text-[#c13a74]">
+                      {noteDraftError}
+                    </p>
                   ) : null}
 
                   <div className="mt-1 flex items-center justify-between border-t border-[#cbc7d3] pt-1 text-[10px] text-[#575266]">
@@ -2183,7 +2222,10 @@ export function EventPlannerPage() {
                       handleAddChecklistItem();
                     }}
                   >
-                    <Label htmlFor="checklist-item-input" className="text-xs font-semibold text-[#5a5468]">
+                    <Label
+                      htmlFor="checklist-item-input"
+                      className="text-xs font-semibold text-[#5a5468]"
+                    >
                       Item name
                     </Label>
                     <Input
@@ -2474,9 +2516,7 @@ export function EventPlannerPage() {
                 >
                   {flowPalettes[pendingFlowNote.palette].label}
                 </span>
-                <h4 className="mt-2 text-lg font-black text-[#1f2430]">
-                  {pendingFlowNote.title}
-                </h4>
+                <h4 className="mt-2 text-lg font-black text-[#1f2430]">{pendingFlowNote.title}</h4>
                 <p className="mt-2 text-xs leading-relaxed text-[#625a70]">
                   {pendingFlowNote.headline}
                 </p>

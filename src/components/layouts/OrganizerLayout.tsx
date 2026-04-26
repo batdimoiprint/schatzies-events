@@ -72,6 +72,7 @@ export function OrganizerLayout() {
       desc: 'Admin just confirmed an event for December 26',
       time: '11:11 am | April 19, 2026',
       unread: true,
+      filterCategory: 'Today',
     },
     {
       id: 2,
@@ -79,6 +80,7 @@ export function OrganizerLayout() {
       desc: 'Admin just confirmed an event for December 26',
       time: '11:11 am | April 19, 2026',
       unread: true,
+      filterCategory: 'This Week',
     },
     {
       id: 3,
@@ -86,6 +88,7 @@ export function OrganizerLayout() {
       desc: 'Admin just confirmed an event for December 26',
       time: '11:11 am | April 19, 2026',
       unread: true,
+      filterCategory: 'Earlier',
     },
     {
       id: 4,
@@ -93,8 +96,14 @@ export function OrganizerLayout() {
       desc: 'Admin just confirmed an event for December 26',
       time: '11:11 am | April 19, 2026',
       unread: false,
+      filterCategory: 'Earlier',
     },
   ]);
+  const filteredNotifications = notifications.filter((notif) => {
+    if (notifTab === 'All') return true;
+    return notif.filterCategory === notifTab;
+  });
+
   const [isInboxOpen, setIsInboxOpen] = useState(false);
   const [hasNewInbox, setHasNewInbox] = useState(true);
   const [inboxTab, setInboxTab] = useState('Today');
@@ -106,6 +115,7 @@ export function OrganizerLayout() {
       color: 'bg-[#db4b88]',
       text: 'Hi, are you available for a meeting? I would like to dis...',
       time: '11:11 am | April 19, 2026',
+      filterCategory: 'Today',
     },
     {
       id: 2,
@@ -114,6 +124,7 @@ export function OrganizerLayout() {
       color: 'bg-[#4bc783]',
       text: 'Oh yes! I have seen that earlier. But I have some revisio...',
       time: '11:11 am | April 19, 2026',
+      filterCategory: 'This Week',
     },
     {
       id: 3,
@@ -122,6 +133,7 @@ export function OrganizerLayout() {
       color: 'bg-[#5b54e3]',
       text: 'I will send the details later today.',
       time: '11:11 am | April 19, 2026',
+      filterCategory: 'Earlier',
     },
     {
       id: 4,
@@ -130,8 +142,14 @@ export function OrganizerLayout() {
       color: 'bg-[#db5a9b]',
       text: 'Thank you for the updates.',
       time: '11:11 am | April 19, 2026',
+      filterCategory: 'Earlier',
     },
   ];
+  const filteredMessages = messages.filter((msg) => {
+    if (inboxTab === 'All') return true;
+    return msg.filterCategory === inboxTab;
+  });
+
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
 
@@ -355,7 +373,7 @@ export function OrganizerLayout() {
                           <button
                             className="rounded-full border border-[#e2deea] px-3 py-1 text-[11px] font-semibold text-[#8f879f] transition-colors hover:bg-[#f6f5f8]"
                             type="button"
-                            onClick={() => setIsNotifOpen(false)}
+                            onClick={() => setNotifTab('All')}
                           >
                             See All
                           </button>
@@ -374,35 +392,41 @@ export function OrganizerLayout() {
                         </div>
                       </div>
                       <div className="scrollbar-thin scrollbar-thumb-[#e8e0eb] scrollbar-track-transparent max-h-[340px] overflow-y-auto">
-                        {notifications.map((notif) => (
-                          <div
-                            key={notif.id}
-                            onClick={() => markAsRead(notif.id)}
-                            className="flex cursor-pointer items-start gap-3 border-b border-[#f0edf4] p-4 transition-colors hover:bg-[#fafafa]"
-                          >
-                            <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-[#f8f5fe] text-[#8f1fd1]">
-                              <svg className="size-5" fill="currentColor" viewBox="0 0 24 24">
-                                <path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zm6-6v-5c0-3.07-1.63-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.64 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2zm-2 1H8v-6c0-2.48 1.51-4.5 4-4.5s4 2.02 4 4.5v6z" />
-                              </svg>
+                        {filteredNotifications.length > 0 ? (
+                          filteredNotifications.map((notif) => (
+                            <div
+                              key={notif.id}
+                              onClick={() => markAsRead(notif.id)}
+                              className="flex cursor-pointer items-start gap-3 border-b border-[#f0edf4] p-4 transition-colors hover:bg-[#fafafa]"
+                            >
+                              <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-[#f8f5fe] text-[#8f1fd1]">
+                                <svg className="size-5" fill="currentColor" viewBox="0 0 24 24">
+                                  <path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zm6-6v-5c0-3.07-1.63-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.64 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2zm-2 1H8v-6c0-2.48 1.51-4.5 4-4.5s4 2.02 4 4.5v6z" />
+                                </svg>
+                              </div>
+                              <div className="min-w-0 flex-1 pt-0.5">
+                                <p className="truncate text-[13px] font-bold leading-tight text-[#2d2834]">
+                                  {notif.title}
+                                </p>
+                                <p className="mt-1 line-clamp-2 text-[11px] font-medium leading-snug text-[#696373]">
+                                  {notif.desc}
+                                </p>
+                                <p className="mt-1.5 text-[9px] font-semibold text-[#a49cb3]">
+                                  {notif.time}
+                                </p>
+                              </div>
+                              <div className="shrink-0 pt-2">
+                                <span
+                                  className={`block size-2 rounded-full ${notif.unread ? 'bg-[#f44b9e]' : 'bg-[#d1cbd9]'}`}
+                                />
+                              </div>
                             </div>
-                            <div className="min-w-0 flex-1 pt-0.5">
-                              <p className="truncate text-[13px] font-bold leading-tight text-[#2d2834]">
-                                {notif.title}
-                              </p>
-                              <p className="mt-1 line-clamp-2 text-[11px] font-medium leading-snug text-[#696373]">
-                                {notif.desc}
-                              </p>
-                              <p className="mt-1.5 text-[9px] font-semibold text-[#a49cb3]">
-                                {notif.time}
-                              </p>
-                            </div>
-                            <div className="shrink-0 pt-2">
-                              <span
-                                className={`block size-2 rounded-full ${notif.unread ? 'bg-[#f44b9e]' : 'bg-[#d1cbd9]'}`}
-                              />
-                            </div>
+                          ))
+                        ) : (
+                          <div className="p-6 text-center text-sm font-medium text-[#a49cb3]">
+                            No notifications found.
                           </div>
-                        ))}
+                        )}
                       </div>
                     </div>
                   ) : null}
@@ -436,7 +460,7 @@ export function OrganizerLayout() {
                           <button
                             className="rounded-full border border-[#e2deea] px-3 py-1 text-[11px] font-semibold text-[#8f879f] transition-colors hover:bg-[#f6f5f8]"
                             type="button"
-                            onClick={() => setIsInboxOpen(false)}
+                            onClick={() => setInboxTab('All')}
                           >
                             See All
                           </button>
@@ -455,29 +479,35 @@ export function OrganizerLayout() {
                         </div>
                       </div>
                       <div className="scrollbar-thin scrollbar-thumb-[#e8e0eb] scrollbar-track-transparent max-h-[340px] overflow-y-auto">
-                        {messages.map((msg) => (
-                          <div
-                            key={msg.id}
-                            className="flex cursor-pointer items-start gap-3 border-b border-[#f0edf4] p-4 transition-colors hover:bg-[#fafafa]"
-                          >
+                        {filteredMessages.length > 0 ? (
+                          filteredMessages.map((msg) => (
                             <div
-                              className={`flex size-10 shrink-0 items-center justify-center rounded-full text-white text-lg font-bold ${msg.color}`}
+                              key={msg.id}
+                              className="flex cursor-pointer items-start gap-3 border-b border-[#f0edf4] p-4 transition-colors hover:bg-[#fafafa]"
                             >
-                              {msg.initial}
+                              <div
+                                className={`flex size-10 shrink-0 items-center justify-center rounded-full text-white text-lg font-bold ${msg.color}`}
+                              >
+                                {msg.initial}
+                              </div>
+                              <div className="min-w-0 flex-1 pt-0.5">
+                                <p className="truncate text-[13px] font-bold leading-tight text-[#2d2834]">
+                                  {msg.name}
+                                </p>
+                                <p className="mt-1 line-clamp-2 text-[11px] font-medium leading-snug text-[#696373]">
+                                  {msg.text}
+                                </p>
+                                <p className="mt-1.5 text-[9px] font-semibold text-[#a49cb3]">
+                                  {msg.time}
+                                </p>
+                              </div>
                             </div>
-                            <div className="min-w-0 flex-1 pt-0.5">
-                              <p className="truncate text-[13px] font-bold leading-tight text-[#2d2834]">
-                                {msg.name}
-                              </p>
-                              <p className="mt-1 line-clamp-2 text-[11px] font-medium leading-snug text-[#696373]">
-                                {msg.text}
-                              </p>
-                              <p className="mt-1.5 text-[9px] font-semibold text-[#a49cb3]">
-                                {msg.time}
-                              </p>
-                            </div>
+                          ))
+                        ) : (
+                          <div className="p-6 text-center text-sm font-medium text-[#a49cb3]">
+                            No messages found.
                           </div>
-                        ))}
+                        )}
                       </div>
                     </div>
                   ) : null}
@@ -530,7 +560,12 @@ export function OrganizerLayout() {
           </header>
 
           <main className="min-h-0 flex-1 overflow-y-auto px-4 py-6 md:px-8">
-            <Outlet context={{ searchTerm }} />
+            <div
+              key={location.pathname}
+              className="animate-in fade-in slide-in-from-bottom-4 duration-500 ease-out fill-mode-both"
+            >
+              <Outlet context={{ searchTerm }} />
+            </div>
           </main>
         </div>
       </div>
