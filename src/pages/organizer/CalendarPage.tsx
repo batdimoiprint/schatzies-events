@@ -200,6 +200,17 @@ function formatDateKeyShort(dateKey: string): string {
   return shortDateFormatter.format(parseDateKey(dateKey));
 }
 
+function formatTime12Hour(time24?: string): string {
+  if (!time24) return '12:00 AM';
+  const [h, m] = time24.split(':');
+  let hours = parseInt(h, 10);
+  if (isNaN(hours)) return time24;
+  const ampm = hours >= 12 ? 'PM' : 'AM';
+  hours = hours % 12;
+  hours = hours || 12; // convert 0 to 12
+  return `${String(hours).padStart(2, '0')}:${m || '00'} ${ampm}`;
+}
+
 function createEntryId(): string {
   return `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 }
@@ -267,21 +278,57 @@ export function CalendarPage() {
   useEffect(() => {
     const loadEntries = async () => {
       try {
-        const data = await getCalendarEntries();
-        if (data && Array.isArray(data)) {
+        const data: any = await getCalendarEntries();
+        let rawArray = [];
+        if (Array.isArray(data)) rawArray = data;
+        else if (data?.entries && Array.isArray(data.entries)) rawArray = data.entries;
+        else if (data?.data && Array.isArray(data.data)) rawArray = data.data;
+        else if (data?.data?.entries && Array.isArray(data.data.entries))
+          rawArray = data.data.entries;
+
+        // Bulletproof extraction of nested backend arrays
+        const flattenedEvents = rawArray.reduce((acc: any[], item: any) => {
+          if (Array.isArray(item)) return acc.concat(item);
+          if (item && item.entries && Array.isArray(item.entries)) return acc.concat(item.entries);
+          if (item && item.events && Array.isArray(item.events)) return acc.concat(item.events);
+          acc.push(item);
+          return acc;
+        }, []);
+
+        if (flattenedEvents.length > 0) {
           const currentTodayKey = toDateKey(new Date());
-          const formattedEntries: CalendarEntry[] = data.map((item: any) => ({
-            id: item.id || createEntryId(),
-            title: item.title || 'Untitled',
-            startDateKey: item.startDateKey || currentTodayKey,
-            startTime: item.startTime || '00:00',
-            endDateKey: item.endDateKey || item.startDateKey || currentTodayKey,
-            endTime: item.endTime || '00:00',
-            label: (item.label as CalendarLabel) || 'Task',
-            location: item.location || '',
-            description: item.description || '',
-            eventType: item.eventType || 'General',
-          }));
+          const formattedEntries: CalendarEntry[] = flattenedEvents.map((item: any) => {
+            const rawLabel = String(item.type || item.label || 'Task');
+            const formattedLabel =
+              rawLabel.charAt(0).toUpperCase() + rawLabel.slice(1).toLowerCase();
+
+            let derivedStartDateKey = currentTodayKey;
+            let derivedStartTime = '00:00';
+
+            if (item.date) {
+              const d = new Date(item.date);
+              if (!isNaN(d.getTime())) {
+                derivedStartDateKey = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+                derivedStartTime = `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+              }
+            } else if (item.startDateKey) {
+              derivedStartDateKey = item.startDateKey;
+              derivedStartTime = item.startTime || '00:00';
+            }
+
+            return {
+              id: item.entryId || item.id || createEntryId(),
+              title: item.title || 'Untitled',
+              startDateKey: derivedStartDateKey,
+              startTime: derivedStartTime,
+              endDateKey: item.endDateKey || derivedStartDateKey,
+              endTime: item.endTime || derivedStartTime,
+              label: formattedLabel as CalendarLabel,
+              location: item.location || '',
+              description: item.description || '',
+              eventType: item.eventType || 'General',
+            };
+          });
           setEntries(formattedEntries);
         }
       } catch (error) {
@@ -474,10 +521,12 @@ export function CalendarPage() {
       startTime: normalizedStartTime,
       endDateKey: normalizedEndDateKey,
       endTime: normalizedEndTime,
-      label: draftEntry.label,
+      label: draftEntry.label.toUpperCase(),
+      type: draftEntry.label.toUpperCase(), // Added for backend compatibility
       location: draftEntry.location.trim(),
       description: draftEntry.description.trim(),
       eventType: draftEntry.eventType,
+      date: new Date(startDateTime).toISOString(), // Added ISO string date for backend compatibility
     };
 
     try {
@@ -485,8 +534,16 @@ export function CalendarPage() {
 
       // Add to local state using the ID from the backend if available
       const newEntry: CalendarEntry = {
-        ...payload,
         id: createdItem?.id || createEntryId(),
+        title: payload.title,
+        startDateKey: payload.startDateKey,
+        startTime: payload.startTime,
+        endDateKey: payload.endDateKey,
+        endTime: payload.endTime,
+        label: draftEntry.label, // KEEP Title Case for UI color mapping
+        location: payload.location,
+        description: payload.description,
+        eventType: payload.eventType,
       };
 
       setEntries((previous) => [...previous, newEntry]);
@@ -713,7 +770,7 @@ export function CalendarPage() {
                         type="button"
                         onClick={() => handleSelectDate(date)}
                         className={[
-                          'min-h-26 rounded-xl border p-2 text-left transition-all',
+                          'flex flex-col rounded-xl border p-2 text-left transition-all overflow-hidden relative',
                           viewMode === 'monthly' ? 'h-28' : 'h-36',
                           isSelected
                             ? 'border-[#be8de4] bg-[#fbf5ff] shadow-[0_8px_18px_rgba(165,62,191,0.18)]'
@@ -721,7 +778,7 @@ export function CalendarPage() {
                           viewMode === 'monthly' && !isCurrentMonth ? 'opacity-55' : '',
                         ].join(' ')}
                       >
-                        <div className="flex items-center justify-between">
+                        <div className="flex items-center justify-between shrink-0 mb-1">
                           <span
                             className={[
                               'inline-flex h-6 min-w-6 items-center justify-center rounded-full px-1.5 text-xs font-black',
@@ -740,14 +797,15 @@ export function CalendarPage() {
                           ) : null}
                         </div>
 
-                        <div className="mt-2 space-y-1">
+                        <div className="mt-1 w-full flex-1 space-y-1 overflow-hidden">
                           {dayEntries.slice(0, 3).map((entry) => (
                             <span
                               key={entry.id}
                               className={`block truncate rounded-md border px-1.5 py-1 text-[10px] font-semibold ${getLabelStyle(entry.label).chip}`}
-                              title={`${entry.startTime} - ${entry.endTime} ${entry.title}`}
+                              title={`${formatTime12Hour(entry.startTime)} - ${formatTime12Hour(entry.endTime)} ${entry.title}`}
                             >
-                              {entry.startTime}-{entry.endTime} {entry.title}
+                              {formatTime12Hour(entry.startTime)} -{' '}
+                              {formatTime12Hour(entry.endTime)} {entry.title}
                             </span>
                           ))}
                           {dayEntries.length > 3 ? (
@@ -1075,8 +1133,8 @@ export function CalendarPage() {
                       </div>
                       <p className="mt-1 text-[11px] font-semibold text-[#6d667e]">
                         {entry.startDateKey === entry.endDateKey
-                          ? `${entry.startTime} - ${entry.endTime} • ${entry.eventType}`
-                          : `${formatDateKeyShort(entry.startDateKey)} ${entry.startTime} - ${formatDateKeyShort(entry.endDateKey)} ${entry.endTime} • ${entry.eventType}`}
+                          ? `${formatTime12Hour(entry.startTime)} - ${formatTime12Hour(entry.endTime)} • ${entry.eventType}`
+                          : `${formatDateKeyShort(entry.startDateKey)} ${formatTime12Hour(entry.startTime)} - ${formatDateKeyShort(entry.endDateKey)} ${formatTime12Hour(entry.endTime)} • ${entry.eventType}`}
                       </p>
                       {entry.location ? (
                         <p className="mt-1 text-[11px] text-[#8f879f]">
