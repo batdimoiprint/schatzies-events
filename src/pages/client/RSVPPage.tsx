@@ -42,13 +42,18 @@ export function RSVPPage() {
       try {
         const response = await axiosInstance.get(`/events/${eventIdParam}`);
         const eventData = response.data.event || response.data;
-        
+
         // Map backend fields to the format the invitation page expects
         setSelectedEvent({
           id: eventData.id,
           title: eventData.title || 'Wedding Celebration',
           date: eventData.dateStart || eventData.startDate || eventData.eventDate || '',
-          time: eventData.dateStart ? new Date(eventData.dateStart).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'TBA',
+          time: eventData.dateStart
+            ? new Date(eventData.dateStart).toLocaleTimeString([], {
+                hour: '2-digit',
+                minute: '2-digit',
+              })
+            : 'TBA',
           location: eventData.venue || eventData.location || 'TBA',
           couple: {
             name1: eventData.title?.split('&')[0]?.trim() || 'Partner 1',
@@ -109,17 +114,21 @@ export function RSVPPage() {
 
       // POST to backend RSVP endpoint
       const response = await axiosInstance.post('/rsvp', payload);
-      
+
       // Swagger says it returns "RSVP submitted successfully" (a string)
       // So we generate a QR code locally for the guest
       const { generateRSVPQRCode } = await import('@/lib/qrCodeGenerator');
-      
+
       // Use a combination of eventId and name/contact to create a stable unique ID if possible
       // or just a timestamp for now
       // Get the REAL ID from the backend response
       const createdGuest = response.data.guest || response.data;
-      const guestId = createdGuest.guestId || createdGuest.id || createdGuest.SK?.split('#')[1] || `guest-${Date.now()}`;
-      
+      const guestId =
+        createdGuest.guestId ||
+        createdGuest.id ||
+        createdGuest.SK?.split('#')[1] ||
+        `guest-${Date.now()}`;
+
       const invitationUrl = `${window.location.origin}/invitation/${selectedEvent.id}/${guestId}`;
       const qrCodeUrl = await generateRSVPQRCode(invitationUrl, selectedEvent.id);
 

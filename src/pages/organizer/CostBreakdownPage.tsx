@@ -67,12 +67,48 @@ const MOCK_EVENTS: EventCostBreakdown[] = [
     paxCount: 100,
     additionalCharges: 5000,
     vendorCharges: [
-      { id: 'v1', category: 'Buffet Catering', name: 'Juan Carlo The Caterer', cost: 60000, color: '#7a0bc0' },
-      { id: 'v2', category: 'Photo and Video Coverage', name: 'Snapshot Studio', cost: 28000, color: '#9838e4' },
-      { id: 'v3', category: 'Elegant Venue Setup and Styling', name: 'Velvet Vows', cost: 22000, color: '#b255f0' },
-      { id: 'v4', category: 'Event Planning and Coordination', name: 'Golden Moments Planning', cost: 14000, color: '#d46ad7' },
-      { id: 'v5', category: 'Ceiling Treatment and Venue Design', name: 'SkyDecor Events Styling', cost: 16000, color: '#ec89be' },
-      { id: 'v6', category: 'Full Event Coordination', name: 'Seamless Events Co.', cost: 10000, color: '#f6b2d5' },
+      {
+        id: 'v1',
+        category: 'Buffet Catering',
+        name: 'Juan Carlo The Caterer',
+        cost: 60000,
+        color: '#7a0bc0',
+      },
+      {
+        id: 'v2',
+        category: 'Photo and Video Coverage',
+        name: 'Snapshot Studio',
+        cost: 28000,
+        color: '#9838e4',
+      },
+      {
+        id: 'v3',
+        category: 'Elegant Venue Setup and Styling',
+        name: 'Velvet Vows',
+        cost: 22000,
+        color: '#b255f0',
+      },
+      {
+        id: 'v4',
+        category: 'Event Planning and Coordination',
+        name: 'Golden Moments Planning',
+        cost: 14000,
+        color: '#d46ad7',
+      },
+      {
+        id: 'v5',
+        category: 'Ceiling Treatment and Venue Design',
+        name: 'SkyDecor Events Styling',
+        cost: 16000,
+        color: '#ec89be',
+      },
+      {
+        id: 'v6',
+        category: 'Full Event Coordination',
+        name: 'Seamless Events Co.',
+        cost: 10000,
+        color: '#f6b2d5',
+      },
     ],
   },
   {
@@ -85,9 +121,27 @@ const MOCK_EVENTS: EventCostBreakdown[] = [
     paxCount: 70,
     additionalCharges: 12000,
     vendorCharges: [
-      { id: 'w1', category: 'Buffet Catering', name: 'Rosario Catering', cost: 96000, color: '#7a0bc0' },
-      { id: 'w2', category: 'Photo and Video Coverage', name: 'Forever Films', cost: 36000, color: '#9838e4' },
-      { id: 'w3', category: 'Elegant Venue Setup and Styling', name: 'White Bloom Styling', cost: 28000, color: '#b255f0' },
+      {
+        id: 'w1',
+        category: 'Buffet Catering',
+        name: 'Rosario Catering',
+        cost: 96000,
+        color: '#7a0bc0',
+      },
+      {
+        id: 'w2',
+        category: 'Photo and Video Coverage',
+        name: 'Forever Films',
+        cost: 36000,
+        color: '#9838e4',
+      },
+      {
+        id: 'w3',
+        category: 'Elegant Venue Setup and Styling',
+        name: 'White Bloom Styling',
+        cost: 28000,
+        color: '#b255f0',
+      },
     ],
   },
   {
@@ -100,9 +154,27 @@ const MOCK_EVENTS: EventCostBreakdown[] = [
     paxCount: 90,
     additionalCharges: 18000,
     vendorCharges: [
-      { id: 'c1', category: 'Buffet Catering', name: 'Prestige Catering Group', cost: 78000, color: '#7a0bc0' },
-      { id: 'c2', category: 'Photo and Video Coverage', name: 'Live Audio Visuals', cost: 30000, color: '#9838e4' },
-      { id: 'c3', category: 'Event Planning and Coordination', name: 'Brand Events Team', cost: 22000, color: '#d46ad7' },
+      {
+        id: 'c1',
+        category: 'Buffet Catering',
+        name: 'Prestige Catering Group',
+        cost: 78000,
+        color: '#7a0bc0',
+      },
+      {
+        id: 'c2',
+        category: 'Photo and Video Coverage',
+        name: 'Live Audio Visuals',
+        cost: 30000,
+        color: '#9838e4',
+      },
+      {
+        id: 'c3',
+        category: 'Event Planning and Coordination',
+        name: 'Brand Events Team',
+        cost: 22000,
+        color: '#d46ad7',
+      },
     ],
   },
 ];
@@ -139,7 +211,9 @@ export function CostBreakdownPage() {
   const [selectedEventId, setSelectedEventId] = useState(MOCK_EVENTS[0].id);
   const [hoveredVendorId, setHoveredVendorId] = useState<string | null>(null);
   const [exportMenuOpen, setExportMenuOpen] = useState(false);
-  const [additionalChargesMap, setAdditionalChargesMap] = useState<Record<string, AdditionalCharge[]>>({});
+  const [additionalChargesMap, setAdditionalChargesMap] = useState<
+    Record<string, AdditionalCharge[]>
+  >({});
   const [newAddDesc, setNewAddDesc] = useState('');
   const [newAddAmount, setNewAddAmount] = useState('');
   const printRef = useRef<HTMLDivElement | null>(null);
@@ -267,7 +341,8 @@ export function CostBreakdownPage() {
     const styleNodes = Array.from(document.querySelectorAll('link[rel="stylesheet"], style'));
     const styles = styleNodes.map((node) => node.outerHTML).join('\n');
 
-    newWindow.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>Cost Breakdown</title>${styles}
+    newWindow.document
+      .write(`<!doctype html><html><head><meta charset="utf-8"><title>Cost Breakdown</title>${styles}
       <style>@page{size:A4 portrait;margin:12mm;}body{background:#fff;color:#000;margin:0;padding:0;} .print-container{width:180mm;max-width:100%;margin:0 auto;} table{border-collapse:collapse;} th,td{padding:6px 6px;}</style></head><body>${printHTML}</body></html>`);
     newWindow.document.close();
     newWindow.focus();
@@ -345,11 +420,15 @@ export function CostBreakdownPage() {
                 </tr>
                 <tr>
                   <td className="py-1">Additional Charges</td>
-                  <td className="py-1 text-right font-semibold">{formatPeso(displayedAdditionalCharges)}</td>
+                  <td className="py-1 text-right font-semibold">
+                    {formatPeso(displayedAdditionalCharges)}
+                  </td>
                 </tr>
                 <tr>
                   <td className="py-1">Total Vendor Charges</td>
-                  <td className="py-1 text-right font-semibold">{formatPeso(totalVendorCharges)}</td>
+                  <td className="py-1 text-right font-semibold">
+                    {formatPeso(totalVendorCharges)}
+                  </td>
                 </tr>
               </tbody>
             </table>
@@ -413,7 +492,9 @@ export function CostBreakdownPage() {
 
               <div className="flex items-center gap-3">
                 <div>
-                  <p className="text-sm font-semibold text-[#4d4454]">{selectedEvent.packageName}</p>
+                  <p className="text-sm font-semibold text-[#4d4454]">
+                    {selectedEvent.packageName}
+                  </p>
                   <p className="inline-flex items-center gap-2 text-sm font-semibold text-[#60586c]">
                     <CalendarDays className="size-4 text-[#8f1fd1]" />
                     {formattedEventDate}
@@ -426,11 +507,15 @@ export function CostBreakdownPage() {
 
                 <div className="flex items-center gap-6 text-sm font-semibold text-[#6f6780]">
                   <div className="flex items-center gap-2">
-                    <span className="text-[11px] uppercase tracking-wide text-[#8b8199]">Start Date</span>
+                    <span className="text-[11px] uppercase tracking-wide text-[#8b8199]">
+                      Start Date
+                    </span>
                     <span>{formattedEventDate}</span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <span className="text-[11px] uppercase tracking-wide text-[#8b8199]">End Date</span>
+                    <span className="text-[11px] uppercase tracking-wide text-[#8b8199]">
+                      End Date
+                    </span>
                     <span>{formattedEventDate}</span>
                   </div>
                 </div>
@@ -530,7 +615,9 @@ export function CostBreakdownPage() {
                     <div className="space-y-4">
                       <div className="rounded-2xl border border-[#eee4f6] bg-[#fcf9fe] p-4">
                         <div className="flex items-center justify-between gap-3 text-sm">
-                          <span className="font-semibold text-[#6e6585]">Base additional charges</span>
+                          <span className="font-semibold text-[#6e6585]">
+                            Base additional charges
+                          </span>
                           <span className="font-bold text-[#2d2834]">
                             {formatPeso(baseAdditionalCharges)}
                           </span>
@@ -556,7 +643,10 @@ export function CostBreakdownPage() {
                           </div>
                         ) : (
                           additionalItems.map((item) => (
-                            <div key={item.id} className="flex items-center justify-between gap-3 rounded-xl bg-[#fbfbfd] p-3">
+                            <div
+                              key={item.id}
+                              className="flex items-center justify-between gap-3 rounded-xl bg-[#fbfbfd] p-3"
+                            >
                               <div className="min-w-0">
                                 <div className="truncate text-sm font-semibold text-[#2f2939]">
                                   {item.description}
@@ -564,7 +654,9 @@ export function CostBreakdownPage() {
                                 <div className="text-xs text-[#8c859d]">Manual additional item</div>
                               </div>
                               <div className="flex items-center gap-3">
-                                <div className="text-sm font-bold text-[#2f2939]">{formatPeso(item.amount)}</div>
+                                <div className="text-sm font-bold text-[#2f2939]">
+                                  {formatPeso(item.amount)}
+                                </div>
                                 <Button
                                   variant="ghost"
                                   onClick={() => handleRemoveAdditional(item.id)}
@@ -637,109 +729,140 @@ export function CostBreakdownPage() {
             </h2>
 
             <div className="grid grid-cols-[320px_minmax(0,1fr)] gap-4">
-            <Card className="h-[500px] border-[#e7dfef] bg-white py-0 shadow-sm">
-              <CardContent className="flex h-full flex-col px-5 py-5">
-                <div className="flex flex-1 items-start justify-center pt-1">
-                  <div className="relative size-60">
-                    <svg viewBox="0 0 160 160" className="size-full -rotate-90">
-                      <circle cx="80" cy="80" r="62" fill="none" stroke="#f0e9f7" strokeWidth="32" />
-                      {chartSegments.map((segment) => (
+              <Card className="h-[500px] border-[#e7dfef] bg-white py-0 shadow-sm">
+                <CardContent className="flex h-full flex-col px-5 py-5">
+                  <div className="flex flex-1 items-start justify-center pt-1">
+                    <div className="relative size-60">
+                      <svg viewBox="0 0 160 160" className="size-full -rotate-90">
                         <circle
-                          key={segment.id}
                           cx="80"
                           cy="80"
                           r="62"
                           fill="none"
-                          stroke={segment.color}
+                          stroke="#f0e9f7"
                           strokeWidth="32"
-                          strokeDasharray={segment.dashArray}
-                          strokeDashoffset={segment.dashOffset}
-                          className="cursor-pointer transition-opacity duration-150"
-                          opacity={hoveredVendorId && hoveredVendorId !== segment.id ? 0.42 : 1}
-                          tabIndex={0}
-                          aria-label={`${segment.category}: ${formatPeso(segment.cost)} (${segment.percentage.toFixed(1)}%)`}
-                          onMouseEnter={() => setHoveredVendorId(segment.id)}
-                          onMouseLeave={() => setHoveredVendorId(null)}
-                          onFocus={() => setHoveredVendorId(segment.id)}
-                          onBlur={() => setHoveredVendorId(null)}
                         />
-                      ))}
-                    </svg>
-
-                    <div className="pointer-events-none absolute inset-[48px] rounded-full bg-white ring-1 ring-[#eee5f6]" />
-
-                    {hoveredSegment ? (
-                      <div className="pointer-events-none absolute -bottom-1 left-1/2 min-w-[210px] -translate-x-1/2 translate-y-full rounded-2xl border border-[#efe4f8] bg-white px-4 py-3 text-center shadow-[0_16px_36px_rgba(42,23,60,0.16)]">
-                        <p className="mt-1 text-sm font-bold text-[#2d2834]">{hoveredSegment.category}</p>
-                        <p className="mt-0.5 text-xs font-medium text-[#6f6780]">{hoveredSegment.name}</p>
-                        <div className="mt-3 flex items-center justify-between gap-3 text-sm">
-                          <span className="font-semibold text-[#6f6780]">Cost</span>
-                          <span className="font-bold text-[#2d2834]">{formatPeso(hoveredSegment.cost)}</span>
-                        </div>
-                        <div className="mt-1 flex items-center justify-between gap-3 text-sm">
-                          <span className="font-semibold text-[#6f6780]">Share</span>
-                          <span className="font-bold text-[#2d2834]">{hoveredSegment.percentage.toFixed(1)}%</span>
-                        </div>
-                      </div>
-                    ) : null}
-                  </div>
-                </div>
-
-                <div className="space-y-1.5 pb-2">
-                  {chartSegments.map((segment) => (
-                    <div key={segment.id} className="flex items-center gap-2 text-[12px] text-[#70687e]">
-                      <span className="size-2 rounded-full" style={{ backgroundColor: segment.color }} />
-                      <span className="min-w-0 flex-1 truncate">{segment.category}</span>
-                      <span className="shrink-0 font-medium">{segment.percentage.toFixed(1)}%</span>
-                    </div>
-                  ))}
-                </div>
-
-                <div className="mt-3 flex justify-center">
-                  <div className="rounded-sm bg-[#ff5b9f] px-4 py-2 text-sm font-bold text-white shadow-[0_10px_24px_rgba(255,91,159,0.28)]">
-                    Total Cost = {formatPeso(totalVendorCharges)}
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="h-[500px] border-[#e7dfef] bg-white py-0 shadow-sm">
-              <CardContent className="h-full px-0 py-0">
-                <div className="overflow-hidden rounded-2xl">
-                  <div className="bg-linear-to-r from-[#ff66a7] to-[#ff4b97] px-6 py-4 text-sm font-semibold text-white">
-                    <div className="grid grid-cols-[1.2fr_1fr_180px] gap-4">
-                      <span>Vendor type</span>
-                      <span>Vendor Name</span>
-                      <span className="text-right">Allocated Cost</span>
-                    </div>
-                  </div>
-
-                  <div className="h-[420px] overflow-y-auto">
-                    <Table>
-                      <TableHeader className="sr-only">
-                        <TableRow>
-                          <TableHead>Vendor type</TableHead>
-                          <TableHead>Vendor Name</TableHead>
-                          <TableHead>Allocated Cost</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {selectedEvent.vendorCharges.map((charge) => (
-                          <TableRow key={charge.id} className="border-[#f1ecf6] odd:bg-[#fff4f8] even:bg-white hover:bg-[#fcfbfd]">
-                            <TableCell className="px-6 py-4 text-sm font-medium text-[#2f2939]">{charge.category}</TableCell>
-                            <TableCell className="px-6 py-4 text-sm text-[#2f2939]">{charge.name}</TableCell>
-                            <TableCell className="px-6 py-4 text-right text-sm font-bold text-[#2f2939]">{formatPeso(charge.cost)}</TableCell>
-                          </TableRow>
+                        {chartSegments.map((segment) => (
+                          <circle
+                            key={segment.id}
+                            cx="80"
+                            cy="80"
+                            r="62"
+                            fill="none"
+                            stroke={segment.color}
+                            strokeWidth="32"
+                            strokeDasharray={segment.dashArray}
+                            strokeDashoffset={segment.dashOffset}
+                            className="cursor-pointer transition-opacity duration-150"
+                            opacity={hoveredVendorId && hoveredVendorId !== segment.id ? 0.42 : 1}
+                            tabIndex={0}
+                            aria-label={`${segment.category}: ${formatPeso(segment.cost)} (${segment.percentage.toFixed(1)}%)`}
+                            onMouseEnter={() => setHoveredVendorId(segment.id)}
+                            onMouseLeave={() => setHoveredVendorId(null)}
+                            onFocus={() => setHoveredVendorId(segment.id)}
+                            onBlur={() => setHoveredVendorId(null)}
+                          />
                         ))}
-                      </TableBody>
-                    </Table>
+                      </svg>
+
+                      <div className="pointer-events-none absolute inset-[48px] rounded-full bg-white ring-1 ring-[#eee5f6]" />
+
+                      {hoveredSegment ? (
+                        <div className="pointer-events-none absolute -bottom-1 left-1/2 min-w-[210px] -translate-x-1/2 translate-y-full rounded-2xl border border-[#efe4f8] bg-white px-4 py-3 text-center shadow-[0_16px_36px_rgba(42,23,60,0.16)]">
+                          <p className="mt-1 text-sm font-bold text-[#2d2834]">
+                            {hoveredSegment.category}
+                          </p>
+                          <p className="mt-0.5 text-xs font-medium text-[#6f6780]">
+                            {hoveredSegment.name}
+                          </p>
+                          <div className="mt-3 flex items-center justify-between gap-3 text-sm">
+                            <span className="font-semibold text-[#6f6780]">Cost</span>
+                            <span className="font-bold text-[#2d2834]">
+                              {formatPeso(hoveredSegment.cost)}
+                            </span>
+                          </div>
+                          <div className="mt-1 flex items-center justify-between gap-3 text-sm">
+                            <span className="font-semibold text-[#6f6780]">Share</span>
+                            <span className="font-bold text-[#2d2834]">
+                              {hoveredSegment.percentage.toFixed(1)}%
+                            </span>
+                          </div>
+                        </div>
+                      ) : null}
+                    </div>
                   </div>
-                </div>
-              </CardContent>
-            </Card>
+
+                  <div className="space-y-1.5 pb-2">
+                    {chartSegments.map((segment) => (
+                      <div
+                        key={segment.id}
+                        className="flex items-center gap-2 text-[12px] text-[#70687e]"
+                      >
+                        <span
+                          className="size-2 rounded-full"
+                          style={{ backgroundColor: segment.color }}
+                        />
+                        <span className="min-w-0 flex-1 truncate">{segment.category}</span>
+                        <span className="shrink-0 font-medium">
+                          {segment.percentage.toFixed(1)}%
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+
+                  <div className="mt-3 flex justify-center">
+                    <div className="rounded-sm bg-[#ff5b9f] px-4 py-2 text-sm font-bold text-white shadow-[0_10px_24px_rgba(255,91,159,0.28)]">
+                      Total Cost = {formatPeso(totalVendorCharges)}
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="h-[500px] border-[#e7dfef] bg-white py-0 shadow-sm">
+                <CardContent className="h-full px-0 py-0">
+                  <div className="overflow-hidden rounded-2xl">
+                    <div className="bg-linear-to-r from-[#ff66a7] to-[#ff4b97] px-6 py-4 text-sm font-semibold text-white">
+                      <div className="grid grid-cols-[1.2fr_1fr_180px] gap-4">
+                        <span>Vendor type</span>
+                        <span>Vendor Name</span>
+                        <span className="text-right">Allocated Cost</span>
+                      </div>
+                    </div>
+
+                    <div className="h-[420px] overflow-y-auto">
+                      <Table>
+                        <TableHeader className="sr-only">
+                          <TableRow>
+                            <TableHead>Vendor type</TableHead>
+                            <TableHead>Vendor Name</TableHead>
+                            <TableHead>Allocated Cost</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {selectedEvent.vendorCharges.map((charge) => (
+                            <TableRow
+                              key={charge.id}
+                              className="border-[#f1ecf6] odd:bg-[#fff4f8] even:bg-white hover:bg-[#fcfbfd]"
+                            >
+                              <TableCell className="px-6 py-4 text-sm font-medium text-[#2f2939]">
+                                {charge.category}
+                              </TableCell>
+                              <TableCell className="px-6 py-4 text-sm text-[#2f2939]">
+                                {charge.name}
+                              </TableCell>
+                              <TableCell className="px-6 py-4 text-right text-sm font-bold text-[#2f2939]">
+                                {formatPeso(charge.cost)}
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
             </div>
           </div>
-
         </div>
       </div>
     </section>

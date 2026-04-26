@@ -25,7 +25,7 @@ export function QrCodePage() {
   const [isLoading, setIsLoading] = useState(false);
   const [selectedEventId, setSelectedEventId] = useState<string>('');
   const [copied, setCopied] = useState(false);
-  
+
   // RSVP Data state
   const [rsvps, setRsvps] = useState<RSVPResponse[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
@@ -39,21 +39,20 @@ export function QrCodePage() {
   const [isEventsLoading, setIsEventsLoading] = useState(true);
 
   const { user } = useAuth();
-  
+
   useEffect(() => {
     const fetchEvents = async () => {
       setIsEventsLoading(true);
       try {
         const data = await getEventManagerEvents();
-        
+
         // Filter events: Clients only see their own, Admins/Organizers see everything
-        const userEvents = user?.role === 'CLIENT' 
-          ? data.filter(e => e.clientId === user.user_id)
-          : data;
+        const userEvents =
+          user?.role === 'CLIENT' ? data.filter((e) => e.clientId === user.user_id) : data;
 
         if (userEvents.length > 0) {
           // Only set the initial event if one isn't already selected
-          setSelectedEventId(prev => prev || userEvents[0].id);
+          setSelectedEventId((prev) => prev || userEvents[0].id);
         }
       } catch (error) {
         console.error('Error fetching events for QR Management:', error);
@@ -61,7 +60,7 @@ export function QrCodePage() {
         setIsEventsLoading(false);
       }
     };
-    
+
     if (user) {
       fetchEvents();
     }
@@ -71,7 +70,7 @@ export function QrCodePage() {
     // Load persisted QR code and fetch guests for the specific selected event
     if (selectedEventId) {
       fetchRSVPs(selectedEventId);
-      
+
       const savedQR = localStorage.getItem(`qr_code_${selectedEventId}`);
       const savedQRId = localStorage.getItem(`qr_id_${selectedEventId}`);
       if (savedQR && savedQRId) {
@@ -93,24 +92,28 @@ export function QrCodePage() {
     try {
       // Try fetching with the raw ID
       let data = await getRSVPList(eventId);
-      
+
       // If no data, try with the EVENT# prefix just in case the backend requires it
       if ((!data || data.length === 0) && !eventId.startsWith('EVENT#')) {
         try {
           const altData = await getRSVPList(`EVENT#${eventId}`);
           if (altData && altData.length > 0) data = altData;
-        } catch (e) { /* ignore fallback error */ }
+        } catch (e) {
+          /* ignore fallback error */
+        }
       }
 
       // Map database fields to the format the UI expects
       const mappedData = (Array.isArray(data) ? data : []).map((item: any) => {
         const rawStatus = (item.status || '').toString().toUpperCase();
-        const isAttending = rawStatus === 'ATTENDING' || rawStatus === 'CONFIRMED' || rawStatus === 'TRUE';
-        
+        const isAttending =
+          rawStatus === 'ATTENDING' || rawStatus === 'CONFIRMED' || rawStatus === 'TRUE';
+
         // Handle DynamoDB BOOL format or standard boolean
-        const scanned = item.isScanned === true || 
-                       (item.isScanned && typeof item.isScanned === 'object' && item.isScanned.BOOL === true) || 
-                       item.isScanned === 'true';
+        const scanned =
+          item.isScanned === true ||
+          (item.isScanned && typeof item.isScanned === 'object' && item.isScanned.BOOL === true) ||
+          item.isScanned === 'true';
 
         return {
           id: item.guestId || item.SK?.split('#')[1] || item.id,
@@ -122,7 +125,7 @@ export function QrCodePage() {
           status: isAttending ? 'Attending' : 'Not Attending',
           isScanned: scanned,
           qrCode: item.qrCode?.S || item.qrCode || '', // CRITICAL: Include the Base64 data!
-          message: item.message || ''
+          message: item.message || '',
         };
       });
 
@@ -145,8 +148,8 @@ export function QrCodePage() {
     if (activeTab === 'scanner' && selectedEventId) {
       const scanner = new Html5QrcodeScanner(
         'reader',
-        { 
-          fps: 20, 
+        {
+          fps: 20,
           qrbox: { width: 250, height: 250 },
           aspectRatio: 1.0,
           disableFlip: false,
@@ -172,7 +175,7 @@ export function QrCodePage() {
           const params = new URLSearchParams(decodedText.split('?')[1] || decodedText);
           eventId = params.get('event_id') || params.get('eventId') || '';
           guestId = params.get('guest_id') || params.get('guestId') || params.get('rsvpId') || '';
-          
+
           // If guestId is a full URL (legacy format), extract only the ID from the path
           if (guestId.includes('/invitation/')) {
             guestId = guestId.split('/').filter(Boolean).pop() || guestId;
@@ -187,104 +190,121 @@ export function QrCodePage() {
         // Only try to pause if the scanner is actually in a scanning state (camera)
         try {
           if (scanner.getState() === 1) scanner.pause(true);
-        } catch (e) { /* ignore pause error */ }
-        
+        } catch (e) {
+          /* ignore pause error */
+        }
+
         // NEW: Search the local RSVP list to find the REAL backend ID for this guest
         console.log('DEBUG - SCANNED ID FROM QR:', guestId);
-        const matchedGuest = rsvps.find(g => {
+        const matchedGuest = rsvps.find((g) => {
           const cleanGuestId = guestId.replace('RSVP#', '').replace('guest-', '');
-          const isMatch = (
-            g.id === cleanGuestId || 
-            g.guestId === cleanGuestId || 
+          const isMatch =
+            g.id === cleanGuestId ||
+            g.guestId === cleanGuestId ||
             g.SK?.includes(cleanGuestId) ||
-            guestId.includes(g.id || '')
-          );
+            guestId.includes(g.id || '');
           if (isMatch) console.log('DEBUG - MATCHED GUEST IN LIST:', g.firstName, g.lastName);
           return isMatch;
         });
 
         if (!matchedGuest) {
           console.warn('DEBUG - NO MATCH FOUND IN GUEST LIST FOR ID:', guestId);
-          console.log('DEBUG - CURRENT GUEST LIST IDS:', rsvps.map(g => g.id));
+          console.log(
+            'DEBUG - CURRENT GUEST LIST IDS:',
+            rsvps.map((g) => g.id)
+          );
         }
 
-          // Send the scan to the backend
-          let response: any = { success: false };
-          try {
-            // Try every possible variation of the data
+        // Send the scan to the backend
+        let response: any = { success: false };
+        try {
+          // Try every possible variation of the data
 
-            const rawBase64 = matchedGuest?.qrCode?.includes('base64,') 
-              ? matchedGuest.qrCode.split('base64,')[1] 
-              : matchedGuest?.qrCode;
+          const rawBase64 = matchedGuest?.qrCode?.includes('base64,')
+            ? matchedGuest.qrCode.split('base64,')[1]
+            : matchedGuest?.qrCode;
 
-            // NEW: Repair corrupted Base64 headers (tVBOR -> iVBOR)
-            const repairedBase64 = matchedGuest?.qrCode?.replace('tVBOR', 'iVBOR');
+          // NEW: Repair corrupted Base64 headers (tVBOR -> iVBOR)
+          const repairedBase64 = matchedGuest?.qrCode?.replace('tVBOR', 'iVBOR');
 
-            const scanAttempts = [
-              { name: 'Repaired Base64', eid: eventId, qrc: repairedBase64 },
-              { name: 'Exact DB qrCode', eid: eventId, qrc: matchedGuest?.qrCode },
-              { name: 'Base64 (No Prefix)', eid: eventId, qrc: rawBase64 },
-              { name: 'Guest UUID', eid: eventId, qrc: guestId },
-              { name: 'Full URL', eid: eventId, qrc: decodedText }
-            ];
+          const scanAttempts = [
+            { name: 'Repaired Base64', eid: eventId, qrc: repairedBase64 },
+            { name: 'Exact DB qrCode', eid: eventId, qrc: matchedGuest?.qrCode },
+            { name: 'Base64 (No Prefix)', eid: eventId, qrc: rawBase64 },
+            { name: 'Guest UUID', eid: eventId, qrc: guestId },
+            { name: 'Full URL', eid: eventId, qrc: decodedText },
+          ];
 
           for (const attempt of scanAttempts) {
             if (!attempt.qrc) {
               console.log(`DEBUG - SKIPPING ATTEMPT ${attempt.name} (Value is empty)`);
               continue;
             }
-            console.log(`DEBUG - TRYING SCAN ATTEMPT: ${attempt.name}`, { eid: attempt.eid, qrc: attempt.qrc.substring(0, 50) + '...' });
+            console.log(`DEBUG - TRYING SCAN ATTEMPT: ${attempt.name}`, {
+              eid: attempt.eid,
+              qrc: attempt.qrc.substring(0, 50) + '...',
+            });
             try {
               const result = await scanGuest(attempt.eid, attempt.qrc);
-                const isResultSuccess = result.success || 
-                                      result.id || 
-                                      result.guest || 
-                                      result.SK || 
-                                      result.guestName || 
-                                      (result.message || '').toLowerCase().includes('checked in') ||
-                                      (result.message || '').toLowerCase().includes('already');
+              const isResultSuccess =
+                result.success ||
+                result.id ||
+                result.guest ||
+                result.SK ||
+                result.guestName ||
+                (result.message || '').toLowerCase().includes('checked in') ||
+                (result.message || '').toLowerCase().includes('already');
 
-                if (isResultSuccess) {
-                  response = result;
-                  break;
-                }
+              if (isResultSuccess) {
                 response = result;
-              } catch (e: any) {
-                if (e.response?.status !== 400) throw e; 
-                response = e.response?.data || { success: false, message: e.message };
+                break;
               }
+              response = result;
+            } catch (e: any) {
+              if (e.response?.status !== 400) throw e;
+              response = e.response?.data || { success: false, message: e.message };
             }
+          }
 
-          const isFinalSuccess = response.success || 
-                                 response.id || 
-                                 response.guest || 
-                                 response.SK || 
-                                 response.guestName || 
-                                 (response.message || '').toLowerCase().includes('checked in') ||
-                                 (response.message || '').toLowerCase().includes('already');
+          const isFinalSuccess =
+            response.success ||
+            response.id ||
+            response.guest ||
+            response.SK ||
+            response.guestName ||
+            (response.message || '').toLowerCase().includes('checked in') ||
+            (response.message || '').toLowerCase().includes('already');
 
           if (isFinalSuccess) {
             const guest = response.guest || response;
-            const firstName = guest.guestName || guest.guestfirstName || guest.firstName || guest.first_name || 'Guest';
+            const firstName =
+              guest.guestName ||
+              guest.guestfirstName ||
+              guest.firstName ||
+              guest.first_name ||
+              'Guest';
             const lastName = guest.guestlastName || guest.lastName || guest.last_name || '';
-            
+
             setScanResult({
               success: true,
               message: response.message || 'Guest checked in successfully',
-              type: (response.message || '').toLowerCase().includes('already') ? 'warning' : 'success',
+              type: (response.message || '').toLowerCase().includes('already')
+                ? 'warning'
+                : 'success',
               guest: { firstName, lastName, isScanned: true },
             });
             fetchRSVPs(selectedEventId);
           } else {
-            setScanResult({ 
-              success: false, 
-              message: response.message || response.error || 'Scan failed (Invalid QR)', 
-              type: 'error' 
+            setScanResult({
+              success: false,
+              message: response.message || response.error || 'Scan failed (Invalid QR)',
+              type: 'error',
             });
           }
         } catch (err: any) {
           console.error('Scan error:', err);
-          const serverMessage = err?.response?.data?.message || err?.response?.data?.error || err.message;
+          const serverMessage =
+            err?.response?.data?.message || err?.response?.data?.error || err.message;
           setScanResult({ success: false, message: `Scan Error: ${serverMessage}`, type: 'error' });
         } finally {
           // Re-enable scanner after a delay
@@ -306,7 +326,9 @@ export function QrCodePage() {
     if (scanResult) {
       timeout = setTimeout(() => setScanResult(null), 3000);
     }
-    return () => { if (timeout) clearTimeout(timeout); };
+    return () => {
+      if (timeout) clearTimeout(timeout);
+    };
   }, [scanResult]);
 
   const generateQRCode = async () => {
@@ -337,21 +359,48 @@ export function QrCodePage() {
   };
 
   const filteredRsvps = rsvps.filter((rsvp) => {
-    const fullName = `${rsvp.firstName} ${rsvp.middleName ? rsvp.middleName + ' ' : ''}${rsvp.lastName}`.toLowerCase();
-    const matchesSearch = fullName.includes(searchQuery.toLowerCase()) || rsvp.contactNumber.includes(searchQuery);
-    const matchesStatus = statusFilter === 'All' || (statusFilter === 'Attending' && rsvp.status === 'Attending') || (statusFilter === 'Not Attending' && rsvp.status === 'Not Attending') || (statusFilter === 'Arrived' && rsvp.isScanned);
+    const fullName =
+      `${rsvp.firstName} ${rsvp.middleName ? rsvp.middleName + ' ' : ''}${rsvp.lastName}`.toLowerCase();
+    const matchesSearch =
+      fullName.includes(searchQuery.toLowerCase()) || rsvp.contactNumber.includes(searchQuery);
+    const matchesStatus =
+      statusFilter === 'All' ||
+      (statusFilter === 'Attending' && rsvp.status === 'Attending') ||
+      (statusFilter === 'Not Attending' && rsvp.status === 'Not Attending') ||
+      (statusFilter === 'Arrived' && rsvp.isScanned);
     return matchesSearch && matchesStatus;
   });
 
   const totalRSVPs = rsvps.length;
-  const attendingCount = rsvps.filter(r => r.status === 'Attending').length;
-  const notAttendingCount = rsvps.filter(r => r.status === 'Not Attending').length;
-  const arrivedCount = rsvps.filter(r => r.isScanned).length;
+  const attendingCount = rsvps.filter((r) => r.status === 'Attending').length;
+  const notAttendingCount = rsvps.filter((r) => r.status === 'Not Attending').length;
+  const arrivedCount = rsvps.filter((r) => r.isScanned).length;
 
   const stats = [
-    { label: 'Confirmed', count: attendingCount, pct: totalRSVPs > 0 ? `${(attendingCount / totalRSVPs) * 100}%` : '0%', bar: 'bg-green-400', text: 'text-green-600' },
-    { label: 'Declined', count: notAttendingCount, pct: totalRSVPs > 0 ? `${(notAttendingCount / totalRSVPs) * 100}%` : '0%', bar: 'bg-red-500', text: 'text-red-500' },
-    { label: 'Pending', count: totalRSVPs - attendingCount - notAttendingCount, pct: totalRSVPs > 0 ? `${((totalRSVPs - attendingCount - notAttendingCount) / totalRSVPs) * 100}%` : '0%', bar: 'bg-yellow-400', text: 'text-yellow-600' }
+    {
+      label: 'Confirmed',
+      count: attendingCount,
+      pct: totalRSVPs > 0 ? `${(attendingCount / totalRSVPs) * 100}%` : '0%',
+      bar: 'bg-green-400',
+      text: 'text-green-600',
+    },
+    {
+      label: 'Declined',
+      count: notAttendingCount,
+      pct: totalRSVPs > 0 ? `${(notAttendingCount / totalRSVPs) * 100}%` : '0%',
+      bar: 'bg-red-500',
+      text: 'text-red-500',
+    },
+    {
+      label: 'Pending',
+      count: totalRSVPs - attendingCount - notAttendingCount,
+      pct:
+        totalRSVPs > 0
+          ? `${((totalRSVPs - attendingCount - notAttendingCount) / totalRSVPs) * 100}%`
+          : '0%',
+      bar: 'bg-yellow-400',
+      text: 'text-yellow-600',
+    },
   ];
 
   return (
@@ -361,7 +410,9 @@ export function QrCodePage() {
       <div className="flex min-h-[6rem] items-start justify-between">
         <div>
           <h1 className="text-4xl font-extrabold tracking-tight text-[#2d2834]">RSVP Management</h1>
-          <p className="mt-1 text-sm text-[#696373]">Oversee your invitations and monitor attendance in real-time.</p>
+          <p className="mt-1 text-sm text-[#696373]">
+            Oversee your invitations and monitor attendance in real-time.
+          </p>
         </div>
       </div>
 
@@ -369,12 +420,20 @@ export function QrCodePage() {
         <div className="mb-6 flex items-end justify-between border-b border-gray-200">
           <div className="flex gap-6">
             {['overview', 'guest-list', 'scanner'].map((tab) => (
-              <button key={tab} onClick={() => setActiveTab(tab as any)} className={`pb-2 text-sm font-semibold capitalize transition ${activeTab === tab ? 'border-b-2 border-[#df2b80] text-[#df2b80]' : 'text-[#696373] hover:text-[#2d2834]'}`}>
+              <button
+                key={tab}
+                onClick={() => setActiveTab(tab as any)}
+                className={`pb-2 text-sm font-semibold capitalize transition ${activeTab === tab ? 'border-b-2 border-[#df2b80] text-[#df2b80]' : 'text-[#696373] hover:text-[#2d2834]'}`}
+              >
                 {tab.replace('-', ' ')}
               </button>
             ))}
           </div>
-          <button onClick={() => setState('idle')} className="mb-2 flex items-center gap-2 rounded-md bg-gray-200 px-5 py-2.5 text-sm font-semibold text-gray-700 shadow-md hover:bg-gray-300 transition active:scale-95" disabled={isLoading}>
+          <button
+            onClick={() => setState('idle')}
+            className="mb-2 flex items-center gap-2 rounded-md bg-gray-200 px-5 py-2.5 text-sm font-semibold text-gray-700 shadow-md hover:bg-gray-300 transition active:scale-95"
+            disabled={isLoading}
+          >
             <PlusCircle weight="bold" size={18} /> Create QR Code
           </button>
         </div>
@@ -394,14 +453,14 @@ export function QrCodePage() {
               </div>
               <h3 className="text-xl font-bold text-[#2d2834]">No Events Found</h3>
               <p className="mt-2 text-sm text-[#696373]">
-                You need to have an active event to generate an RSVP QR code. 
-                Please create or select an event first!
+                You need to have an active event to generate an RSVP QR code. Please create or
+                select an event first!
               </p>
             </div>
           ) : (
-            <button 
-              onClick={generateQRCode} 
-              disabled={isLoading} 
+            <button
+              onClick={generateQRCode}
+              disabled={isLoading}
               className="flex items-center gap-2.5 rounded-xl bg-white px-8 py-4 text-lg font-bold text-[#df2b80] shadow-xl hover:shadow-2xl hover:-translate-y-1 active:scale-95 disabled:opacity-50 transition-all duration-300"
             >
               <PlusCircle weight="bold" size={24} /> Create QR Code
@@ -415,44 +474,81 @@ export function QrCodePage() {
           <div className="grid grid-cols-1 gap-10 lg:grid-cols-[auto_1fr]">
             <div className="flex flex-col items-center rounded-2xl bg-white p-6 shadow-lg border border-gray-100">
               <p className="text-base font-bold text-[#df2b80]">Schatzies Events</p>
-              {qrCode && <div className="mt-4 rounded-lg bg-white p-4 shadow-inner border border-gray-50"><img src={qrCode} alt="Generated QR Code" className="w-48 h-48" /></div>}
-              <p className="mt-5 text-sm font-extrabold uppercase tracking-wide text-[#2d2834]">Share QR to Invite Guest!</p>
-              <p className="mt-1 text-xs text-[#696373]">QR CODE ID: <span className="font-semibold">{currentQRId.substring(3, 13)}</span></p>
-              <span className="mt-2 inline-block rounded-full bg-green-100 px-3 py-0.5 text-xs font-bold text-green-800">Active Invitation Link</span>
+              {qrCode && (
+                <div className="mt-4 rounded-lg bg-white p-4 shadow-inner border border-gray-50">
+                  <img src={qrCode} alt="Generated QR Code" className="w-48 h-48" />
+                </div>
+              )}
+              <p className="mt-5 text-sm font-extrabold uppercase tracking-wide text-[#2d2834]">
+                Share QR to Invite Guest!
+              </p>
+              <p className="mt-1 text-xs text-[#696373]">
+                QR CODE ID: <span className="font-semibold">{currentQRId.substring(3, 13)}</span>
+              </p>
+              <span className="mt-2 inline-block rounded-full bg-green-100 px-3 py-0.5 text-xs font-bold text-green-800">
+                Active Invitation Link
+              </span>
               <div className="mt-5 flex gap-3">
-                <button onClick={handleDownloadQR} className="flex items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-4 py-2 text-xs font-semibold text-[#df2b80] shadow-sm hover:bg-gray-50"><Download weight="bold" size={14} /> Download QR</button>
-                <button onClick={handleCopyLink} className="flex items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-4 py-2 text-xs font-semibold text-[#df2b80] shadow-sm hover:bg-gray-50"><LinkIcon weight="bold" size={14} /> {copied ? 'Copied!' : 'Copy Link'}</button>
+                <button
+                  onClick={handleDownloadQR}
+                  className="flex items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-4 py-2 text-xs font-semibold text-[#df2b80] shadow-sm hover:bg-gray-50"
+                >
+                  <Download weight="bold" size={14} /> Download QR
+                </button>
+                <button
+                  onClick={handleCopyLink}
+                  className="flex items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-4 py-2 text-xs font-semibold text-[#df2b80] shadow-sm hover:bg-gray-50"
+                >
+                  <LinkIcon weight="bold" size={14} /> {copied ? 'Copied!' : 'Copy Link'}
+                </button>
               </div>
             </div>
 
             <div className="flex flex-col">
-              <h3 className="pb-2 text-lg font-extrabold text-[#2d2834] border-b border-black">Attendance Breakdown</h3>
+              <h3 className="pb-2 text-lg font-extrabold text-[#2d2834] border-b border-black">
+                Attendance Breakdown
+              </h3>
               <div className="mt-5 rounded-xl border border-gray-100 bg-white p-5 shadow-md">
                 <div className="flex items-start justify-between">
                   <div>
                     <p className="text-sm font-bold text-[#2d2834]">Live Response Analytics</p>
-                    <p className="text-[11px] text-[#696373]">A visual representation of your current guest status.</p>
+                    <p className="text-[11px] text-[#696373]">
+                      A visual representation of your current guest status.
+                    </p>
                   </div>
                   <ChartBar weight="fill" size={18} className="text-[#696373]" />
                 </div>
                 <div className="mt-5 flex flex-col gap-4">
                   {stats.map(({ label, pct, count, bar, text }) => (
                     <div key={label} className="flex items-center gap-3">
-                      <span className="w-20 shrink-0 text-xs font-semibold text-[#696373]">{label}</span>
+                      <span className="w-20 shrink-0 text-xs font-semibold text-[#696373]">
+                        {label}
+                      </span>
                       <div className="flex-1 h-6 rounded bg-gray-100 overflow-hidden">
-                        <div className={`h-full rounded transition-all duration-1000 ${bar}`} style={{ width: pct }} />
+                        <div
+                          className={`h-full rounded transition-all duration-1000 ${bar}`}
+                          style={{ width: pct }}
+                        />
                       </div>
-                      <span className={`w-10 shrink-0 text-right text-xs font-bold ${text}`}>{count}</span>
+                      <span className={`w-10 shrink-0 text-right text-xs font-bold ${text}`}>
+                        {count}
+                      </span>
                     </div>
                   ))}
                 </div>
               </div>
               <div className="mt-6 flex justify-between items-center text-xs text-[#696373]">
-                 <div className="flex gap-4">
-                    <span>Capacity: <strong>150</strong></span>
-                    <span>Arrived: <strong className="text-blue-600">{arrivedCount}</strong></span>
-                 </div>
-                 <span>Total Responses: <strong>{totalRSVPs}/150</strong></span>
+                <div className="flex gap-4">
+                  <span>
+                    Capacity: <strong>150</strong>
+                  </span>
+                  <span>
+                    Arrived: <strong className="text-blue-600">{arrivedCount}</strong>
+                  </span>
+                </div>
+                <span>
+                  Total Responses: <strong>{totalRSVPs}/150</strong>
+                </span>
               </div>
             </div>
           </div>
@@ -469,11 +565,21 @@ export function QrCodePage() {
             <div className="flex flex-wrap items-center gap-3">
               <div className="relative min-w-[200px]">
                 <MagnifyingGlass className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-[#b2acbf]" />
-                <input type="text" placeholder="Search name or contact..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="w-full rounded-lg border border-gray-200 bg-gray-50 py-2 pl-9 pr-4 text-xs text-[#4f4a56] outline-none focus:border-[#df2b80] focus:bg-white" />
+                <input
+                  type="text"
+                  placeholder="Search name or contact..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full rounded-lg border border-gray-200 bg-gray-50 py-2 pl-9 pr-4 text-xs text-[#4f4a56] outline-none focus:border-[#df2b80] focus:bg-white"
+                />
               </div>
               <div className="relative">
                 <Funnel className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-[#b2acbf]" />
-                <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} className="appearance-none rounded-lg border border-gray-200 bg-gray-50 py-2 pl-9 pr-8 text-xs font-medium text-[#4f4a56] outline-none focus:border-[#df2b80] focus:bg-white">
+                <select
+                  value={statusFilter}
+                  onChange={(e) => setStatusFilter(e.target.value)}
+                  className="appearance-none rounded-lg border border-gray-200 bg-gray-50 py-2 pl-9 pr-8 text-xs font-medium text-[#4f4a56] outline-none focus:border-[#df2b80] focus:bg-white"
+                >
                   <option value="All">All Status</option>
                   <option value="Attending">Attending</option>
                   <option value="Not Attending">Not Attending</option>
@@ -495,22 +601,43 @@ export function QrCodePage() {
               </thead>
               <tbody>
                 {filteredRsvps.length === 0 ? (
-                  <tr><td colSpan={5} className="py-10 text-center text-[#696373] italic">No guests found matching your criteria.</td></tr>
+                  <tr>
+                    <td colSpan={5} className="py-10 text-center text-[#696373] italic">
+                      No guests found matching your criteria.
+                    </td>
+                  </tr>
                 ) : (
                   filteredRsvps.map((rsvp, i) => (
-                    <tr key={rsvp.id} className="border-b border-gray-50 bg-white transition-all duration-200 hover:bg-pink-50/50" style={{ animation: `slideUp 0.35s ease-out ${i * 0.04}s both` }}>
+                    <tr
+                      key={rsvp.id}
+                      className="border-b border-gray-50 bg-white transition-all duration-200 hover:bg-pink-50/50"
+                      style={{ animation: `slideUp 0.35s ease-out ${i * 0.04}s both` }}
+                    >
                       <td className="px-4 py-3.5 text-xs font-medium text-[#696373]">{i + 1}</td>
                       <td className="px-4 py-3.5">
                         <div className="flex items-center gap-2.5">
-                          <div className="flex size-8 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-pink-400 to-purple-500 text-xs font-bold text-white">{rsvp.firstName.charAt(0)}</div>
+                          <div className="flex size-8 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-pink-400 to-purple-500 text-xs font-bold text-white">
+                            {rsvp.firstName.charAt(0)}
+                          </div>
                           <span className="font-medium text-[#2d2834]">{`${rsvp.firstName} ${rsvp.middleName ? rsvp.middleName + ' ' : ''}${rsvp.lastName}`}</span>
                         </div>
                       </td>
                       <td className="px-4 py-3.5 text-[#696373]">{rsvp.contactNumber}</td>
-                      <td className="px-4 py-3.5"><span className={`inline-flex items-center gap-1.5 rounded-full px-3 py-0.5 text-[10px] font-bold ${rsvp.isScanned ? 'bg-blue-100 text-blue-700' : 'bg-yellow-100 text-yellow-700'}`}>{rsvp.isScanned ? 'Arrived' : 'Pending'}</span></td>
+                      <td className="px-4 py-3.5">
+                        <span
+                          className={`inline-flex items-center gap-1.5 rounded-full px-3 py-0.5 text-[10px] font-bold ${rsvp.isScanned ? 'bg-blue-100 text-blue-700' : 'bg-yellow-100 text-yellow-700'}`}
+                        >
+                          {rsvp.isScanned ? 'Arrived' : 'Pending'}
+                        </span>
+                      </td>
                       <td className="px-4 py-3.5 text-center">
-                        <span className={`inline-flex items-center gap-1.5 rounded-full px-3.5 py-1 text-xs font-semibold ${rsvp.status === 'Attending' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-600'}`}>
-                          <span className={`inline-block size-1.5 rounded-full ${rsvp.status === 'Attending' ? 'bg-green-500' : 'bg-red-500'}`} /> {rsvp.status}
+                        <span
+                          className={`inline-flex items-center gap-1.5 rounded-full px-3.5 py-1 text-xs font-semibold ${rsvp.status === 'Attending' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-600'}`}
+                        >
+                          <span
+                            className={`inline-block size-1.5 rounded-full ${rsvp.status === 'Attending' ? 'bg-green-500' : 'bg-red-500'}`}
+                          />{' '}
+                          {rsvp.status}
                         </span>
                       </td>
                     </tr>
@@ -525,16 +652,31 @@ export function QrCodePage() {
       {state === 'active' && activeTab === 'scanner' && (
         <div className="animate-[fadeIn_0.3s_ease-out] rounded-xl bg-white p-8 shadow-md border border-gray-100">
           <div className="mx-auto max-w-md">
-            <h3 className="mb-4 text-center text-lg font-bold text-[#2d2834]">Scan Guest QR Code</h3>
-            <div id="reader" className="overflow-hidden rounded-xl border-2 border-dashed border-gray-200 bg-gray-50 shadow-inner"></div>
+            <h3 className="mb-4 text-center text-lg font-bold text-[#2d2834]">
+              Scan Guest QR Code
+            </h3>
+            <div
+              id="reader"
+              className="overflow-hidden rounded-xl border-2 border-dashed border-gray-200 bg-gray-50 shadow-inner"
+            ></div>
             {scanResult && (
-              <div className={`mt-6 rounded-lg p-4 text-center animate-in fade-in zoom-in duration-300 border ${scanResult.type === 'success' ? 'bg-green-100 text-green-800 border-green-200' : scanResult.type === 'warning' ? 'bg-yellow-100 text-yellow-800 border-yellow-200' : 'bg-red-100 text-red-800 border-red-200'}`}>
+              <div
+                className={`mt-6 rounded-lg p-4 text-center animate-in fade-in zoom-in duration-300 border ${scanResult.type === 'success' ? 'bg-green-100 text-green-800 border-green-200' : scanResult.type === 'warning' ? 'bg-yellow-100 text-yellow-800 border-yellow-200' : 'bg-red-100 text-red-800 border-red-200'}`}
+              >
                 <p className="text-sm font-bold">{scanResult.message}</p>
-                {scanResult.guest && <p className="mt-1 text-xs font-medium text-gray-700">Guest: {scanResult.guest.firstName} {scanResult.guest.lastName}</p>}
+                {scanResult.guest && (
+                  <p className="mt-1 text-xs font-medium text-gray-700">
+                    Guest: {scanResult.guest.firstName} {scanResult.guest.lastName}
+                  </p>
+                )}
                 <p className="mt-2 text-[10px] opacity-60">Resetting in 3 seconds...</p>
               </div>
             )}
-            {!scanResult && <p className="mt-6 text-center text-xs text-[#696373]">Position the QR code within the frame to scan.</p>}
+            {!scanResult && (
+              <p className="mt-6 text-center text-xs text-[#696373]">
+                Position the QR code within the frame to scan.
+              </p>
+            )}
           </div>
         </div>
       )}

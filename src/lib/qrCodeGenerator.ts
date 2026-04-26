@@ -13,9 +13,7 @@ export async function generateRSVPQRCode(rsvpId: string, eventId: string): Promi
 
     // If the first argument is already a full URL, use it directly
     // Otherwise, construct the standard invitation URL
-    const qrUrl = rsvpId.startsWith('http') 
-      ? rsvpId 
-      : `${origin}/invitation/${eventId}/${rsvpId}`;
+    const qrUrl = rsvpId.startsWith('http') ? rsvpId : `${origin}/invitation/${eventId}/${rsvpId}`;
 
     // Generate QR code as data URL
     const qrCodeDataUrl = await QRCode.toDataURL(qrUrl, {
