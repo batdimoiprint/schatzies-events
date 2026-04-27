@@ -30,6 +30,11 @@ const organizerNavItems = [
     icon: '/Pictures/organizerpics/RSVP.png',
   },
   {
+    label: 'Message',
+    to: '/organizer/message',
+    icon: '/Pictures/organizerpics/email.png',
+  },
+  {
     label: 'Cost Breakdown',
     to: '/organizer/cost-breakdown',
     icon: '/Pictures/organizerpics/Cost Breakdown.png',
@@ -42,6 +47,7 @@ const pageTitles: Record<string, string> = {
   '/organizer/event-planner': 'Event Planner',
   '/organizer/event-manager': 'Event Manager',
   '/organizer/rsvp': 'RSVP',
+  '/organizer/message': 'Messages',
   '/organizer/cost-breakdown': 'Cost Breakdown',
 };
 
@@ -51,6 +57,7 @@ const pageDescriptions: Record<string, string> = {
   '/organizer/event-planner': 'Planning and organization of the overall event',
   '/organizer/event-manager': 'Manages the list of the events completed',
   '/organizer/rsvp': 'Helps organizer to plan, allocate resources, schedule and confirm the event.',
+  '/organizer/message': 'Communication hub for clients and vendors',
   '/organizer/cost-breakdown': 'Displays cost and budget breakdown of an event or services',
 };
 

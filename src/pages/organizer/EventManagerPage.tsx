@@ -11,15 +11,14 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import type { OrganizerLayoutOutletContext } from '@/components/layouts/OrganizerLayout';
-import {
-  deleteEvent,
-  getEventManagerEvents,
-  updateEvent,
-  type EventManagerEvent,
-} from '@/api/events';
+import { getEventManagerEvents, updateEvent, type EventManagerEvent } from '@/api/events';
 import { getVendorsByEventId, type EventManagerVendor } from '@/api/vendors';
+import { getWorkers, type EventWorker } from '@/api/workers';
 
 type VendorStatus = EventManagerVendor['status'];
+type EventManagerTab = 'Events' | 'Vendor' | 'Workers';
+
+const EVENT_MANAGER_TABS: EventManagerTab[] = ['Events', 'Vendor', 'Workers'];
 
 function getVendorStatusBadgeClasses(status: VendorStatus) {
   if (status === 'Active') return 'bg-[#e6f4ea] text-[#1e7e34]';
@@ -30,15 +29,19 @@ export function EventManagerPage() {
   const location = useLocation();
   const outletContext = useOutletContext<OrganizerLayoutOutletContext | undefined>();
   const searchTerm = outletContext?.searchTerm ?? '';
-  const [activeTab, setActiveTab] = useState<'Events' | 'Vendor' | 'Workers'>(
+  const [activeTab, setActiveTab] = useState<EventManagerTab>(
     location.state?.activeTab || 'Events'
   );
   const [events, setEvents] = useState<EventManagerEvent[]>([]);
   const [vendors, setVendors] = useState<EventManagerVendor[]>([]);
+  const [workers, setWorkers] = useState<EventWorker[]>([]);
   const [selectedEventId, setSelectedEventId] = useState<string>('');
+  const [selectedVendorId, setSelectedVendorId] = useState<string>('');
+  const [selectedWorkerId, setSelectedWorkerId] = useState<string>('');
   const [isLoading, setIsLoading] = useState(false);
   const [isMutating, setIsMutating] = useState(false);
   const [error, setError] = useState<string>('');
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
   const fetchEvents = useCallback(async () => {
     setIsLoading(true);
@@ -51,6 +54,7 @@ export function EventManagerPage() {
         if (current && eventRows.some((event) => event.id === current)) {
           return current;
         }
+
         return eventRows[0]?.id || '';
       });
     } catch {
@@ -75,9 +79,32 @@ export function EventManagerPage() {
     }
   }, []);
 
+  const fetchWorkers = useCallback(async () => {
+    try {
+      const workerRows = await getWorkers();
+      setWorkers(workerRows);
+    } catch {
+      setWorkers([]);
+    }
+  }, []);
+
+  const handleRefreshAll = useCallback(async () => {
+    setIsRefreshing(true);
+    try {
+      await Promise.all([fetchEvents(), fetchVendors(selectedEventId), fetchWorkers()]);
+    } finally {
+      // Optional: 500ms delay so the user can clearly see the animation even if the API is fast
+      setTimeout(() => {
+        setIsRefreshing(false);
+        setIsActionsOpen(false);
+      }, 500);
+    }
+  }, [fetchEvents, fetchVendors, fetchWorkers, selectedEventId]);
+
   useEffect(() => {
     void fetchEvents();
-  }, [fetchEvents]);
+    void fetchWorkers();
+  }, [fetchEvents, fetchWorkers]);
 
   useEffect(() => {
     void fetchVendors(selectedEventId);
@@ -104,35 +131,13 @@ export function EventManagerPage() {
     [fetchEvents]
   );
 
-  const handleDeleteEvent = useCallback(
-    async (event: EventManagerEvent) => {
-      const shouldDelete = window.confirm(`Delete ${event.title}?`);
-      if (!shouldDelete) {
-        return;
-      }
-
-      setIsMutating(true);
-      setError('');
-      try {
-        await deleteEvent(event.id);
-        await fetchEvents();
-      } catch {
-        setError('Unable to delete event.');
-      } finally {
-        setIsMutating(false);
-      }
-    },
-    [fetchEvents]
-  );
-
   const filteredData = useMemo(() => {
     const normalizedSearchTerm = searchTerm.trim().toLowerCase();
+    const matchesSearch = (searchableFields: string[]) =>
+      !normalizedSearchTerm ||
+      searchableFields.some((field) => field.toLowerCase().includes(normalizedSearchTerm));
 
     if (activeTab === 'Events') {
-      if (!normalizedSearchTerm) {
-        return { activeTab: 'Events' as const, data: events };
-      }
-
       const data = events.filter((event) => {
         const searchableFields = [
           event.title,
@@ -145,17 +150,14 @@ export function EventManagerPage() {
           event.status,
           String(event.rsvp),
         ];
-        return searchableFields.some((field) => field.toLowerCase().includes(normalizedSearchTerm));
+
+        return matchesSearch(searchableFields);
       });
 
       return { activeTab: 'Events' as const, data };
     }
 
     if (activeTab === 'Vendor') {
-      if (!normalizedSearchTerm) {
-        return { activeTab: 'Vendor' as const, data: vendors };
-      }
-
       const data = vendors.filter((vendor) => {
         const searchableFields = [
           vendor.name,
@@ -165,14 +167,27 @@ export function EventManagerPage() {
           vendor.service,
           vendor.status,
         ];
-        return searchableFields.some((field) => field.toLowerCase().includes(normalizedSearchTerm));
+
+        return matchesSearch(searchableFields);
       });
 
       return { activeTab: 'Vendor' as const, data };
     }
 
-    return { activeTab: 'Workers' as const, data: [] as never[] };
-  }, [activeTab, events, searchTerm, vendors]);
+    const data = workers.filter((worker) => {
+      const searchableFields = [
+        worker.firstName,
+        worker.lastName,
+        worker.email,
+        worker.role,
+        worker.status,
+      ];
+
+      return matchesSearch(searchableFields);
+    });
+
+    return { activeTab: 'Workers' as const, data };
+  }, [activeTab, events, searchTerm, vendors, workers]);
 
   const [rsvpModalEvent, setRsvpModalEvent] = useState<EventManagerEvent | null>(null);
   const [isActionsOpen, setIsActionsOpen] = useState(false);
@@ -189,13 +204,13 @@ export function EventManagerPage() {
       ) : null}
 
       {/* Main Content Area */}
-      <div className="flex-1 flex flex-col rounded-xl border border-[#eef0f4] bg-white p-6 shadow-sm overflow-hidden min-h-[calc(100vh-260px)]">
+      <div className="flex-1 flex flex-col rounded-xl border border-[#eef0f4] bg-white p-6 shadow-sm overflow-hidden min-h-[calc(100vh-150px)]">
         {/* Controls Row */}
         <div className="mb-4 flex flex-wrap items-center justify-between border-b border-[#f1eef5] pb-0">
           {/* Folder Tabs */}
           <div className="flex gap-1">
-            {['Events', 'Vendor', 'Workers'].map((tabLabel) => {
-              const internalTab = tabLabel as 'Events' | 'Vendor' | 'Workers';
+            {EVENT_MANAGER_TABS.map((tabLabel) => {
+              const internalTab = tabLabel;
               const isActive = activeTab === internalTab;
 
               return (
@@ -245,40 +260,85 @@ export function EventManagerPage() {
               {isActionsOpen && (
                 <div className="absolute right-0 z-20 mt-2 w-36 overflow-hidden rounded-xl border border-[#f1eef5] bg-white py-1 shadow-lg">
                   {activeTab === 'Events' && selectedEventId && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsActionsOpen(false);
+                        const targetEvent = events.find((e) => e.id === selectedEventId);
+                        if (targetEvent) void handleUpdateEventTitle(targetEvent);
+                      }}
+                      className="w-full px-4 py-2.5 text-left text-xs font-bold text-[#5c546a] transition-colors hover:bg-[#faf9fc] hover:text-[#df1b8b]"
+                    >
+                      Edit Event
+                    </button>
+                  )}
+                  {activeTab === 'Vendor' && selectedVendorId && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsActionsOpen(false);
+                        window.alert('Backend setup required for Unassign Vendor');
+                      }}
+                      className="w-full px-4 py-2.5 text-left text-xs font-bold text-[#5c546a] transition-colors hover:bg-[#faf9fc] hover:text-[#df1b8b]"
+                    >
+                      Unassign Vendor
+                    </button>
+                  )}
+                  {activeTab === 'Workers' && selectedWorkerId && (
                     <>
                       <button
                         type="button"
                         onClick={() => {
                           setIsActionsOpen(false);
-                          const targetEvent = events.find((e) => e.id === selectedEventId);
-                          if (targetEvent) void handleUpdateEventTitle(targetEvent);
+                          window.alert('Assign Modal logic to be added');
                         }}
                         className="w-full px-4 py-2.5 text-left text-xs font-bold text-[#5c546a] transition-colors hover:bg-[#faf9fc] hover:text-[#df1b8b]"
                       >
-                        Edit Event
+                        Assign to Event
                       </button>
                       <button
                         type="button"
                         onClick={() => {
                           setIsActionsOpen(false);
-                          const targetEvent = events.find((e) => e.id === selectedEventId);
-                          if (targetEvent) void handleDeleteEvent(targetEvent);
+                          window.alert('Backend setup required for Unassign Worker');
                         }}
-                        className="w-full px-4 py-2.5 text-left text-xs font-bold text-[#5c546a] transition-colors hover:bg-[#faf9fc] hover:text-[#c33274]"
+                        className="w-full px-4 py-2.5 text-left text-xs font-bold text-[#5c546a] transition-colors hover:bg-[#faf9fc] hover:text-[#df1b8b]"
                       >
-                        Archive Event
+                        Unassign Worker
                       </button>
                     </>
                   )}
                   <button
                     type="button"
-                    onClick={() => {
-                      setIsActionsOpen(false);
-                      void fetchEvents();
-                    }}
-                    className="w-full px-4 py-2.5 text-left text-xs font-bold text-[#5c546a] transition-colors hover:bg-[#faf9fc] hover:text-[#df1b8b]"
+                    disabled={isRefreshing}
+                    onClick={handleRefreshAll}
+                    className="w-full px-4 py-2.5 text-left text-xs font-bold text-[#5c546a] transition-colors hover:bg-[#faf9fc] hover:text-[#df1b8b] disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    Refresh Data
+                    <div className="flex items-center gap-2">
+                      {isRefreshing && (
+                        <svg
+                          className="animate-spin h-3 w-3 text-[#df1b8b]"
+                          xmlns="http://www.w3.org/2000/svg"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                        >
+                          <circle
+                            className="opacity-25"
+                            cx="12"
+                            cy="12"
+                            r="10"
+                            stroke="currentColor"
+                            strokeWidth="4"
+                          ></circle>
+                          <path
+                            className="opacity-75"
+                            fill="currentColor"
+                            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                          ></path>
+                        </svg>
+                      )}
+                      {isRefreshing ? 'Refreshing...' : 'Refresh Data'}
+                    </div>
                   </button>
                 </div>
               )}
@@ -381,28 +441,33 @@ export function EventManagerPage() {
                     <TableRow
                       key={event.id}
                       onClick={() => setSelectedEventId(event.id)}
-                      className={`group transition-colors border-b border-[#f6f4f9] ${
-                        selectedEventId === event.id
-                          ? 'bg-[#faf9fc] ring-1 ring-inset ring-[#e1d5eb]'
-                          : 'hover:bg-[#faf9fc]'
-                      }`}
+                      className={`group transition-colors border-b border-[#f6f4f9] ${selectedEventId === event.id ? 'bg-[#faf9fc] ring-1 ring-inset ring-[#e1d5eb]' : 'hover:bg-[#faf9fc]'}`}
                     >
                       <TableCell className="py-4 font-bold text-[#5c546a]">{event.title}</TableCell>
-                      <TableCell className="py-4 font-semibold text-[#5c546a]">{event.date}</TableCell>
-                      <TableCell className="py-4 font-semibold text-[#5c546a]">{event.timeSlot}</TableCell>
-                      <TableCell className="py-4 font-semibold text-[#5c546a]">{event.client}</TableCell>
-                      <TableCell className="py-4 font-semibold text-[#5c546a]">{event.type}</TableCell>
-                      <TableCell className="py-4 font-semibold text-[#5c546a]">{event.package}</TableCell>
-                      <TableCell className="py-4 font-semibold text-[#5c546a]">{event.venue}</TableCell>
+                      <TableCell className="py-4 font-semibold text-[#5c546a]">
+                        {event.date}
+                      </TableCell>
+                      <TableCell className="py-4 font-semibold text-[#5c546a]">
+                        {event.timeSlot}
+                      </TableCell>
+                      <TableCell className="py-4 font-semibold text-[#5c546a]">
+                        {event.client}
+                      </TableCell>
+                      <TableCell className="py-4 font-semibold text-[#5c546a]">
+                        {event.type}
+                      </TableCell>
+                      <TableCell className="py-4 font-semibold text-[#5c546a]">
+                        {event.package}
+                      </TableCell>
+                      <TableCell className="py-4 font-semibold text-[#5c546a]">
+                        {event.venue}
+                      </TableCell>
                       <TableCell className="py-4 font-bold text-[#5c546a]">
                         <div className="flex items-center gap-1.5">
                           {event.rsvp}
                           <button
                             type="button"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setRsvpModalEvent(event);
-                            }}
+                            onClick={() => setRsvpModalEvent(event)}
                             className="text-[9px] font-bold uppercase tracking-wider text-[#760CB4] hover:brightness-125 hover:underline"
                           >
                             View RSVP
@@ -437,13 +502,24 @@ export function EventManagerPage() {
                   ? filteredData.data.map((vendor) => (
                       <TableRow
                         key={vendor.id}
-                        className="border-b border-[#f6f4f9] hover:bg-[#faf9fc]"
+                        onClick={() => setSelectedVendorId(vendor.id)}
+                        className={`group transition-colors border-b border-[#f6f4f9] ${selectedVendorId === vendor.id ? 'bg-[#faf9fc] ring-1 ring-inset ring-[#e1d5eb]' : 'hover:bg-[#faf9fc]'}`}
                       >
-                        <TableCell className="py-4 font-bold text-[#5c546a]">{vendor.name}</TableCell>
-                        <TableCell className="py-4 font-semibold text-[#5c546a]">{vendor.contactPerson}</TableCell>
-                        <TableCell className="py-4 font-semibold text-[#5c546a]">{vendor.email}</TableCell>
-                        <TableCell className="py-4 font-semibold text-[#5c546a]">{vendor.phone}</TableCell>
-                        <TableCell className="py-4 font-semibold text-[#5c546a]">{vendor.service}</TableCell>
+                        <TableCell className="py-4 font-bold text-[#5c546a]">
+                          {vendor.name}
+                        </TableCell>
+                        <TableCell className="py-4 font-semibold text-[#5c546a]">
+                          {vendor.contactPerson}
+                        </TableCell>
+                        <TableCell className="py-4 font-semibold text-[#5c546a]">
+                          {vendor.email}
+                        </TableCell>
+                        <TableCell className="py-4 font-semibold text-[#5c546a]">
+                          {vendor.phone}
+                        </TableCell>
+                        <TableCell className="py-4 font-semibold text-[#5c546a]">
+                          {vendor.service}
+                        </TableCell>
                         <TableCell className="py-4">
                           <Badge className={getVendorStatusBadgeClasses(vendor.status)}>
                             {vendor.status}
@@ -451,7 +527,37 @@ export function EventManagerPage() {
                         </TableCell>
                       </TableRow>
                     ))
-                  : null}
+                  : filteredData.activeTab === 'Workers'
+                    ? filteredData.data.map((worker) => (
+                        <TableRow
+                          key={worker.id}
+                          onClick={() => setSelectedWorkerId(worker.id)}
+                          className={`group transition-colors border-b border-[#f6f4f9] ${selectedWorkerId === worker.id ? 'bg-[#faf9fc] ring-1 ring-inset ring-[#e1d5eb]' : 'hover:bg-[#faf9fc]'}`}
+                        >
+                          <TableCell className="py-4 font-bold text-[#5c546a]">
+                            {worker.firstName} {worker.lastName}
+                          </TableCell>
+                          <TableCell className="py-4 font-semibold text-[#5c546a]">
+                            {worker.role}
+                          </TableCell>
+                          <TableCell className="py-4 font-semibold text-[#5c546a]">N/A</TableCell>
+                          <TableCell className="py-4 font-semibold text-[#5c546a]">
+                            {worker.email}
+                          </TableCell>
+                          <TableCell className="py-4">
+                            <Badge
+                              className={
+                                worker.status === 'Active'
+                                  ? 'bg-[#e6f4ea] text-[#1e7e34]'
+                                  : 'bg-[#fce8e6] text-[#c5221f]'
+                              }
+                            >
+                              {worker.status}
+                            </Badge>
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    : null}
               {filteredData.data.length === 0 ? (
                 <TableRow>
                   <TableCell

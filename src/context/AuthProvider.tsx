@@ -2,7 +2,7 @@ import { useEffect, useState, useCallback, useRef } from 'react';
 import type { ReactNode } from 'react';
 import { login, verifyToken } from '@/api/auth';
 import { AuthContext } from './AuthContext';
-import type { User } from '@/types/auth';
+import type { User, LoginResult } from '@/types/auth';
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
@@ -15,19 +15,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (showError) setError(null);
       const verifiedUser = await verifyToken();
       setUser(verifiedUser ?? null);
-      
+
       // Persist a small flag in localStorage to help survive 429s on refresh
       if (verifiedUser) {
         localStorage.setItem('auth_hint', 'true');
       } else {
         localStorage.removeItem('auth_hint');
       }
-      
+
       return verifiedUser ?? null;
     } catch (err: any) {
       const status = err?.response?.status;
-      
-      // If we get a 429 (Too Many Requests), don't force logout 
+
+      // If we get a 429 (Too Many Requests), don't force logout
       // if we have a hint that the user was previously authenticated.
       if (status === 429 && localStorage.getItem('auth_hint') === 'true') {
         console.warn('Rate limit hit during auth check, maintaining session hint.');
@@ -37,7 +37,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       console.error('Token verification failed:', err);
       setUser(null);
       localStorage.removeItem('auth_hint');
-      
+
       if (showError) {
         setError(err instanceof Error ? err.message : 'Failed to verify session');
       }
@@ -45,18 +45,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const handleLogin = async (email: string, password: string): Promise<User | null> => {
+  const handleLogin = async (email: string, password: string): Promise<LoginResult> => {
     setIsLoading(true);
     setError(null);
 
     try {
-      const loggedInUser = await login(email, password);
-      if (loggedInUser) {
-        setUser(loggedInUser);
-        return loggedInUser;
+      const result = await login(email, password);
+
+      // Backend requires a password reset — pass it through to the caller
+      if (result.requiresPasswordReset) {
+        return result;
       }
+
+      if (result.user) {
+        setUser(result.user);
+        return result;
+      }
+
       // Fallback to token verification if login doesn't return user
-      return await checkToken();
+      const verifiedUser = await checkToken();
+      return { user: verifiedUser, requiresPasswordReset: false, resetToken: null };
     } catch (err: unknown) {
       setUser(null);
 
@@ -71,7 +79,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setError(err instanceof Error ? err.message : 'Unable to login');
       }
 
-      return null;
+      return { user: null, requiresPasswordReset: false, resetToken: null };
     } finally {
       setIsLoading(false);
     }

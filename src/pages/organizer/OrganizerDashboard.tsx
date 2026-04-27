@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { fetchDashboardSummary } from '@/api/organizer-dashboard';
+import { getCalendarEntries } from '@/api/calendar';
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -36,11 +37,11 @@ type KpiCardData = {
   iconImage: string;
 };
 
-const kpiDataSets: Record<string, KpiCardData[]> = {
+const defaultKpiDataSets: Record<string, KpiCardData[]> = {
   Weekly: [
     {
       title: 'Events Completed',
-      value: '1',
+      value: '0',
       caption: '(This week)',
       gradientClassName: 'from-[#cf6ef6] to-[#a536e4]',
       iconBgClassName: 'bg-white/25',
@@ -48,7 +49,7 @@ const kpiDataSets: Record<string, KpiCardData[]> = {
     },
     {
       title: 'Total Revenue',
-      value: 'PHP 15,000',
+      value: 'PHP 0',
       caption: '(This week)',
       gradientClassName: 'from-[#f48db3] to-[#e75691]',
       iconBgClassName: 'bg-white/25',
@@ -56,7 +57,7 @@ const kpiDataSets: Record<string, KpiCardData[]> = {
     },
     {
       title: 'Active Vendors',
-      value: '2',
+      value: '0',
       caption: '(Currently active)',
       gradientClassName: 'from-[#f0df72] to-[#ddc447]',
       iconBgClassName: 'bg-black/10',
@@ -64,7 +65,7 @@ const kpiDataSets: Record<string, KpiCardData[]> = {
     },
     {
       title: 'Total Profit',
-      value: 'PHP 8,000',
+      value: 'PHP 0',
       caption: '(This week profit)',
       gradientClassName: 'from-[#8cb2f7] to-[#4c7fe3]',
       iconBgClassName: 'bg-white/25',
@@ -74,7 +75,7 @@ const kpiDataSets: Record<string, KpiCardData[]> = {
   Monthly: [
     {
       title: 'Events Completed',
-      value: '4',
+      value: '0',
       caption: '(Events)',
       gradientClassName: 'from-[#cf6ef6] to-[#a536e4]',
       iconBgClassName: 'bg-white/25',
@@ -82,7 +83,7 @@ const kpiDataSets: Record<string, KpiCardData[]> = {
     },
     {
       title: 'Total Revenue',
-      value: 'PHP 50,000',
+      value: 'PHP 0',
       caption: '(Overall)',
       gradientClassName: 'from-[#f48db3] to-[#e75691]',
       iconBgClassName: 'bg-white/25',
@@ -90,7 +91,7 @@ const kpiDataSets: Record<string, KpiCardData[]> = {
     },
     {
       title: 'Active Vendors',
-      value: '4',
+      value: '0',
       caption: '(Outsourced vendors)',
       gradientClassName: 'from-[#f0df72] to-[#ddc447]',
       iconBgClassName: 'bg-black/10',
@@ -98,7 +99,7 @@ const kpiDataSets: Record<string, KpiCardData[]> = {
     },
     {
       title: 'Total Profit',
-      value: 'PHP 50,000',
+      value: 'PHP 0',
       caption: '(Overall profit per month)',
       gradientClassName: 'from-[#8cb2f7] to-[#4c7fe3]',
       iconBgClassName: 'bg-white/25',
@@ -108,7 +109,7 @@ const kpiDataSets: Record<string, KpiCardData[]> = {
   'Semi-Annually': [
     {
       title: 'Events Completed',
-      value: '18',
+      value: '0',
       caption: '(Past 6 months)',
       gradientClassName: 'from-[#cf6ef6] to-[#a536e4]',
       iconBgClassName: 'bg-white/25',
@@ -116,7 +117,7 @@ const kpiDataSets: Record<string, KpiCardData[]> = {
     },
     {
       title: 'Total Revenue',
-      value: 'PHP 350,000',
+      value: 'PHP 0',
       caption: '(Past 6 months)',
       gradientClassName: 'from-[#f48db3] to-[#e75691]',
       iconBgClassName: 'bg-white/25',
@@ -124,7 +125,7 @@ const kpiDataSets: Record<string, KpiCardData[]> = {
     },
     {
       title: 'Active Vendors',
-      value: '12',
+      value: '0',
       caption: '(Total engaged)',
       gradientClassName: 'from-[#f0df72] to-[#ddc447]',
       iconBgClassName: 'bg-black/10',
@@ -132,7 +133,7 @@ const kpiDataSets: Record<string, KpiCardData[]> = {
     },
     {
       title: 'Total Profit',
-      value: 'PHP 180,000',
+      value: 'PHP 0',
       caption: '(Past 6 months profit)',
       gradientClassName: 'from-[#8cb2f7] to-[#4c7fe3]',
       iconBgClassName: 'bg-white/25',
@@ -142,7 +143,7 @@ const kpiDataSets: Record<string, KpiCardData[]> = {
   Annually: [
     {
       title: 'Events Completed',
-      value: '42',
+      value: '0',
       caption: '(This year)',
       gradientClassName: 'from-[#cf6ef6] to-[#a536e4]',
       iconBgClassName: 'bg-white/25',
@@ -150,7 +151,7 @@ const kpiDataSets: Record<string, KpiCardData[]> = {
     },
     {
       title: 'Total Revenue',
-      value: 'PHP 850,000',
+      value: 'PHP 0',
       caption: '(This year)',
       gradientClassName: 'from-[#f48db3] to-[#e75691]',
       iconBgClassName: 'bg-white/25',
@@ -158,7 +159,7 @@ const kpiDataSets: Record<string, KpiCardData[]> = {
     },
     {
       title: 'Active Vendors',
-      value: '25',
+      value: '0',
       caption: '(Total engaged)',
       gradientClassName: 'from-[#f0df72] to-[#ddc447]',
       iconBgClassName: 'bg-black/10',
@@ -166,7 +167,7 @@ const kpiDataSets: Record<string, KpiCardData[]> = {
     },
     {
       title: 'Total Profit',
-      value: 'PHP 450,000',
+      value: 'PHP 0',
       caption: '(This year profit)',
       gradientClassName: 'from-[#8cb2f7] to-[#4c7fe3]',
       iconBgClassName: 'bg-white/25',
@@ -222,6 +223,16 @@ function buildCalendarGrid(date: Date): Array<number | null> {
   const trailingPadding = Array.from({ length: trailingCount }, () => null);
 
   return [...leadingPadding, ...monthDays, ...trailingPadding];
+}
+
+function formatTime12Hour(timeString?: string) {
+  if (!timeString) return '';
+  const [hourString, minute] = timeString.split(':');
+  const hour = parseInt(hourString, 10);
+  if (isNaN(hour)) return timeString;
+  const ampm = hour >= 12 ? 'PM' : 'AM';
+  const formattedHour = hour % 12 || 12;
+  return `${formattedHour}:${minute || '00'} ${ampm}`;
 }
 
 function DashboardMetricCard({
@@ -348,12 +359,80 @@ export function OrganizerDashboard() {
   const [monthlyStatusData, setMonthlyStatusData] = useState<StatusSlice[]>([]);
   const [upcomingEventsData, setUpcomingEventsData] = useState<ListEntry[]>([]);
   const [activeVendorsData, setActiveVendorsData] = useState<ListEntry[]>([]);
+  const [calendarMarkers, setCalendarMarkers] = useState<any[]>([]);
+  const [kpiData, setKpiData] = useState<Record<string, KpiCardData[]>>(defaultKpiDataSets);
 
   useEffect(() => {
     const loadDashboardData = async () => {
+      // Fetch calendar markers
+      try {
+        const calendarData: any = await getCalendarEntries();
+        let rawArray = [];
+        if (Array.isArray(calendarData)) rawArray = calendarData;
+        else if (calendarData?.entries && Array.isArray(calendarData.entries))
+          rawArray = calendarData.entries;
+        else if (calendarData?.data && Array.isArray(calendarData.data))
+          rawArray = calendarData.data;
+        else if (calendarData?.data?.entries && Array.isArray(calendarData.data.entries))
+          rawArray = calendarData.data.entries;
+
+        // Bulletproof extraction of nested backend arrays
+        const flattenedEvents = rawArray.reduce((acc: any[], item: any) => {
+          if (Array.isArray(item)) return acc.concat(item);
+          if (item && item.entries && Array.isArray(item.entries)) return acc.concat(item.entries);
+          if (item && item.events && Array.isArray(item.events)) return acc.concat(item.events);
+          acc.push(item);
+          return acc;
+        }, []);
+
+        if (flattenedEvents.length > 0) {
+          const mappedMarkers = flattenedEvents.map((item: any) => {
+            let derivedStartDateKey = item.startDateKey;
+            if (item.date && !derivedStartDateKey) {
+              const d = new Date(item.date);
+              if (!isNaN(d.getTime())) {
+                derivedStartDateKey = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+              }
+            }
+            const rawLabel = String(item.type || item.label || 'Task');
+            return {
+              ...item,
+              startDateKey: derivedStartDateKey,
+              label: rawLabel.charAt(0).toUpperCase() + rawLabel.slice(1).toLowerCase(),
+            };
+          });
+          setCalendarMarkers(mappedMarkers);
+        }
+      } catch (error) {
+        console.error('Failed to fetch calendar markers for dashboard:', error);
+      }
+
       const data = await fetchDashboardSummary();
 
       if (data) {
+        if (data.kpi) {
+          const formatMoney = (val: number = 0) => `PHP ${val.toLocaleString('en-US')}`;
+          const vendorCount = String(
+            data.activeVendorsCount || (data.activeVendors ? data.activeVendors.length : 0)
+          );
+
+          setKpiData((prev) => ({
+            ...prev,
+            Monthly: [
+              { ...prev.Monthly[0], value: String(data.kpi.month?.completed || 0) },
+              { ...prev.Monthly[1], value: formatMoney(data.kpi.month?.completedRevenue || 0) },
+              { ...prev.Monthly[2], value: vendorCount },
+              { ...prev.Monthly[3], value: formatMoney(data.kpi.month?.completedProfit || 0) },
+            ],
+            Annually: [
+              { ...prev.Annually[0], value: String(data.kpi.year?.completed || 0) },
+              { ...prev.Annually[1], value: formatMoney(data.kpi.year?.completedRevenue || 0) },
+              { ...prev.Annually[2], value: vendorCount },
+              { ...prev.Annually[3], value: formatMoney(data.kpi.year?.completedProfit || 0) },
+            ],
+          }));
+        }
+
         // 1. Map Semi-Annual Graph
         if (data.semiAnnual && data.semiAnnual.monthlyGraph) {
           const mappedSemiAnnual = Object.entries(data.semiAnnual.monthlyGraph).map(
@@ -418,11 +497,14 @@ export function OrganizerDashboard() {
               ? 'TBA'
               : `${dateObj.getMonth() + 1}/${dateObj.getDate()}`;
 
+            const rawTime = event.time || event.startTime;
+            const formattedTime = rawTime ? ` at ${formatTime12Hour(rawTime)}` : '';
+
             return {
               rank: index + 1,
               title: event.title,
               subtitle: `Status: ${event.status}`,
-              date: formattedDate,
+              date: `${formattedDate}${formattedTime}`,
               badgeColor: badgeColors[index % badgeColors.length],
             };
           });
@@ -462,7 +544,7 @@ export function OrganizerDashboard() {
   );
   const [kpiFilter, setKpiFilter] = useState('Monthly');
   const [isKpiDropdownOpen, setIsKpiDropdownOpen] = useState(false);
-  const currentKpiCards = kpiDataSets[kpiFilter] || kpiDataSets['Monthly'];
+  const currentKpiCards = kpiData[kpiFilter] || kpiData['Monthly'];
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
@@ -866,7 +948,7 @@ export function OrganizerDashboard() {
                     if (day === null) {
                       return (
                         <div key={`calendar-cell-${index}`} className="flex justify-center">
-                          <span className="flex size-8 items-center justify-center rounded-md text-transparent">
+                          <span className="flex size-10 items-center justify-center rounded-md text-transparent">
                             .
                           </span>
                         </div>
@@ -885,24 +967,63 @@ export function OrganizerDashboard() {
                           aria-pressed={isSelected}
                           title={isToday ? `Today • Day ${day}` : `Day ${day}`}
                           className={[
-                            'flex size-8 items-center justify-center rounded-md border text-xs font-sans transition-all duration-150',
+                            'flex size-10 flex-col items-center justify-between rounded-md py-1 border text-xs font-sans transition-all duration-150',
                             isSelected
-                              ? 'bg-linear-to-br from-[#f051a3] to-[#8f1fd0] text-white font-bold border-transparent'
+                              ? 'bg-[#fdf8ff] text-[#8f1fd1] font-black border-2 border-[#8f1fd1]'
                               : isToday
                                 ? 'bg-[#fce4ec] text-[#7a667f] font-bold border-[#f1c3d7]'
                                 : 'text-[#9b8fa8] font-semibold border-transparent hover:bg-[#f4eff8]',
                           ].join(' ')}
                         >
-                          <div className="flex flex-col items-center justify-center gap-[2px]">
-                            <span>{day}</span>
-                            {/* Calendar mini eto then yung sa may Legend na 4 so may Temporary Simulation: Add a purple 'Meeting' dot every 5th day, and a yellow 'Task' dot on the 12th, then dito nyo alisin y ung logic na day % 5 === 0 || day === 12. for API integration */}
-                            {day % 5 === 0 || day === 12 ? (
-                              <span
-                                className={`size-1.5 rounded-full ${day === 12 ? 'bg-[#e2c341]' : 'bg-[#9740d0]'}`}
-                              />
-                            ) : (
-                              <span className="size-1.5" />
-                            )}
+                          <span className="leading-none">{day}</span>
+                          <div className="flex w-full justify-center gap-1 overflow-hidden px-1">
+                            {(() => {
+                              const dateKey = `${dayDate.getFullYear()}-${String(dayDate.getMonth() + 1).padStart(2, '0')}-${String(dayDate.getDate()).padStart(2, '0')}`;
+                              const dayEvents = calendarMarkers.filter(
+                                (e) => e.startDateKey === dateKey
+                              );
+
+                              if (dayEvents.length === 0) return <span className="h-2" />;
+
+                              const counts: Record<string, number> = {
+                                Task: 0,
+                                Meeting: 0,
+                                Reminder: 0,
+                                Default: 0,
+                              };
+
+                              dayEvents.forEach((event) => {
+                                if (event.label === 'Task') counts.Task++;
+                                else if (event.label === 'Meeting') counts.Meeting++;
+                                else if (event.label === 'Reminder') counts.Reminder++;
+                                else counts.Default++;
+                              });
+
+                              return (
+                                <div className="flex items-center gap-[2px] leading-none">
+                                  {counts.Task > 0 && (
+                                    <span className="text-[8px] font-black text-[#e2c341]">
+                                      {counts.Task}
+                                    </span>
+                                  )}
+                                  {counts.Meeting > 0 && (
+                                    <span className="text-[8px] font-black text-[#9740d0]">
+                                      {counts.Meeting}
+                                    </span>
+                                  )}
+                                  {counts.Reminder > 0 && (
+                                    <span className="text-[8px] font-black text-[#e54e9d]">
+                                      {counts.Reminder}
+                                    </span>
+                                  )}
+                                  {counts.Default > 0 && (
+                                    <span className="text-[8px] font-black text-[#3b28cc]">
+                                      {counts.Default}
+                                    </span>
+                                  )}
+                                </div>
+                              );
+                            })()}
                           </div>
                         </button>
                       </div>

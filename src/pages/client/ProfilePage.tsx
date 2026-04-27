@@ -77,59 +77,56 @@ export function ProfilePage() {
   const loadedUserIdRef = useRef<string | null>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
 
-  const loadProfileData = useCallback(
-    async (userId: string) => {
-      // Already loaded for this user — use cache
-      if (loadedUserIdRef.current === userId && profileCache?.userId === userId) {
-        setProfile(profileCache.data);
-        setOriginalProfile(profileCache.data);
-        setIsLoading(false);
-        return;
+  const loadProfileData = useCallback(async (userId: string) => {
+    // Already loaded for this user — use cache
+    if (loadedUserIdRef.current === userId && profileCache?.userId === userId) {
+      setProfile(profileCache.data);
+      setOriginalProfile(profileCache.data);
+      setIsLoading(false);
+      return;
+    }
+
+    // If there's an in-flight request, abort it
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+    }
+    abortControllerRef.current = new AbortController();
+
+    setIsLoading(true);
+    setFetchError(null);
+
+    try {
+      const fetchedUser = await getUserById(userId);
+      const mapped = mapUserToProfile(fetchedUser);
+
+      // Update cache
+      profileCache = { userId, data: mapped };
+      loadedUserIdRef.current = userId;
+
+      setProfile(mapped);
+      setOriginalProfile(mapped);
+    } catch (error: unknown) {
+      // Don't update state if aborted
+      if (error instanceof DOMException && error.name === 'AbortError') return;
+
+      console.error('Failed to load profile:', error);
+
+      // On rate-limit (429) or server error, show a user-friendly message
+      // but do NOT reset loadedUserIdRef — prevent retry loops
+      const status =
+        typeof error === 'object' && error !== null && 'response' in error
+          ? (error as { response?: { status?: number } }).response?.status
+          : undefined;
+
+      if (status === 429) {
+        setFetchError('Too many requests. Please wait a moment and try again.');
+      } else {
+        setFetchError('Failed to load profile data. Please try again later.');
       }
-
-      // If there's an in-flight request, abort it
-      if (abortControllerRef.current) {
-        abortControllerRef.current.abort();
-      }
-      abortControllerRef.current = new AbortController();
-
-      setIsLoading(true);
-      setFetchError(null);
-
-      try {
-        const fetchedUser = await getUserById(userId);
-        const mapped = mapUserToProfile(fetchedUser);
-
-        // Update cache
-        profileCache = { userId, data: mapped };
-        loadedUserIdRef.current = userId;
-
-        setProfile(mapped);
-        setOriginalProfile(mapped);
-      } catch (error: unknown) {
-        // Don't update state if aborted
-        if (error instanceof DOMException && error.name === 'AbortError') return;
-
-        console.error('Failed to load profile:', error);
-
-        // On rate-limit (429) or server error, show a user-friendly message
-        // but do NOT reset loadedUserIdRef — prevent retry loops
-        const status =
-          typeof error === 'object' && error !== null && 'response' in error
-            ? (error as { response?: { status?: number } }).response?.status
-            : undefined;
-
-        if (status === 429) {
-          setFetchError('Too many requests. Please wait a moment and try again.');
-        } else {
-          setFetchError('Failed to load profile data. Please try again later.');
-        }
-      } finally {
-        setIsLoading(false);
-      }
-    },
-    []
-  );
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
 
   // Single effect: react to user changes (covers both initial mount and user switch)
   useEffect(() => {
