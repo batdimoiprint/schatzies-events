@@ -1,3 +1,871 @@
-export function CostBreakdownPage() {
-  return <div>Coming Soon</div>;
+import { useMemo, useRef, useState } from 'react';
+import { ArrowRight, CalendarDays, ChevronDown, Download } from 'lucide-react';
+
+import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
+import {
+  Dialog,
+  DialogTrigger,
+  DialogContent,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+  DialogClose,
+} from '@/components/ui/dialog';
+
+type VendorCharge = {
+  id: string;
+  category: string;
+  name: string;
+  cost: number;
+  color: string;
+};
+
+type EventCostBreakdown = {
+  id: string;
+  eventName: string;
+  packageName: string;
+  eventType: string;
+  eventDate: string;
+  packagePerPax: number;
+  paxCount: number;
+  additionalCharges: number;
+  vendorCharges: VendorCharge[];
+};
+
+type AdditionalCharge = {
+  id: string;
+  description: string;
+  amount: number;
+};
+
+const MOCK_EVENTS: EventCostBreakdown[] = [
+  {
+    id: 'event-1',
+    eventName: "Angela's 18th Birthday",
+    packageName: 'Charming Package',
+    eventType: 'Debut',
+    eventDate: '2026-01-03',
+    packagePerPax: 2000,
+    paxCount: 100,
+    additionalCharges: 5000,
+    vendorCharges: [
+      {
+        id: 'v1',
+        category: 'Buffet Catering',
+        name: 'Juan Carlo The Caterer',
+        cost: 60000,
+        color: '#7a0bc0',
+      },
+      {
+        id: 'v2',
+        category: 'Photo and Video Coverage',
+        name: 'Snapshot Studio',
+        cost: 28000,
+        color: '#9838e4',
+      },
+      {
+        id: 'v3',
+        category: 'Elegant Venue Setup and Styling',
+        name: 'Velvet Vows',
+        cost: 22000,
+        color: '#b255f0',
+      },
+      {
+        id: 'v4',
+        category: 'Event Planning and Coordination',
+        name: 'Golden Moments Planning',
+        cost: 14000,
+        color: '#d46ad7',
+      },
+      {
+        id: 'v5',
+        category: 'Ceiling Treatment and Venue Design',
+        name: 'SkyDecor Events Styling',
+        cost: 16000,
+        color: '#ec89be',
+      },
+      {
+        id: 'v6',
+        category: 'Full Event Coordination',
+        name: 'Seamless Events Co.',
+        cost: 10000,
+        color: '#f6b2d5',
+      },
+    ],
+  },
+  {
+    id: 'event-2',
+    eventName: 'Ray & Sam Wedding Reception',
+    packageName: 'Elegance Package',
+    eventType: 'Wedding',
+    eventDate: '2026-02-14',
+    packagePerPax: 4200,
+    paxCount: 70,
+    additionalCharges: 12000,
+    vendorCharges: [
+      {
+        id: 'w1',
+        category: 'Buffet Catering',
+        name: 'Rosario Catering',
+        cost: 96000,
+        color: '#7a0bc0',
+      },
+      {
+        id: 'w2',
+        category: 'Photo and Video Coverage',
+        name: 'Forever Films',
+        cost: 36000,
+        color: '#9838e4',
+      },
+      {
+        id: 'w3',
+        category: 'Elegant Venue Setup and Styling',
+        name: 'White Bloom Styling',
+        cost: 28000,
+        color: '#b255f0',
+      },
+    ],
+  },
+  {
+    id: 'event-3',
+    eventName: 'Mika Corporate Year-End Gala',
+    packageName: 'Corporate Gala Package',
+    eventType: 'Corporate',
+    eventDate: '2026-03-28',
+    packagePerPax: 2900,
+    paxCount: 90,
+    additionalCharges: 18000,
+    vendorCharges: [
+      {
+        id: 'c1',
+        category: 'Buffet Catering',
+        name: 'Prestige Catering Group',
+        cost: 78000,
+        color: '#7a0bc0',
+      },
+      {
+        id: 'c2',
+        category: 'Photo and Video Coverage',
+        name: 'Live Audio Visuals',
+        cost: 30000,
+        color: '#9838e4',
+      },
+      {
+        id: 'c3',
+        category: 'Event Planning and Coordination',
+        name: 'Brand Events Team',
+        cost: 22000,
+        color: '#d46ad7',
+      },
+    ],
+  },
+];
+
+const pesoFormatter = new Intl.NumberFormat('en-PH', {
+  style: 'currency',
+  currency: 'PHP',
+  maximumFractionDigits: 0,
+});
+
+const longDateFormatter = new Intl.DateTimeFormat('en-US', {
+  month: 'long',
+  day: 'numeric',
+  year: 'numeric',
+});
+
+function formatPeso(value: number): string {
+  return pesoFormatter.format(value);
 }
+
+function formatCsvValue(value: string | number): string {
+  if (typeof value === 'number') {
+    return String(value);
+  }
+
+  if (value.includes(',') || value.includes('"') || value.includes('\n')) {
+    return `"${value.replaceAll('"', '""')}"`;
+  }
+
+  return value;
+}
+
+export function CostBreakdownPage() {
+  const [selectedEventId, setSelectedEventId] = useState(MOCK_EVENTS[0].id);
+  const [hoveredVendorId, setHoveredVendorId] = useState<string | null>(null);
+  const [exportMenuOpen, setExportMenuOpen] = useState(false);
+  const [additionalChargesMap, setAdditionalChargesMap] = useState<
+    Record<string, AdditionalCharge[]>
+  >({});
+  const [newAddDesc, setNewAddDesc] = useState('');
+  const [newAddAmount, setNewAddAmount] = useState('');
+  const printRef = useRef<HTMLDivElement | null>(null);
+
+  const selectedEvent = useMemo(() => {
+    return MOCK_EVENTS.find((event) => event.id === selectedEventId) ?? MOCK_EVENTS[0];
+  }, [selectedEventId]);
+
+  const additionalItems = additionalChargesMap[selectedEvent.id] ?? [];
+  const additionalItemsTotal = additionalItems.reduce((total, item) => total + item.amount, 0);
+  const baseAdditionalCharges = 0;
+  const displayedAdditionalCharges = baseAdditionalCharges + additionalItemsTotal;
+  const packagePayment = selectedEvent.packagePerPax * selectedEvent.paxCount;
+  const totalVendorCharges = useMemo(() => {
+    return selectedEvent.vendorCharges.reduce((total, charge) => total + charge.cost, 0);
+  }, [selectedEvent.vendorCharges]);
+  const totalRevenue = packagePayment + displayedAdditionalCharges;
+  const profitOrRemainingBudget = totalRevenue - totalVendorCharges;
+
+  const formattedEventDate = useMemo(() => {
+    return longDateFormatter.format(new Date(selectedEvent.eventDate));
+  }, [selectedEvent.eventDate]);
+
+  const chartSegments = useMemo(() => {
+    const total = totalVendorCharges || 1;
+    const radius = 62;
+    const circumference = 2 * Math.PI * radius;
+    let cumulative = 0;
+
+    return selectedEvent.vendorCharges.map((charge) => {
+      const percentage = (charge.cost / total) * 100;
+      const strokeLength = (percentage / 100) * circumference;
+      const dashArray = `${strokeLength} ${Math.max(circumference - strokeLength, 0)}`;
+      const dashOffset = -((cumulative / 100) * circumference);
+
+      cumulative += percentage;
+
+      return {
+        ...charge,
+        percentage,
+        dashArray,
+        dashOffset,
+      };
+    });
+  }, [selectedEvent.vendorCharges, totalVendorCharges]);
+
+  const hoveredSegment = useMemo(() => {
+    return chartSegments.find((segment) => segment.id === hoveredVendorId) ?? null;
+  }, [chartSegments, hoveredVendorId]);
+
+  const handleAddAdditional = () => {
+    const amount = Number(newAddAmount || 0);
+
+    if (!newAddDesc.trim() || amount <= 0) {
+      return;
+    }
+
+    const item: AdditionalCharge = {
+      id: `${Date.now()}`,
+      description: newAddDesc.trim(),
+      amount,
+    };
+
+    setAdditionalChargesMap((prev) => ({
+      ...prev,
+      [selectedEvent.id]: [...(prev[selectedEvent.id] ?? []), item],
+    }));
+    setNewAddDesc('');
+    setNewAddAmount('');
+  };
+
+  const handleRemoveAdditional = (id: string) => {
+    setAdditionalChargesMap((prev) => ({
+      ...prev,
+      [selectedEvent.id]: (prev[selectedEvent.id] ?? []).filter((item) => item.id !== id),
+    }));
+  };
+
+  const handleExportCsv = () => {
+    const summaryRows: Array<Array<string | number>> = [
+      ['Event', selectedEvent.eventName],
+      ['Type', selectedEvent.eventType],
+      ['Date', formattedEventDate],
+      [],
+      ['Client Package Payment', packagePayment],
+      ['Additional Charges', displayedAdditionalCharges],
+      ['Total Revenue', totalRevenue],
+      ['Total Vendor Charges', totalVendorCharges],
+      ['Profit', profitOrRemainingBudget],
+      [],
+      ['Vendor Charges'],
+      ['Category', 'Vendor / Item', 'Cost'],
+      ...selectedEvent.vendorCharges.map((charge) => [charge.category, charge.name, charge.cost]),
+    ];
+
+    const csvContent = summaryRows
+      .map((row) => row.map((cell) => formatCsvValue(cell)).join(','))
+      .join('\n');
+
+    const csvBlob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const csvUrl = URL.createObjectURL(csvBlob);
+    const link = document.createElement('a');
+
+    link.href = csvUrl;
+    link.download = `${selectedEvent.eventName.toLowerCase().replaceAll(' ', '-')}-cost-breakdown.csv`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(csvUrl);
+    setExportMenuOpen(false);
+  };
+
+  const handleDownloadPdf = () => {
+    if (!printRef.current) {
+      return;
+    }
+
+    const printHTML = printRef.current.outerHTML;
+    const newWindow = window.open('', '_blank', 'width=900,height=700');
+
+    if (!newWindow) {
+      return;
+    }
+
+    const styleNodes = Array.from(document.querySelectorAll('link[rel="stylesheet"], style'));
+    const styles = styleNodes.map((node) => node.outerHTML).join('\n');
+
+    newWindow.document
+      .write(`<!doctype html><html><head><meta charset="utf-8"><title>Cost Breakdown</title>${styles}
+      <style>@page{size:A4 portrait;margin:12mm;}body{background:#fff;color:#000;margin:0;padding:0;} .print-container{width:180mm;max-width:100%;margin:0 auto;} table{border-collapse:collapse;} th,td{padding:6px 6px;}</style></head><body>${printHTML}</body></html>`);
+    newWindow.document.close();
+    newWindow.focus();
+    newWindow.onload = () => {
+      try {
+        newWindow.print();
+      } catch {
+        // ignore print failures
+      }
+    };
+    setExportMenuOpen(false);
+  };
+
+  return (
+    <section className="space-y-6 pb-6">
+      <div className="hidden print:block">
+        <div
+          ref={printRef}
+          className="mx-auto bg-white p-4 text-black print-container"
+          style={{
+            fontFamily: 'Source Sans Pro, Arial, sans-serif',
+            width: '180mm',
+            maxWidth: '100%',
+          }}
+        >
+          <div className="mb-3 text-center">
+            <img
+              src="/Pictures/business-logo.png"
+              alt="Schatzies Events"
+              className="mx-auto mb-2"
+              style={{ width: 72 }}
+            />
+            <div className="text-sm font-bold uppercase tracking-wide">Schatzies Events</div>
+            <h1 className="mt-1 text-lg font-bold">{selectedEvent.eventName}</h1>
+            <div className="text-sm text-gray-700">{selectedEvent.packageName}</div>
+            <div className="mt-1 text-sm">{formattedEventDate}</div>
+          </div>
+
+          <div className="mb-3">
+            <div className="mb-2 text-sm font-semibold">Additional Charges (Breakdown)</div>
+            <table className="w-full" style={{ borderCollapse: 'collapse' }}>
+              <thead>
+                <tr style={{ borderTop: '1px solid #111', borderBottom: '1px solid #111' }}>
+                  <th className="py-1 text-left text-[11px]">Description</th>
+                  <th className="py-1 text-right text-[11px]">Amount</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td className="py-1">Base additional charges</td>
+                  <td className="py-1 text-right">{formatPeso(baseAdditionalCharges)}</td>
+                </tr>
+                {additionalItems.map((item) => (
+                  <tr key={item.id}>
+                    <td className="py-1">{item.description}</td>
+                    <td className="py-1 text-right">{formatPeso(item.amount)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          <div className="mb-3">
+            <table className="w-full" style={{ borderCollapse: 'collapse' }}>
+              <thead>
+                <tr>
+                  <th className="py-1 text-left text-[12px]">Description</th>
+                  <th className="py-1 text-right text-[12px]">Amount</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td className="py-1">Client Package ({selectedEvent.paxCount} pax)</td>
+                  <td className="py-1 text-right font-semibold">{formatPeso(packagePayment)}</td>
+                </tr>
+                <tr>
+                  <td className="py-1">Additional Charges</td>
+                  <td className="py-1 text-right font-semibold">
+                    {formatPeso(displayedAdditionalCharges)}
+                  </td>
+                </tr>
+                <tr>
+                  <td className="py-1">Total Vendor Charges</td>
+                  <td className="py-1 text-right font-semibold">
+                    {formatPeso(totalVendorCharges)}
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div className="mb-3">
+            <div className="mb-2 text-sm font-semibold">Vendor Charges</div>
+            <table className="w-full" style={{ borderCollapse: 'collapse' }}>
+              <thead>
+                <tr style={{ borderTop: '1px solid #111', borderBottom: '1px solid #111' }}>
+                  <th className="py-1 text-left text-[11px]">Category</th>
+                  <th className="py-1 text-left text-[11px]">Vendor / Item</th>
+                  <th className="py-1 text-right text-[11px]">Cost</th>
+                </tr>
+              </thead>
+              <tbody>
+                {selectedEvent.vendorCharges.map((charge) => (
+                  <tr key={charge.id}>
+                    <td className="py-1">{charge.category}</td>
+                    <td className="py-1">{charge.name}</td>
+                    <td className="py-1 text-right">{formatPeso(charge.cost)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          <div className="mt-3 border-t pt-2">
+            <div className="flex justify-between text-sm font-bold">
+              <span>Total Revenue</span>
+              <span>{formatPeso(totalRevenue)}</span>
+            </div>
+            <div className="mt-1 flex justify-between text-sm font-bold">
+              <span>Profit</span>
+              <span>{formatPeso(profitOrRemainingBudget)}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="overflow-x-auto pb-2">
+        <div className="min-w-[1140px] space-y-6 pr-1">
+          <div className="flex items-center justify-between gap-4 rounded-3xl border border-[#eadfec] bg-white p-4 shadow-sm print:hidden">
+            <div className="flex items-center gap-3">
+              <div className="relative">
+                <Select value={selectedEvent.id} onValueChange={setSelectedEventId}>
+                  <SelectTrigger className="h-11 w-[255px] rounded-2xl border-0 bg-linear-to-r from-[#f34da7] to-[#8f1fd1] px-4 text-sm font-semibold text-white shadow-[0_10px_24px_rgba(165,44,180,0.3)] data-[placeholder]:text-white/80 [&_svg]:hidden">
+                    <SelectValue placeholder="Select an event" />
+                  </SelectTrigger>
+                  <SelectContent className="rounded-xl">
+                    {MOCK_EVENTS.map((event) => (
+                      <SelectItem key={event.id} value={event.id}>
+                        {event.eventName}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+
+                <ChevronDown className="pointer-events-none absolute right-3 top-1/2 size-4 -translate-y-1/2 text-white" />
+              </div>
+
+              <div className="flex items-center gap-3">
+                <div>
+                  <p className="text-sm font-semibold text-[#4d4454]">
+                    {selectedEvent.packageName}
+                  </p>
+                  <p className="inline-flex items-center gap-2 text-sm font-semibold text-[#60586c]">
+                    <CalendarDays className="size-4 text-[#8f1fd1]" />
+                    {formattedEventDate}
+                  </p>
+                </div>
+
+                <span className="rounded-full border border-[#eadcf6] bg-[#f8f1fd] px-3 py-1 text-xs font-bold uppercase tracking-wide text-[#8f23cf]">
+                  {selectedEvent.eventType}
+                </span>
+
+                <div className="flex items-center gap-6 text-sm font-semibold text-[#6f6780]">
+                  <div className="flex items-center gap-2">
+                    <span className="text-[11px] uppercase tracking-wide text-[#8b8199]">
+                      Start Date
+                    </span>
+                    <span>{formattedEventDate}</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-[11px] uppercase tracking-wide text-[#8b8199]">
+                      End Date
+                    </span>
+                    <span>{formattedEventDate}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="relative">
+              <Button
+                onClick={() => setExportMenuOpen((open) => !open)}
+                className="rounded-full bg-linear-to-r from-[#f34da7] to-[#8f1fd1] px-5 text-white shadow-[0_10px_24px_rgba(165,44,180,0.28)] hover:opacity-95"
+              >
+                Export
+                <ChevronDown className="size-4" />
+              </Button>
+
+              {exportMenuOpen ? (
+                <div className="absolute right-0 top-full z-20 mt-2 w-44 overflow-hidden rounded-2xl border border-[#eadfec] bg-white shadow-[0_12px_34px_rgba(42,23,60,0.12)]">
+                  <button
+                    type="button"
+                    onClick={handleExportCsv}
+                    className="flex w-full items-center gap-2 px-4 py-3 text-left text-sm font-semibold text-[#4a4157] transition-colors hover:bg-[#faf6fd]"
+                  >
+                    <Download className="size-4 text-[#8f1fd1]" />
+                    Export CSV
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleDownloadPdf}
+                    className="flex w-full items-center gap-2 px-4 py-3 text-left text-sm font-semibold text-[#4a4157] transition-colors hover:bg-[#faf6fd]"
+                  >
+                    <Download className="size-4 text-[#f34da7]" />
+                    Download PDF
+                  </button>
+                </div>
+              ) : null}
+            </div>
+          </div>
+
+          <div className="overflow-hidden rounded-2xl border border-[#e7dfef] bg-white shadow-sm">
+            <div className="grid h-[168px] grid-cols-4 divide-x divide-[#ece6f3]">
+              <div className="p-5">
+                <p className="inline-flex items-center gap-2 text-sm font-semibold text-[#7a7186]">
+                  <span className="size-2.5 rounded-full bg-[#8f23cf] ring-2 ring-[#efe4fb]" />
+                  Revenue
+                </p>
+                <p className="mt-5 font-sans text-5xl font-black tracking-tight text-[#2d2834]">
+                  {formatPeso(packagePayment)}
+                </p>
+              </div>
+
+              <div className="p-5">
+                <p className="inline-flex items-center gap-2 text-sm font-semibold text-[#7a7186]">
+                  <span className="size-2.5 rounded-full bg-[#5dbac0] ring-2 ring-[#e3f6f7]" />
+                  Profit
+                </p>
+                <p
+                  className={`mt-5 font-sans text-5xl font-black tracking-tight ${profitOrRemainingBudget >= 0 ? 'text-[#2d2834]' : 'text-[#c03560]'}`}
+                >
+                  {formatPeso(profitOrRemainingBudget)}
+                </p>
+              </div>
+
+              <div className="p-5">
+                <p className="inline-flex items-center gap-2 text-sm font-semibold text-[#7a7186]">
+                  <span className="size-2.5 rounded-full bg-[#d7d6db]" />
+                  Package (Per Pax)
+                </p>
+                <p className="mt-5 font-sans text-5xl font-black tracking-tight text-[#2d2834]">
+                  {formatPeso(selectedEvent.packagePerPax)}
+                </p>
+                <p className="mt-2 text-right text-xs font-semibold text-[#898299]">
+                  {selectedEvent.paxCount} pax
+                </p>
+              </div>
+
+              <div className="p-5">
+                <p className="inline-flex items-center gap-2 text-sm font-semibold text-[#7a7186]">
+                  <span className="size-2.5 rounded-full bg-[#d7d6db]" />
+                  Additional Charges
+                </p>
+                <p className="mt-5 font-sans text-5xl font-black tracking-tight text-[#2d2834]">
+                  {formatPeso(displayedAdditionalCharges)}
+                </p>
+                <Dialog>
+                  <DialogTrigger asChild>
+                    <button className="mt-2 inline-flex items-center gap-1 text-xs font-semibold text-[#6e6585] transition-colors hover:text-[#4f4760]">
+                      View Details
+                      <ArrowRight className="size-3" />
+                    </button>
+                  </DialogTrigger>
+                  <DialogContent className="sm:max-w-xl">
+                    <DialogTitle>Additional Charges</DialogTitle>
+                    <DialogDescription>
+                      Track the base additional charges and any extra adjustments for this event.
+                    </DialogDescription>
+
+                    <div className="space-y-4">
+                      <div className="rounded-2xl border border-[#eee4f6] bg-[#fcf9fe] p-4">
+                        <div className="flex items-center justify-between gap-3 text-sm">
+                          <span className="font-semibold text-[#6e6585]">
+                            Base additional charges
+                          </span>
+                          <span className="font-bold text-[#2d2834]">
+                            {formatPeso(baseAdditionalCharges)}
+                          </span>
+                        </div>
+                        <div className="mt-2 flex items-center justify-between gap-3 text-sm">
+                          <span className="font-semibold text-[#6e6585]">Extra items added</span>
+                          <span className="font-bold text-[#2d2834]">
+                            {formatPeso(additionalItemsTotal)}
+                          </span>
+                        </div>
+                        <div className="mt-3 flex items-center justify-between border-t border-[#ece4f5] pt-3 text-sm">
+                          <span className="font-bold text-[#4a4157]">Total Additional Charges</span>
+                          <span className="font-bold text-[#8f1fd1]">
+                            {formatPeso(displayedAdditionalCharges)}
+                          </span>
+                        </div>
+                      </div>
+
+                      <div className="max-h-52 space-y-3 overflow-y-auto pr-1">
+                        {additionalItems.length === 0 ? (
+                          <div className="rounded-xl border border-dashed border-[#eadcf6] px-4 py-3 text-sm text-[#8b8199]">
+                            No extra items added yet.
+                          </div>
+                        ) : (
+                          additionalItems.map((item) => (
+                            <div
+                              key={item.id}
+                              className="flex items-center justify-between gap-3 rounded-xl bg-[#fbfbfd] p-3"
+                            >
+                              <div className="min-w-0">
+                                <div className="truncate text-sm font-semibold text-[#2f2939]">
+                                  {item.description}
+                                </div>
+                                <div className="text-xs text-[#8c859d]">Manual additional item</div>
+                              </div>
+                              <div className="flex items-center gap-3">
+                                <div className="text-sm font-bold text-[#2f2939]">
+                                  {formatPeso(item.amount)}
+                                </div>
+                                <Button
+                                  variant="ghost"
+                                  onClick={() => handleRemoveAdditional(item.id)}
+                                  className="text-xs text-red-500 hover:bg-red-50 hover:text-red-600"
+                                >
+                                  Remove
+                                </Button>
+                              </div>
+                            </div>
+                          ))
+                        )}
+                      </div>
+
+                      <div className="grid grid-cols-1 gap-2 sm:grid-cols-[1fr_120px] sm:items-end">
+                        <div>
+                          <Label className="text-sm">Description</Label>
+                          <Input
+                            value={newAddDesc}
+                            onChange={(event) => setNewAddDesc(event.target.value)}
+                            placeholder="e.g. Extra chairs"
+                          />
+                        </div>
+                        <div>
+                          <Label className="text-sm">Amount</Label>
+                          <Input
+                            value={newAddAmount}
+                            onChange={(event) => setNewAddAmount(event.target.value)}
+                            placeholder="0"
+                            type="number"
+                          />
+                        </div>
+                      </div>
+
+                      <div className="flex gap-2">
+                        <Button
+                          onClick={handleAddAdditional}
+                          className="rounded-full bg-linear-to-r from-[#f34da7] to-[#8f1fd1] px-4 py-1 text-sm text-white hover:opacity-95"
+                        >
+                          Add
+                        </Button>
+                        <Button
+                          variant="outline"
+                          onClick={() => {
+                            setNewAddDesc('');
+                            setNewAddAmount('');
+                          }}
+                          className="rounded-full px-4 py-1"
+                        >
+                          Clear
+                        </Button>
+                      </div>
+                    </div>
+
+                    <DialogFooter>
+                      <DialogClose asChild>
+                        <button className="rounded-full border border-[#e4d9ef] px-3 py-1 text-sm font-semibold text-[#4a4157]">
+                          Done
+                        </button>
+                      </DialogClose>
+                    </DialogFooter>
+                  </DialogContent>
+                </Dialog>
+              </div>
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <h2 className="text-[32px] font-black tracking-tight text-[#4a4157]">
+              Cost Distribution (Vendors)
+            </h2>
+
+            <div className="grid grid-cols-[320px_minmax(0,1fr)] gap-4">
+              <Card className="h-[500px] border-[#e7dfef] bg-white py-0 shadow-sm">
+                <CardContent className="flex h-full flex-col px-5 py-5">
+                  <div className="flex flex-1 items-start justify-center pt-1">
+                    <div className="relative size-60">
+                      <svg viewBox="0 0 160 160" className="size-full -rotate-90">
+                        <circle
+                          cx="80"
+                          cy="80"
+                          r="62"
+                          fill="none"
+                          stroke="#f0e9f7"
+                          strokeWidth="32"
+                        />
+                        {chartSegments.map((segment) => (
+                          <circle
+                            key={segment.id}
+                            cx="80"
+                            cy="80"
+                            r="62"
+                            fill="none"
+                            stroke={segment.color}
+                            strokeWidth="32"
+                            strokeDasharray={segment.dashArray}
+                            strokeDashoffset={segment.dashOffset}
+                            className="cursor-pointer transition-opacity duration-150"
+                            opacity={hoveredVendorId && hoveredVendorId !== segment.id ? 0.42 : 1}
+                            tabIndex={0}
+                            aria-label={`${segment.category}: ${formatPeso(segment.cost)} (${segment.percentage.toFixed(1)}%)`}
+                            onMouseEnter={() => setHoveredVendorId(segment.id)}
+                            onMouseLeave={() => setHoveredVendorId(null)}
+                            onFocus={() => setHoveredVendorId(segment.id)}
+                            onBlur={() => setHoveredVendorId(null)}
+                          />
+                        ))}
+                      </svg>
+
+                      <div className="pointer-events-none absolute inset-[48px] rounded-full bg-white ring-1 ring-[#eee5f6]" />
+
+                      {hoveredSegment ? (
+                        <div className="pointer-events-none absolute -bottom-1 left-1/2 min-w-[210px] -translate-x-1/2 translate-y-full rounded-2xl border border-[#efe4f8] bg-white px-4 py-3 text-center shadow-[0_16px_36px_rgba(42,23,60,0.16)]">
+                          <p className="mt-1 text-sm font-bold text-[#2d2834]">
+                            {hoveredSegment.category}
+                          </p>
+                          <p className="mt-0.5 text-xs font-medium text-[#6f6780]">
+                            {hoveredSegment.name}
+                          </p>
+                          <div className="mt-3 flex items-center justify-between gap-3 text-sm">
+                            <span className="font-semibold text-[#6f6780]">Cost</span>
+                            <span className="font-bold text-[#2d2834]">
+                              {formatPeso(hoveredSegment.cost)}
+                            </span>
+                          </div>
+                          <div className="mt-1 flex items-center justify-between gap-3 text-sm">
+                            <span className="font-semibold text-[#6f6780]">Share</span>
+                            <span className="font-bold text-[#2d2834]">
+                              {hoveredSegment.percentage.toFixed(1)}%
+                            </span>
+                          </div>
+                        </div>
+                      ) : null}
+                    </div>
+                  </div>
+
+                  <div className="space-y-1.5 pb-2">
+                    {chartSegments.map((segment) => (
+                      <div
+                        key={segment.id}
+                        className="flex items-center gap-2 text-[12px] text-[#70687e]"
+                      >
+                        <span
+                          className="size-2 rounded-full"
+                          style={{ backgroundColor: segment.color }}
+                        />
+                        <span className="min-w-0 flex-1 truncate">{segment.category}</span>
+                        <span className="shrink-0 font-medium">
+                          {segment.percentage.toFixed(1)}%
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+
+                  <div className="mt-3 flex justify-center">
+                    <div className="rounded-sm bg-[#ff5b9f] px-4 py-2 text-sm font-bold text-white shadow-[0_10px_24px_rgba(255,91,159,0.28)]">
+                      Total Cost = {formatPeso(totalVendorCharges)}
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="h-[500px] border-[#e7dfef] bg-white py-0 shadow-sm">
+                <CardContent className="h-full px-0 py-0">
+                  <div className="overflow-hidden rounded-2xl">
+                    <div className="bg-linear-to-r from-[#ff66a7] to-[#ff4b97] px-6 py-4 text-sm font-semibold text-white">
+                      <div className="grid grid-cols-[1.2fr_1fr_180px] gap-4">
+                        <span>Vendor type</span>
+                        <span>Vendor Name</span>
+                        <span className="text-right">Allocated Cost</span>
+                      </div>
+                    </div>
+
+                    <div className="h-[420px] overflow-y-auto">
+                      <Table>
+                        <TableHeader className="sr-only">
+                          <TableRow>
+                            <TableHead>Vendor type</TableHead>
+                            <TableHead>Vendor Name</TableHead>
+                            <TableHead>Allocated Cost</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {selectedEvent.vendorCharges.map((charge) => (
+                            <TableRow
+                              key={charge.id}
+                              className="border-[#f1ecf6] odd:bg-[#fff4f8] even:bg-white hover:bg-[#fcfbfd]"
+                            >
+                              <TableCell className="px-6 py-4 text-sm font-medium text-[#2f2939]">
+                                {charge.category}
+                              </TableCell>
+                              <TableCell className="px-6 py-4 text-sm text-[#2f2939]">
+                                {charge.name}
+                              </TableCell>
+                              <TableCell className="px-6 py-4 text-right text-sm font-bold text-[#2f2939]">
+                                {formatPeso(charge.cost)}
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+// paayos api cata

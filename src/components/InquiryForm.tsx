@@ -634,7 +634,7 @@ export function InquiryForm({ onClose, selectedPackageId, selectedEventType }: I
                   {/* ── Event Specifications ── */}
                   <section>
                     <p className="mb-2.5 text-[0.9rem] font-bold text-[#1a1225]">
-                      Event Specifications
+                      Event Specifications <span className="text-red-500">✱</span>
                     </p>
 
                     <div className="space-y-2">
@@ -676,8 +676,8 @@ export function InquiryForm({ onClose, selectedPackageId, selectedEventType }: I
                             name="eventPackage"
                             value={form.eventPackage}
                             onChange={handleChange}
-                            disabled={!form.eventType || (selectedPackage ? true : false)}
-                            className={`${selectBase} ${!form.eventType || selectedPackage ? 'opacity-60 cursor-not-allowed' : ''}`}
+                            disabled={!form.eventType}
+                            className={`${selectBase} ${!form.eventType ? 'opacity-60 cursor-not-allowed' : ''}`}
                           >
                             <option value="" disabled hidden>
                               {!form.eventType ? 'Select Event Type First' : 'Event Package'}

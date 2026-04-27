@@ -1,6 +1,8 @@
-import { useEffect, useMemo, useState, type ChangeEvent } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { fetchDashboardSummary } from '@/api/organizer-dashboard';
+import { getCalendarEntries } from '@/api/calendar';
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -35,96 +37,144 @@ type KpiCardData = {
   iconImage: string;
 };
 
-const semiAnnualCompletions: MonthlyValue[] = [
-  { month: 'Jan', value: 21 },
-  { month: 'Feb', value: 27 },
-  { month: 'Mar', value: 30 },
-  { month: 'Apr', value: 32 },
-  { month: 'May', value: 37 },
-  { month: 'Jun', value: 39 },
-];
-
-const monthlyStatus: StatusSlice[] = [
-  { label: 'Completed', value: 75, eventCount: 15, color: '#b964ef' },
-  { label: 'Execution', value: 20, eventCount: 4, color: '#ef79b3' },
-  { label: 'Planning', value: 5, eventCount: 1, color: '#f4d03f' },
-];
-
-const upcomingEvents: ListEntry[] = [
-  {
-    rank: 1,
-    title: "Juliana Rox's 18th Birthday",
-    subtitle: 'Package | Client name | Contact',
-    date: '11/21',
-    badgeColor: 'bg-[#db37b4]',
-  },
-  {
-    rank: 2,
-    title: 'AngelaFoundHerRaytone',
-    subtitle: 'Package | Client name | Contact',
-    date: '11/21',
-    badgeColor: 'bg-[#bb2ec4]',
-  },
-  {
-    rank: 3,
-    title: 'AngelaFoundHerRaytone',
-    subtitle: 'Package | Client name | Contact',
-    date: '11/21',
-    badgeColor: 'bg-[#9b24cd]',
-  },
-];
-
-const activeVendors: ListEntry[] = [
-  {
-    rank: 1,
-    title: 'Nice Print Photography',
-    subtitle: 'Contact person | Email | Contact number',
-    date: '11/21',
-    badgeColor: 'bg-[#29bf4c]',
-  },
-  {
-    rank: 2,
-    title: "Sam's Catering Services",
-    subtitle: 'Contact person | Email | Contact number',
-    date: '11/21',
-    badgeColor: 'bg-[#1aa73a]',
-  },
-];
-
-const kpiCards: KpiCardData[] = [
-  {
-    title: 'Events Completed',
-    value: '4',
-    caption: '(Events)',
-    gradientClassName: 'from-[#cf6ef6] to-[#a536e4]',
-    iconBgClassName: 'bg-white/25',
-    iconImage: '/Pictures/organizerpics/Event completed.png',
-  },
-  {
-    title: 'Total Revenue',
-    value: 'PHP 50,000',
-    caption: '(Overall)',
-    gradientClassName: 'from-[#f48db3] to-[#e75691]',
-    iconBgClassName: 'bg-white/25',
-    iconImage: '/Pictures/organizerpics/TotalRevenue.png',
-  },
-  {
-    title: 'Active Vendors',
-    value: '4',
-    caption: '(Outsourced vendors)',
-    gradientClassName: 'from-[#f0df72] to-[#ddc447]',
-    iconBgClassName: 'bg-black/10',
-    iconImage: '/Pictures/organizerpics/ActiveVendors.png',
-  },
-  {
-    title: 'Total Profit',
-    value: 'PHP 50,000',
-    caption: '(Overall profit per month)',
-    gradientClassName: 'from-[#8cb2f7] to-[#4c7fe3]',
-    iconBgClassName: 'bg-white/25',
-    iconImage: '/Pictures/organizerpics/TotalProfit.png',
-  },
-];
+const defaultKpiDataSets: Record<string, KpiCardData[]> = {
+  Weekly: [
+    {
+      title: 'Events Completed',
+      value: '0',
+      caption: '(This week)',
+      gradientClassName: 'from-[#cf6ef6] to-[#a536e4]',
+      iconBgClassName: 'bg-white/25',
+      iconImage: '/Pictures/organizerpics/Event completed.png',
+    },
+    {
+      title: 'Total Revenue',
+      value: 'PHP 0',
+      caption: '(This week)',
+      gradientClassName: 'from-[#f48db3] to-[#e75691]',
+      iconBgClassName: 'bg-white/25',
+      iconImage: '/Pictures/organizerpics/TotalRevenue.png',
+    },
+    {
+      title: 'Active Vendors',
+      value: '0',
+      caption: '(Currently active)',
+      gradientClassName: 'from-[#f0df72] to-[#ddc447]',
+      iconBgClassName: 'bg-black/10',
+      iconImage: '/Pictures/organizerpics/ActiveVendors.png',
+    },
+    {
+      title: 'Total Profit',
+      value: 'PHP 0',
+      caption: '(This week profit)',
+      gradientClassName: 'from-[#8cb2f7] to-[#4c7fe3]',
+      iconBgClassName: 'bg-white/25',
+      iconImage: '/Pictures/organizerpics/TotalProfit.png',
+    },
+  ],
+  Monthly: [
+    {
+      title: 'Events Completed',
+      value: '0',
+      caption: '(Events)',
+      gradientClassName: 'from-[#cf6ef6] to-[#a536e4]',
+      iconBgClassName: 'bg-white/25',
+      iconImage: '/Pictures/organizerpics/Event completed.png',
+    },
+    {
+      title: 'Total Revenue',
+      value: 'PHP 0',
+      caption: '(Overall)',
+      gradientClassName: 'from-[#f48db3] to-[#e75691]',
+      iconBgClassName: 'bg-white/25',
+      iconImage: '/Pictures/organizerpics/TotalRevenue.png',
+    },
+    {
+      title: 'Active Vendors',
+      value: '0',
+      caption: '(Outsourced vendors)',
+      gradientClassName: 'from-[#f0df72] to-[#ddc447]',
+      iconBgClassName: 'bg-black/10',
+      iconImage: '/Pictures/organizerpics/ActiveVendors.png',
+    },
+    {
+      title: 'Total Profit',
+      value: 'PHP 0',
+      caption: '(Overall profit per month)',
+      gradientClassName: 'from-[#8cb2f7] to-[#4c7fe3]',
+      iconBgClassName: 'bg-white/25',
+      iconImage: '/Pictures/organizerpics/TotalProfit.png',
+    },
+  ],
+  'Semi-Annually': [
+    {
+      title: 'Events Completed',
+      value: '0',
+      caption: '(Past 6 months)',
+      gradientClassName: 'from-[#cf6ef6] to-[#a536e4]',
+      iconBgClassName: 'bg-white/25',
+      iconImage: '/Pictures/organizerpics/Event completed.png',
+    },
+    {
+      title: 'Total Revenue',
+      value: 'PHP 0',
+      caption: '(Past 6 months)',
+      gradientClassName: 'from-[#f48db3] to-[#e75691]',
+      iconBgClassName: 'bg-white/25',
+      iconImage: '/Pictures/organizerpics/TotalRevenue.png',
+    },
+    {
+      title: 'Active Vendors',
+      value: '0',
+      caption: '(Total engaged)',
+      gradientClassName: 'from-[#f0df72] to-[#ddc447]',
+      iconBgClassName: 'bg-black/10',
+      iconImage: '/Pictures/organizerpics/ActiveVendors.png',
+    },
+    {
+      title: 'Total Profit',
+      value: 'PHP 0',
+      caption: '(Past 6 months profit)',
+      gradientClassName: 'from-[#8cb2f7] to-[#4c7fe3]',
+      iconBgClassName: 'bg-white/25',
+      iconImage: '/Pictures/organizerpics/TotalProfit.png',
+    },
+  ],
+  Annually: [
+    {
+      title: 'Events Completed',
+      value: '0',
+      caption: '(This year)',
+      gradientClassName: 'from-[#cf6ef6] to-[#a536e4]',
+      iconBgClassName: 'bg-white/25',
+      iconImage: '/Pictures/organizerpics/Event completed.png',
+    },
+    {
+      title: 'Total Revenue',
+      value: 'PHP 0',
+      caption: '(This year)',
+      gradientClassName: 'from-[#f48db3] to-[#e75691]',
+      iconBgClassName: 'bg-white/25',
+      iconImage: '/Pictures/organizerpics/TotalRevenue.png',
+    },
+    {
+      title: 'Active Vendors',
+      value: '0',
+      caption: '(Total engaged)',
+      gradientClassName: 'from-[#f0df72] to-[#ddc447]',
+      iconBgClassName: 'bg-black/10',
+      iconImage: '/Pictures/organizerpics/ActiveVendors.png',
+    },
+    {
+      title: 'Total Profit',
+      value: 'PHP 0',
+      caption: '(This year profit)',
+      gradientClassName: 'from-[#8cb2f7] to-[#4c7fe3]',
+      iconBgClassName: 'bg-white/25',
+      iconImage: '/Pictures/organizerpics/TotalProfit.png',
+    },
+  ],
+};
 
 const calendarDays = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
 
@@ -173,6 +223,16 @@ function buildCalendarGrid(date: Date): Array<number | null> {
   const trailingPadding = Array.from({ length: trailingCount }, () => null);
 
   return [...leadingPadding, ...monthDays, ...trailingPadding];
+}
+
+function formatTime12Hour(timeString?: string) {
+  if (!timeString) return '';
+  const [hourString, minute] = timeString.split(':');
+  const hour = parseInt(hourString, 10);
+  if (isNaN(hour)) return timeString;
+  const ampm = hour >= 12 ? 'PM' : 'AM';
+  const formattedHour = hour % 12 || 12;
+  return `${formattedHour}:${minute || '00'} ${ampm}`;
 }
 
 function DashboardMetricCard({
@@ -295,6 +355,181 @@ function ScheduleListCard({
 
 export function OrganizerDashboard() {
   const navigate = useNavigate();
+  const [semiAnnualData, setSemiAnnualData] = useState<MonthlyValue[]>([]);
+  const [monthlyStatusData, setMonthlyStatusData] = useState<StatusSlice[]>([]);
+  const [upcomingEventsData, setUpcomingEventsData] = useState<ListEntry[]>([]);
+  const [activeVendorsData, setActiveVendorsData] = useState<ListEntry[]>([]);
+  const [calendarMarkers, setCalendarMarkers] = useState<any[]>([]);
+  const [kpiData, setKpiData] = useState<Record<string, KpiCardData[]>>(defaultKpiDataSets);
+
+  useEffect(() => {
+    const loadDashboardData = async () => {
+      // Fetch calendar markers
+      try {
+        const calendarData: any = await getCalendarEntries();
+        let rawArray = [];
+        if (Array.isArray(calendarData)) rawArray = calendarData;
+        else if (calendarData?.entries && Array.isArray(calendarData.entries))
+          rawArray = calendarData.entries;
+        else if (calendarData?.data && Array.isArray(calendarData.data))
+          rawArray = calendarData.data;
+        else if (calendarData?.data?.entries && Array.isArray(calendarData.data.entries))
+          rawArray = calendarData.data.entries;
+
+        // Bulletproof extraction of nested backend arrays
+        const flattenedEvents = rawArray.reduce((acc: any[], item: any) => {
+          if (Array.isArray(item)) return acc.concat(item);
+          if (item && item.entries && Array.isArray(item.entries)) return acc.concat(item.entries);
+          if (item && item.events && Array.isArray(item.events)) return acc.concat(item.events);
+          acc.push(item);
+          return acc;
+        }, []);
+
+        if (flattenedEvents.length > 0) {
+          const mappedMarkers = flattenedEvents.map((item: any) => {
+            let derivedStartDateKey = item.startDateKey;
+            if (item.date && !derivedStartDateKey) {
+              const d = new Date(item.date);
+              if (!isNaN(d.getTime())) {
+                derivedStartDateKey = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+              }
+            }
+            const rawLabel = String(item.type || item.label || 'Task');
+            return {
+              ...item,
+              startDateKey: derivedStartDateKey,
+              label: rawLabel.charAt(0).toUpperCase() + rawLabel.slice(1).toLowerCase(),
+            };
+          });
+          setCalendarMarkers(mappedMarkers);
+        }
+      } catch (error) {
+        console.error('Failed to fetch calendar markers for dashboard:', error);
+      }
+
+      const data = await fetchDashboardSummary();
+
+      if (data) {
+        if (data.kpi) {
+          const formatMoney = (val: number = 0) => `PHP ${val.toLocaleString('en-US')}`;
+          const vendorCount = String(
+            data.activeVendorsCount || (data.activeVendors ? data.activeVendors.length : 0)
+          );
+
+          setKpiData((prev) => ({
+            ...prev,
+            Monthly: [
+              { ...prev.Monthly[0], value: String(data.kpi.month?.completed || 0) },
+              { ...prev.Monthly[1], value: formatMoney(data.kpi.month?.completedRevenue || 0) },
+              { ...prev.Monthly[2], value: vendorCount },
+              { ...prev.Monthly[3], value: formatMoney(data.kpi.month?.completedProfit || 0) },
+            ],
+            Annually: [
+              { ...prev.Annually[0], value: String(data.kpi.year?.completed || 0) },
+              { ...prev.Annually[1], value: formatMoney(data.kpi.year?.completedRevenue || 0) },
+              { ...prev.Annually[2], value: vendorCount },
+              { ...prev.Annually[3], value: formatMoney(data.kpi.year?.completedProfit || 0) },
+            ],
+          }));
+        }
+
+        // 1. Map Semi-Annual Graph
+        if (data.semiAnnual && data.semiAnnual.monthlyGraph) {
+          const mappedSemiAnnual = Object.entries(data.semiAnnual.monthlyGraph).map(
+            ([monthNum, value]) => {
+              const monthNames = [
+                'Jan',
+                'Feb',
+                'Mar',
+                'Apr',
+                'May',
+                'Jun',
+                'Jul',
+                'Aug',
+                'Sep',
+                'Oct',
+                'Nov',
+                'Dec',
+              ];
+              const monthIndex = parseInt(monthNum, 10) - 1;
+              return {
+                month: monthNames[monthIndex] || monthNum,
+                value: value as number,
+              };
+            }
+          );
+          setSemiAnnualData(mappedSemiAnnual);
+        }
+
+        // 2. Map Monthly Status Donut Chart
+        if (data.status && data.status.month) {
+          const monthData = data.status.month;
+          const total = monthData.planning + monthData.execution + monthData.completed || 1;
+          setMonthlyStatusData([
+            {
+              label: 'Completed',
+              value: Math.round((monthData.completed / total) * 100) || 0,
+              eventCount: monthData.completed,
+              color: '#b964ef',
+            },
+            {
+              label: 'Execution',
+              value: Math.round((monthData.execution / total) * 100) || 0,
+              eventCount: monthData.execution,
+              color: '#ef79b3',
+            },
+            {
+              label: 'Planning',
+              value: Math.round((monthData.planning / total) * 100) || 0,
+              eventCount: monthData.planning,
+              color: '#f4d03f',
+            },
+          ]);
+        }
+
+        // 3. Map Upcoming Events List
+        if (data.upcomingEvents && Array.isArray(data.upcomingEvents)) {
+          const badgeColors = ['bg-[#db37b4]', 'bg-[#bb2ec4]', 'bg-[#9b24cd]'];
+          const mappedEvents = data.upcomingEvents.map((event: any, index: number) => {
+            // Format date to MM/DD
+            const dateObj = new Date(event.date);
+            const formattedDate = isNaN(dateObj.getTime())
+              ? 'TBA'
+              : `${dateObj.getMonth() + 1}/${dateObj.getDate()}`;
+
+            const rawTime = event.time || event.startTime;
+            const formattedTime = rawTime ? ` at ${formatTime12Hour(rawTime)}` : '';
+
+            return {
+              rank: index + 1,
+              title: event.title,
+              subtitle: `Status: ${event.status}`,
+              date: `${formattedDate}${formattedTime}`,
+              badgeColor: badgeColors[index % badgeColors.length],
+            };
+          });
+          setUpcomingEventsData(mappedEvents);
+        }
+
+        // Map Active Vendors List (if provided by the summary API)
+        if (data.activeVendors && Array.isArray(data.activeVendors)) {
+          const badgeColors = ['bg-[#29bf4c]', 'bg-[#1aa73a]', 'bg-[#158f31]'];
+          const mappedVendors = data.activeVendors.map((vendor: any, index: number) => {
+            return {
+              rank: index + 1,
+              title: vendor.name || 'Unknown Vendor',
+              subtitle: `${vendor.contactPerson || 'No Contact'} | ${vendor.service || 'Service'}`,
+              date: vendor.status || 'Active',
+              badgeColor: badgeColors[index % badgeColors.length],
+            };
+          });
+          setActiveVendorsData(mappedVendors);
+        }
+      }
+    };
+
+    loadDashboardData();
+  }, []);
 
   const today = useMemo(() => {
     const now = new Date();
@@ -307,6 +542,9 @@ export function OrganizerDashboard() {
   const [viewDate, setViewDate] = useState(
     () => new Date(today.getFullYear(), today.getMonth(), 1)
   );
+  const [kpiFilter, setKpiFilter] = useState('Monthly');
+  const [isKpiDropdownOpen, setIsKpiDropdownOpen] = useState(false);
+  const currentKpiCards = kpiData[kpiFilter] || kpiData['Monthly'];
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
@@ -322,24 +560,9 @@ export function OrganizerDashboard() {
 
   const calendarGrid = useMemo(() => buildCalendarGrid(viewDate), [viewDate]);
   const totalEvents = useMemo(
-    () => monthlyStatus.reduce((sum, slice) => sum + slice.eventCount, 0),
-    []
+    () => monthlyStatusData.reduce((sum, slice) => sum + slice.eventCount, 0),
+    [monthlyStatusData]
   );
-
-  const yearOptions = useMemo(() => {
-    const centerYear = viewDate.getFullYear();
-    return Array.from({ length: 11 }, (_, index) => centerYear - 5 + index);
-  }, [viewDate]);
-
-  const handleMonthChange = (event: ChangeEvent<HTMLSelectElement>) => {
-    const nextMonth = Number(event.target.value);
-    setViewDate((prev) => new Date(prev.getFullYear(), nextMonth, 1));
-  };
-
-  const handleYearChange = (event: ChangeEvent<HTMLSelectElement>) => {
-    const nextYear = Number(event.target.value);
-    setViewDate((prev) => new Date(nextYear, prev.getMonth(), 1));
-  };
 
   const goToPreviousMonth = () => {
     setViewDate((prev) => new Date(prev.getFullYear(), prev.getMonth() - 1, 1));
@@ -438,7 +661,7 @@ export function OrganizerDashboard() {
 
                       {/* Bars container */}
                       <div className="absolute inset-0 flex items-end justify-between px-2">
-                        {semiAnnualCompletions.map((monthData, index) => (
+                        {semiAnnualData.map((monthData, index) => (
                           <div
                             key={`bar-${monthData.month}`}
                             className="flex-1 h-full flex justify-center items-end px-1 sm:px-2 relative group"
@@ -462,7 +685,7 @@ export function OrganizerDashboard() {
 
                     {/* Month labels */}
                     <div className="flex justify-between gap-2 px-2 pt-2 text-center">
-                      {semiAnnualCompletions.map((monthData) => (
+                      {semiAnnualData.map((monthData) => (
                         <span
                           key={`label-${monthData.month}`}
                           className="flex-1 text-xs font-bold text-[#706980]"
@@ -475,7 +698,7 @@ export function OrganizerDashboard() {
                 </div>
 
                 <div className="sr-only" aria-hidden="true">
-                  {semiAnnualCompletions.map((monthData) => (
+                  {semiAnnualData.map((monthData) => (
                     <span key={`value-${monthData.month}`}>
                       {monthData.month}: {monthData.value}
                     </span>
@@ -524,7 +747,7 @@ export function OrganizerDashboard() {
                       (() => {
                         let cumulativePercent = 0;
 
-                        return monthlyStatus.map((slice) => {
+                        return monthlyStatusData.map((slice) => {
                           const sliceLength = (slice.value / 100) * donutCircumference;
                           const strokeDasharray = `${sliceLength} ${donutCircumference - sliceLength}`;
                           const strokeDashoffset =
@@ -589,7 +812,7 @@ export function OrganizerDashboard() {
                 </div>
 
                 <div className="grid grid-cols-3 gap-2 pt-1 text-center">
-                  {monthlyStatus.map((slice) => (
+                  {monthlyStatusData.map((slice) => (
                     <div
                       key={slice.label}
                       className="transition-transform duration-200 hover:scale-105 cursor-default"
@@ -625,18 +848,40 @@ export function OrganizerDashboard() {
                   Evaluation of events, vendors, and resources
                 </p>
               </div>
-              <Button className="rounded-[10px] border-0 bg-white px-4 py-1.5 text-xs font-semibold text-[#717171] shadow-[0_4px_4px_rgba(0,0,0,0.05)] hover:bg-white/95 flex items-center gap-1">
-                Monthly
-                <img
-                  src="/Pictures/organizerpics/dropdown.png"
-                  alt="dropdown"
-                  className="w-1.5 h-1.5"
-                />
-              </Button>
+              <div className="relative">
+                <Button
+                  onClick={() => setIsKpiDropdownOpen(!isKpiDropdownOpen)}
+                  className="flex w-28 items-center justify-between rounded-[10px] border-0 bg-white px-4 py-1.5 text-xs font-semibold text-[#717171] shadow-[0_4px_4px_rgba(0,0,0,0.05)] transition-colors hover:bg-white/95"
+                >
+                  {kpiFilter}
+                  <img
+                    src="/Pictures/organizerpics/dropdown.png"
+                    alt="dropdown"
+                    className={`h-1.5 w-1.5 transition-transform duration-200 ${isKpiDropdownOpen ? 'rotate-180' : ''}`}
+                  />
+                </Button>
+                {isKpiDropdownOpen && (
+                  <div className="absolute right-0 top-full z-50 mt-1 w-32 overflow-hidden rounded-lg border border-[#e2deea] bg-white py-1 shadow-lg animate-in fade-in slide-in-from-top-1">
+                    {['Weekly', 'Monthly', 'Semi-Annually', 'Annually'].map((option) => (
+                      <button
+                        key={option}
+                        type="button"
+                        onClick={() => {
+                          setKpiFilter(option);
+                          setIsKpiDropdownOpen(false);
+                        }}
+                        className={`w-full px-4 py-2 text-left text-xs font-semibold transition-colors hover:bg-[#f6f5f8] ${kpiFilter === option ? 'text-[#df2b80]' : 'text-[#717171]'}`}
+                      >
+                        {option}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
 
             <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
-              {kpiCards.map((item) => (
+              {currentKpiCards.map((item) => (
                 <DashboardMetricCard key={item.title} {...item} />
               ))}
             </div>
@@ -648,31 +893,10 @@ export function OrganizerDashboard() {
             <CardHeader className="py-4 px-6">
               <div className="flex items-center justify-between gap-6">
                 <div className="flex flex-col items-center justify-center w-fit">
-                  <div className="flex items-center gap-2">
-                    <select
-                      aria-label="Select month"
-                      value={viewDate.getMonth()}
-                      onChange={handleMonthChange}
-                      className="rounded-md border border-transparent bg-transparent px-2 py-1 text-lg font-black leading-none text-[#393341] outline-none transition-colors hover:bg-[#f5eff9] focus:border-[#e3d8ed] focus:bg-white"
-                    >
-                      {calendarMonths.map((monthLabel, monthIndex) => (
-                        <option key={monthLabel} value={monthIndex}>
-                          {monthLabel}
-                        </option>
-                      ))}
-                    </select>
-                    <select
-                      aria-label="Select year"
-                      value={viewDate.getFullYear()}
-                      onChange={handleYearChange}
-                      className="rounded-md border border-transparent bg-transparent px-2 py-1 text-lg font-black leading-none text-[#393341] outline-none transition-colors hover:bg-[#f5eff9] focus:border-[#e3d8ed] focus:bg-white"
-                    >
-                      {yearOptions.map((yearValue) => (
-                        <option key={yearValue} value={yearValue}>
-                          {yearValue}
-                        </option>
-                      ))}
-                    </select>
+                  <div className="flex items-center gap-2 px-2">
+                    <span className="text-lg font-black leading-none text-[#393341]">
+                      {calendarMonths[viewDate.getMonth()]} {viewDate.getFullYear()}
+                    </span>
                   </div>
                   <p className="mt-1 text-xs font-semibold text-[#c5bdd1] text-center">
                     {selectedDate
@@ -724,7 +948,7 @@ export function OrganizerDashboard() {
                     if (day === null) {
                       return (
                         <div key={`calendar-cell-${index}`} className="flex justify-center">
-                          <span className="flex size-8 items-center justify-center rounded-md text-transparent">
+                          <span className="flex size-10 items-center justify-center rounded-md text-transparent">
                             .
                           </span>
                         </div>
@@ -743,24 +967,63 @@ export function OrganizerDashboard() {
                           aria-pressed={isSelected}
                           title={isToday ? `Today • Day ${day}` : `Day ${day}`}
                           className={[
-                            'flex size-8 items-center justify-center rounded-md border text-xs font-sans transition-all duration-150',
+                            'flex size-10 flex-col items-center justify-between rounded-md py-1 border text-xs font-sans transition-all duration-150',
                             isSelected
-                              ? 'bg-linear-to-br from-[#f051a3] to-[#8f1fd0] text-white font-bold border-transparent'
+                              ? 'bg-[#fdf8ff] text-[#8f1fd1] font-black border-2 border-[#8f1fd1]'
                               : isToday
                                 ? 'bg-[#fce4ec] text-[#7a667f] font-bold border-[#f1c3d7]'
                                 : 'text-[#9b8fa8] font-semibold border-transparent hover:bg-[#f4eff8]',
                           ].join(' ')}
                         >
-                          <div className="flex flex-col items-center justify-center gap-[2px]">
-                            <span>{day}</span>
-                            {/* Calendar mini eto then yung sa may Legend na 4 so may Temporary Simulation: Add a purple 'Meeting' dot every 5th day, and a yellow 'Task' dot on the 12th, then dito nyo alisin y ung logic na day % 5 === 0 || day === 12. for API integration */}
-                            {day % 5 === 0 || day === 12 ? (
-                              <span
-                                className={`size-1.5 rounded-full ${day === 12 ? 'bg-[#e2c341]' : 'bg-[#9740d0]'}`}
-                              />
-                            ) : (
-                              <span className="size-1.5" />
-                            )}
+                          <span className="leading-none">{day}</span>
+                          <div className="flex w-full justify-center gap-1 overflow-hidden px-1">
+                            {(() => {
+                              const dateKey = `${dayDate.getFullYear()}-${String(dayDate.getMonth() + 1).padStart(2, '0')}-${String(dayDate.getDate()).padStart(2, '0')}`;
+                              const dayEvents = calendarMarkers.filter(
+                                (e) => e.startDateKey === dateKey
+                              );
+
+                              if (dayEvents.length === 0) return <span className="h-2" />;
+
+                              const counts: Record<string, number> = {
+                                Task: 0,
+                                Meeting: 0,
+                                Reminder: 0,
+                                Default: 0,
+                              };
+
+                              dayEvents.forEach((event) => {
+                                if (event.label === 'Task') counts.Task++;
+                                else if (event.label === 'Meeting') counts.Meeting++;
+                                else if (event.label === 'Reminder') counts.Reminder++;
+                                else counts.Default++;
+                              });
+
+                              return (
+                                <div className="flex items-center gap-[2px] leading-none">
+                                  {counts.Task > 0 && (
+                                    <span className="text-[8px] font-black text-[#e2c341]">
+                                      {counts.Task}
+                                    </span>
+                                  )}
+                                  {counts.Meeting > 0 && (
+                                    <span className="text-[8px] font-black text-[#9740d0]">
+                                      {counts.Meeting}
+                                    </span>
+                                  )}
+                                  {counts.Reminder > 0 && (
+                                    <span className="text-[8px] font-black text-[#e54e9d]">
+                                      {counts.Reminder}
+                                    </span>
+                                  )}
+                                  {counts.Default > 0 && (
+                                    <span className="text-[8px] font-black text-[#3b28cc]">
+                                      {counts.Default}
+                                    </span>
+                                  )}
+                                </div>
+                              );
+                            })()}
                           </div>
                         </button>
                       </div>
@@ -794,7 +1057,7 @@ export function OrganizerDashboard() {
 
           <ScheduleListCard
             title="Upcoming Events"
-            entries={upcomingEvents}
+            entries={upcomingEventsData}
             onViewListClick={() =>
               navigate('/organizer/event-manager', {
                 state: { activeTab: 'Events' },
@@ -803,7 +1066,7 @@ export function OrganizerDashboard() {
           />
           <ScheduleListCard
             title="Active Outsourced Vendors"
-            entries={activeVendors}
+            entries={activeVendorsData}
             onViewListClick={() =>
               navigate('/organizer/event-manager', {
                 state: { activeTab: 'Vendor' },

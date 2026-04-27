@@ -2,7 +2,6 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { useEffect, useState } from 'react';
 import { InquiryForm } from '@/components/InquiryForm';
-import { ChatWidget } from '@/components/ChatWidget';
 import LoadingScreen from '@/components/ui/LoadingScreen';
 import ScrollReveal from '@/components/ui/ScrollReveal';
 
@@ -87,8 +86,13 @@ export function LandingPage() {
         {/* Modern gradient overlay - animated */}
         <div className="absolute inset-0 bg-gradient-to-br from-[#FF589C]/40 via-[#FD78AD]/20 to-transparent animate-gradient-slow" />
 
-        {/* Subtle animated noise overlay */}
-        <div className="absolute inset-0 bg-gradient-to-r from-white/80 via-white/40 to-transparent" />
+        {/* White blur overlay on left side that fades to middle */}
+        <div
+          className="absolute inset-0"
+          style={{
+            background: 'linear-gradient(to right, white 0%, white 25%, transparent 100%)',
+          }}
+        />
 
         {/* Subtle vignette effect */}
         <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-black/10" />
@@ -152,7 +156,6 @@ export function LandingPage() {
         <TestimonialsSection />
       </ScrollReveal>
 
-      <ChatWidget />
       {inquiryOpen && <InquiryForm onClose={() => setInquiryOpen(false)} />}
     </>
   );
@@ -269,23 +272,23 @@ function SpotlightSection() {
    ───────────────────────────────────────── */
 function ServicesSection() {
   return (
-    <section id="services" className="bg-[#fdf2f6] py-16 lg:py-24">
-      <div className="mx-auto max-w-[90rem] space-y-10 lg:space-y-12">
+    <section id="services" className="bg-[#fdf2f6] py-10 lg:py-24">
+      <div className="mx-auto max-w-[90rem] space-y-4 px-3 sm:px-6 lg:space-y-12 lg:px-8">
         {/* Block 1 */}
-        <div className="grid items-stretch overflow-hidden rounded-2xl bg-[#fbedf3] transition-all duration-500 hover:shadow-xl lg:grid-cols-2">
-          <div className="flex flex-col justify-center px-8 py-12 lg:px-12 lg:py-16 animate-fade-in-left">
-            <h3 className="font-heading text-[clamp(1.8rem,5vw,3.5rem)] leading-[1.2] font-bold text-[#1a1225]">
+        <div className="grid grid-cols-2 items-stretch overflow-hidden rounded-2xl bg-[#fbedf3] transition-all duration-500 hover:shadow-xl">
+          <div className="flex flex-col justify-center px-4 py-6 sm:px-8 sm:py-10 lg:px-12 lg:py-16 animate-fade-in-left">
+            <h3 className="font-heading text-[clamp(0.85rem,3vw,3.5rem)] leading-[1.2] font-bold text-[#1a1225]">
               A <span className="text-[#e61f83]">Love Story</span> Told in
               <br />
               Every Detail
             </h3>
-            <p className="mt-4 font-sans text-[clamp(1rem,1.6vw,1.2rem)] leading-[1.7] text-[#3d2052]">
+            <p className="mt-2 lg:mt-4 font-sans text-[clamp(0.65rem,1.3vw,1.2rem)] leading-[1.5] lg:leading-[1.7] text-[#3d2052]">
               We don&rsquo;t just plan weddings; we protect your peace. From intimate vows to grand
               ballrooms, we ensure the only thing you focus on is the person at the end of the
               aisle.
             </p>
           </div>
-          <div className="min-h-[20rem] lg:min-h-[32rem] overflow-hidden">
+          <div className="min-h-[10rem] sm:min-h-[20rem] lg:min-h-[32rem] overflow-hidden">
             <div
               className="h-full w-full bg-cover bg-center transition-transform duration-700 hover:scale-105"
               style={{ backgroundImage: `url(${serviceImages.wedding})` }}
@@ -296,8 +299,8 @@ function ServicesSection() {
         </div>
 
         {/* Block 2 */}
-        <div className="grid items-stretch overflow-hidden rounded-2xl bg-[#fbedf3] transition-all duration-500 hover:shadow-xl lg:grid-cols-2">
-          <div className="relative min-h-[20rem] lg:min-h-[32rem] order-first lg:order-none overflow-hidden">
+        <div className="grid grid-cols-2 items-stretch overflow-hidden rounded-2xl bg-[#fbedf3] transition-all duration-500 hover:shadow-xl">
+          <div className="relative min-h-[10rem] sm:min-h-[20rem] lg:min-h-[32rem] overflow-hidden">
             <div
               className="absolute inset-0 bg-cover bg-center transition-transform duration-700 hover:scale-105"
               style={{ backgroundImage: `url(${serviceImages.debut})` }}
@@ -305,19 +308,19 @@ function ServicesSection() {
               aria-label="Debut celebration photos"
             />
             <div
-              className="absolute bottom-4 right-4 h-[38%] w-[38%] rounded-xl bg-cover bg-center shadow-xl ring-2 ring-white/60 transition-all duration-500 hover:scale-110 hover:shadow-2xl"
+              className="absolute bottom-2 right-2 sm:bottom-4 sm:right-4 h-[38%] w-[38%] rounded-xl bg-cover bg-center shadow-xl ring-2 ring-white/60 transition-all duration-500 hover:scale-110 hover:shadow-2xl"
               style={{ backgroundImage: `url(${serviceImages.debutAlt})` }}
               role="img"
               aria-label="Debut celebration detail"
             />
           </div>
-          <div className="flex flex-col justify-center px-8 py-12 lg:px-12 lg:py-16 animate-fade-in-right">
-            <h3 className="font-heading text-[clamp(1.8rem,5vw,3.5rem)] leading-[1.2] font-bold text-[#1a1225]">
+          <div className="flex flex-col justify-center px-4 py-6 sm:px-8 sm:py-10 lg:px-12 lg:py-16 animate-fade-in-right">
+            <h3 className="font-heading text-[clamp(0.85rem,3vw,3.5rem)] leading-[1.2] font-bold text-[#1a1225]">
               <span className="text-[#e61f83]">Your 18th:</span> More Than a
               <br />
               Birthday, It&rsquo;s a <span className="text-[#e61f83]">Milestone</span>
             </h3>
-            <p className="mt-4 font-sans text-[clamp(1rem,1.6vw,1.2rem)] leading-[1.7] text-[#3d2052]">
+            <p className="mt-2 lg:mt-4 font-sans text-[clamp(0.65rem,1.3vw,1.2rem)] leading-[1.5] lg:leading-[1.7] text-[#3d2052]">
               Eighteen years in the making, designed in a single night. We transform your milestone
               into a cinematic celebration that captures exactly who you are and who you&rsquo;re
               becoming.
@@ -367,34 +370,34 @@ function TestimonialsSection() {
         </p>
       </div>
 
-      <div className="mx-auto mt-10 grid max-w-[80rem] gap-6 px-6 sm:grid-cols-2 lg:gap-8 lg:px-8">
+      <div className="mx-auto mt-6 grid grid-cols-2 max-w-[80rem] gap-3 px-3 sm:gap-6 sm:px-6 lg:gap-8 lg:px-8">
         {testimonials.map((t, idx) => (
           <Card
             key={t.name}
-            className="relative rounded-xl border-0 bg-white/80 px-6 py-6 shadow-sm backdrop-blur-sm transition-all duration-300 hover:shadow-lg hover:scale-105 hover:bg-white/90 lg:px-8 lg:py-8 animate-fade-in-up"
+            className="relative rounded-xl border-0 bg-white/80 px-3 py-4 shadow-sm backdrop-blur-sm transition-all duration-300 hover:shadow-lg hover:scale-105 hover:bg-white/90 sm:px-6 sm:py-6 lg:px-8 lg:py-8 animate-fade-in-up"
             style={{ animationDelay: `${idx * 100}ms` }}
           >
-            <span className="absolute right-5 top-4 font-heading text-[2.5rem] leading-none text-[#c2649b] lg:right-6 lg:top-5 lg:text-[3rem]">
+            <span className="absolute right-2 top-2 font-heading text-[1.5rem] leading-none text-[#c2649b] sm:right-5 sm:top-4 sm:text-[2.5rem] lg:right-6 lg:top-5 lg:text-[3rem]">
               &ldquo;&rdquo;
             </span>
 
-            <div className="flex items-center gap-3">
-              <div className="flex h-9 w-9 items-center justify-center rounded-full bg-[#501f5a] lg:h-10 lg:w-10">
-                <span className="text-sm font-bold text-white lg:text-base">
+            <div className="flex items-center gap-2 sm:gap-3">
+              <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[#501f5a] sm:h-9 sm:w-9 lg:h-10 lg:w-10">
+                <span className="text-[0.65rem] font-bold text-white sm:text-sm lg:text-base">
                   {t.name.charAt(0)}
                 </span>
               </div>
-              <div>
-                <p className="font-sans text-[0.95rem] font-bold text-[#1a1225] lg:text-[1rem]">
+              <div className="min-w-0">
+                <p className="truncate font-sans text-[0.7rem] font-bold text-[#1a1225] sm:text-[0.95rem] lg:text-[1rem]">
                   {t.name}
                 </p>
-                <p className="text-[0.75rem] font-semibold text-[#e61f83] lg:text-[0.8rem]">
+                <p className="text-[0.6rem] font-semibold text-[#e61f83] sm:text-[0.75rem] lg:text-[0.8rem]">
                   Recommends!
                 </p>
               </div>
             </div>
 
-            <p className="mt-3 font-sans text-[0.9rem] leading-[1.6] text-[#3d2052] lg:mt-4 lg:text-[0.95rem]">
+            <p className="mt-2 font-sans text-[0.65rem] leading-[1.5] text-[#3d2052] sm:mt-3 sm:text-[0.9rem] sm:leading-[1.6] lg:mt-4 lg:text-[0.95rem]">
               {t.text}
             </p>
           </Card>

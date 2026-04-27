@@ -41,10 +41,17 @@ interface EventOption {
 
 const EMPTY_VENDOR_FORM: CreateVendorPayload = {
   vendorName: '',
+  contactPerson: '',
+  typeOfSupply: '',
+  servicesOffered: '',
+  pricing: '',
   serviceType: '',
+  price: null,
   email: '',
   contactNumber: '',
   availabilityStatus: 'inactive',
+  lastEventHandled: '',
+  notes: '',
 };
 
 function normalizeStatus(status: string): 'active' | 'inactive' {
@@ -166,11 +173,18 @@ export function AdminVendorPoolPage() {
       const vendor = await getVendorById(vendorId);
       setVendorForm({
         vendorName: vendor.name,
+        contactPerson: vendor.contactPerson,
+        typeOfSupply: vendor.typeOfSupply,
+        servicesOffered: vendor.servicesOffered,
+        pricing: vendor.pricing,
         serviceType: vendor.serviceType,
+        price: vendor.price,
         eventId: vendor.eventId,
         email: vendor.contactEmail,
         contactNumber: vendor.contactPhone,
         availabilityStatus: normalizeStatus(vendor.status),
+        lastEventHandled: vendor.lastEventHandled,
+        notes: vendor.notes,
       });
       setIsDialogOpen(true);
     } catch {
@@ -185,10 +199,20 @@ export function AdminVendorPoolPage() {
 
     const payloadBase = {
       vendorName: vendorForm.vendorName.trim(),
+      contactPerson: vendorForm.contactPerson?.trim() || '',
+      typeOfSupply: vendorForm.typeOfSupply?.trim() || '',
+      servicesOffered: vendorForm.servicesOffered?.trim() || '',
+      pricing: vendorForm.pricing?.trim() || '',
       serviceType: vendorForm.serviceType.trim(),
+      price:
+        vendorForm.price === null || vendorForm.price === undefined
+          ? undefined
+          : Number(vendorForm.price),
       email: vendorForm.email?.trim() || '',
       contactNumber: vendorForm.contactNumber?.trim() || '',
       availabilityStatus: normalizeStatus(vendorForm.availabilityStatus || 'inactive'),
+      lastEventHandled: vendorForm.lastEventHandled?.trim() || '',
+      notes: vendorForm.notes?.trim() || '',
     };
 
     if (!payloadBase.vendorName || !payloadBase.serviceType) {
@@ -250,7 +274,9 @@ export function AdminVendorPoolPage() {
       <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
         <div>
           <h1 className="text-3xl font-black text-[#2e2837]">Vendor Pool</h1>
-          <p className="font-semibold text-[#8f879f]">Manage and track your outsourced event vendors</p>
+          <p className="font-semibold text-[#8f879f]">
+            Manage and track your outsourced event vendors
+          </p>
         </div>
 
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
@@ -292,7 +318,9 @@ export function AdminVendorPoolPage() {
 
       {isLoading ? (
         <Card className="border-none shadow-sm">
-          <CardContent className="py-8 text-center font-semibold text-[#7d728f]">Loading vendors...</CardContent>
+          <CardContent className="py-8 text-center font-semibold text-[#7d728f]">
+            Loading vendors...
+          </CardContent>
         </Card>
       ) : null}
 
@@ -318,7 +346,10 @@ export function AdminVendorPoolPage() {
               </div>
 
               <div className="flex flex-col items-center justify-center gap-2 sm:flex-row">
-                <Button className="bg-[#ff7eb3] text-white hover:bg-[#ff6aa5]" onClick={openCreateDialog}>
+                <Button
+                  className="bg-[#ff7eb3] text-white hover:bg-[#ff6aa5]"
+                  onClick={openCreateDialog}
+                >
                   Add First Vendor
                 </Button>
                 {hasActiveFilters ? (
@@ -358,7 +389,9 @@ export function AdminVendorPoolPage() {
                         <Briefcase className="h-4 w-4 text-[#ff7eb3]" />
                         <CardTitle className="text-lg font-bold">{vendor.name}</CardTitle>
                       </div>
-                      <p className="text-sm font-semibold text-muted-foreground">{vendor.serviceType || '-'}</p>
+                      <p className="text-sm font-semibold text-muted-foreground">
+                        {vendor.serviceType || '-'}
+                      </p>
                     </div>
 
                     <Badge className={badge.className}>{badge.label}</Badge>
@@ -368,13 +401,51 @@ export function AdminVendorPoolPage() {
                 <CardContent className="mt-auto space-y-3 text-sm">
                   <div className="space-y-1 text-[#7a708a]">
                     <p>
+                      <span className="font-semibold text-[#4e445e]">Contact Person:</span>{' '}
+                      {vendor.contactPerson || '-'}
+                    </p>
+                    <p>
                       <span className="font-semibold text-[#4e445e]">Event:</span> {eventName}
                     </p>
                     <p>
-                      <span className="font-semibold text-[#4e445e]">Email:</span> {vendor.contactEmail || '-'}
+                      <span className="font-semibold text-[#4e445e]">Email:</span>{' '}
+                      {vendor.contactEmail || '-'}
                     </p>
                     <p>
-                      <span className="font-semibold text-[#4e445e]">Phone:</span> {vendor.contactPhone || '-'}
+                      <span className="font-semibold text-[#4e445e]">Phone:</span>{' '}
+                      {vendor.contactPhone || '-'}
+                    </p>
+                    <p>
+                      <span className="font-semibold text-[#4e445e]">Type of Supply:</span>{' '}
+                      {vendor.typeOfSupply || '-'}
+                    </p>
+                    <p>
+                      <span className="font-semibold text-[#4e445e]">Services Offered:</span>{' '}
+                      {vendor.servicesOffered || '-'}
+                    </p>
+                    <p>
+                      <span className="font-semibold text-[#4e445e]">Pricing:</span>{' '}
+                      {vendor.pricing || '-'}
+                    </p>
+                    <p>
+                      <span className="font-semibold text-[#4e445e]">Price:</span>{' '}
+                      {vendor.price ?? '-'}
+                    </p>
+                    <p>
+                      <span className="font-semibold text-[#4e445e]">Last Event Handled:</span>{' '}
+                      {vendor.lastEventHandled || '-'}
+                    </p>
+                    <p>
+                      <span className="font-semibold text-[#4e445e]">Notes:</span>{' '}
+                      {vendor.notes || '-'}
+                    </p>
+                    <p>
+                      <span className="font-semibold text-[#4e445e]">Created:</span>{' '}
+                      {vendor.createdAt ? new Date(vendor.createdAt).toLocaleString() : '-'}
+                    </p>
+                    <p>
+                      <span className="font-semibold text-[#4e445e]">Updated:</span>{' '}
+                      {vendor.updatedAt ? new Date(vendor.updatedAt).toLocaleString() : '-'}
                     </p>
                   </div>
 
@@ -437,6 +508,14 @@ export function AdminVendorPoolPage() {
               }
             />
 
+            <Input
+              placeholder="Contact person"
+              value={vendorForm.contactPerson || ''}
+              onChange={(event) =>
+                setVendorForm((current) => ({ ...current, contactPerson: event.target.value }))
+              }
+            />
+
             <Select
               value={vendorForm.eventId || 'none'}
               onValueChange={(value) =>
@@ -472,10 +551,68 @@ export function AdminVendorPoolPage() {
               }
             />
 
+            <Input
+              placeholder="Type of supply"
+              value={vendorForm.typeOfSupply || ''}
+              onChange={(event) =>
+                setVendorForm((current) => ({ ...current, typeOfSupply: event.target.value }))
+              }
+            />
+
+            <Input
+              placeholder="Services offered"
+              value={vendorForm.servicesOffered || ''}
+              onChange={(event) =>
+                setVendorForm((current) => ({ ...current, servicesOffered: event.target.value }))
+              }
+            />
+
+            <Input
+              placeholder="Pricing"
+              value={vendorForm.pricing || ''}
+              onChange={(event) =>
+                setVendorForm((current) => ({ ...current, pricing: event.target.value }))
+              }
+            />
+
+            <Input
+              type="number"
+              min="0"
+              step="0.01"
+              placeholder="Price"
+              value={vendorForm.price ?? ''}
+              onChange={(event) => {
+                const nextValue = event.target.value;
+                setVendorForm((current) => ({
+                  ...current,
+                  price: nextValue === '' ? null : Number(nextValue),
+                }));
+              }}
+            />
+
+            <Input
+              placeholder="Last event handled"
+              value={vendorForm.lastEventHandled || ''}
+              onChange={(event) =>
+                setVendorForm((current) => ({ ...current, lastEventHandled: event.target.value }))
+              }
+            />
+
+            <Input
+              placeholder="Notes"
+              value={vendorForm.notes || ''}
+              onChange={(event) =>
+                setVendorForm((current) => ({ ...current, notes: event.target.value }))
+              }
+            />
+
             <Select
               value={normalizeStatus(vendorForm.availabilityStatus || 'inactive')}
               onValueChange={(value) =>
-                setVendorForm((current) => ({ ...current, availabilityStatus: normalizeStatus(value) }))
+                setVendorForm((current) => ({
+                  ...current,
+                  availabilityStatus: normalizeStatus(value),
+                }))
               }
             >
               <SelectTrigger className="h-10 w-full">

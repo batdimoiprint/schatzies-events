@@ -1,26 +1,26 @@
 import QRCode from 'qrcode';
 
 /**
- * Generate a QR code for an RSVP response
+ * Generate a QR code for an RSVP response that redirects to the RSVP page
  * @param rsvpId - The RSVP response ID
  * @param eventId - The event ID
  * @returns Promise<string> - Data URL of the QR code image
  */
 export async function generateRSVPQRCode(rsvpId: string, eventId: string): Promise<string> {
   try {
-    // Create a simple but unique QR code data
-    const qrData = JSON.stringify({
-      rsvpId,
-      eventId,
-      timestamp: Date.now(),
-    });
+    // Get the current origin (localhost:5173, production domain, etc.)
+    const origin = typeof window !== 'undefined' ? window.location.origin : 'http://localhost:5173';
+
+    // If the first argument is already a full URL, use it directly
+    // Otherwise, construct the standard invitation URL
+    const qrUrl = rsvpId.startsWith('http') ? rsvpId : `${origin}/invitation/${eventId}/${rsvpId}`;
 
     // Generate QR code as data URL
-    const qrCodeDataUrl = await QRCode.toDataURL(qrData, {
-      errorCorrectionLevel: 'H',
+    const qrCodeDataUrl = await QRCode.toDataURL(qrUrl, {
+      errorCorrectionLevel: 'M', // Medium error correction makes the code less dense and easier to scan
       type: 'image/png',
-      width: 300,
-      margin: 1,
+      width: 400, // Slightly larger for better resolution
+      margin: 4, // Larger margin helps scanners detect the edges
       color: {
         dark: '#000000',
         light: '#FFFFFF',

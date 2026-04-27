@@ -5,6 +5,7 @@ import { NavLink, Outlet, useLocation, useNavigate, Navigate } from 'react-route
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useAuth } from '@/hooks/useAuth';
+import { logout } from '@/api/auth';
 
 const organizerNavItems = [
   { label: 'Dashboard', to: '/organizer', icon: '/Pictures/organizerpics/dashboard 2.png' },
@@ -23,7 +24,11 @@ const organizerNavItems = [
     to: '/organizer/event-manager',
     icon: '/Pictures/organizerpics/event manager.png',
   },
-  { label: 'RSVP', to: '/organizer/rsvp', icon: '/Pictures/organizerpics/RSVP.png' },
+  {
+    label: 'RSVP',
+    to: '/organizer/rsvp',
+    icon: '/Pictures/organizerpics/RSVP.png',
+  },
   {
     label: 'Cost Breakdown',
     to: '/organizer/cost-breakdown',
@@ -57,13 +62,122 @@ export function OrganizerLayout() {
   const { isLoading, setAuthenticatedUser, isAuthenticated, user } = useAuth();
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
+  const [isNotifOpen, setIsNotifOpen] = useState(false);
+  const [hasNewNotif, setHasNewNotif] = useState(true);
+  const [notifTab, setNotifTab] = useState('Today');
+  const [notifications, setNotifications] = useState([
+    {
+      id: 1,
+      title: 'Admin Confirmation',
+      desc: 'Admin just confirmed an event for December 26',
+      time: '11:11 am | April 19, 2026',
+      unread: true,
+      filterCategory: 'Today',
+    },
+    {
+      id: 2,
+      title: 'Admin Confirmation',
+      desc: 'Admin just confirmed an event for December 26',
+      time: '11:11 am | April 19, 2026',
+      unread: true,
+      filterCategory: 'This Week',
+    },
+    {
+      id: 3,
+      title: 'Admin Confirmation',
+      desc: 'Admin just confirmed an event for December 26',
+      time: '11:11 am | April 19, 2026',
+      unread: true,
+      filterCategory: 'Earlier',
+    },
+    {
+      id: 4,
+      title: 'Admin Confirmation',
+      desc: 'Admin just confirmed an event for December 26',
+      time: '11:11 am | April 19, 2026',
+      unread: false,
+      filterCategory: 'Earlier',
+    },
+  ]);
+  const filteredNotifications = notifications.filter((notif) => {
+    if (notifTab === 'All') return true;
+    return notif.filterCategory === notifTab;
+  });
+
+  const [isInboxOpen, setIsInboxOpen] = useState(false);
+  const [hasNewInbox, setHasNewInbox] = useState(true);
+  const [inboxTab, setInboxTab] = useState('Today');
+  const messages = [
+    {
+      id: 1,
+      name: 'Christian Dace Juliales',
+      initial: 'C',
+      color: 'bg-[#db4b88]',
+      text: 'Hi, are you available for a meeting? I would like to dis...',
+      time: '11:11 am | April 19, 2026',
+      filterCategory: 'Today',
+    },
+    {
+      id: 2,
+      name: 'Diane M. Rotono',
+      initial: 'D',
+      color: 'bg-[#4bc783]',
+      text: 'Oh yes! I have seen that earlier. But I have some revisio...',
+      time: '11:11 am | April 19, 2026',
+      filterCategory: 'This Week',
+    },
+    {
+      id: 3,
+      name: 'Sabrina Carpenter',
+      initial: 'S',
+      color: 'bg-[#5b54e3]',
+      text: 'I will send the details later today.',
+      time: '11:11 am | April 19, 2026',
+      filterCategory: 'Earlier',
+    },
+    {
+      id: 4,
+      name: 'Zara Larson',
+      initial: 'Z',
+      color: 'bg-[#db5a9b]',
+      text: 'Thank you for the updates.',
+      time: '11:11 am | April 19, 2026',
+      filterCategory: 'Earlier',
+    },
+  ];
+  const filteredMessages = messages.filter((msg) => {
+    if (inboxTab === 'All') return true;
+    return msg.filterCategory === inboxTab;
+  });
+
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
 
   const navigate = useNavigate();
   const location = useLocation();
   const showHeaderSearch = ['/organizer/event-planner', '/organizer/event-manager'].includes(
     location.pathname
   );
+
+  const handleLogout = async () => {
+    if (isLoggingOut) return;
+
+    setIsLoggingOut(true);
+    setIsSettingsOpen(false);
+    try {
+      await logout();
+    } finally {
+      setAuthenticatedUser(null);
+      navigate('/login', { replace: true });
+      setIsLoggingOut(false);
+    }
+  };
+
+  const markAsRead = (id: number) => {
+    setNotifications((prev) =>
+      prev.map((notif) => (notif.id === id ? { ...notif, unread: false } : notif))
+    );
+  };
 
   //Loading screen pag nag login sa Organizer na Account.
   if (isLoading) {
@@ -226,26 +340,178 @@ export function OrganizerLayout() {
               ) : null}
 
               <div className="flex items-center gap-4 rounded-3xl bg-linear-to-r from-[#ef4aa4] to-[#8b1bce] px-4 py-3 shadow-[0_10px_24px_rgba(161,37,193,0.33)]">
-                <Button
-                  variant="ghost"
-                  size="icon-sm"
-                  className="rounded-full bg-white/25 text-white hover:bg-white/40 hover:text-white"
-                  aria-label="Notifications"
-                >
-                  <img
-                    src="/Pictures/organizerpics/notif dashboard.png"
-                    alt="Notifications"
-                    className="size-4"
-                  />
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="icon-sm"
-                  className="rounded-full text-white hover:bg-white/20 hover:text-white"
-                  aria-label="Email"
-                >
-                  <img src="/Pictures/organizerpics/email.png" alt="Email" className="size-4" />
-                </Button>
+                <div className="relative">
+                  <Button
+                    variant="ghost"
+                    size="icon-sm"
+                    className="rounded-full bg-white/25 text-white hover:bg-white/40 hover:text-white"
+                    aria-label="Notifications"
+                    onClick={() => {
+                      setIsNotifOpen(!isNotifOpen);
+                      setHasNewNotif(false);
+                      setIsSettingsOpen(false);
+                      setIsInboxOpen(false);
+                    }}
+                  >
+                    <div className="relative">
+                      <img
+                        src="/Pictures/organizerpics/notif dashboard.png"
+                        alt="Notifications"
+                        className="size-4"
+                      />
+                      {hasNewNotif && (
+                        <span className="absolute -right-0.5 -top-0.5 size-2 rounded-full bg-[#f44b9e] border border-white/50" />
+                      )}
+                    </div>
+                  </Button>
+
+                  {isNotifOpen ? (
+                    <div className="absolute right-[-120px] sm:right-[-140px] top-full z-50 mt-4 flex w-[340px] flex-col overflow-hidden rounded-2xl border border-[#e2deea] bg-white shadow-[0_12px_40px_rgba(0,0,0,0.12)] sm:w-[380px] animate-in fade-in slide-in-from-top-2">
+                      <div className="border-b border-[#f0edf4] p-4">
+                        <div className="mb-4 flex items-center justify-between">
+                          <h3 className="text-base font-bold text-[#2d2834]">Notification</h3>
+                          <button
+                            className="rounded-full border border-[#e2deea] px-3 py-1 text-[11px] font-semibold text-[#8f879f] transition-colors hover:bg-[#f6f5f8]"
+                            type="button"
+                            onClick={() => setNotifTab('All')}
+                          >
+                            See All
+                          </button>
+                        </div>
+                        <div className="flex rounded-full bg-[#f6f5f8] p-1">
+                          {['Today', 'This Week', 'Earlier'].map((tab) => (
+                            <button
+                              key={tab}
+                              onClick={() => setNotifTab(tab)}
+                              className={`flex-1 rounded-full py-1.5 text-xs font-bold transition-all ${notifTab === tab ? 'bg-white text-[#2d2834] shadow-sm' : 'text-[#8f879f] hover:text-[#4f4a56]'}`}
+                              type="button"
+                            >
+                              {tab}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                      <div className="scrollbar-thin scrollbar-thumb-[#e8e0eb] scrollbar-track-transparent max-h-[340px] overflow-y-auto">
+                        {filteredNotifications.length > 0 ? (
+                          filteredNotifications.map((notif) => (
+                            <div
+                              key={notif.id}
+                              onClick={() => markAsRead(notif.id)}
+                              className="flex cursor-pointer items-start gap-3 border-b border-[#f0edf4] p-4 transition-colors hover:bg-[#fafafa]"
+                            >
+                              <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-[#f8f5fe] text-[#8f1fd1]">
+                                <svg className="size-5" fill="currentColor" viewBox="0 0 24 24">
+                                  <path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zm6-6v-5c0-3.07-1.63-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.64 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2zm-2 1H8v-6c0-2.48 1.51-4.5 4-4.5s4 2.02 4 4.5v6z" />
+                                </svg>
+                              </div>
+                              <div className="min-w-0 flex-1 pt-0.5">
+                                <p className="truncate text-[13px] font-bold leading-tight text-[#2d2834]">
+                                  {notif.title}
+                                </p>
+                                <p className="mt-1 line-clamp-2 text-[11px] font-medium leading-snug text-[#696373]">
+                                  {notif.desc}
+                                </p>
+                                <p className="mt-1.5 text-[9px] font-semibold text-[#a49cb3]">
+                                  {notif.time}
+                                </p>
+                              </div>
+                              <div className="shrink-0 pt-2">
+                                <span
+                                  className={`block size-2 rounded-full ${notif.unread ? 'bg-[#f44b9e]' : 'bg-[#d1cbd9]'}`}
+                                />
+                              </div>
+                            </div>
+                          ))
+                        ) : (
+                          <div className="p-6 text-center text-sm font-medium text-[#a49cb3]">
+                            No notifications found.
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  ) : null}
+                </div>
+                <div className="relative">
+                  <Button
+                    variant="ghost"
+                    size="icon-sm"
+                    className="rounded-full text-white hover:bg-white/20 hover:text-white"
+                    aria-label="Email"
+                    onClick={() => {
+                      setIsInboxOpen(!isInboxOpen);
+                      setHasNewInbox(false);
+                      setIsNotifOpen(false);
+                      setIsSettingsOpen(false);
+                    }}
+                  >
+                    <div className="relative">
+                      <img src="/Pictures/organizerpics/email.png" alt="Email" className="size-4" />
+                      {hasNewInbox && (
+                        <span className="absolute -right-0.5 -top-0.5 size-2 rounded-full bg-[#f44b9e] border border-white/50" />
+                      )}
+                    </div>
+                  </Button>
+
+                  {isInboxOpen ? (
+                    <div className="absolute right-[-60px] sm:right-[-80px] top-full z-50 mt-4 flex w-[340px] flex-col overflow-hidden rounded-2xl border border-[#e2deea] bg-white shadow-[0_12px_40px_rgba(0,0,0,0.12)] sm:w-[380px] animate-in fade-in slide-in-from-top-2">
+                      <div className="border-b border-[#f0edf4] p-4">
+                        <div className="mb-4 flex items-center justify-between">
+                          <h3 className="text-base font-bold text-[#2d2834]">Message Inbox</h3>
+                          <button
+                            className="rounded-full border border-[#e2deea] px-3 py-1 text-[11px] font-semibold text-[#8f879f] transition-colors hover:bg-[#f6f5f8]"
+                            type="button"
+                            onClick={() => setInboxTab('All')}
+                          >
+                            See All
+                          </button>
+                        </div>
+                        <div className="flex rounded-full bg-[#f6f5f8] p-1">
+                          {['Today', 'This Week', 'Earlier'].map((tab) => (
+                            <button
+                              key={tab}
+                              onClick={() => setInboxTab(tab)}
+                              className={`flex-1 rounded-full py-1.5 text-xs font-bold transition-all ${inboxTab === tab ? 'bg-white text-[#2d2834] shadow-sm' : 'text-[#8f879f] hover:text-[#4f4a56]'}`}
+                              type="button"
+                            >
+                              {tab}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                      <div className="scrollbar-thin scrollbar-thumb-[#e8e0eb] scrollbar-track-transparent max-h-[340px] overflow-y-auto">
+                        {filteredMessages.length > 0 ? (
+                          filteredMessages.map((msg) => (
+                            <div
+                              key={msg.id}
+                              className="flex cursor-pointer items-start gap-3 border-b border-[#f0edf4] p-4 transition-colors hover:bg-[#fafafa]"
+                            >
+                              <div
+                                className={`flex size-10 shrink-0 items-center justify-center rounded-full text-white text-lg font-bold ${msg.color}`}
+                              >
+                                {msg.initial}
+                              </div>
+                              <div className="min-w-0 flex-1 pt-0.5">
+                                <p className="truncate text-[13px] font-bold leading-tight text-[#2d2834]">
+                                  {msg.name}
+                                </p>
+                                <p className="mt-1 line-clamp-2 text-[11px] font-medium leading-snug text-[#696373]">
+                                  {msg.text}
+                                </p>
+                                <p className="mt-1.5 text-[9px] font-semibold text-[#a49cb3]">
+                                  {msg.time}
+                                </p>
+                              </div>
+                            </div>
+                          ))
+                        ) : (
+                          <div className="p-6 text-center text-sm font-medium text-[#a49cb3]">
+                            No messages found.
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  ) : null}
+                </div>
                 <img
                   src="/Pictures/organizerpics/Profile Picture.png"
                   alt="Organizer profile"
@@ -257,7 +523,11 @@ export function OrganizerLayout() {
                     size="icon-sm"
                     className="rounded-full text-white hover:bg-white/20 hover:text-white"
                     aria-label="Settings"
-                    onClick={() => setIsSettingsOpen(!isSettingsOpen)}
+                    onClick={() => {
+                      setIsSettingsOpen(!isSettingsOpen);
+                      setIsNotifOpen(false);
+                      setIsInboxOpen(false);
+                    }}
                   >
                     <img
                       src="/Pictures/organizerpics/settings dashboard.png"
@@ -277,13 +547,10 @@ export function OrganizerLayout() {
                       <button
                         type="button"
                         className="cursor-pointer hover:bg-[#f6f5f8] text-sm font-semibold text-[#df2b80] px-4 py-2 w-full text-left transition-colors"
-                        onClick={() => {
-                          setIsSettingsOpen(false);
-                          setAuthenticatedUser(null);
-                          navigate('/login');
-                        }}
+                        disabled={isLoggingOut}
+                        onClick={handleLogout}
                       >
-                        Logout
+                        {isLoggingOut ? 'Logging out...' : 'Logout'}
                       </button>
                     </div>
                   ) : null}
@@ -293,7 +560,12 @@ export function OrganizerLayout() {
           </header>
 
           <main className="min-h-0 flex-1 overflow-y-auto px-4 py-6 md:px-8">
-            <Outlet context={{ searchTerm }} />
+            <div
+              key={location.pathname}
+              className="animate-in fade-in slide-in-from-bottom-4 duration-500 ease-out fill-mode-both"
+            >
+              <Outlet context={{ searchTerm }} />
+            </div>
           </main>
         </div>
       </div>
