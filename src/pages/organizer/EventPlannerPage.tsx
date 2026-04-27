@@ -941,7 +941,12 @@ export function EventPlannerPage() {
   const [selectedProjectId, setSelectedProjectId] = useState(1);
   const [activeTab, setActiveTab] = useState<PlannerTab>('task');
   const [plannerTaskCards, setPlannerTaskCards] = useState<TaskCard[]>(taskCards);
-  const [checklistDraftItem, setChecklistDraftItem] = useState('');
+  const [checklistDeleteTarget, setChecklistDeleteTarget] = useState<{
+    id: string;
+    label: string;
+  } | null>(null);
+  const [checklistDeleteValidation, setChecklistDeleteValidation] = useState('');
+  const [checklistDeleteError, setChecklistDeleteError] = useState('');
   const [plannerNotes, setPlannerNotes] = useState<PlannerQuickNote[]>(initialPlannerNotes);
   const [noteDraftTitle, setNoteDraftTitle] = useState('');
   const [noteDraftBody, setNoteDraftBody] = useState('');
@@ -1073,9 +1078,7 @@ export function EventPlannerPage() {
   const checklistItems = checklistTaskCard?.items ?? [];
 
   const handleAddChecklistItem = () => {
-    const normalizedLabel = checklistDraftItem.trim();
-
-    if (!normalizedLabel || !checklistTaskCard) {
+    if (!checklistTaskCard) {
       return;
     }
 
@@ -1086,14 +1089,13 @@ export function EventPlannerPage() {
         }
 
         const nextItemId = `cost-${Date.now()}`;
+        const nextLabel = `New checklist item ${card.items.length + 1}`;
         return {
           ...card,
-          items: [...card.items, { id: nextItemId, label: normalizedLabel, done: false }],
+          items: [...card.items, { id: nextItemId, label: nextLabel, done: false }],
         };
       })
     );
-
-    setChecklistDraftItem('');
   };
 
   const handleRemoveChecklistItem = (itemId: string) => {
@@ -1113,6 +1115,35 @@ export function EventPlannerPage() {
         };
       })
     );
+  };
+
+  const openChecklistDeleteValidation = (item: { id: string; label: string }) => {
+    setChecklistDeleteTarget(item);
+    setChecklistDeleteValidation('');
+    setChecklistDeleteError('');
+  };
+
+  const closeChecklistDeleteValidation = () => {
+    setChecklistDeleteTarget(null);
+    setChecklistDeleteValidation('');
+    setChecklistDeleteError('');
+  };
+
+  const handleConfirmChecklistDelete = () => {
+    if (!checklistDeleteTarget) {
+      return;
+    }
+
+    const normalizedExpectedLabel = checklistDeleteTarget.label.trim().toLowerCase();
+    const normalizedProvidedLabel = checklistDeleteValidation.trim().toLowerCase();
+
+    if (!normalizedProvidedLabel || normalizedProvidedLabel !== normalizedExpectedLabel) {
+      setChecklistDeleteError(`Type "${checklistDeleteTarget.label}" to confirm deletion.`);
+      return;
+    }
+
+    handleRemoveChecklistItem(checklistDeleteTarget.id);
+    closeChecklistDeleteValidation();
   };
 
   return (
@@ -1568,34 +1599,21 @@ export function EventPlannerPage() {
               </div>
             </section>
           ) : activeTab === 'checklist' ? (
-            <section className="rounded-2xl border border-[#ddd8e8] bg-[#fbfafd] p-3 shadow-[0_6px_14px_rgba(31,18,54,0.05)]">
-              <div className="mb-2 flex flex-wrap items-center justify-between gap-2 rounded-xl border border-[#e7e2f0] bg-white px-3 py-2">
-                <div>
-                  <p className="text-xs font-black uppercase tracking-[0.12em] text-[#8f879f]">
-                    Checklist
-                  </p>
-                  <h3 className="text-[22px] font-black tracking-tight text-[#272331]">
-                    {checklistItems.length} Items
-                  </h3>
-                </div>
-                <span className="inline-flex rounded-full border border-[#e2dbee] bg-[#f8f4fd] px-3 py-1 text-xs font-black text-[#7c1cc9]">
-                  {checklistItems.filter((item) => item.done).length}/{checklistItems.length} done
-                </span>
-              </div>
+            <section className="rounded-xl border border-[#ddd8e8] bg-white p-3 shadow-[0_6px_14px_rgba(31,18,54,0.05)]">
+              <h3 className="mb-3 text-[18px] font-bold tracking-tight text-[#18151f]">
+                Checklist ({checklistItems.length} Items)
+              </h3>
 
-              <div className="rounded-md border border-[#d7d2dd] bg-[#efeff1] p-2 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.45)]">
-                <ul>
+              <div className="overflow-hidden rounded-sm border border-[#e7e3ea] bg-white">
+                <ul className="divide-y divide-[#dcd7df]">
                   {checklistItems.map((item) => (
-                    <li
-                      key={item.id}
-                      className="flex min-h-[44px] items-center justify-between border-b border-[#cfc9d8] px-2 transition-colors hover:bg-white/35"
-                    >
-                      <div className="flex items-center gap-4">
+                    <li key={item.id} className="flex min-h-[46px] items-center justify-between px-3">
+                      <div className="flex min-w-0 items-center gap-3">
                         <button
                           type="button"
                           onClick={() => handleToggleTaskItem(checklistTaskCard?.id ?? '', item.id)}
                           className={[
-                            'inline-flex size-6 items-center justify-center rounded-sm border-2 text-[11px] font-black transition-all',
+                            'inline-flex size-5 shrink-0 items-center justify-center rounded-[3px] border-2 text-[10px] font-black transition-all',
                             item.done
                               ? 'border-[#ff1f7a] bg-[#ff1f7a] text-white'
                               : 'border-[#ff1f7a] bg-white text-transparent hover:text-[#ff1f7a]',
@@ -1604,14 +1622,15 @@ export function EventPlannerPage() {
                         >
                           ✓
                         </button>
-                        <span className="text-[14px] font-semibold tracking-tight text-[#3b3744]">
+
+                        <span className="truncate text-[15px] font-medium text-[#302c39]">
                           {item.label}
                         </span>
                       </div>
 
-                      <div className="flex items-center gap-2">
+                      <div className="ml-3 flex shrink-0 items-center gap-2">
                         {item.id === 'cost-2' ? (
-                          <span className="inline-flex items-center gap-1 rounded-full bg-[#e3e3e6] px-2 py-1 text-[10px] font-bold text-[#6f697e]">
+                          <span className="inline-flex items-center gap-1 rounded-md border border-[#d8d3de] bg-[#f6f5f8] px-2 py-1 text-[9px] font-semibold text-[#6f697e]">
                             <CalendarDays className="size-3" />
                             Due Jan 2
                           </span>
@@ -1619,62 +1638,32 @@ export function EventPlannerPage() {
 
                         <button
                           type="button"
-                          onClick={() => handleRemoveChecklistItem(item.id)}
-                          className="inline-flex size-7 items-center justify-center rounded-md border border-[#d7d0e2] bg-white text-[#7a728d] transition hover:border-[#f1589e] hover:text-[#f1589e]"
-                          aria-label={`Remove ${item.label}`}
+                          onClick={() => openChecklistDeleteValidation({ id: item.id, label: item.label })}
+                          className="inline-flex h-6 w-6 items-center justify-center rounded-sm border border-[#d7d0e2] bg-white text-[#7a728d] transition hover:border-[#f1589e] hover:text-[#f1589e]"
+                          aria-label={`Delete ${item.label}`}
                         >
-                          <Trash2 className="size-3.5" />
+                          <Trash2 className="size-3" />
                         </button>
                       </div>
                     </li>
                   ))}
                 </ul>
 
-                <div className="mx-auto mt-4 w-full max-w-[520px] rounded-xl border border-[#ddd6e7] bg-white p-3 shadow-[0_8px_18px_rgba(46,28,80,0.08)]">
-                  <p className="text-[12px] font-black uppercase tracking-[0.08em] text-[#7b7390]">
-                    Add Checklist Item
-                  </p>
-
-                  <form
-                    className="mt-2 space-y-2"
-                    onSubmit={(event) => {
-                      event.preventDefault();
-                      handleAddChecklistItem();
-                    }}
-                  >
-                    <Label
-                      htmlFor="checklist-item-input"
-                      className="text-xs font-semibold text-[#5a5468]"
-                    >
-                      Item name
-                    </Label>
-                    <Input
-                      id="checklist-item-input"
-                      type="text"
-                      value={checklistDraftItem}
-                      onChange={(event) => setChecklistDraftItem(event.target.value)}
-                      className="h-10 border-[#d5cede] text-sm font-semibold text-[#3f3a4e]"
-                    />
-
-                    <div className="flex items-center justify-center gap-2 pt-1">
-                      <button
-                        type="button"
-                        onClick={() => setChecklistDraftItem('')}
-                        className="inline-flex h-9 items-center justify-center rounded-lg border border-[#d7d0e2] px-3 text-xs font-bold text-[#5d5670] transition hover:bg-[#f4f1f8]"
-                      >
-                        Clear
-                      </button>
-                      <button
-                        type="submit"
-                        className="inline-flex h-9 items-center justify-center gap-1 rounded-lg bg-linear-to-r from-[#f1589e] via-[#d735b3] to-[#8a1fd0] px-4 text-xs font-black text-white shadow-[0_10px_22px_rgba(125,31,186,0.34)]"
-                      >
-                        <Plus className="size-3.5" />
-                        Add Item
-                      </button>
-                    </div>
-                  </form>
-                </div>
+                {checklistItems.length === 0 ? (
+                  <div className="px-3 py-8 text-center text-sm font-semibold text-[#777184]">
+                    No checklist items yet. Add one to start tracking tasks.
+                  </div>
+                ) : null}
               </div>
+
+              <button
+                type="button"
+                onClick={handleAddChecklistItem}
+                className="mt-4 inline-flex h-11 w-full items-center justify-center gap-2 rounded-md bg-linear-to-r from-[#f1589e] via-[#d735b3] to-[#8a1fd0] px-4 text-[15px] font-semibold tracking-tight text-white shadow-[0_10px_22px_rgba(125,31,186,0.34)]"
+              >
+                <Plus className="size-5 text-[#1f1b2b]" />
+                <span>Add Checklist Item</span>
+              </button>
             </section>
           ) : activeTab === 'flow' ? (
             <FlowNotesBoard />
@@ -1688,6 +1677,77 @@ export function EventPlannerPage() {
           )}
         </section>
       </div>
+
+      <Dialog
+        open={Boolean(checklistDeleteTarget)}
+        onOpenChange={(open) => {
+          if (!open) {
+            closeChecklistDeleteValidation();
+          }
+        }}
+      >
+        <DialogContent
+          showCloseButton={false}
+          className="max-w-[calc(100%-1rem)] rounded-2xl border border-[#e3dfea] bg-white p-0 sm:max-w-[520px]"
+        >
+          <form
+            className="px-6 py-5"
+            onSubmit={(event) => {
+              event.preventDefault();
+              handleConfirmChecklistDelete();
+            }}
+          >
+            <h3 className="text-[24px] font-black tracking-tight text-[#1f1f21]">
+              Delete checklist item?
+            </h3>
+            <p className="mt-2 text-sm text-[#686176]">
+              This action will permanently remove the selected checklist row.
+            </p>
+
+            <div className="mt-4 rounded-lg border border-[#ece7f2] bg-[#faf8fc] px-3 py-2 text-sm font-semibold text-[#4f4a58]">
+              {checklistDeleteTarget?.label}
+            </div>
+
+            <Label
+              htmlFor="delete-checklist-validation"
+              className="mt-4 block text-xs font-semibold uppercase tracking-[0.1em] text-[#7d778d]"
+            >
+              Type the item name to confirm
+            </Label>
+            <Input
+              id="delete-checklist-validation"
+              type="text"
+              value={checklistDeleteValidation}
+              onChange={(event) => {
+                setChecklistDeleteValidation(event.target.value);
+                setChecklistDeleteError('');
+              }}
+              className="mt-2 h-10 border-[#d5cede] text-sm font-semibold text-[#3f3a4e]"
+              placeholder={checklistDeleteTarget?.label ?? ''}
+            />
+
+            {checklistDeleteError ? (
+              <p className="mt-2 text-xs font-semibold text-[#d22067]">{checklistDeleteError}</p>
+            ) : null}
+
+            <div className="mt-5 flex items-center justify-end gap-2">
+              <button
+                type="button"
+                onClick={closeChecklistDeleteValidation}
+                className="inline-flex h-9 items-center justify-center rounded-lg border border-[#d7d0e2] px-3 text-xs font-bold text-[#5d5670] transition hover:bg-[#f4f1f8]"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                className="inline-flex h-9 items-center justify-center rounded-lg bg-[#cf1f65] px-4 text-xs font-black uppercase tracking-[0.08em] text-white shadow-[0_8px_18px_rgba(172,31,90,0.34)]"
+              >
+                Delete item
+              </button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
