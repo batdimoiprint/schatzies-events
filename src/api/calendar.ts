@@ -10,6 +10,10 @@ export interface CalendarEntryPayload {
   location: string;
   description: string;
   eventType: string;
+  date?: string;
+  endDate?: string;
+  type?: string;
+  eventId?: string;
 }
 
 export const getCalendarEntries = async (filters: any = {}): Promise<any[]> => {

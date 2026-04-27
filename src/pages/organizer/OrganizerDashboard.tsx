@@ -412,12 +412,16 @@ export function OrganizerDashboard() {
       if (data) {
         if (data.kpi) {
           const formatMoney = (val: number = 0) => `PHP ${val.toLocaleString('en-US')}`;
-          const vendorCount = String(
-            data.activeVendorsCount || (data.activeVendors ? data.activeVendors.length : 0)
-          );
+          const vendorCount = String(data.activeVendors?.count || 0);
 
           setKpiData((prev) => ({
             ...prev,
+            Weekly: [
+              { ...prev.Weekly[0], value: String(data.kpi?.week?.completed || 0) },
+              { ...prev.Weekly[1], value: formatMoney(data.kpi?.week?.completedRevenue || 0) },
+              { ...prev.Weekly[2], value: vendorCount },
+              { ...prev.Weekly[3], value: formatMoney(data.kpi?.week?.completedProfit || 0) },
+            ],
             Monthly: [
               { ...prev.Monthly[0], value: String(data.kpi.month?.completed || 0) },
               { ...prev.Monthly[1], value: formatMoney(data.kpi.month?.completedRevenue || 0) },
@@ -503,7 +507,7 @@ export function OrganizerDashboard() {
             return {
               rank: index + 1,
               title: event.title,
-              subtitle: `Status: ${event.status}`,
+              subtitle: `${event.eventType || 'Event'} • ${event.clientName || 'Unknown Client'} • Status: ${event.status}`,
               date: `${formattedDate}${formattedTime}`,
               badgeColor: badgeColors[index % badgeColors.length],
             };
@@ -512,14 +516,14 @@ export function OrganizerDashboard() {
         }
 
         // Map Active Vendors List (if provided by the summary API)
-        if (data.activeVendors && Array.isArray(data.activeVendors)) {
+        if (data.activeVendors && Array.isArray(data.activeVendors.topVendors)) {
           const badgeColors = ['bg-[#29bf4c]', 'bg-[#1aa73a]', 'bg-[#158f31]'];
-          const mappedVendors = data.activeVendors.map((vendor: any, index: number) => {
+          const mappedVendors = data.activeVendors.topVendors.map((vendor: any, index: number) => {
             return {
               rank: index + 1,
-              title: vendor.name || 'Unknown Vendor',
-              subtitle: `${vendor.contactPerson || 'No Contact'} | ${vendor.service || 'Service'}`,
-              date: vendor.status || 'Active',
+              title: vendor.vendorName || vendor.name || 'Unknown Vendor',
+              subtitle: 'Active Partner',
+              date: 'Present',
               badgeColor: badgeColors[index % badgeColors.length],
             };
           });
@@ -752,7 +756,6 @@ export function OrganizerDashboard() {
                           const strokeDasharray = `${sliceLength} ${donutCircumference - sliceLength}`;
                           const strokeDashoffset =
                             donutCircumference - (cumulativePercent / 100) * donutCircumference;
-                          const isSliceHovered = hoveredDonut?.label === slice.label;
 
                           cumulativePercent += slice.value;
 
@@ -767,14 +770,15 @@ export function OrganizerDashboard() {
                               strokeWidth="20"
                               strokeDasharray={strokeDasharray}
                               strokeDashoffset={strokeDashoffset}
+                              className="cursor-pointer transition-opacity duration-150"
+                              opacity={
+                                hoveredDonut && hoveredDonut.label !== slice.label ? 0.42 : 1
+                              }
+                              tabIndex={0}
                               onMouseEnter={() => setHoveredDonut(slice)}
                               onMouseLeave={() => setHoveredDonut(null)}
-                              className="cursor-pointer transition-[transform,opacity] duration-200"
-                              style={{
-                                transformOrigin: '50% 50%',
-                                transform: isSliceHovered ? 'scale(1.03)' : 'scale(1)',
-                                opacity: hoveredDonut && !isSliceHovered ? 0.9 : 1,
-                              }}
+                              onFocus={() => setHoveredDonut(slice)}
+                              onBlur={() => setHoveredDonut(null)}
                             />
                           );
                         });
@@ -782,33 +786,23 @@ export function OrganizerDashboard() {
                     )}
                   </svg>
 
-                  <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center text-center">
-                    {totalEvents === 0 ? (
-                      <>
-                        <p className="text-xs font-semibold text-[#8e8797]">Total Events</p>
-                        <p className="mt-1 text-4xl font-black leading-none text-[#8e8797]">
-                          0 Events
-                        </p>
-                      </>
-                    ) : hoveredDonut ? (
-                      <>
-                        <p className="text-xs font-semibold text-[#8e8797]">{hoveredDonut.label}</p>
-                        <p
-                          className="mt-1 text-4xl font-black leading-none"
-                          style={{ color: hoveredDonut.color }}
-                        >
-                          {hoveredDonut.eventCount} Events
-                        </p>
-                      </>
-                    ) : (
-                      <>
-                        <p className="text-xs font-semibold text-[#8e8797]">Total Events</p>
-                        <p className="mt-1 text-4xl font-black leading-none text-[#3d3745]">
-                          {totalEvents}
-                        </p>
-                      </>
-                    )}
-                  </div>
+                  <div className="pointer-events-none absolute inset-[56px] rounded-full bg-white ring-1 ring-[#eee5f6]" />
+
+                  {hoveredDonut ? (
+                    <div className="pointer-events-none absolute -bottom-4 left-1/2 min-w-[200px] -translate-x-1/2 translate-y-full rounded-2xl border border-[#efe4f8] bg-white px-4 py-3 text-center shadow-[0_16px_36px_rgba(42,23,60,0.16)] z-10">
+                      <p className="mt-1 text-sm font-bold text-[#2d2834]">{hoveredDonut.label}</p>
+                      <div className="mt-3 flex items-center justify-between gap-3 text-sm">
+                        <span className="font-semibold text-[#6f6780]">Total Events</span>
+                        <span className="font-black" style={{ color: hoveredDonut.color }}>
+                          {hoveredDonut.eventCount}
+                        </span>
+                      </div>
+                      <div className="mt-1 flex items-center justify-between gap-3 text-sm">
+                        <span className="font-semibold text-[#6f6780]">Share</span>
+                        <span className="font-bold text-[#2d2834]">{hoveredDonut.value}%</span>
+                      </div>
+                    </div>
+                  ) : null}
                 </div>
 
                 <div className="grid grid-cols-3 gap-2 pt-1 text-center">
