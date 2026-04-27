@@ -77,3 +77,13 @@ export const scheduleInquiryMeeting = async (
     throw error;
   }
 };
+
+export const checkUserRegistered = async (id: string): Promise<boolean> => {
+  try {
+    const response = await axiosInstance.get(`/inquiries/${id}/isUserRegistered`);
+    return response.data.isUserRegistered || response.data.is_Account_Created === true;
+  } catch (error) {
+    console.error('Failed to check user registration:', error);
+    return false;
+  }
+};

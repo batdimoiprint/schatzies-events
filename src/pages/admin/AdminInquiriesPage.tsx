@@ -29,7 +29,7 @@ import {
 } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { getInquiries, updateInquiryStatus, scheduleInquiryMeeting } from '@/api/inquiries';
+import { getInquiries, updateInquiryStatus, scheduleInquiryMeeting, checkUserRegistered } from '@/api/inquiries';
 import { createUser, getOrganizerUsers } from '@/api/users';
 
 export function AdminInquiriesPage() {
@@ -49,6 +49,7 @@ export function AdminInquiriesPage() {
   const [isCreatingAccount, setIsCreatingAccount] = useState(false);
   const [accountCreateError, setAccountCreateError] = useState('');
   const [accountCreateSuccess, setAccountCreateSuccess] = useState('');
+  const [isAccountRegisteredByInquiry, setIsAccountRegisteredByInquiry] = useState<Record<string, boolean>>({});
   const [createdAccounts, setCreatedAccounts] = useState<
     Record<string, { password: string; createdAt: string }>
   >({});
@@ -202,13 +203,23 @@ export function AdminInquiriesPage() {
     fetchOrganizers();
   }, []);
 
-  const handleViewDetails = (inquiry: any) => {
+  const handleViewDetails = async (inquiry: any) => {
     setSelectedInquiry(inquiry);
     setSelectedMeetingOrganizerId(inquiry?.meetingDetails?.organizerId || '');
     setAccountCreateError('');
     setAccountCreateSuccess('');
     setCopiedInquiryId('');
     setIsDialogOpen(true);
+
+    const inquiryKey = getInquiryKey(inquiry);
+    if (inquiryKey) {
+      try {
+        const isRegistered = await checkUserRegistered(inquiryKey);
+        setIsAccountRegisteredByInquiry((prev) => ({ ...prev, [inquiryKey]: isRegistered }));
+      } catch (error) {
+        console.error('Failed to check if user is registered', error);
+      }
+    }
   };
 
   const getInquiryKey = (inquiry: any) =>
@@ -386,9 +397,11 @@ export function AdminInquiriesPage() {
         password: generatedPassword,
         contactNumber: selectedInquiry.contactNumber || '',
         role: 'CLIENT',
+        inquiryId: inquiryKey,
       });
 
       if (inquiryKey) {
+        setIsAccountRegisteredByInquiry((prev) => ({ ...prev, [inquiryKey]: true }));
         setCreatedAccounts((prev) => ({
           ...prev,
           [inquiryKey]: {
@@ -430,6 +443,7 @@ export function AdminInquiriesPage() {
     ? Boolean(showPasswordByInquiry[selectedInquiryKey])
     : false;
   const isCopied = selectedInquiryKey ? copiedInquiryId === selectedInquiryKey : false;
+  const isAlreadyRegistered = selectedInquiryKey ? isAccountRegisteredByInquiry[selectedInquiryKey] : false;
 
   return (
     <div className="space-y-6 p-4 ">
@@ -802,13 +816,13 @@ export function AdminInquiriesPage() {
                     type="button"
                     onClick={handleCreateUserAccount}
                     disabled={
-                      isCreatingAccount || !selectedInquiry?.email || Boolean(createdAccount)
+                      isCreatingAccount || !selectedInquiry?.email || Boolean(createdAccount) || isAlreadyRegistered
                     }
                     className="mt-3 w-full bg-linear-to-r from-[#f347a5] to-[#8f1fd1] text-white hover:brightness-105"
                   >
                     {isCreatingAccount
                       ? 'Creating Account...'
-                      : createdAccount
+                      : createdAccount || isAlreadyRegistered
                         ? 'Account Created'
                         : 'Create User Account'}
                   </Button>

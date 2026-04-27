@@ -15,6 +15,7 @@ export interface UserPayload {
   gender?: string;
   contactNumber?: string;
   role?: string;
+  inquiryId?: string;
 }
 
 export interface UserResponse {
