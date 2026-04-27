@@ -15,19 +15,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (showError) setError(null);
       const verifiedUser = await verifyToken();
       setUser(verifiedUser ?? null);
-      
+
       // Persist a small flag in localStorage to help survive 429s on refresh
       if (verifiedUser) {
         localStorage.setItem('auth_hint', 'true');
       } else {
         localStorage.removeItem('auth_hint');
       }
-      
+
       return verifiedUser ?? null;
     } catch (err: any) {
       const status = err?.response?.status;
-      
-      // If we get a 429 (Too Many Requests), don't force logout 
+
+      // If we get a 429 (Too Many Requests), don't force logout
       // if we have a hint that the user was previously authenticated.
       if (status === 429 && localStorage.getItem('auth_hint') === 'true') {
         console.warn('Rate limit hit during auth check, maintaining session hint.');
@@ -37,7 +37,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       console.error('Token verification failed:', err);
       setUser(null);
       localStorage.removeItem('auth_hint');
-      
+
       if (showError) {
         setError(err instanceof Error ? err.message : 'Failed to verify session');
       }

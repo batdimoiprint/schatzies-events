@@ -31,5 +31,9 @@ export const getRSVPList = async (eventId: string): Promise<any[]> => {
   // Swagger: GET /api/events/{eventId}/rsvps
   const response = await axiosInstance.get(`/events/${eventId}/rsvps`);
   // The response is an object with a "guests" array based on Swagger
-  return response.data.guests || response.data.rsvps || (Array.isArray(response.data) ? response.data : []);
+  return (
+    response.data.guests ||
+    response.data.rsvps ||
+    (Array.isArray(response.data) ? response.data : [])
+  );
 };

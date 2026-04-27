@@ -388,12 +388,24 @@ export function EventManagerPage() {
                       }`}
                     >
                       <TableCell className="py-4 font-bold text-[#5c546a]">{event.title}</TableCell>
-                      <TableCell className="py-4 font-semibold text-[#5c546a]">{event.date}</TableCell>
-                      <TableCell className="py-4 font-semibold text-[#5c546a]">{event.timeSlot}</TableCell>
-                      <TableCell className="py-4 font-semibold text-[#5c546a]">{event.client}</TableCell>
-                      <TableCell className="py-4 font-semibold text-[#5c546a]">{event.type}</TableCell>
-                      <TableCell className="py-4 font-semibold text-[#5c546a]">{event.package}</TableCell>
-                      <TableCell className="py-4 font-semibold text-[#5c546a]">{event.venue}</TableCell>
+                      <TableCell className="py-4 font-semibold text-[#5c546a]">
+                        {event.date}
+                      </TableCell>
+                      <TableCell className="py-4 font-semibold text-[#5c546a]">
+                        {event.timeSlot}
+                      </TableCell>
+                      <TableCell className="py-4 font-semibold text-[#5c546a]">
+                        {event.client}
+                      </TableCell>
+                      <TableCell className="py-4 font-semibold text-[#5c546a]">
+                        {event.type}
+                      </TableCell>
+                      <TableCell className="py-4 font-semibold text-[#5c546a]">
+                        {event.package}
+                      </TableCell>
+                      <TableCell className="py-4 font-semibold text-[#5c546a]">
+                        {event.venue}
+                      </TableCell>
                       <TableCell className="py-4 font-bold text-[#5c546a]">
                         <div className="flex items-center gap-1.5">
                           {event.rsvp}
@@ -439,11 +451,21 @@ export function EventManagerPage() {
                         key={vendor.id}
                         className="border-b border-[#f6f4f9] hover:bg-[#faf9fc]"
                       >
-                        <TableCell className="py-4 font-bold text-[#5c546a]">{vendor.name}</TableCell>
-                        <TableCell className="py-4 font-semibold text-[#5c546a]">{vendor.contactPerson}</TableCell>
-                        <TableCell className="py-4 font-semibold text-[#5c546a]">{vendor.email}</TableCell>
-                        <TableCell className="py-4 font-semibold text-[#5c546a]">{vendor.phone}</TableCell>
-                        <TableCell className="py-4 font-semibold text-[#5c546a]">{vendor.service}</TableCell>
+                        <TableCell className="py-4 font-bold text-[#5c546a]">
+                          {vendor.name}
+                        </TableCell>
+                        <TableCell className="py-4 font-semibold text-[#5c546a]">
+                          {vendor.contactPerson}
+                        </TableCell>
+                        <TableCell className="py-4 font-semibold text-[#5c546a]">
+                          {vendor.email}
+                        </TableCell>
+                        <TableCell className="py-4 font-semibold text-[#5c546a]">
+                          {vendor.phone}
+                        </TableCell>
+                        <TableCell className="py-4 font-semibold text-[#5c546a]">
+                          {vendor.service}
+                        </TableCell>
                         <TableCell className="py-4">
                           <Badge className={getVendorStatusBadgeClasses(vendor.status)}>
                             {vendor.status}

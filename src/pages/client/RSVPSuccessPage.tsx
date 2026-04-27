@@ -56,7 +56,9 @@ export function RSVPSuccessPage({
           {qrCode && (
             <div className="mb-6 rounded-2xl bg-white p-4 shadow-xl border border-pink-100 flex flex-col items-center animate-in zoom-in duration-500">
               <img src={qrCode} alt="Guest QR Code" className="w-40 h-40 sm:w-48 sm:h-48 mb-2" />
-              <p className="text-[10px] font-bold text-gray-400 tracking-widest uppercase">Your Digital Pass</p>
+              <p className="text-[10px] font-bold text-gray-400 tracking-widest uppercase">
+                Your Digital Pass
+              </p>
             </div>
           )}
 
