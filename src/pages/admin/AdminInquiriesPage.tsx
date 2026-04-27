@@ -6,6 +6,9 @@ import {
   CheckCircle2,
   Clock3,
   MessageSquareText,
+  ArrowUpDown,
+  ArrowUp,
+  ArrowDown,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -43,8 +46,8 @@ export function AdminInquiriesPage() {
   });
 
   const [searchQuery, setSearchQuery] = useState('');
-  const [sortBy, setSortBy] = useState<'date' | 'status'>('date');
-  const [sortOrder, setSortOrder] = useState<'desc' | 'asc'>('desc');
+  const [sortBy, setSortBy] = useState<'date' | 'status' | 'eventType' | 'sender' | 'email'>('date');
+  const [sortOrder, setSortOrder] = useState<'desc' | 'asc'>('asc');
   const [selectedInquiry, setSelectedInquiry] = useState<any | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isScheduleModalOpen, setIsScheduleModalOpen] = useState(false);
@@ -144,6 +147,27 @@ export function AdminInquiriesPage() {
         if (statusCompare !== 0) {
           return sortOrder === 'asc' ? statusCompare : -statusCompare;
         }
+      } else if (sortBy === 'eventType') {
+        const typeA = (a.eventType || a.subject || 'Inquiry').toLowerCase();
+        const typeB = (b.eventType || b.subject || 'Inquiry').toLowerCase();
+        const typeCompare = typeA.localeCompare(typeB);
+        if (typeCompare !== 0) {
+          return sortOrder === 'asc' ? typeCompare : -typeCompare;
+        }
+      } else if (sortBy === 'sender') {
+        const nameA = `${a.firstName || ''} ${a.lastName || ''}`.toLowerCase();
+        const nameB = `${b.firstName || ''} ${b.lastName || ''}`.toLowerCase();
+        const nameCompare = nameA.localeCompare(nameB);
+        if (nameCompare !== 0) {
+          return sortOrder === 'asc' ? nameCompare : -nameCompare;
+        }
+      } else if (sortBy === 'email') {
+        const emailA = (a.email || '').toLowerCase();
+        const emailB = (b.email || '').toLowerCase();
+        const emailCompare = emailA.localeCompare(emailB);
+        if (emailCompare !== 0) {
+          return sortOrder === 'asc' ? emailCompare : -emailCompare;
+        }
       }
 
       const aDate = new Date(a.date || a.createdAt || 0).getTime();
@@ -200,6 +224,24 @@ export function AdminInquiriesPage() {
     );
   };
 
+  const toggleSort = (field: 'date' | 'status' | 'eventType' | 'sender' | 'email') => {
+    if (sortBy === field) {
+      setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortBy(field);
+      setSortOrder('asc');
+    }
+  };
+
+  const SortIcon = ({ field }: { field: 'date' | 'status' | 'eventType' | 'sender' | 'email' }) => {
+    if (sortBy !== field) return <ArrowUpDown className="ml-2 h-4 w-4 opacity-50" />;
+    return sortOrder === 'asc' ? (
+      <ArrowUp className="ml-2 h-4 w-4 text-[#8f1fd1]" />
+    ) : (
+      <ArrowDown className="ml-2 h-4 w-4 text-[#8f1fd1]" />
+    );
+  };
+
   return (
     <div className="space-y-6 p-4 ">
       {/* Summary */}
@@ -247,7 +289,7 @@ export function AdminInquiriesPage() {
       {/* Table */}
       <div className="overflow-hidden rounded-2xl border border-[#eee7f4] bg-white shadow-[0_8px_30px_rgba(53,36,71,0.06)]">
         <div className="flex flex-col gap-3 border-b border-[#f1eaf7] bg-[#fcf9ff] p-4 md:flex-row md:items-end md:justify-between">
-          <div className="w-full md:max-w-sm">
+          <div className="w-full">
             <Label
               htmlFor="inquiry-search"
               className="mb-1 block text-[11px] font-black uppercase tracking-[0.08em] text-[#857a98]"
@@ -259,43 +301,8 @@ export function AdminInquiriesPage() {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search sender, email, event type, status"
-              className="h-9 border-[#e5ddee] bg-white"
+              className="h-9 border-[#e5ddee] bg-white w-full md:max-w-md"
             />
-          </div>
-
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
-            <div>
-              <Label className="mb-1 block text-[11px] font-black uppercase tracking-[0.08em] text-[#857a98]">
-                Sort By
-              </Label>
-              <Select value={sortBy} onValueChange={(value: 'date' | 'status') => setSortBy(value)}>
-                <SelectTrigger className="h-9 w-full min-w-[150px] border-[#e5ddee] bg-white sm:w-[170px]">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="date">Date</SelectItem>
-                  <SelectItem value="status">Status</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div>
-              <Label className="mb-1 block text-[11px] font-black uppercase tracking-[0.08em] text-[#857a98]">
-                Order
-              </Label>
-              <Select
-                value={sortOrder}
-                onValueChange={(value: 'asc' | 'desc') => setSortOrder(value)}
-              >
-                <SelectTrigger className="h-9 w-full min-w-[150px] border-[#e5ddee] bg-white sm:w-[170px]">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="desc">Descending</SelectItem>
-                  <SelectItem value="asc">Ascending</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
           </div>
         </div>
 
@@ -317,20 +324,50 @@ export function AdminInquiriesPage() {
           <Table>
             <TableHeader className="bg-[#faf7fd]">
               <TableRow className="border-b border-[#efe7f6]">
-                <TableHead className="h-12 text-lg font-black uppercase tracking-[0.06em] text-[#7c7390]">
-                  Sender
+                <TableHead 
+                  className="h-12 text-lg font-black uppercase tracking-[0.06em] text-[#7c7390] cursor-pointer hover:text-[#8f1fd1] transition-colors"
+                  onClick={() => toggleSort('sender')}
+                >
+                  <div className="flex items-center">
+                    Sender
+                    <SortIcon field="sender" />
+                  </div>
                 </TableHead>
-                <TableHead className="h-12 text-lg font-black uppercase tracking-[0.06em] text-[#7c7390]">
-                  Email
+                <TableHead 
+                  className="h-12 text-lg font-black uppercase tracking-[0.06em] text-[#7c7390] cursor-pointer hover:text-[#8f1fd1] transition-colors"
+                  onClick={() => toggleSort('email')}
+                >
+                  <div className="flex items-center">
+                    Email
+                    <SortIcon field="email" />
+                  </div>
                 </TableHead>
-                <TableHead className="h-12 text-lg font-black uppercase tracking-[0.06em] text-[#7c7390]">
-                  Event Type
+                <TableHead 
+                  className="h-12 text-lg font-black uppercase tracking-[0.06em] text-[#7c7390] cursor-pointer hover:text-[#8f1fd1] transition-colors"
+                  onClick={() => toggleSort('eventType')}
+                >
+                  <div className="flex items-center">
+                    Event Type
+                    <SortIcon field="eventType" />
+                  </div>
                 </TableHead>
-                <TableHead className="h-12 text-lg font-black uppercase tracking-[0.06em] text-[#7c7390]">
-                  Date
+                <TableHead 
+                  className="h-12 text-lg font-black uppercase tracking-[0.06em] text-[#7c7390] cursor-pointer hover:text-[#8f1fd1] transition-colors"
+                  onClick={() => toggleSort('date')}
+                >
+                  <div className="flex items-center">
+                    Date
+                    <SortIcon field="date" />
+                  </div>
                 </TableHead>
-                <TableHead className="h-12 text-lg font-black uppercase tracking-[0.06em] text-[#7c7390]">
-                  Status
+                <TableHead 
+                  className="h-12 text-lg font-black uppercase tracking-[0.06em] text-[#7c7390] cursor-pointer hover:text-[#8f1fd1] transition-colors"
+                  onClick={() => toggleSort('status')}
+                >
+                  <div className="flex items-center">
+                    Event Status
+                    <SortIcon field="status" />
+                  </div>
                 </TableHead>
                 <TableHead className="text-right">Actions</TableHead>
               </TableRow>

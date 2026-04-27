@@ -43,6 +43,10 @@ export function InquiryDetailsDialog({
   const [showPasswordByInquiry, setShowPasswordByInquiry] = useState<Record<string, boolean>>({});
   const [copiedInquiryId, setCopiedInquiryId] = useState('');
   const [scheduleError, setScheduleError] = useState('');
+  const [isConfirmOpen, setIsConfirmOpen] = useState(false);
+  const [pendingStatus, setPendingStatus] = useState('');
+  const [isOrgConfirmOpen, setIsOrgConfirmOpen] = useState(false);
+  const [pendingOrganizerId, setPendingOrganizerId] = useState('');
 
   const getInquiryKey = (inquiry: any) =>
     String(inquiry?.id || inquiry?._id || inquiry?.email || '').trim();
@@ -81,48 +85,55 @@ export function InquiryDetailsDialog({
     checkRegistered();
   }, [selectedInquiry]);
 
-  const handleStatusChange = async (newStatus: string) => {
-    if (!selectedInquiry) return;
+  const handleStatusChange = (newStatus: string) => {
+    if (!selectedInquiry || newStatus === selectedInquiry.status) return;
+    setPendingStatus(newStatus);
+    setIsConfirmOpen(true);
+  };
 
+  const confirmStatusChange = async () => {
+    if (!selectedInquiry || !pendingStatus) return;
     const id = selectedInquiry.id || selectedInquiry._id;
-
     try {
-      await updateInquiryStatus(id, newStatus);
-      onInquiryUpdated({ ...selectedInquiry, status: newStatus });
+      await updateInquiryStatus(id, pendingStatus);
+      onInquiryUpdated({ ...selectedInquiry, status: pendingStatus });
+      setIsConfirmOpen(false);
+      setPendingStatus('');
     } catch (error) {
       console.error('Failed to update status', error);
     }
   };
 
-  const handleUpdateMeetingOrganizer = async () => {
-    if (!selectedInquiry?.meetingDetails) return;
-    if (!selectedMeetingOrganizerId) {
-      setScheduleError('Please select an organizer.');
-      return;
-    }
+  const handleOrganizerChange = (newOrgId: string) => {
+    if (!selectedInquiry?.meetingDetails || newOrgId === selectedInquiry.meetingDetails.organizerId) return;
+    setPendingOrganizerId(newOrgId);
+    setIsOrgConfirmOpen(true);
+  };
 
+  const confirmOrganizerChange = async () => {
+    if (!selectedInquiry?.meetingDetails || !pendingOrganizerId) return;
     try {
       setIsUpdatingMeetingOrganizer(true);
       setScheduleError('');
-
       const id = selectedInquiry.id || selectedInquiry._id;
       const existingMeeting = selectedInquiry.meetingDetails;
-
       await scheduleInquiryMeeting(id, {
         date: existingMeeting.date || selectedInquiry.date,
         time: existingMeeting.time || '09:00',
         location: existingMeeting.location || 'TBA',
-        organizerId: selectedMeetingOrganizerId,
+        organizerId: pendingOrganizerId,
       });
-
       onInquiryUpdated({
         ...selectedInquiry,
         status: 'Meeting Scheduled',
         meetingDetails: {
           ...existingMeeting,
-          organizerId: selectedMeetingOrganizerId,
+          organizerId: pendingOrganizerId,
         },
       });
+      setIsOrgConfirmOpen(false);
+      setPendingOrganizerId('');
+      setSelectedMeetingOrganizerId(pendingOrganizerId);
     } catch (error) {
       console.error('Failed to update meeting organizer', error);
       setScheduleError('Unable to update organizer right now. Please try again.');
@@ -228,10 +239,7 @@ export function InquiryDetailsDialog({
               </p>
             </div>
             <div className="hidden md:block">
-              <div className="px-4 py-2 rounded-xl bg-white/60 border border-[#efe8f6] backdrop-blur-sm">
-                <p className="text-[10px] font-black uppercase tracking-widest text-[#857a98] mb-0.5">Current Status</p>
-                <p className="text-sm font-bold text-[#6f2ea8]">{selectedInquiry?.status || 'New'}</p>
-              </div>
+     
             </div>
           </div>
         </div>
@@ -268,6 +276,10 @@ export function InquiryDetailsDialog({
                   Event Requirements
                 </h3>
                 <div className="grid grid-cols-2 gap-3">
+                  <div className="px-4 py-3 rounded-xl bg-[#f7ebff]/50 border-2 border-[#eadcf7] backdrop-blur-sm shadow-sm flex flex-col justify-center">
+                    <p className="text-[10px] font-black uppercase tracking-widest text-[#857a98] mb-0.5">Current Status</p>
+                    <p className="text-sm font-bold text-[#6f2ea8]">{selectedInquiry?.status || 'New'}</p>
+                  </div>
                   <div className="rounded-xl border border-[#f1eaf7] bg-white p-3 shadow-sm">
                     <h4 className="text-[10px] font-black uppercase tracking-wider text-[#a094b8] mb-1">Event Format</h4>
                     <p className="text-[#4e4560] font-bold text-sm">
@@ -278,6 +290,16 @@ export function InquiryDetailsDialog({
                     <h4 className="text-[10px] font-black uppercase tracking-wider text-[#a094b8] mb-1">Planned Date</h4>
                     <p className="text-[#4e4560] font-bold text-sm">
                       {new Date(selectedInquiry.date || selectedInquiry.createdAt || Date.now()).toLocaleDateString()}
+                    </p>
+                  </div>
+                  <div className="rounded-xl border border-[#f1eaf7] bg-white p-3 shadow-sm">
+                    <h4 className="text-[10px] font-black uppercase tracking-wider text-[#a094b8] mb-1">Submitted Date</h4>
+                    <p className="text-[#4e4560] font-bold text-sm">
+                      {new Date(selectedInquiry.createdAt || selectedInquiry.created_at || Date.now()).toLocaleDateString('en-US', {
+                        month: 'short',
+                        day: 'numeric',
+                        year: 'numeric'
+                      })}
                     </p>
                   </div>
                   {selectedInquiry.eventPackage && (
@@ -331,7 +353,7 @@ export function InquiryDetailsDialog({
               </section>
 
               <section className="space-y-3">
-                <h4 className="text-xs font-black uppercase tracking-widest text-[#b0a4c5] mb-2">Discovery Meeting</h4>
+                <h4 className="text-xs font-black uppercase tracking-widest text-[#b0a4c5] mb-2">Meetings</h4>
                 {selectedInquiry.meetingDetails ? (
                   <div className="w-full space-y-4">
                     <div className="rounded-2xl border border-[#eadcf7] bg-linear-to-br from-[#fbf6ff] to-[#f5f0ff] p-4 shadow-sm">
@@ -346,42 +368,36 @@ export function InquiryDetailsDialog({
                           <p className="text-xs font-bold text-[#8f1fd1]">at {selectedInquiry.meetingDetails.time || 'TBD'}</p>
                         </div>
                       </div>
-                      <div className="space-y-2 text-[11px] font-semibold">
+                      <div className="space-y-3 text-[11px] font-semibold">
                         <p className="flex justify-between border-b border-[#eee7f4] pb-1.5">
                           <span className="text-[#a094b8]">Location</span>
                           <span className="text-[#5f4f7a]">{selectedInquiry.meetingDetails.location || 'TBA'}</span>
                         </p>
-                        <p className="flex justify-between pt-0.5">
-                          <span className="text-[#a094b8]">Organizer</span>
-                          <span className="text-[#5f4f7a] text-right">{getOrganizerLabel(selectedInquiry.meetingDetails.organizerId || '')}</span>
-                        </p>
-                      </div>
-                    </div>
-
-                    <div className="p-4 rounded-2xl border border-[#efe8f6] bg-white/50 space-y-3">
-                      <Label className="text-[10px] font-black uppercase text-[#857a98] block">Reassign Expert</Label>
-                      <div className="flex flex-col gap-2">
-                        <select
-                          value={selectedMeetingOrganizerId}
-                          onChange={(e) => setSelectedMeetingOrganizerId(e.target.value)}
-                          className="h-10 w-full rounded-xl border border-[#ddd8e8] bg-white px-3 text-xs font-bold text-[#4c455e] outline-none focus:border-[#be8de4] transition-all"
-                        >
-                          <option value="">Select organizer</option>
-                          {organizers.map((organizer) => (
-                            <option key={organizer.user_id} value={organizer.user_id}>
-                              {[organizer.firstName, organizer.lastName].filter(Boolean).join(' ')}
-                            </option>
-                          ))}
-                        </select>
-                        <Button
-                          type="button"
-                          variant="outline"
-                          onClick={handleUpdateMeetingOrganizer}
-                          disabled={isUpdatingMeetingOrganizer || organizersLoading || !selectedMeetingOrganizerId}
-                          className="w-full h-10 border-[#e7dff0] text-[#8f1fd1] font-black text-xs uppercase tracking-wider hover:bg-[#f8f2fd] rounded-xl"
-                        >
-                          {isUpdatingMeetingOrganizer ? 'Updating...' : 'Update Assignment'}
-                        </Button>
+                        <div className="space-y-2">
+                          <p className="flex justify-between">
+                            <span className="text-[#a094b8]">Current Expert</span>
+                            <span className="text-[#5f4f7a] text-right">{getOrganizerLabel(selectedInquiry.meetingDetails.organizerId || '')}</span>
+                          </p>
+                          <div className="pt-1">
+                            <Label className="text-[9px] font-black uppercase text-[#857a98] mb-1.5 block">Reassign Expert</Label>
+                            <Select
+                              value={selectedMeetingOrganizerId}
+                              onValueChange={handleOrganizerChange}
+                              disabled={isUpdatingMeetingOrganizer}
+                            >
+                              <SelectTrigger className="h-9 w-full rounded-xl border-[#eadcf7] bg-white/80 px-3 text-[11px] font-bold text-[#4c455e] transition-all">
+                                <SelectValue placeholder="Change organizer..." />
+                              </SelectTrigger>
+                              <SelectContent className="rounded-xl border-[#e5ddee]">
+                                {organizers.map((organizer) => (
+                                  <SelectItem key={organizer.user_id} value={organizer.user_id}>
+                                    {[organizer.firstName, organizer.lastName].filter(Boolean).join(' ')}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </div>
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -493,6 +509,67 @@ export function InquiryDetailsDialog({
           </div>
         )}
       </DialogContent>
+
+      {/* Status Change Confirmation Dialog */}
+      <Dialog open={isConfirmOpen} onOpenChange={setIsConfirmOpen}>
+        <DialogContent className="sm:max-w-[400px] p-0 overflow-hidden border-none rounded-2xl">
+          <div className="p-6 text-center">
+            <div className="h-12 w-12 rounded-full bg-amber-50 text-amber-500 flex items-center justify-center mx-auto mb-4">
+              <CalendarIcon className="h-6 w-6" />
+            </div>
+            <h3 className="text-xl font-black text-[#2e2837] mb-2">Update Status?</h3>
+            <p className="text-sm font-medium text-[#7a708d] mb-6">
+              Are you sure you want to change the status of this inquiry from <span className="font-bold text-[#6f2ea8]">{selectedInquiry?.status || 'New'}</span> to <span className="font-bold text-[#8f1fd1]">{pendingStatus}</span>?
+            </p>
+            <div className="flex gap-3">
+              <Button
+                variant="outline"
+                onClick={() => setIsConfirmOpen(false)}
+                className="flex-1 h-11 border-[#e7dff0] text-[#5a5368] font-bold rounded-xl"
+              >
+                No, Keep it
+              </Button>
+              <Button
+                onClick={confirmStatusChange}
+                className="flex-1 h-11 bg-linear-to-r from-[#f347a5] to-[#8f1fd1] text-white font-black rounded-xl shadow-md"
+              >
+                Yes, Update
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Organizer Change Confirmation Dialog */}
+      <Dialog open={isOrgConfirmOpen} onOpenChange={setIsOrgConfirmOpen}>
+        <DialogContent className="sm:max-w-[400px] p-0 overflow-hidden border-none rounded-2xl">
+          <div className="p-6 text-center">
+            <div className="h-12 w-12 rounded-full bg-linear-to-br from-[#f347a5]/10 to-[#8f1fd1]/10 text-[#8f1fd1] flex items-center justify-center mx-auto mb-4">
+              <CalendarIcon className="h-6 w-6" />
+            </div>
+            <h3 className="text-xl font-black text-[#2e2837] mb-2">Change Organizer?</h3>
+            <p className="text-sm font-medium text-[#7a708d] mb-6">
+              Are you sure you want to reassign this inquiry from <span className="font-bold text-[#6f2ea8]">{getOrganizerLabel(selectedInquiry?.meetingDetails?.organizerId || '')}</span> to <span className="font-bold text-[#8f1fd1]">{getOrganizerLabel(pendingOrganizerId)}</span>?
+            </p>
+            <div className="flex gap-3">
+              <Button
+                variant="outline"
+                onClick={() => setIsOrgConfirmOpen(false)}
+                className="flex-1 h-11 border-[#e7dff0] text-[#5a5368] font-bold rounded-xl"
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={confirmOrganizerChange}
+                disabled={isUpdatingMeetingOrganizer}
+                className="flex-1 h-11 bg-linear-to-r from-[#2e2837] to-[#5a5368] text-white font-black rounded-xl shadow-md"
+              >
+                {isUpdatingMeetingOrganizer ? 'Updating...' : 'Confirm'}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </Dialog>
   );
 }
