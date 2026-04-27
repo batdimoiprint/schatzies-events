@@ -179,3 +179,8 @@ export async function updateEvent(
 export async function deleteEvent(eventId: string): Promise<void> {
   await axiosInstance.delete(`/events/${eventId}`);
 }
+
+export async function getEventVendors(eventId: string) {
+  const response = await axiosInstance.get(`/events/${eventId}/vendors`);
+  return response.data;
+}

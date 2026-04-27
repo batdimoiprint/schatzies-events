@@ -1,5 +1,7 @@
-import { useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { ArrowRight, CalendarDays, ChevronDown, Download } from 'lucide-react';
+import { exportCostBreakdown, getCostBreakdown } from '@/api/cost-breakdown';
+import { getEvents, getEventVendors } from '@/api/events';
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -38,145 +40,21 @@ type VendorCharge = {
   color: string;
 };
 
-type EventCostBreakdown = {
-  id: string;
-  eventName: string;
-  packageName: string;
-  eventType: string;
-  eventDate: string;
-  packagePerPax: number;
-  paxCount: number;
-  additionalCharges: number;
-  vendorCharges: VendorCharge[];
-};
-
 type AdditionalCharge = {
   id: string;
   description: string;
   amount: number;
 };
 
-const MOCK_EVENTS: EventCostBreakdown[] = [
-  {
-    id: 'event-1',
-    eventName: "Angela's 18th Birthday",
-    packageName: 'Charming Package',
-    eventType: 'Debut',
-    eventDate: '2026-01-03',
-    packagePerPax: 2000,
-    paxCount: 100,
-    additionalCharges: 5000,
-    vendorCharges: [
-      {
-        id: 'v1',
-        category: 'Buffet Catering',
-        name: 'Juan Carlo The Caterer',
-        cost: 60000,
-        color: '#7a0bc0',
-      },
-      {
-        id: 'v2',
-        category: 'Photo and Video Coverage',
-        name: 'Snapshot Studio',
-        cost: 28000,
-        color: '#9838e4',
-      },
-      {
-        id: 'v3',
-        category: 'Elegant Venue Setup and Styling',
-        name: 'Velvet Vows',
-        cost: 22000,
-        color: '#b255f0',
-      },
-      {
-        id: 'v4',
-        category: 'Event Planning and Coordination',
-        name: 'Golden Moments Planning',
-        cost: 14000,
-        color: '#d46ad7',
-      },
-      {
-        id: 'v5',
-        category: 'Ceiling Treatment and Venue Design',
-        name: 'SkyDecor Events Styling',
-        cost: 16000,
-        color: '#ec89be',
-      },
-      {
-        id: 'v6',
-        category: 'Full Event Coordination',
-        name: 'Seamless Events Co.',
-        cost: 10000,
-        color: '#f6b2d5',
-      },
-    ],
-  },
-  {
-    id: 'event-2',
-    eventName: 'Ray & Sam Wedding Reception',
-    packageName: 'Elegance Package',
-    eventType: 'Wedding',
-    eventDate: '2026-02-14',
-    packagePerPax: 4200,
-    paxCount: 70,
-    additionalCharges: 12000,
-    vendorCharges: [
-      {
-        id: 'w1',
-        category: 'Buffet Catering',
-        name: 'Rosario Catering',
-        cost: 96000,
-        color: '#7a0bc0',
-      },
-      {
-        id: 'w2',
-        category: 'Photo and Video Coverage',
-        name: 'Forever Films',
-        cost: 36000,
-        color: '#9838e4',
-      },
-      {
-        id: 'w3',
-        category: 'Elegant Venue Setup and Styling',
-        name: 'White Bloom Styling',
-        cost: 28000,
-        color: '#b255f0',
-      },
-    ],
-  },
-  {
-    id: 'event-3',
-    eventName: 'Mika Corporate Year-End Gala',
-    packageName: 'Corporate Gala Package',
-    eventType: 'Corporate',
-    eventDate: '2026-03-28',
-    packagePerPax: 2900,
-    paxCount: 90,
-    additionalCharges: 18000,
-    vendorCharges: [
-      {
-        id: 'c1',
-        category: 'Buffet Catering',
-        name: 'Prestige Catering Group',
-        cost: 78000,
-        color: '#7a0bc0',
-      },
-      {
-        id: 'c2',
-        category: 'Photo and Video Coverage',
-        name: 'Live Audio Visuals',
-        cost: 30000,
-        color: '#9838e4',
-      },
-      {
-        id: 'c3',
-        category: 'Event Planning and Coordination',
-        name: 'Brand Events Team',
-        cost: 22000,
-        color: '#d46ad7',
-      },
-    ],
-  },
+const VENDOR_FALLBACK_COLORS = [
+  '#7a0bc0',
+  '#9838e4',
+  '#b255f0',
+  '#d46ad7',
+  '#ec89be',
+  '#f6b2d5',
+  '#5dbac0',
+  '#8f23cf',
 ];
 
 const pesoFormatter = new Intl.NumberFormat('en-PH', {
@@ -195,20 +73,25 @@ function formatPeso(value: number): string {
   return pesoFormatter.format(value);
 }
 
+function toOptionalNumber(value: unknown): number | null {
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
 function formatCsvValue(value: string | number): string {
   if (typeof value === 'number') {
     return String(value);
   }
-
   if (value.includes(',') || value.includes('"') || value.includes('\n')) {
     return `"${value.replaceAll('"', '""')}"`;
   }
-
   return value;
 }
 
 export function CostBreakdownPage() {
-  const [selectedEventId, setSelectedEventId] = useState(MOCK_EVENTS[0].id);
+  const [selectedEventId, setSelectedEventId] = useState('');
+  const [apiEvents, setApiEvents] = useState<any[]>([]);
+  const [apiVendors, setApiVendors] = useState<VendorCharge[]>([]);
   const [hoveredVendorId, setHoveredVendorId] = useState<string | null>(null);
   const [exportMenuOpen, setExportMenuOpen] = useState(false);
   const [additionalChargesMap, setAdditionalChargesMap] = useState<
@@ -216,26 +99,198 @@ export function CostBreakdownPage() {
   >({});
   const [newAddDesc, setNewAddDesc] = useState('');
   const [newAddAmount, setNewAddAmount] = useState('');
+  const [apiPackagePrice, setApiPackagePrice] = useState<number | null>(null);
+  const [apiEventPax, setApiEventPax] = useState<number | null>(null);
+  const [apiAdditionalCharges, setApiAdditionalCharges] = useState<number | null>(null);
+  const [apiRevenue, setApiRevenue] = useState<number | null>(null);
+  const [apiProfit, setApiProfit] = useState<number | null>(null);
   const printRef = useRef<HTMLDivElement | null>(null);
 
   const selectedEvent = useMemo(() => {
-    return MOCK_EVENTS.find((event) => event.id === selectedEventId) ?? MOCK_EVENTS[0];
+    return apiEvents.find((event) => String(event?.id ?? '') === selectedEventId) ?? null;
+  }, [apiEvents, selectedEventId]);
+
+  const selectedEventName = String(
+    selectedEvent?.title ?? selectedEvent?.eventName ?? 'Unknown Event'
+  );
+  const selectedEventPackage = String(
+    selectedEvent?.eventPackage ?? selectedEvent?.packageName ?? 'No package assigned'
+  );
+  const selectedEventType = String(selectedEvent?.eventType ?? selectedEvent?.type ?? 'Unknown');
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const loadEvents = async () => {
+      try {
+        const eventsResult = await getEvents();
+        const eventRows = Array.isArray(eventsResult)
+          ? eventsResult
+          : Array.isArray((eventsResult as { events?: unknown[] })?.events)
+            ? ((eventsResult as { events: unknown[] }).events as any[])
+            : [];
+
+        if (!isMounted) {
+          return;
+        }
+
+        setApiEvents(eventRows);
+        if (eventRows.length > 0) {
+          setSelectedEventId(String(eventRows[0]?.id ?? ''));
+        }
+      } catch (error) {
+        if (!isMounted) {
+          return;
+        }
+
+        console.error('Failed to load events:', error);
+        setApiEvents([]);
+      }
+    };
+
+    void loadEvents();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const loadCostBreakdown = async () => {
+      if (!selectedEventId) {
+        setApiPackagePrice(null);
+        setApiEventPax(null);
+        setApiAdditionalCharges(null);
+        setApiRevenue(null);
+        setApiProfit(null);
+        setApiVendors([]);
+        return;
+      }
+
+      setApiPackagePrice(null);
+      setApiEventPax(null);
+      setApiAdditionalCharges(null);
+      setApiRevenue(null);
+      setApiProfit(null);
+      setApiVendors([]);
+
+      try {
+        const [costResult, vendorsResult] = await Promise.all([
+          getCostBreakdown(selectedEventId),
+          getEventVendors(selectedEventId),
+        ]);
+
+        const costPayload =
+          (costResult?.data as Record<string, unknown> | undefined) ??
+          (costResult?.costBreakdown as Record<string, unknown> | undefined) ??
+          (costResult as Record<string, unknown> | undefined) ??
+          {};
+
+        const vendorRows = Array.isArray(vendorsResult)
+          ? vendorsResult
+          : Array.isArray((vendorsResult as { vendors?: unknown[] })?.vendors)
+            ? ((vendorsResult as { vendors: unknown[] }).vendors as any[])
+            : Array.isArray((vendorsResult as { data?: unknown[] })?.data)
+              ? ((vendorsResult as { data: unknown[] }).data as any[])
+              : Array.isArray((vendorsResult as { data?: { vendors?: unknown[] } })?.data?.vendors)
+                ? ((vendorsResult as { data: { vendors: unknown[] } }).data.vendors as any[])
+                : [];
+
+        const mappedVendors: VendorCharge[] = vendorRows.map((vendor: any, index: number) => ({
+          id: String(vendor?.id ?? vendor?.vendorId ?? `${selectedEventId}-${index}`),
+          category: String(
+            vendor?.category ??
+              vendor?.vendorType ??
+              vendor?.serviceCategory ??
+              vendor?.service ??
+              'Uncategorized'
+          ),
+          name: String(
+            vendor?.name ?? vendor?.vendorName ?? vendor?.companyName ?? 'Unknown Vendor'
+          ),
+          cost:
+            toOptionalNumber(
+              vendor?.cost ?? vendor?.allocatedCost ?? vendor?.amount ?? vendor?.price
+            ) ?? 0,
+          color: String(
+            vendor?.color ??
+              vendor?.hexColor ??
+              VENDOR_FALLBACK_COLORS[index % VENDOR_FALLBACK_COLORS.length]
+          ),
+        }));
+
+        if (!isMounted) {
+          return;
+        }
+
+        setApiPackagePrice(
+          toOptionalNumber(
+            costPayload.packagePricePerPax ?? costPayload.packagePerPax ?? costPayload.packagePrice
+          )
+        );
+        setApiEventPax(
+          toOptionalNumber(costPayload.eventPax ?? costPayload.paxCount ?? costPayload.pax)
+        );
+        setApiAdditionalCharges(
+          toOptionalNumber(costPayload.additionalCharges ?? costPayload.additionalCharge)
+        );
+        setApiRevenue(toOptionalNumber(costPayload.revenue ?? costPayload.totalRevenue));
+        setApiProfit(toOptionalNumber(costPayload.profit ?? costPayload.totalProfit));
+        setApiVendors(mappedVendors);
+      } catch (error) {
+        if (!isMounted) {
+          return;
+        }
+
+        console.error('Failed to load cost breakdown:', error);
+        setApiVendors([]);
+      }
+    };
+
+    void loadCostBreakdown();
+
+    return () => {
+      isMounted = false;
+    };
   }, [selectedEventId]);
 
-  const additionalItems = additionalChargesMap[selectedEvent.id] ?? [];
+  const additionalItems = additionalChargesMap[selectedEventId] ?? [];
   const additionalItemsTotal = additionalItems.reduce((total, item) => total + item.amount, 0);
-  const baseAdditionalCharges = 0;
+  const fallbackPackagePrice = toOptionalNumber(
+    selectedEvent?.packagePricePerPax ?? selectedEvent?.packagePerPax ?? selectedEvent?.packagePrice
+  );
+  const fallbackEventPax = toOptionalNumber(
+    selectedEvent?.eventPax ?? selectedEvent?.paxCount ?? selectedEvent?.pax
+  );
+  const fallbackAdditionalCharges = toOptionalNumber(
+    selectedEvent?.additionalCharges ?? selectedEvent?.additionalCharge
+  );
+  const resolvedPackagePrice = apiPackagePrice ?? fallbackPackagePrice ?? 0;
+  const resolvedEventPax = apiEventPax ?? fallbackEventPax ?? 0;
+  const baseAdditionalCharges = apiAdditionalCharges ?? fallbackAdditionalCharges ?? 0;
   const displayedAdditionalCharges = baseAdditionalCharges + additionalItemsTotal;
-  const packagePayment = selectedEvent.packagePerPax * selectedEvent.paxCount;
+  const packagePayment = resolvedPackagePrice * resolvedEventPax;
   const totalVendorCharges = useMemo(() => {
-    return selectedEvent.vendorCharges.reduce((total, charge) => total + charge.cost, 0);
-  }, [selectedEvent.vendorCharges]);
-  const totalRevenue = packagePayment + displayedAdditionalCharges;
-  const profitOrRemainingBudget = totalRevenue - totalVendorCharges;
+    return apiVendors.reduce((total, charge) => total + charge.cost, 0);
+  }, [apiVendors]);
+  const totalRevenue = apiRevenue ?? packagePayment + displayedAdditionalCharges;
+  const profitOrRemainingBudget = apiProfit ?? totalRevenue - totalVendorCharges;
 
   const formattedEventDate = useMemo(() => {
-    return longDateFormatter.format(new Date(selectedEvent.eventDate));
-  }, [selectedEvent.eventDate]);
+    const dateValue = selectedEvent?.startDate ?? selectedEvent?.eventDate ?? selectedEvent?.date;
+    if (!dateValue) {
+      return 'Date not available';
+    }
+
+    const parsedDate = new Date(dateValue);
+    if (Number.isNaN(parsedDate.getTime())) {
+      return 'Date not available';
+    }
+
+    return longDateFormatter.format(parsedDate);
+  }, [selectedEvent]);
 
   const chartSegments = useMemo(() => {
     const total = totalVendorCharges || 1;
@@ -243,7 +298,7 @@ export function CostBreakdownPage() {
     const circumference = 2 * Math.PI * radius;
     let cumulative = 0;
 
-    return selectedEvent.vendorCharges.map((charge) => {
+    return apiVendors.map((charge) => {
       const percentage = (charge.cost / total) * 100;
       const strokeLength = (percentage / 100) * circumference;
       const dashArray = `${strokeLength} ${Math.max(circumference - strokeLength, 0)}`;
@@ -258,13 +313,17 @@ export function CostBreakdownPage() {
         dashOffset,
       };
     });
-  }, [selectedEvent.vendorCharges, totalVendorCharges]);
+  }, [apiVendors, totalVendorCharges]);
 
   const hoveredSegment = useMemo(() => {
     return chartSegments.find((segment) => segment.id === hoveredVendorId) ?? null;
   }, [chartSegments, hoveredVendorId]);
 
   const handleAddAdditional = () => {
+    if (!selectedEventId) {
+      return;
+    }
+
     const amount = Number(newAddAmount || 0);
 
     if (!newAddDesc.trim() || amount <= 0) {
@@ -279,7 +338,7 @@ export function CostBreakdownPage() {
 
     setAdditionalChargesMap((prev) => ({
       ...prev,
-      [selectedEvent.id]: [...(prev[selectedEvent.id] ?? []), item],
+      [selectedEventId]: [...(prev[selectedEventId] ?? []), item],
     }));
     setNewAddDesc('');
     setNewAddAmount('');
@@ -288,42 +347,55 @@ export function CostBreakdownPage() {
   const handleRemoveAdditional = (id: string) => {
     setAdditionalChargesMap((prev) => ({
       ...prev,
-      [selectedEvent.id]: (prev[selectedEvent.id] ?? []).filter((item) => item.id !== id),
+      [selectedEventId]: (prev[selectedEventId] ?? []).filter((item) => item.id !== id),
     }));
   };
 
-  const handleExportCsv = () => {
-    const summaryRows: Array<Array<string | number>> = [
-      ['Event', selectedEvent.eventName],
-      ['Type', selectedEvent.eventType],
-      ['Date', formattedEventDate],
-      [],
-      ['Client Package Payment', packagePayment],
-      ['Additional Charges', displayedAdditionalCharges],
-      ['Total Revenue', totalRevenue],
-      ['Total Vendor Charges', totalVendorCharges],
-      ['Profit', profitOrRemainingBudget],
-      [],
-      ['Vendor Charges'],
-      ['Category', 'Vendor / Item', 'Cost'],
-      ...selectedEvent.vendorCharges.map((charge) => [charge.category, charge.name, charge.cost]),
-    ];
+  const handleExportCsv = async () => {
+    if (!selectedEventId) {
+      setExportMenuOpen(false);
+      return;
+    }
 
-    const csvContent = summaryRows
-      .map((row) => row.map((cell) => formatCsvValue(cell)).join(','))
-      .join('\n');
+    try {
+      // Call the backend just to log the export action if needed
+      await exportCostBreakdown(selectedEventId);
 
-    const csvBlob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const csvUrl = URL.createObjectURL(csvBlob);
-    const link = document.createElement('a');
+      const summaryRows: Array<Array<string | number>> = [
+        ['Event', selectedEventName],
+        ['Type', selectedEventType],
+        ['Date', formattedEventDate],
+        [],
+        ['Client Package Payment', packagePayment],
+        ['Additional Charges', displayedAdditionalCharges],
+        ['Total Revenue', totalRevenue],
+        ['Total Vendor Charges', totalVendorCharges],
+        ['Profit', profitOrRemainingBudget],
+        [],
+        ['Vendor Charges'],
+        ['Category', 'Vendor / Item', 'Cost'],
+        ...apiVendors.map((charge) => [charge.category, charge.name, charge.cost]),
+      ];
 
-    link.href = csvUrl;
-    link.download = `${selectedEvent.eventName.toLowerCase().replaceAll(' ', '-')}-cost-breakdown.csv`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(csvUrl);
-    setExportMenuOpen(false);
+      const csvContent = summaryRows
+        .map((row) => row.map((cell) => formatCsvValue(cell)).join(','))
+        .join('\n');
+
+      const csvBlob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const csvUrl = URL.createObjectURL(csvBlob);
+      const link = document.createElement('a');
+
+      link.href = csvUrl;
+      link.download = `${selectedEventName.toLowerCase().replaceAll(' ', '-')}-cost-breakdown.csv`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(csvUrl);
+    } catch (error) {
+      console.error('Failed to export cost breakdown CSV:', error);
+    } finally {
+      setExportMenuOpen(false);
+    }
   };
 
   const handleDownloadPdf = () => {
@@ -376,8 +448,8 @@ export function CostBreakdownPage() {
               style={{ width: 72 }}
             />
             <div className="text-sm font-bold uppercase tracking-wide">Schatzies Events</div>
-            <h1 className="mt-1 text-lg font-bold">{selectedEvent.eventName}</h1>
-            <div className="text-sm text-gray-700">{selectedEvent.packageName}</div>
+            <h1 className="mt-1 text-lg font-bold">{selectedEventName}</h1>
+            <div className="text-sm text-gray-700">{selectedEventPackage}</div>
             <div className="mt-1 text-sm">{formattedEventDate}</div>
           </div>
 
@@ -415,7 +487,7 @@ export function CostBreakdownPage() {
               </thead>
               <tbody>
                 <tr>
-                  <td className="py-1">Client Package ({selectedEvent.paxCount} pax)</td>
+                  <td className="py-1">Client Package ({resolvedEventPax} pax)</td>
                   <td className="py-1 text-right font-semibold">{formatPeso(packagePayment)}</td>
                 </tr>
                 <tr>
@@ -445,7 +517,7 @@ export function CostBreakdownPage() {
                 </tr>
               </thead>
               <tbody>
-                {selectedEvent.vendorCharges.map((charge) => (
+                {apiVendors.map((charge) => (
                   <tr key={charge.id}>
                     <td className="py-1">{charge.category}</td>
                     <td className="py-1">{charge.name}</td>
@@ -474,14 +546,14 @@ export function CostBreakdownPage() {
           <div className="flex items-center justify-between gap-4 rounded-3xl border border-[#eadfec] bg-white p-4 shadow-sm print:hidden">
             <div className="flex items-center gap-3">
               <div className="relative">
-                <Select value={selectedEvent.id} onValueChange={setSelectedEventId}>
+                <Select value={selectedEventId} onValueChange={setSelectedEventId}>
                   <SelectTrigger className="h-11 w-[255px] rounded-2xl border-0 bg-linear-to-r from-[#f34da7] to-[#8f1fd1] px-4 text-sm font-semibold text-white shadow-[0_10px_24px_rgba(165,44,180,0.3)] data-[placeholder]:text-white/80 [&_svg]:hidden">
                     <SelectValue placeholder="Select an event" />
                   </SelectTrigger>
                   <SelectContent className="rounded-xl">
-                    {MOCK_EVENTS.map((event) => (
-                      <SelectItem key={event.id} value={event.id}>
-                        {event.eventName}
+                    {apiEvents.map((event) => (
+                      <SelectItem key={String(event?.id)} value={String(event?.id)}>
+                        {event?.title || event?.eventName || 'Untitled event'}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -492,9 +564,7 @@ export function CostBreakdownPage() {
 
               <div className="flex items-center gap-3">
                 <div>
-                  <p className="text-sm font-semibold text-[#4d4454]">
-                    {selectedEvent.packageName}
-                  </p>
+                  <p className="text-sm font-semibold text-[#4d4454]">{selectedEventPackage}</p>
                   <p className="inline-flex items-center gap-2 text-sm font-semibold text-[#60586c]">
                     <CalendarDays className="size-4 text-[#8f1fd1]" />
                     {formattedEventDate}
@@ -502,7 +572,7 @@ export function CostBreakdownPage() {
                 </div>
 
                 <span className="rounded-full border border-[#eadcf6] bg-[#f8f1fd] px-3 py-1 text-xs font-bold uppercase tracking-wide text-[#8f23cf]">
-                  {selectedEvent.eventType}
+                  {selectedEventType}
                 </span>
 
                 <div className="flex items-center gap-6 text-sm font-semibold text-[#6f6780]">
@@ -562,7 +632,7 @@ export function CostBreakdownPage() {
                   Revenue
                 </p>
                 <p className="mt-5 font-sans text-5xl font-black tracking-tight text-[#2d2834]">
-                  {formatPeso(packagePayment)}
+                  {formatPeso(totalRevenue)}
                 </p>
               </div>
 
@@ -584,10 +654,10 @@ export function CostBreakdownPage() {
                   Package (Per Pax)
                 </p>
                 <p className="mt-5 font-sans text-5xl font-black tracking-tight text-[#2d2834]">
-                  {formatPeso(selectedEvent.packagePerPax)}
+                  {formatPeso(resolvedPackagePrice)}
                 </p>
                 <p className="mt-2 text-right text-xs font-semibold text-[#898299]">
-                  {selectedEvent.paxCount} pax
+                  {resolvedEventPax} pax
                 </p>
               </div>
 
@@ -839,7 +909,7 @@ export function CostBreakdownPage() {
                           </TableRow>
                         </TableHeader>
                         <TableBody>
-                          {selectedEvent.vendorCharges.map((charge) => (
+                          {apiVendors.map((charge) => (
                             <TableRow
                               key={charge.id}
                               className="border-[#f1ecf6] odd:bg-[#fff4f8] even:bg-white hover:bg-[#fcfbfd]"
