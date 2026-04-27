@@ -285,43 +285,39 @@ export function CalendarPage() {
   useEffect(() => {
     const loadEntries = async () => {
       try {
-        const data: any = await getCalendarEntries();
-        let rawArray = [];
-        if (Array.isArray(data)) rawArray = data;
-        else if (data?.entries && Array.isArray(data.entries)) rawArray = data.entries;
-        else if (data?.data && Array.isArray(data.data)) rawArray = data.data;
-        else if (data?.data?.entries && Array.isArray(data.data.entries))
-          rawArray = data.data.entries;
+        const data = await getCalendarEntries();
 
-        // Bulletproof extraction of nested backend arrays
-        const flattenedEvents = rawArray.reduce((acc: any[], item: any) => {
-          if (Array.isArray(item)) return acc.concat(item);
-          if (item && item.entries && Array.isArray(item.entries)) return acc.concat(item.entries);
-          if (item && item.events && Array.isArray(item.events)) return acc.concat(item.events);
-          acc.push(item);
-          return acc;
-        }, []);
-
-        if (flattenedEvents.length > 0) {
-          const currentTodayKey = toDateKey(new Date());
-          const formattedEntries: CalendarEntry[] = flattenedEvents.map((item: any) => {
-            const rawLabel = String(item.type || item.label || 'Task');
+        if (Array.isArray(data) && data.length > 0) {
+          const formattedEntries: CalendarEntry[] = data.map((item: any) => {
+            const rawLabel = String(item.label || item.type || 'Task');
             const formattedLabel =
               rawLabel.charAt(0).toUpperCase() + rawLabel.slice(1).toLowerCase();
 
-            let derivedStartDateKey = currentTodayKey;
-            let derivedStartTime = '00:00';
+            let derivedStartDateKey = '';
+            let derivedStartTime = item.startTime || '00:00';
 
-            if (item.date) {
-              const d = new Date(item.date);
+            // Robust date extractor for backward compatibility
+            const rawDateString = item.startDateKey || item.date || item.createdAt || '';
+
+            if (rawDateString) {
+              const d = new Date(rawDateString);
               if (!isNaN(d.getTime())) {
                 derivedStartDateKey = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-                derivedStartTime = `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+                if (!item.startTime && rawDateString.includes('T')) {
+                  derivedStartTime = `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+                }
               }
-            } else if (item.startDateKey) {
-              derivedStartDateKey = item.startDateKey;
-              derivedStartTime = item.startTime || '00:00';
             }
+
+            // Extract end time from endDate ISO string if backend didn't send endTime explicitly
+            let derivedEndTime = item.endTime;
+            if (!derivedEndTime && item.endDate && String(item.endDate).includes('T')) {
+              const ed = new Date(item.endDate);
+              if (!isNaN(ed.getTime())) {
+                derivedEndTime = `${String(ed.getHours()).padStart(2, '0')}:${String(ed.getMinutes()).padStart(2, '0')}`;
+              }
+            }
+            derivedEndTime = derivedEndTime || derivedStartTime;
 
             return {
               id: item.entryId || item.id || createEntryId(),
@@ -329,14 +325,16 @@ export function CalendarPage() {
               startDateKey: derivedStartDateKey,
               startTime: derivedStartTime,
               endDateKey: item.endDateKey || derivedStartDateKey,
-              endTime: item.endTime || derivedStartTime,
+              endTime: derivedEndTime,
               label: formattedLabel as CalendarLabel,
               location: item.location || '',
               description: item.description || '',
               eventType: item.eventType || 'General',
             };
           });
-          setEntries(formattedEntries);
+
+          // Filter out entries with completely broken/missing dates to avoid UI stacking
+          setEntries(formattedEntries.filter((entry) => entry.startDateKey !== ''));
         }
       } catch (error) {
         console.error('Failed to load calendar entries:', error);
@@ -543,7 +541,7 @@ export function CalendarPage() {
 
       // Add to local state using the ID from the backend if available
       const newEntry: CalendarEntry = {
-        id: createdItem?.id || createEntryId(),
+        id: createdItem?.entryId || createdItem?.id || createEntryId(),
         title: payload.title,
         startDateKey: payload.startDateKey,
         startTime: payload.startTime,
