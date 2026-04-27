@@ -93,7 +93,10 @@ function SupportExtras({ extra }: { extra?: SupportExtra }) {
     return (
       <div className="mt-3 space-y-2 text-xs">
         {extra.packages.map((packageItem) => (
-          <div key={packageItem.name} className="rounded-lg bg-white px-3 py-2 border border-pink-100 shadow-sm">
+          <div
+            key={packageItem.name}
+            className="rounded-lg bg-white px-3 py-2 border border-pink-100 shadow-sm"
+          >
             <div className="flex items-center justify-between gap-3">
               <span className="font-semibold text-gray-700">{packageItem.name}</span>
               <span className="font-bold text-[#700F81]">
@@ -110,7 +113,10 @@ function SupportExtras({ extra }: { extra?: SupportExtra }) {
     return (
       <ul className="mt-3 space-y-2 text-xs">
         {extra.inclusions.map((item) => (
-          <li key={item} className="rounded-lg bg-white px-3 py-2 border border-pink-100 shadow-sm text-gray-600">
+          <li
+            key={item}
+            className="rounded-lg bg-white px-3 py-2 border border-pink-100 shadow-sm text-gray-600"
+          >
             ✅ {item}
           </li>
         ))}
@@ -197,11 +203,11 @@ export function ChatWidget() {
 
       if (matchedItems.length > 0) {
         // Unique responses only
-        const uniqueAnswers = Array.from(new Set(matchedItems.map(item => item.answer)));
+        const uniqueAnswers = Array.from(new Set(matchedItems.map((item) => item.answer)));
         const combinedAnswer = uniqueAnswers.join('\n\n');
-        
+
         // Use the first match's extra if it exists
-        const firstExtra = matchedItems.find(item => item.extra)?.extra;
+        const firstExtra = matchedItems.find((item) => item.extra)?.extra;
 
         botResponse = {
           content: `${combinedAnswer}\n\n${supportContent.closing}`,
@@ -253,12 +259,25 @@ export function ChatWidget() {
               onClick={() => setChatOpen(false)}
               className="flex h-8 w-8 items-center justify-center rounded-full text-white/90 transition-colors hover:bg-white/20"
             >
-              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="20"
+                height="20"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <line x1="18" y1="6" x2="6" y2="18"></line>
+                <line x1="6" y1="6" x2="18" y2="18"></line>
+              </svg>
             </button>
           </div>
 
           {/* Chat Body */}
-          <div 
+          <div
             ref={scrollRef}
             className="flex-1 overflow-y-auto bg-gray-50/50 p-4 space-y-4 scroll-smooth"
           >
@@ -267,7 +286,9 @@ export function ChatWidget() {
                 key={msg.id}
                 className={`flex w-full ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
               >
-                <div className={`flex max-w-[85%] gap-2 ${msg.role === 'user' ? 'flex-row-reverse' : 'flex-row'}`}>
+                <div
+                  className={`flex max-w-[85%] gap-2 ${msg.role === 'user' ? 'flex-row-reverse' : 'flex-row'}`}
+                >
                   {msg.role === 'bot' && (
                     <img
                       src="/Pictures/business-logo.png"
@@ -291,7 +312,7 @@ export function ChatWidget() {
           </div>
 
           {/* Input bar */}
-          <form 
+          <form
             onSubmit={handleSendMessage}
             className="flex items-center gap-2 border-t border-gray-100 bg-white px-4 py-3 shrink-0"
           >
@@ -307,7 +328,20 @@ export function ChatWidget() {
               disabled={!inputValue.trim()}
               className="flex h-9 w-9 items-center justify-center rounded-full bg-[#700F81] text-white transition-all hover:scale-105 active:scale-95 disabled:opacity-50 disabled:grayscale"
             >
-              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="18"
+                height="18"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <line x1="22" y1="2" x2="11" y2="13"></line>
+                <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+              </svg>
             </button>
           </form>
         </div>
@@ -320,7 +354,20 @@ export function ChatWidget() {
         className="fixed bottom-4 right-4 z-[9999] flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br from-[#FF0066] to-[#700F81] shadow-[0_8px_32px_rgba(112,15,129,0.5)] transition-transform hover:scale-110 active:scale-95 sm:bottom-7 sm:right-7 sm:h-20 sm:w-20"
       >
         {chatOpen ? (
-          <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="32"
+            height="32"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="white"
+            strokeWidth="2.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
         ) : (
           <div className="relative">
             <svg
