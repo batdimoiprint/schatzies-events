@@ -79,6 +79,8 @@ const customLabelStyle = {
   badge: 'bg-[#ece6f7] text-[#655d77]',
 };
 
+const sidebarSectionTitleClass = 'text-sm font-black uppercase tracking-[0.12em] text-[#8f879f]';
+
 function isBaseCalendarLabel(value: string): value is BaseCalendarLabel {
   return value === 'Task' || value === 'Meeting' || value === 'Reminder';
 }
@@ -238,6 +240,7 @@ export function CalendarPage() {
   const [customLabelError, setCustomLabelError] = useState('');
   const [isFilterMenuOpen, setIsFilterMenuOpen] = useState(false);
   const [formError, setFormError] = useState('');
+  const [isForcingAdd, setIsForcingAdd] = useState(false);
   const [draftEntry, setDraftEntry] = useState<DraftEntry>(() => ({
     title: '',
     startDateKey: todayKey,
@@ -273,6 +276,10 @@ export function CalendarPage() {
       ...previous,
       startDateKey: selectedDateKey,
     }));
+  }, [selectedDateKey]);
+
+  useEffect(() => {
+    setIsForcingAdd(false);
   }, [selectedDateKey]);
 
   useEffect(() => {
@@ -393,6 +400,8 @@ export function CalendarPage() {
   }, [visibleDays, showOnlyMarkedDates, entriesByDate]);
 
   const selectedDateEntries = entriesByDate[selectedDateKey] ?? [];
+  const shouldShowAddForm = isForcingAdd || selectedDateEntries.length === 0;
+  const shouldShowMarkersSection = selectedDateEntries.length > 0 && !isForcingAdd;
 
   const markedDateCount = useMemo(() => {
     return Object.keys(entriesByDate).length;
@@ -569,7 +578,7 @@ export function CalendarPage() {
   };
 
   return (
-    <section className="w-full pb-2">
+    <section className="w-full min-h-[calc(100vh-150px)] pb-2">
       <div className="flex w-full min-w-0 flex-col gap-4 text-[#302c39]">
         <div className="grid items-start grid-cols-[minmax(0,1fr)_320px] gap-4">
           <div className="self-start rounded-2xl border border-[#ddd8e8] bg-white p-5 shadow-[0_8px_20px_rgba(46,22,76,0.07)]">
@@ -834,291 +843,307 @@ export function CalendarPage() {
             </div>
           </div>
 
-          <aside className="w-[320px] self-start space-y-4">
-            <section className="rounded-2xl border border-[#ddd8e8] bg-white p-4 shadow-[0_8px_20px_rgba(46,22,76,0.07)]">
-              <h3 className="text-sm font-black uppercase tracking-[0.12em] text-[#8f879f]">
-                Add Marker
-              </h3>
-              <p className="mt-1 text-xs font-semibold text-[#7e768f]">
-                Plot tasks, meetings, and reminders in your calendar.
-              </p>
+          <aside className="w-[320px] self-start">
+            {shouldShowAddForm ? (
+              <section className="rounded-2xl border border-[#ddd8e8] bg-white p-4 shadow-[0_8px_20px_rgba(46,22,76,0.07)] animate-in fade-in slide-in-from-right-4 duration-300">
+                <h3 className={sidebarSectionTitleClass}>Add Marker</h3>
+                <p className="mt-1 text-xs font-semibold text-[#7e768f]">
+                  Plot tasks, meetings, and reminders in your calendar.
+                </p>
 
-              <form className="mt-4 space-y-3" onSubmit={handleAddMarker}>
-                <div className="space-y-1.5">
-                  <Label className="text-[11px] font-bold text-[#6a627c]">For *</Label>
-                  <div className="flex flex-wrap gap-2">
-                    {selectableLabels.map((label) => {
-                      const isSelected = draftEntry.label === label;
+                <form className="mt-4 space-y-3" onSubmit={handleAddMarker}>
+                  <div className="space-y-1.5">
+                    <Label className="text-[11px] font-bold text-[#6a627c]">For *</Label>
+                    <div className="flex flex-wrap gap-2">
+                      {selectableLabels.map((label) => {
+                        const isSelected = draftEntry.label === label;
 
-                      return (
-                        <button
-                          key={label}
+                        return (
+                          <button
+                            key={label}
+                            type="button"
+                            onClick={() => {
+                              setDraftEntry((previous) => ({
+                                ...previous,
+                                label,
+                              }));
+                            }}
+                            className={[
+                              'rounded-2xl border px-6 py-2 text-sm font-black transition-all',
+                              getLabelPickerStyle(label),
+                              isSelected
+                                ? 'border-[#9d4bd6] shadow-[0_8px_14px_rgba(127,34,185,0.2)]'
+                                : 'border-transparent opacity-85 hover:opacity-100',
+                            ].join(' ')}
+                            aria-pressed={isSelected}
+                          >
+                            {label}
+                          </button>
+                        );
+                      })}
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsAddingCustomLabel((previous) => !previous);
+                        setCustomLabelError('');
+                      }}
+                      className="inline-flex size-14 items-center justify-center rounded-xl border border-dashed border-[#a648df] text-[#8f2bd2] transition-colors hover:bg-[#f8efff]"
+                      aria-label="Add custom label"
+                    >
+                      <Plus className="size-5" />
+                    </button>
+
+                    {isAddingCustomLabel ? (
+                      <div className="flex items-center gap-2">
+                        <Input
+                          value={customLabelDraft}
+                          onChange={(event) => {
+                            setCustomLabelDraft(event.target.value);
+                            if (customLabelError) {
+                              setCustomLabelError('');
+                            }
+                          }}
+                          onKeyDown={(event) => {
+                            if (event.key === 'Enter') {
+                              event.preventDefault();
+                              handleCreateCustomLabel();
+                            }
+                          }}
+                          placeholder="Add label"
+                          className="h-9 rounded-lg border-[#ddd8e8] bg-white px-3 text-sm text-[#4c455e]"
+                        />
+                        <Button
                           type="button"
-                          onClick={() => {
+                          variant="outline"
+                          onClick={handleCreateCustomLabel}
+                          className="h-9 rounded-lg border-[#d7c9e7] px-3 text-xs font-black text-[#7b2bb8] hover:bg-[#f5ecff]"
+                        >
+                          Add
+                        </Button>
+                      </div>
+                    ) : null}
+
+                    {customLabelError ? (
+                      <p className="text-xs font-semibold text-[#c33274]" role="alert">
+                        {customLabelError}
+                      </p>
+                    ) : null}
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <Label
+                      htmlFor="calendar-title"
+                      className="text-[11px] font-bold text-[#6a627c]"
+                    >
+                      Title
+                    </Label>
+                    <Input
+                      id="calendar-title"
+                      value={draftEntry.title}
+                      onChange={(event) => {
+                        setDraftEntry((previous) => ({
+                          ...previous,
+                          title: event.target.value,
+                        }));
+                      }}
+                      placeholder="Enter title"
+                      className="h-9 rounded-lg border-[#ddd8e8] bg-white px-3 text-sm text-[#4c455e]"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label className="text-[11px] font-bold text-[#6a627c]">Date and Time *</Label>
+
+                    <div className="space-y-1.5">
+                      <Label
+                        htmlFor="calendar-start-date"
+                        className="text-[11px] font-bold text-[#6a627c]"
+                      >
+                        Start Date *
+                      </Label>
+                      <div className="flex overflow-hidden rounded-lg border border-[#ddd8e8] bg-white">
+                        <Input
+                          id="calendar-start-date"
+                          type="date"
+                          value={draftEntry.startDateKey}
+                          onChange={(event) => {
+                            const nextDate = event.target.value;
+
                             setDraftEntry((previous) => ({
                               ...previous,
-                              label,
+                              startDateKey: nextDate,
+                            }));
+
+                            if (nextDate) {
+                              const parsedDate = parseDateKey(nextDate);
+                              setSelectedDateKey(nextDate);
+                              setDisplayMonth(
+                                new Date(parsedDate.getFullYear(), parsedDate.getMonth(), 1)
+                              );
+                            }
+                          }}
+                          className="h-9 rounded-none border-0 bg-transparent px-2 text-xs text-[#4c455e] focus-visible:ring-0"
+                        />
+                        <div className="h-auto w-px bg-[#ddd8e8]" />
+                        <Input
+                          type="time"
+                          value={draftEntry.startTime}
+                          onChange={(event) => {
+                            setDraftEntry((previous) => ({
+                              ...previous,
+                              startTime: event.target.value,
                             }));
                           }}
-                          className={[
-                            'rounded-2xl border px-6 py-2 text-sm font-black transition-all',
-                            getLabelPickerStyle(label),
-                            isSelected
-                              ? 'border-[#9d4bd6] shadow-[0_8px_14px_rgba(127,34,185,0.2)]'
-                              : 'border-transparent opacity-85 hover:opacity-100',
-                          ].join(' ')}
-                          aria-pressed={isSelected}
-                        >
-                          {label}
-                        </button>
-                      );
-                    })}
+                          aria-label="Start time"
+                          className="h-9 rounded-none border-0 bg-transparent px-2 text-xs text-[#4c455e] focus-visible:ring-0"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <Label
+                        htmlFor="calendar-end-date"
+                        className="text-[11px] font-bold text-[#6a627c]"
+                      >
+                        End Date *
+                      </Label>
+                      <div className="flex overflow-hidden rounded-lg border border-[#ddd8e8] bg-white">
+                        <Input
+                          id="calendar-end-date"
+                          type="date"
+                          value={draftEntry.endDateKey}
+                          onChange={(event) => {
+                            setDraftEntry((previous) => ({
+                              ...previous,
+                              endDateKey: event.target.value,
+                            }));
+                          }}
+                          className="h-9 rounded-none border-0 bg-transparent px-2 text-xs text-[#4c455e] focus-visible:ring-0"
+                        />
+                        <div className="h-auto w-px bg-[#ddd8e8]" />
+                        <Input
+                          type="time"
+                          value={draftEntry.endTime}
+                          onChange={(event) => {
+                            setDraftEntry((previous) => ({
+                              ...previous,
+                              endTime: event.target.value,
+                            }));
+                          }}
+                          aria-label="End time"
+                          className="h-9 rounded-none border-0 bg-transparent px-2 text-xs text-[#4c455e] focus-visible:ring-0"
+                        />
+                      </div>
+                    </div>
                   </div>
 
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setIsAddingCustomLabel((previous) => !previous);
-                      setCustomLabelError('');
-                    }}
-                    className="inline-flex size-14 items-center justify-center rounded-xl border border-dashed border-[#a648df] text-[#8f2bd2] transition-colors hover:bg-[#f8efff]"
-                    aria-label="Add custom label"
-                  >
-                    <Plus className="size-5" />
-                  </button>
+                  <div className="space-y-1.5">
+                    <Label htmlFor="calendar-type" className="text-[11px] font-bold text-[#6a627c]">
+                      Event
+                    </Label>
+                    <select
+                      id="calendar-type"
+                      value={draftEntry.eventType}
+                      onChange={(event) => {
+                        setDraftEntry((previous) => ({
+                          ...previous,
+                          eventType: event.target.value,
+                        }));
+                      }}
+                      className="h-9 w-full rounded-lg border border-[#ddd8e8] bg-white px-2 text-xs font-semibold text-[#4c455e] outline-none focus:border-[#be8de4]"
+                    >
+                      <option value="General">General</option>
+                      <option value="Booking">Booking</option>
+                      <option value="Client">Client</option>
+                      <option value="Supplier">Supplier</option>
+                    </select>
+                  </div>
 
-                  {isAddingCustomLabel ? (
-                    <div className="flex items-center gap-2">
-                      <Input
-                        value={customLabelDraft}
-                        onChange={(event) => {
-                          setCustomLabelDraft(event.target.value);
-                          if (customLabelError) {
-                            setCustomLabelError('');
-                          }
-                        }}
-                        onKeyDown={(event) => {
-                          if (event.key === 'Enter') {
-                            event.preventDefault();
-                            handleCreateCustomLabel();
-                          }
-                        }}
-                        placeholder="Add label"
-                        className="h-9 rounded-lg border-[#ddd8e8] bg-white px-3 text-sm text-[#4c455e]"
-                      />
-                      <Button
-                        type="button"
-                        variant="outline"
-                        onClick={handleCreateCustomLabel}
-                        className="h-9 rounded-lg border-[#d7c9e7] px-3 text-xs font-black text-[#7b2bb8] hover:bg-[#f5ecff]"
-                      >
-                        Add
-                      </Button>
-                    </div>
-                  ) : null}
+                  <div className="space-y-1.5">
+                    <Label
+                      htmlFor="calendar-location"
+                      className="text-[11px] font-bold text-[#6a627c]"
+                    >
+                      Location
+                    </Label>
+                    <Input
+                      id="calendar-location"
+                      value={draftEntry.location}
+                      onChange={(event) => {
+                        setDraftEntry((previous) => ({
+                          ...previous,
+                          location: event.target.value,
+                        }));
+                      }}
+                      placeholder="Optional location"
+                      className="h-9 rounded-lg border-[#ddd8e8] bg-white px-3 text-sm text-[#4c455e]"
+                    />
+                  </div>
 
-                  {customLabelError ? (
+                  <div className="space-y-1.5">
+                    <Label
+                      htmlFor="calendar-description"
+                      className="text-[11px] font-bold text-[#6a627c]"
+                    >
+                      Description
+                    </Label>
+                    <textarea
+                      id="calendar-description"
+                      value={draftEntry.description}
+                      onChange={(event) => {
+                        setDraftEntry((previous) => ({
+                          ...previous,
+                          description: event.target.value,
+                        }));
+                      }}
+                      placeholder="Optional notes"
+                      className="h-20 w-full resize-none rounded-lg border border-[#ddd8e8] bg-white px-3 py-2 text-sm text-[#4c455e] outline-none placeholder:text-[#a49cb3] focus:border-[#be8de4]"
+                    />
+                  </div>
+
+                  {formError ? (
                     <p className="text-xs font-semibold text-[#c33274]" role="alert">
-                      {customLabelError}
+                      {formError}
                     </p>
                   ) : null}
-                </div>
 
-                <div className="space-y-1.5">
-                  <Label htmlFor="calendar-title" className="text-[11px] font-bold text-[#6a627c]">
-                    Title
-                  </Label>
-                  <Input
-                    id="calendar-title"
-                    value={draftEntry.title}
-                    onChange={(event) => {
-                      setDraftEntry((previous) => ({
-                        ...previous,
-                        title: event.target.value,
-                      }));
-                    }}
-                    placeholder="Enter title"
-                    className="h-9 rounded-lg border-[#ddd8e8] bg-white px-3 text-sm text-[#4c455e]"
-                  />
-                </div>
+                  <Button
+                    type="submit"
+                    className="h-9 w-full rounded-full bg-linear-to-r from-[#f347a5] to-[#8f1fd1] text-sm font-black text-white hover:brightness-105"
+                  >
+                    <Plus className="size-3.5" />
+                    Add Marker
+                  </Button>
+                </form>
+              </section>
+            ) : null}
 
-                <div className="space-y-2">
-                  <Label className="text-[11px] font-bold text-[#6a627c]">Date and Time *</Label>
-
-                  <div className="space-y-1.5">
-                    <Label
-                      htmlFor="calendar-start-date"
-                      className="text-[11px] font-bold text-[#6a627c]"
-                    >
-                      Start Date *
-                    </Label>
-                    <div className="flex overflow-hidden rounded-lg border border-[#ddd8e8] bg-white">
-                      <Input
-                        id="calendar-start-date"
-                        type="date"
-                        value={draftEntry.startDateKey}
-                        onChange={(event) => {
-                          const nextDate = event.target.value;
-
-                          setDraftEntry((previous) => ({
-                            ...previous,
-                            startDateKey: nextDate,
-                          }));
-
-                          if (nextDate) {
-                            const parsedDate = parseDateKey(nextDate);
-                            setSelectedDateKey(nextDate);
-                            setDisplayMonth(
-                              new Date(parsedDate.getFullYear(), parsedDate.getMonth(), 1)
-                            );
-                          }
-                        }}
-                        className="h-9 rounded-none border-0 bg-transparent px-2 text-xs text-[#4c455e] focus-visible:ring-0"
-                      />
-                      <div className="h-auto w-px bg-[#ddd8e8]" />
-                      <Input
-                        type="time"
-                        value={draftEntry.startTime}
-                        onChange={(event) => {
-                          setDraftEntry((previous) => ({
-                            ...previous,
-                            startTime: event.target.value,
-                          }));
-                        }}
-                        aria-label="Start time"
-                        className="h-9 rounded-none border-0 bg-transparent px-2 text-xs text-[#4c455e] focus-visible:ring-0"
-                      />
-                    </div>
+            {shouldShowMarkersSection ? (
+              <section className="rounded-2xl border border-[#ddd8e8] bg-white p-4 shadow-[0_8px_20px_rgba(46,22,76,0.07)] animate-in fade-in slide-in-from-right-4 duration-300">
+                <div className="flex items-start justify-between gap-2">
+                  <div>
+                    <h3 className={sidebarSectionTitleClass}>Markers for this Date</h3>
+                    <p className="mt-1 text-xs font-semibold text-[#7e768f]">
+                      {longDateFormatter.format(selectedDate)}
+                    </p>
+                    <p className="mt-1 text-xs font-semibold text-[#8f879f]">
+                      {selectedDateEntries.length} markers for this date
+                    </p>
                   </div>
-
-                  <div className="space-y-1.5">
-                    <Label
-                      htmlFor="calendar-end-date"
-                      className="text-[11px] font-bold text-[#6a627c]"
-                    >
-                      End Date *
-                    </Label>
-                    <div className="flex overflow-hidden rounded-lg border border-[#ddd8e8] bg-white">
-                      <Input
-                        id="calendar-end-date"
-                        type="date"
-                        value={draftEntry.endDateKey}
-                        onChange={(event) => {
-                          setDraftEntry((previous) => ({
-                            ...previous,
-                            endDateKey: event.target.value,
-                          }));
-                        }}
-                        className="h-9 rounded-none border-0 bg-transparent px-2 text-xs text-[#4c455e] focus-visible:ring-0"
-                      />
-                      <div className="h-auto w-px bg-[#ddd8e8]" />
-                      <Input
-                        type="time"
-                        value={draftEntry.endTime}
-                        onChange={(event) => {
-                          setDraftEntry((previous) => ({
-                            ...previous,
-                            endTime: event.target.value,
-                          }));
-                        }}
-                        aria-label="End time"
-                        className="h-9 rounded-none border-0 bg-transparent px-2 text-xs text-[#4c455e] focus-visible:ring-0"
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                <div className="space-y-1.5">
-                  <Label htmlFor="calendar-type" className="text-[11px] font-bold text-[#6a627c]">
-                    Event
-                  </Label>
-                  <select
-                    id="calendar-type"
-                    value={draftEntry.eventType}
-                    onChange={(event) => {
-                      setDraftEntry((previous) => ({
-                        ...previous,
-                        eventType: event.target.value,
-                      }));
-                    }}
-                    className="h-9 w-full rounded-lg border border-[#ddd8e8] bg-white px-2 text-xs font-semibold text-[#4c455e] outline-none focus:border-[#be8de4]"
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => setIsForcingAdd(true)}
+                    className="h-8 rounded-full border-[#d7c9e7] px-3 text-xs font-black text-[#7b2bb8] hover:bg-[#f5ecff]"
                   >
-                    <option value="General">General</option>
-                    <option value="Booking">Booking</option>
-                    <option value="Client">Client</option>
-                    <option value="Supplier">Supplier</option>
-                  </select>
+                    Add New
+                  </Button>
                 </div>
 
-                <div className="space-y-1.5">
-                  <Label
-                    htmlFor="calendar-location"
-                    className="text-[11px] font-bold text-[#6a627c]"
-                  >
-                    Location
-                  </Label>
-                  <Input
-                    id="calendar-location"
-                    value={draftEntry.location}
-                    onChange={(event) => {
-                      setDraftEntry((previous) => ({
-                        ...previous,
-                        location: event.target.value,
-                      }));
-                    }}
-                    placeholder="Optional location"
-                    className="h-9 rounded-lg border-[#ddd8e8] bg-white px-3 text-sm text-[#4c455e]"
-                  />
-                </div>
-
-                <div className="space-y-1.5">
-                  <Label
-                    htmlFor="calendar-description"
-                    className="text-[11px] font-bold text-[#6a627c]"
-                  >
-                    Description
-                  </Label>
-                  <textarea
-                    id="calendar-description"
-                    value={draftEntry.description}
-                    onChange={(event) => {
-                      setDraftEntry((previous) => ({
-                        ...previous,
-                        description: event.target.value,
-                      }));
-                    }}
-                    placeholder="Optional notes"
-                    className="h-20 w-full resize-none rounded-lg border border-[#ddd8e8] bg-white px-3 py-2 text-sm text-[#4c455e] outline-none placeholder:text-[#a49cb3] focus:border-[#be8de4]"
-                  />
-                </div>
-
-                {formError ? (
-                  <p className="text-xs font-semibold text-[#c33274]" role="alert">
-                    {formError}
-                  </p>
-                ) : null}
-
-                <Button
-                  type="submit"
-                  className="h-9 w-full rounded-full bg-linear-to-r from-[#f347a5] to-[#8f1fd1] text-sm font-black text-white hover:brightness-105"
-                >
-                  <Plus className="size-3.5" />
-                  Add Marker
-                </Button>
-              </form>
-            </section>
-
-            <section className="rounded-2xl border border-[#ddd8e8] bg-white p-4 shadow-[0_8px_20px_rgba(46,22,76,0.07)]">
-              <h3 className="text-sm font-black text-[#4e465f]">
-                {longDateFormatter.format(selectedDate)}
-              </h3>
-              <p className="mt-1 text-xs font-semibold text-[#8f879f]">
-                {selectedDateEntries.length} markers for this date
-              </p>
-
-              <div className="mt-3 space-y-2">
-                {selectedDateEntries.length > 0 ? (
-                  selectedDateEntries.map((entry) => (
+                <div className="mt-3 space-y-2">
+                  {selectedDateEntries.map((entry) => (
                     <article
                       key={entry.id}
                       className="rounded-lg border border-[#ece7f2] bg-[#fcfbfe] p-2.5 text-xs"
@@ -1145,14 +1170,10 @@ export function CalendarPage() {
                         <p className="mt-1 text-[11px] text-[#8f879f]">{entry.description}</p>
                       ) : null}
                     </article>
-                  ))
-                ) : (
-                  <div className="rounded-lg border border-dashed border-[#ddd8e8] bg-[#fcfbfe] p-3 text-xs text-[#8f879f]">
-                    No marker found for this date. Create one using the form above.
-                  </div>
-                )}
-              </div>
-            </section>
+                  ))}
+                </div>
+              </section>
+            ) : null}
           </aside>
         </div>
       </div>
