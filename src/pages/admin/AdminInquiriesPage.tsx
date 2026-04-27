@@ -1,4 +1,5 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState, useEffect } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Badge } from '@/components/ui/badge';
 import {
   Calendar as CalendarIcon,
@@ -33,8 +34,16 @@ import { getInquiries, updateInquiryStatus, scheduleInquiryMeeting, checkUserReg
 import { createUser, getOrganizerUsers } from '@/api/users';
 
 export function AdminInquiriesPage() {
-  const [inquiries, setInquiries] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
+  const queryClient = useQueryClient();
+  const {
+    data: inquiries = [],
+    isLoading: loading,
+  } = useQuery({
+    queryKey: ['inquiries'],
+    queryFn: getInquiries,
+    refetchInterval: 10000, // polling every 10 seconds
+  });
+
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState<'date' | 'status'>('date');
   const [sortOrder, setSortOrder] = useState<'desc' | 'asc'>('desc');
@@ -69,20 +78,6 @@ export function AdminInquiriesPage() {
     description: '',
     eventType: 'Client',
   });
-
-  useEffect(() => {
-    const fetchInquiries = async () => {
-      try {
-        const data = await getInquiries();
-        setInquiries(data);
-      } catch (error) {
-        console.error('Failed to fetch inquiries', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchInquiries();
-  }, []);
 
   const statusCounts = useMemo(() => {
     const counts = {
@@ -248,8 +243,8 @@ export function AdminInquiriesPage() {
     try {
       await updateInquiryStatus(id, newStatus);
       setSelectedInquiry({ ...selectedInquiry, status: newStatus });
-      setInquiries(
-        inquiries.map((inq) => ((inq.id || inq._id) === id ? { ...inq, status: newStatus } : inq))
+      queryClient.setQueryData(['inquiries'], (old: any[] | undefined) =>
+        (old || []).map((inq) => ((inq.id || inq._id) === id ? { ...inq, status: newStatus } : inq))
       );
     } catch (error) {
       console.error('Failed to update status', error);
@@ -285,8 +280,8 @@ export function AdminInquiriesPage() {
       };
 
       setSelectedInquiry({ ...selectedInquiry, status: newStatus, meetingDetails });
-      setInquiries(
-        inquiries.map((inq) =>
+      queryClient.setQueryData(['inquiries'], (old: any[] | undefined) =>
+        (old || []).map((inq) =>
           (inq.id || inq._id) === id ? { ...inq, status: newStatus, meetingDetails } : inq
         )
       );
@@ -339,8 +334,8 @@ export function AdminInquiriesPage() {
         meetingDetails: updatedMeetingDetails,
       });
 
-      setInquiries(
-        inquiries.map((inq) =>
+      queryClient.setQueryData(['inquiries'], (old: any[] | undefined) =>
+        (old || []).map((inq) =>
           (inq.id || inq._id) === id
             ? {
                 ...inq,
