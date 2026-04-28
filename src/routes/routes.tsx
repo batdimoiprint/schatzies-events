@@ -39,6 +39,7 @@ import { RSVPPage } from '@/pages/client/RSVPPage';
 import { OrganizerMessagePage } from '@/pages/organizer/OrganizerMessagePage';
 import { RSVPPage as OrganizerRSVPPage } from '@/pages/organizer/RSVPPage';
 import { CostBreakdownPage } from '@/pages/organizer/CostBreakdownPage';
+import { OrganizerProfilePage } from '@/pages/organizer/OrganizerProfilePage';
 import { InvitationPage } from '@/pages/public/InvitationPage';
 
 const router = createBrowserRouter([
@@ -161,6 +162,10 @@ const router = createBrowserRouter([
       {
         path: 'cost-breakdown',
         Component: CostBreakdownPage,
+      },
+      {
+        path: 'profile',
+        Component: OrganizerProfilePage,
       },
     ],
   },
