@@ -170,7 +170,7 @@ export function InquiryForm({ onClose, selectedPackageId, selectedEventType }: I
 
       {/* Terms and Conditions Modal */}
       <Dialog open={showTerms} onOpenChange={setShowTerms}>
-        <DialogContent className="fixed z-[99999] w-full max-w-[800px] max-h-[80vh] overflow-hidden flex flex-col">
+        <DialogContent className="fixed z-[99999] w-full max-w-[1100px] max-h-[80vh] overflow-hidden flex flex-col">
           <DialogHeader>
             <DialogTitle className="text-[1.3rem] font-bold text-[#1a1225]">
               Terms and Conditions
@@ -279,7 +279,7 @@ export function InquiryForm({ onClose, selectedPackageId, selectedEventType }: I
 
       {/* Package Details Modal */}
       <Dialog open={showPackageDetails} onOpenChange={setShowPackageDetails}>
-        <DialogContent className="fixed z-[99999] w-full max-w-[900px] max-h-[85vh] overflow-y-auto">
+        <DialogContent className="fixed z-[99999] w-full max-w-[1100px] max-h-[85vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="text-[1.5rem] font-bold text-[#1a1225]">
               {(currentSelectedPackage || selectedPackage)?.name} Package Details
@@ -673,20 +673,28 @@ export function InquiryForm({ onClose, selectedPackageId, selectedEventType }: I
 
                       {/* Show selected package info if available */}
                       {(currentSelectedPackage || selectedPackage) && (
-                        <div className="mt-3 h-11 rounded-lg bg-gradient-to-r from-[#FF0066]/10 to-[#700F81]/10 px-4 py-2 border border-[#FF0066]/20 flex items-center justify-between gap-2">
-                          <div className="flex-1 min-w-0">
-                            <p className="text-[0.75rem] font-bold text-[#3d2052] truncate">
-                              {(currentSelectedPackage || selectedPackage)?.name}
-                            </p>
+                        <div className="mt-3 rounded-lg bg-gradient-to-r from-[#FF0066]/10 to-[#700F81]/10 p-3 border border-[#FF0066]/20">
+                          <div className="flex items-start justify-between gap-2">
+                            <div className="flex-1">
+                              <p className="text-[0.8rem] font-semibold text-gray-600">
+                                Selected Package
+                              </p>
+                              <p className="text-[1rem] font-bold text-[#3d2052]">
+                                {(currentSelectedPackage || selectedPackage)?.name}
+                              </p>
+                              <p className="text-[0.8rem] text-gray-600 mt-1 line-clamp-2">
+                                {(currentSelectedPackage || selectedPackage)?.description}
+                              </p>
+                            </div>
+                            <Button
+                              type="button"
+                              onClick={() => setShowPackageDetails(true)}
+                              className="shrink-0 mt-0 h-9 w-9 rounded-full bg-gradient-to-r from-[#FF0066] to-[#700F81] text-white hover:brightness-110 hover:scale-110"
+                              title="View package details"
+                            >
+                              <Eye className="h-4 w-4" />
+                            </Button>
                           </div>
-                          <Button
-                            type="button"
-                            onClick={() => setShowPackageDetails(true)}
-                            className="shrink-0 h-7 w-7 rounded-full bg-[#FF0066]/20 text-[#FF0066] hover:bg-[#FF0066]/40 transition"
-                            title="View package details"
-                          >
-                            <Eye className="h-3.5 w-3.5" />
-                          </Button>
                         </div>
                       )}
 
