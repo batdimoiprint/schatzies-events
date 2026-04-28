@@ -2,7 +2,7 @@ import { useEffect, useState, useCallback, useRef } from 'react';
 import type { ReactNode } from 'react';
 import { login, verifyToken } from '@/api/auth';
 import { AuthContext } from './AuthContext';
-import type { User } from '@/types/auth';
+import type { User, LoginResult } from '@/types/auth';
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
@@ -45,18 +45,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const handleLogin = async (email: string, password: string): Promise<User | null> => {
+  const handleLogin = async (email: string, password: string): Promise<LoginResult> => {
     setIsLoading(true);
     setError(null);
 
     try {
-      const loggedInUser = await login(email, password);
-      if (loggedInUser) {
-        setUser(loggedInUser);
-        return loggedInUser;
+      const result = await login(email, password);
+
+      // Backend requires a password reset — pass it through to the caller
+      if (result.requiresPasswordReset) {
+        return result;
       }
+
+      if (result.user) {
+        setUser(result.user);
+        return result;
+      }
+
       // Fallback to token verification if login doesn't return user
-      return await checkToken();
+      const verifiedUser = await checkToken();
+      return { user: verifiedUser, requiresPasswordReset: false, resetToken: null };
     } catch (err: unknown) {
       setUser(null);
 
@@ -71,7 +79,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setError(err instanceof Error ? err.message : 'Unable to login');
       }
 
-      return null;
+      return { user: null, requiresPasswordReset: false, resetToken: null };
     } finally {
       setIsLoading(false);
     }

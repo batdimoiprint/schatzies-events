@@ -7,6 +7,7 @@ import { LandingPage } from '@/pages/public/LandingPage';
 import EventPackagesPage from '@/pages/public/EventPackagesPage';
 import { LoginPage } from '@/pages/public/LoginPage';
 import { ForgotPasswordPage } from '@/pages/public/ForgotPasswordPage';
+import { ForceResetPasswordPage } from '@/pages/public/ForceResetPasswordPage';
 import ServicesPage from '@/pages/public/ServicesPage';
 import AboutUsPage from '@/pages/public/AboutUsPage';
 import ContactPage from '@/pages/public/ContactPage';
@@ -39,6 +40,7 @@ import { RSVPPage } from '@/pages/client/RSVPPage';
 import { OrganizerMessagePage } from '@/pages/organizer/OrganizerMessagePage';
 import { RSVPPage as OrganizerRSVPPage } from '@/pages/organizer/RSVPPage';
 import { CostBreakdownPage } from '@/pages/organizer/CostBreakdownPage';
+import { OrganizerProfilePage } from '@/pages/organizer/OrganizerProfilePage';
 import { InvitationPage } from '@/pages/public/InvitationPage';
 
 const router = createBrowserRouter([
@@ -49,6 +51,10 @@ const router = createBrowserRouter([
   {
     path: 'login',
     Component: LoginPage,
+  },
+  {
+    path: 'force-reset-password',
+    Component: ForceResetPasswordPage,
   },
   {
     path: '/',
@@ -161,6 +167,10 @@ const router = createBrowserRouter([
       {
         path: 'cost-breakdown',
         Component: CostBreakdownPage,
+      },
+      {
+        path: 'profile',
+        Component: OrganizerProfilePage,
       },
     ],
   },
