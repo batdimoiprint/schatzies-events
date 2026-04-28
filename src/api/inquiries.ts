@@ -23,6 +23,20 @@ export interface Inquiry {
   status: string;
 }
 
+export interface ScheduleInquiryMeetingPayload {
+  title: string;
+  startDateKey: string;
+  startTime: string;
+  endDateKey: string;
+  endTime: string;
+  label: string;
+  organizerId: string;
+  location: string;
+  description: string;
+  eventType: string;
+  inquiryUserId?: string;
+}
+
 export const submitInquiry = async (inquiryData: InquiryFormData): Promise<void> => {
   try {
     // Transform camelCase to snake_case for backend API
@@ -67,7 +81,7 @@ export const updateInquiryStatus = async (id: string, status: string): Promise<I
 
 export const scheduleInquiryMeeting = async (
   id: string,
-  data: { date: string; time: string; location: string; organizerId: string }
+  data: ScheduleInquiryMeetingPayload
 ): Promise<Inquiry> => {
   try {
     const response = await axiosInstance.post(`/inquiries/${id}/meeting`, data);
@@ -75,5 +89,15 @@ export const scheduleInquiryMeeting = async (
   } catch (error) {
     console.error('Failed to schedule meeting:', error);
     throw error;
+  }
+};
+
+export const checkUserRegistered = async (id: string): Promise<boolean> => {
+  try {
+    const response = await axiosInstance.get(`/inquiries/${id}/isUserRegistered`);
+    return response.data.isUserRegistered || response.data.is_Account_Created === true;
+  } catch (error) {
+    console.error('Failed to check user registration:', error);
+    return false;
   }
 };

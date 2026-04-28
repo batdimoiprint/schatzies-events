@@ -15,6 +15,7 @@ export interface UserPayload {
   gender?: string;
   contactNumber?: string;
   role?: string;
+  inquiryId?: string;
 }
 
 export interface UserResponse {
@@ -68,7 +69,7 @@ export const updateUser = async (
   userId: string,
   payload: Partial<UserPayload>
 ): Promise<UserResponse> => {
-  const response = await axiosInstance.put(`/users/${userId}`, payload);
+  const response = await axiosInstance.patch(`/users/${userId}`, payload);
   return response.data.user;
 };
 

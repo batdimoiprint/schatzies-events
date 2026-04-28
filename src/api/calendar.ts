@@ -10,6 +10,9 @@ export interface CalendarEntryPayload {
   location: string;
   description: string;
   eventType: string;
+  organizerId?: string;
+  eventId?: string;
+  inquiryUserId?: string;
   date?: string;
   endDate?: string;
   type?: string;
