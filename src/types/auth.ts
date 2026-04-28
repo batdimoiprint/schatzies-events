@@ -18,12 +18,19 @@ export interface User {
   created_at?: string;
 }
 
+export interface LoginResult {
+  user: User | null;
+  requiresPasswordReset?: boolean;
+  resetToken?: string | null;
+}
+
 export interface AuthContextType {
   user: User | null;
   isAuthenticated: boolean;
   isLoading: boolean;
   error: string | null;
-  login: (email: string, password: string) => Promise<User | null>;
+  login: (email: string, password: string) => Promise<LoginResult>;
   verifyToken: () => Promise<User | null>;
   setAuthenticatedUser: (user: User | null) => void;
 }
+
