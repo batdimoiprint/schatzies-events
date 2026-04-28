@@ -1,11 +1,18 @@
 import { useEffect, useState } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
-import { Calendar as CalendarIcon, Check, Copy, Eye, EyeOff } from 'lucide-react';
-import { checkUserRegistered, scheduleInquiryMeeting, updateInquiryStatus } from '@/api/inquiries';
+import { Calendar as CalendarIcon, Check, Copy, Eye, EyeOff, Loader2 } from 'lucide-react';
+import { updateCalendarEntry } from '@/api/calendar';
+import { checkUserRegistered, updateInquiryStatus } from '@/api/inquiries';
 import { createUser } from '@/api/users';
 
 interface InquiryDetailsDialogProps {
@@ -25,7 +32,6 @@ export function InquiryDetailsDialog({
   selectedInquiry,
   getOrganizerLabel,
   organizers,
-  organizersLoading,
   setIsScheduleModalOpen,
   onInquiryUpdated,
 }: InquiryDetailsDialogProps) {
@@ -42,9 +48,9 @@ export function InquiryDetailsDialog({
   >({});
   const [showPasswordByInquiry, setShowPasswordByInquiry] = useState<Record<string, boolean>>({});
   const [copiedInquiryId, setCopiedInquiryId] = useState('');
-  const [scheduleError, setScheduleError] = useState('');
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
   const [pendingStatus, setPendingStatus] = useState('');
+  const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
   const [isOrgConfirmOpen, setIsOrgConfirmOpen] = useState(false);
   const [pendingOrganizerId, setPendingOrganizerId] = useState('');
 
@@ -68,7 +74,6 @@ export function InquiryDetailsDialog({
     setAccountCreateError('');
     setAccountCreateSuccess('');
     setCopiedInquiryId('');
-    setScheduleError('');
 
     const inquiryKey = getInquiryKey(selectedInquiry);
     if (!inquiryKey) return;
@@ -95,17 +100,21 @@ export function InquiryDetailsDialog({
     if (!selectedInquiry || !pendingStatus) return;
     const id = selectedInquiry.id || selectedInquiry._id;
     try {
+      setIsUpdatingStatus(true);
       await updateInquiryStatus(id, pendingStatus);
       onInquiryUpdated({ ...selectedInquiry, status: pendingStatus });
       setIsConfirmOpen(false);
       setPendingStatus('');
     } catch (error) {
       console.error('Failed to update status', error);
+    } finally {
+      setIsUpdatingStatus(false);
     }
   };
 
   const handleOrganizerChange = (newOrgId: string) => {
-    if (!selectedInquiry?.meetingDetails || newOrgId === selectedInquiry.meetingDetails.organizerId) return;
+    if (!selectedInquiry?.meetingDetails || newOrgId === selectedInquiry.meetingDetails.organizerId)
+      return;
     setPendingOrganizerId(newOrgId);
     setIsOrgConfirmOpen(true);
   };
@@ -114,14 +123,26 @@ export function InquiryDetailsDialog({
     if (!selectedInquiry?.meetingDetails || !pendingOrganizerId) return;
     try {
       setIsUpdatingMeetingOrganizer(true);
-      setScheduleError('');
-      const id = selectedInquiry.id || selectedInquiry._id;
       const existingMeeting = selectedInquiry.meetingDetails;
-      await scheduleInquiryMeeting(id, {
-        date: existingMeeting.date || selectedInquiry.date,
-        time: existingMeeting.time || '09:00',
-        location: existingMeeting.location || 'TBA',
+      await updateCalendarEntry(existingMeeting.entryId, {
+        title:
+          existingMeeting.title ||
+          `Meeting with ${selectedInquiry.firstName || ''} ${selectedInquiry.lastName || ''}`.trim(),
+        startDateKey: existingMeeting.startDateKey || existingMeeting.date || selectedInquiry.date,
+        startTime: existingMeeting.startTime || existingMeeting.time || '09:00',
+        endDateKey: existingMeeting.endDateKey || existingMeeting.date || selectedInquiry.date,
+        endTime: existingMeeting.endTime || '10:00',
+        label: existingMeeting.label || 'Meeting',
         organizerId: pendingOrganizerId,
+        location: existingMeeting.location || '',
+        description: existingMeeting.description || '',
+        eventType: existingMeeting.eventType || 'Client',
+        eventId: selectedInquiry.id || selectedInquiry._id,
+        inquiryUserId:
+          selectedInquiry.userId ||
+          selectedInquiry.user_id ||
+          existingMeeting.inquiryUserId ||
+          undefined,
       });
       onInquiryUpdated({
         ...selectedInquiry,
@@ -136,7 +157,6 @@ export function InquiryDetailsDialog({
       setSelectedMeetingOrganizerId(pendingOrganizerId);
     } catch (error) {
       console.error('Failed to update meeting organizer', error);
-      setScheduleError('Unable to update organizer right now. Please try again.');
     } finally {
       setIsUpdatingMeetingOrganizer(false);
     }
@@ -227,20 +247,23 @@ export function InquiryDetailsDialog({
         <div className="bg-linear-to-r from-[#fdfbff] to-[#f5f7ff] p-6 border-b border-[#eee7f4]">
           <div className="flex items-center justify-between">
             <div>
-              <DialogTitle className="text-2xl font-black text-[#2e2837]">Inquiry Details</DialogTitle>
+              <DialogTitle className="text-2xl font-black text-[#2e2837]">
+                Inquiry Details
+              </DialogTitle>
               <p className="text-sm font-semibold text-[#8f879f] mt-0.5">
-                Submitted on {new Date(selectedInquiry?.createdAt || selectedInquiry?.created_at || Date.now()).toLocaleDateString('en-US', { 
-                  month: 'long', 
-                  day: 'numeric', 
+                Submitted on{' '}
+                {new Date(
+                  selectedInquiry?.createdAt || selectedInquiry?.created_at || Date.now()
+                ).toLocaleDateString('en-US', {
+                  month: 'long',
+                  day: 'numeric',
                   year: 'numeric',
                   hour: '2-digit',
-                  minute: '2-digit'
+                  minute: '2-digit',
                 })}
               </p>
             </div>
-            <div className="hidden md:block">
-     
-            </div>
+            <div className="hidden md:block"></div>
           </div>
         </div>
 
@@ -255,16 +278,22 @@ export function InquiryDetailsDialog({
                 </h3>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="rounded-2xl border border-[#efe8f6] bg-[#fcfaff] p-4 transition-all hover:border-[#e2d5f0]">
-                    <h4 className="text-[10px] font-black uppercase tracking-wider text-[#857a98] mb-1">Full Name</h4>
+                    <h4 className="text-[10px] font-black uppercase tracking-wider text-[#857a98] mb-1">
+                      Full Name
+                    </h4>
                     <p className="text-[#2e2837] font-bold text-lg">
                       {selectedInquiry.firstName} {selectedInquiry.lastName}
                     </p>
                   </div>
                   <div className="rounded-2xl border border-[#efe8f6] bg-[#fcfaff] p-4 transition-all hover:border-[#e2d5f0]">
-                    <h4 className="text-[10px] font-black uppercase tracking-wider text-[#857a98] mb-1">Contact Details</h4>
+                    <h4 className="text-[10px] font-black uppercase tracking-wider text-[#857a98] mb-1">
+                      Contact Details
+                    </h4>
                     <p className="text-sm font-bold text-[#5a5368]">{selectedInquiry.email}</p>
                     {selectedInquiry.contactNumber && (
-                      <p className="text-sm font-medium text-[#7a708d] mt-0.5">{selectedInquiry.contactNumber}</p>
+                      <p className="text-sm font-medium text-[#7a708d] mt-0.5">
+                        {selectedInquiry.contactNumber}
+                      </p>
                     )}
                   </div>
                 </div>
@@ -277,41 +306,63 @@ export function InquiryDetailsDialog({
                 </h3>
                 <div className="grid grid-cols-2 gap-3">
                   <div className="px-4 py-3 rounded-xl bg-[#f7ebff]/50 border-2 border-[#eadcf7] backdrop-blur-sm shadow-sm flex flex-col justify-center">
-                    <p className="text-[10px] font-black uppercase tracking-widest text-[#857a98] mb-0.5">Current Status</p>
-                    <p className="text-sm font-bold text-[#6f2ea8]">{selectedInquiry?.status || 'New'}</p>
+                    <p className="text-[10px] font-black uppercase tracking-widest text-[#857a98] mb-0.5">
+                      Current Status
+                    </p>
+                    <p className="text-sm font-bold text-[#6f2ea8]">
+                      {selectedInquiry?.status || 'New'}
+                    </p>
                   </div>
                   <div className="rounded-xl border border-[#f1eaf7] bg-white p-3 shadow-sm">
-                    <h4 className="text-[10px] font-black uppercase tracking-wider text-[#a094b8] mb-1">Event Format</h4>
+                    <h4 className="text-[10px] font-black uppercase tracking-wider text-[#a094b8] mb-1">
+                      Event Format
+                    </h4>
                     <p className="text-[#4e4560] font-bold text-sm">
                       {selectedInquiry.eventType || selectedInquiry.subject || 'N/A'}
                     </p>
                   </div>
                   <div className="rounded-xl border border-[#f1eaf7] bg-white p-3 shadow-sm">
-                    <h4 className="text-[10px] font-black uppercase tracking-wider text-[#a094b8] mb-1">Planned Date</h4>
+                    <h4 className="text-[10px] font-black uppercase tracking-wider text-[#a094b8] mb-1">
+                      Planned Date
+                    </h4>
                     <p className="text-[#4e4560] font-bold text-sm">
-                      {new Date(selectedInquiry.date || selectedInquiry.createdAt || Date.now()).toLocaleDateString()}
+                      {new Date(
+                        selectedInquiry.date || selectedInquiry.createdAt || Date.now()
+                      ).toLocaleDateString()}
                     </p>
                   </div>
                   <div className="rounded-xl border border-[#f1eaf7] bg-white p-3 shadow-sm">
-                    <h4 className="text-[10px] font-black uppercase tracking-wider text-[#a094b8] mb-1">Submitted Date</h4>
+                    <h4 className="text-[10px] font-black uppercase tracking-wider text-[#a094b8] mb-1">
+                      Submitted Date
+                    </h4>
                     <p className="text-[#4e4560] font-bold text-sm">
-                      {new Date(selectedInquiry.createdAt || selectedInquiry.created_at || Date.now()).toLocaleDateString('en-US', {
+                      {new Date(
+                        selectedInquiry.createdAt || selectedInquiry.created_at || Date.now()
+                      ).toLocaleDateString('en-US', {
                         month: 'short',
                         day: 'numeric',
-                        year: 'numeric'
+                        year: 'numeric',
                       })}
                     </p>
                   </div>
                   {selectedInquiry.eventPackage && (
                     <div className="rounded-xl border border-[#f1eaf7] bg-white p-3 shadow-sm">
-                      <h4 className="text-[10px] font-black uppercase tracking-wider text-[#a094b8] mb-1">Package Choice</h4>
-                      <p className="text-[#4e4560] font-bold text-sm">{selectedInquiry.eventPackage}</p>
+                      <h4 className="text-[10px] font-black uppercase tracking-wider text-[#a094b8] mb-1">
+                        Package Choice
+                      </h4>
+                      <p className="text-[#4e4560] font-bold text-sm">
+                        {selectedInquiry.eventPackage}
+                      </p>
                     </div>
                   )}
                   {selectedInquiry.eventPax && (
                     <div className="rounded-xl border border-[#f1eaf7] bg-white p-3 shadow-sm">
-                      <h4 className="text-[10px] font-black uppercase tracking-wider text-[#a094b8] mb-1">Guest Count</h4>
-                      <p className="text-[#4e4560] font-bold text-sm">{selectedInquiry.eventPax} Pax</p>
+                      <h4 className="text-[10px] font-black uppercase tracking-wider text-[#a094b8] mb-1">
+                        Guest Count
+                      </h4>
+                      <p className="text-[#4e4560] font-bold text-sm">
+                        {selectedInquiry.eventPax} Pax
+                      </p>
                     </div>
                   )}
                 </div>
@@ -331,9 +382,13 @@ export function InquiryDetailsDialog({
             {/* Right Column - Actions & Status */}
             <div className="mt-8 border-t border-[#efe8f6] pt-8 md:mt-0 md:w-2/5 md:border-l md:border-t-0 md:pl-8 md:pt-0 space-y-6">
               <section className="space-y-3">
-                <h4 className="text-xs font-black uppercase tracking-widest text-[#b0a4c5] mb-2">Inquiry Status</h4>
+                <h4 className="text-xs font-black uppercase tracking-widest text-[#b0a4c5] mb-2">
+                  Inquiry Status
+                </h4>
                 <div className="p-4 rounded-2xl border border-[#eadcf7] bg-white shadow-sm">
-                  <Label className="text-[10px] font-black uppercase text-[#857a98] mb-2 block">Change State</Label>
+                  <Label className="text-[10px] font-black uppercase text-[#857a98] mb-2 block">
+                    Change State
+                  </Label>
                   <Select
                     value={selectedInquiry.status || 'New'}
                     onValueChange={handleStatusChange}
@@ -353,7 +408,9 @@ export function InquiryDetailsDialog({
               </section>
 
               <section className="space-y-3">
-                <h4 className="text-xs font-black uppercase tracking-widest text-[#b0a4c5] mb-2">Meetings</h4>
+                <h4 className="text-xs font-black uppercase tracking-widest text-[#b0a4c5] mb-2">
+                  Meetings
+                </h4>
                 {selectedInquiry.meetingDetails ? (
                   <div className="w-full space-y-4">
                     <div className="rounded-2xl border border-[#eadcf7] bg-linear-to-br from-[#fbf6ff] to-[#f5f0ff] p-4 shadow-sm">
@@ -363,23 +420,34 @@ export function InquiryDetailsDialog({
                         </div>
                         <div>
                           <p className="text-sm font-black text-[#5f4f7a]">
-                            {new Date(selectedInquiry.meetingDetails.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                            {new Date(selectedInquiry.meetingDetails.date).toLocaleDateString(
+                              'en-US',
+                              { month: 'short', day: 'numeric', year: 'numeric' }
+                            )}
                           </p>
-                          <p className="text-xs font-bold text-[#8f1fd1]">at {selectedInquiry.meetingDetails.time || 'TBD'}</p>
+                          <p className="text-xs font-bold text-[#8f1fd1]">
+                            at {selectedInquiry.meetingDetails.time || 'TBD'}
+                          </p>
                         </div>
                       </div>
                       <div className="space-y-3 text-[11px] font-semibold">
                         <p className="flex justify-between border-b border-[#eee7f4] pb-1.5">
                           <span className="text-[#a094b8]">Location</span>
-                          <span className="text-[#5f4f7a]">{selectedInquiry.meetingDetails.location || 'TBA'}</span>
+                          <span className="text-[#5f4f7a]">
+                            {selectedInquiry.meetingDetails.location || 'TBA'}
+                          </span>
                         </p>
                         <div className="space-y-2">
                           <p className="flex justify-between">
                             <span className="text-[#a094b8]">Current Expert</span>
-                            <span className="text-[#5f4f7a] text-right">{getOrganizerLabel(selectedInquiry.meetingDetails.organizerId || '')}</span>
+                            <span className="text-[#5f4f7a] text-right">
+                              {getOrganizerLabel(selectedInquiry.meetingDetails.organizerId || '')}
+                            </span>
                           </p>
                           <div className="pt-1">
-                            <Label className="text-[9px] font-black uppercase text-[#857a98] mb-1.5 block">Reassign Expert</Label>
+                            <Label className="text-[9px] font-black uppercase text-[#857a98] mb-1.5 block">
+                              Reassign Expert
+                            </Label>
                             <Select
                               value={selectedMeetingOrganizerId}
                               onValueChange={handleOrganizerChange}
@@ -391,7 +459,9 @@ export function InquiryDetailsDialog({
                               <SelectContent className="rounded-xl border-[#e5ddee]">
                                 {organizers.map((organizer) => (
                                   <SelectItem key={organizer.user_id} value={organizer.user_id}>
-                                    {[organizer.firstName, organizer.lastName].filter(Boolean).join(' ')}
+                                    {[organizer.firstName, organizer.lastName]
+                                      .filter(Boolean)
+                                      .join(' ')}
                                   </SelectItem>
                                 ))}
                               </SelectContent>
@@ -406,7 +476,9 @@ export function InquiryDetailsDialog({
                     <div className="rounded-2xl border border-dashed border-[#eadcf7] bg-[#fbf6ff] p-6 text-center">
                       <CalendarIcon className="h-8 w-8 text-[#d5c9e4] mx-auto mb-2" />
                       <p className="text-sm font-bold text-[#6a5a83]">No meeting scheduled</p>
-                      <p className="text-[11px] text-[#9a8fb0] mt-1">Schedule a discovery call to proceed</p>
+                      <p className="text-[11px] text-[#9a8fb0] mt-1">
+                        Schedule a discovery call to proceed
+                      </p>
                     </div>
                     <Button
                       className="w-full h-12 bg-linear-to-r from-[#f347a5] to-[#8f1fd1] text-white font-black rounded-xl shadow-md hover:shadow-lg transition-all"
@@ -420,7 +492,9 @@ export function InquiryDetailsDialog({
               </section>
 
               <section className="space-y-3">
-                <h4 className="text-xs font-black uppercase tracking-widest text-[#b0a4c5] mb-2">Portal Access</h4>
+                <h4 className="text-xs font-black uppercase tracking-widest text-[#b0a4c5] mb-2">
+                  Portal Access
+                </h4>
                 <div className="rounded-2xl border border-[#eadcf7] bg-white p-4 shadow-sm overflow-hidden relative">
                   {!selectedInquiry.meetingDetails && !isAlreadyRegistered && !createdAccount && (
                     <div className="absolute inset-0 z-10 bg-white/60 backdrop-blur-[1px] flex items-center justify-center p-6 text-center">
@@ -429,14 +503,16 @@ export function InquiryDetailsDialog({
                       </p>
                     </div>
                   )}
-                  
+
                   <div className="flex items-start gap-3 mb-4">
                     <div className="h-8 w-8 rounded-lg bg-[#f7ebff] flex items-center justify-center text-[#8f1fd1]">
                       <Check className="h-4 w-4" />
                     </div>
                     <div>
                       <p className="text-sm font-black text-[#5f4f7a]">Client Account</p>
-                      <p className="text-[10px] font-semibold text-[#8f879f]">Enable portal access for this client</p>
+                      <p className="text-[10px] font-semibold text-[#8f879f]">
+                        Enable portal access for this client
+                      </p>
                     </div>
                   </div>
 
@@ -444,9 +520,9 @@ export function InquiryDetailsDialog({
                     type="button"
                     onClick={handleCreateUserAccount}
                     disabled={
-                      isCreatingAccount || 
-                      !selectedInquiry?.email || 
-                      Boolean(createdAccount) || 
+                      isCreatingAccount ||
+                      !selectedInquiry?.email ||
+                      Boolean(createdAccount) ||
                       isAlreadyRegistered ||
                       !selectedInquiry.meetingDetails
                     }
@@ -461,33 +537,46 @@ export function InquiryDetailsDialog({
 
                   {createdAccount && (
                     <div className="mt-4 space-y-2 rounded-xl border border-[#e5dbef] bg-[#faf7ff] p-3 animate-in fade-in slide-in-from-top-2">
-                      <p className="text-[10px] font-black uppercase text-[#6f2ea8]">Temporary Access Key</p>
+                      <p className="text-[10px] font-black uppercase text-[#6f2ea8]">
+                        Temporary Access Key
+                      </p>
                       <div className="flex items-center gap-2">
                         <div className="relative flex-1">
                           <Input
                             readOnly
-                            value={
-                              isPasswordVisible
-                                ? createdAccount.password
-                                : '••••••••••••'
-                            }
+                            value={isPasswordVisible ? createdAccount.password : '••••••••••••'}
                             className="h-10 border-[#ddd8e8] bg-white text-xs font-bold text-[#4c455e] rounded-lg pr-10"
                           />
                           <button
                             type="button"
-                            onClick={() => setShowPasswordByInquiry((prev) => ({ ...prev, [selectedInquiryKey]: !isPasswordVisible }))}
+                            onClick={() =>
+                              setShowPasswordByInquiry((prev) => ({
+                                ...prev,
+                                [selectedInquiryKey]: !isPasswordVisible,
+                              }))
+                            }
                             className="absolute right-3 top-1/2 -translate-y-1/2 text-[#8f879f] hover:text-[#8f1fd1]"
                           >
-                            {isPasswordVisible ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                            {isPasswordVisible ? (
+                              <EyeOff className="h-4 w-4" />
+                            ) : (
+                              <Eye className="h-4 w-4" />
+                            )}
                           </button>
                         </div>
                         <Button
                           type="button"
                           variant="outline"
-                          onClick={() => handleCopyPassword(selectedInquiryKey, createdAccount.password)}
+                          onClick={() =>
+                            handleCopyPassword(selectedInquiryKey, createdAccount.password)
+                          }
                           className="h-10 w-10 p-0 border-[#ddd8e8] rounded-lg bg-white"
                         >
-                          {isCopied ? <Check className="h-4 w-4 text-emerald-600" /> : <Copy className="h-4 w-4" />}
+                          {isCopied ? (
+                            <Check className="h-4 w-4 text-emerald-600" />
+                          ) : (
+                            <Copy className="h-4 w-4" />
+                          )}
                         </Button>
                       </div>
                     </div>
@@ -500,7 +589,9 @@ export function InquiryDetailsDialog({
                   )}
                   {accountCreateSuccess && (
                     <div className="mt-3 p-2 rounded-lg bg-emerald-50 border border-emerald-100">
-                      <p className="text-[10px] font-bold text-emerald-700">{accountCreateSuccess}</p>
+                      <p className="text-[10px] font-bold text-emerald-700">
+                        {accountCreateSuccess}
+                      </p>
                     </div>
                   )}
                 </div>
@@ -519,7 +610,9 @@ export function InquiryDetailsDialog({
             </div>
             <h3 className="text-xl font-black text-[#2e2837] mb-2">Update Status?</h3>
             <p className="text-sm font-medium text-[#7a708d] mb-6">
-              Are you sure you want to change the status of this inquiry from <span className="font-bold text-[#6f2ea8]">{selectedInquiry?.status || 'New'}</span> to <span className="font-bold text-[#8f1fd1]">{pendingStatus}</span>?
+              Are you sure you want to change the status of this inquiry from{' '}
+              <span className="font-bold text-[#6f2ea8]">{selectedInquiry?.status || 'New'}</span>{' '}
+              to <span className="font-bold text-[#8f1fd1]">{pendingStatus}</span>?
             </p>
             <div className="flex gap-3">
               <Button
@@ -531,9 +624,17 @@ export function InquiryDetailsDialog({
               </Button>
               <Button
                 onClick={confirmStatusChange}
+                disabled={isUpdatingStatus}
                 className="flex-1 h-11 bg-linear-to-r from-[#f347a5] to-[#8f1fd1] text-white font-black rounded-xl shadow-md"
               >
-                Yes, Update
+                {isUpdatingStatus ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Updating...
+                  </>
+                ) : (
+                  'Yes, Update'
+                )}
               </Button>
             </div>
           </div>
@@ -549,7 +650,15 @@ export function InquiryDetailsDialog({
             </div>
             <h3 className="text-xl font-black text-[#2e2837] mb-2">Change Organizer?</h3>
             <p className="text-sm font-medium text-[#7a708d] mb-6">
-              Are you sure you want to reassign this inquiry from <span className="font-bold text-[#6f2ea8]">{getOrganizerLabel(selectedInquiry?.meetingDetails?.organizerId || '')}</span> to <span className="font-bold text-[#8f1fd1]">{getOrganizerLabel(pendingOrganizerId)}</span>?
+              Are you sure you want to reassign this inquiry from{' '}
+              <span className="font-bold text-[#6f2ea8]">
+                {getOrganizerLabel(selectedInquiry?.meetingDetails?.organizerId || '')}
+              </span>{' '}
+              to{' '}
+              <span className="font-bold text-[#8f1fd1]">
+                {getOrganizerLabel(pendingOrganizerId)}
+              </span>
+              ?
             </p>
             <div className="flex gap-3">
               <Button

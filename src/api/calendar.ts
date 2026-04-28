@@ -10,6 +10,9 @@ export interface CalendarEntryPayload {
   location: string;
   description: string;
   eventType: string;
+  organizerId?: string;
+  eventId?: string;
+  inquiryUserId?: string;
 }
 
 export const getCalendarEntries = async (filters: any = {}): Promise<any[]> => {
@@ -19,5 +22,13 @@ export const getCalendarEntries = async (filters: any = {}): Promise<any[]> => {
 
 export const createCalendarEntry = async (data: CalendarEntryPayload): Promise<any> => {
   const response = await axiosInstance.post('/calendar', data);
+  return response.data.entry;
+};
+
+export const updateCalendarEntry = async (
+  entryId: string,
+  data: Partial<CalendarEntryPayload>
+): Promise<any> => {
+  const response = await axiosInstance.put(`/calendar/${entryId}`, data);
   return response.data.entry;
 };

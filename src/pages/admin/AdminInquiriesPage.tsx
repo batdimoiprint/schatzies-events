@@ -19,13 +19,6 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { getInquiries } from '@/api/inquiries';
@@ -36,17 +29,16 @@ import { ScheduleMeetingDialog } from '@/components/admin/ScheduleMeetingDialog'
 
 export function AdminInquiriesPage() {
   const queryClient = useQueryClient();
-  const {
-    data: inquiries = [],
-    isLoading: loading,
-  } = useQuery<any[]>({
+  const { data: inquiries = [], isLoading: loading } = useQuery<any[]>({
     queryKey: ['inquiries'],
     queryFn: getInquiries,
     refetchInterval: 10000, // polling every 10 seconds
   });
 
   const [searchQuery, setSearchQuery] = useState('');
-  const [sortBy, setSortBy] = useState<'date' | 'status' | 'eventType' | 'sender' | 'email'>('date');
+  const [sortBy, setSortBy] = useState<'date' | 'status' | 'eventType' | 'sender' | 'email'>(
+    'date'
+  );
   const [sortOrder, setSortOrder] = useState<'desc' | 'asc'>('asc');
   const [selectedInquiry, setSelectedInquiry] = useState<any | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -324,7 +316,7 @@ export function AdminInquiriesPage() {
           <Table>
             <TableHeader className="bg-[#faf7fd]">
               <TableRow className="border-b border-[#efe7f6]">
-                <TableHead 
+                <TableHead
                   className="h-12 text-lg font-black uppercase tracking-[0.06em] text-[#7c7390] cursor-pointer hover:text-[#8f1fd1] transition-colors"
                   onClick={() => toggleSort('sender')}
                 >
@@ -333,7 +325,7 @@ export function AdminInquiriesPage() {
                     <SortIcon field="sender" />
                   </div>
                 </TableHead>
-                <TableHead 
+                <TableHead
                   className="h-12 text-lg font-black uppercase tracking-[0.06em] text-[#7c7390] cursor-pointer hover:text-[#8f1fd1] transition-colors"
                   onClick={() => toggleSort('email')}
                 >
@@ -342,7 +334,7 @@ export function AdminInquiriesPage() {
                     <SortIcon field="email" />
                   </div>
                 </TableHead>
-                <TableHead 
+                <TableHead
                   className="h-12 text-lg font-black uppercase tracking-[0.06em] text-[#7c7390] cursor-pointer hover:text-[#8f1fd1] transition-colors"
                   onClick={() => toggleSort('eventType')}
                 >
@@ -351,7 +343,7 @@ export function AdminInquiriesPage() {
                     <SortIcon field="eventType" />
                   </div>
                 </TableHead>
-                <TableHead 
+                <TableHead
                   className="h-12 text-lg font-black uppercase tracking-[0.06em] text-[#7c7390] cursor-pointer hover:text-[#8f1fd1] transition-colors"
                   onClick={() => toggleSort('date')}
                 >
@@ -360,7 +352,7 @@ export function AdminInquiriesPage() {
                     <SortIcon field="date" />
                   </div>
                 </TableHead>
-                <TableHead 
+                <TableHead
                   className="h-12 text-lg font-black uppercase tracking-[0.06em] text-[#7c7390] cursor-pointer hover:text-[#8f1fd1] transition-colors"
                   onClick={() => toggleSort('status')}
                 >
