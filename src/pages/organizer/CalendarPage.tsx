@@ -106,7 +106,6 @@ function getLabelStyle(label: CalendarLabel) {
   if (isBaseCalendarLabel(label)) {
     return labelStyles[label];
   }
-
   return customLabelStyle;
 }
 
@@ -114,8 +113,7 @@ function getLabelPickerStyle(label: CalendarLabel): string {
   if (isBaseCalendarLabel(label)) {
     return labelPickerStyles[label];
   }
-
-  return 'bg-[#f0edf4] text-[#4f4a56]'; // Neutral Gray fallback
+  return 'bg-[#f0edf4] text-[#4f4a56]';
 }
 
 const monthTitleFormatter = new Intl.DateTimeFormat('en-US', {
@@ -139,7 +137,6 @@ function toDateKey(date: Date): string {
   const year = date.getFullYear();
   const month = String(date.getMonth() + 1).padStart(2, '0');
   const day = String(date.getDate()).padStart(2, '0');
-
   return `${year}-${month}-${day}`;
 }
 
@@ -177,7 +174,6 @@ function buildMonthlyViewDays(monthDate: Date): Date[] {
 
 function buildWeeklyViewDays(anchorDate: Date): Date[] {
   const weekStart = startOfWeek(anchorDate);
-
   return Array.from({ length: 7 }, (_, index) => addDays(weekStart, index));
 }
 
@@ -190,7 +186,6 @@ function compareEntriesByTime(a: CalendarEntry, b: CalendarEntry): number {
 function toDateTimeValue(dateKey: string, time: string): number {
   const [hours, minutes] = time.split(':').map((value) => Number(value));
   const date = parseDateKey(dateKey);
-
   return new Date(date.getFullYear(), date.getMonth(), date.getDate(), hours, minutes).getTime();
 }
 
@@ -226,7 +221,7 @@ function formatTime12Hour(time24?: string): string {
   if (isNaN(hours)) return time24;
   const ampm = hours >= 12 ? 'PM' : 'AM';
   hours = hours % 12;
-  hours = hours || 12; // convert 0 to 12
+  hours = hours || 12;
   return `${String(hours).padStart(2, '0')}:${m || '00'} ${ampm}`;
 }
 
@@ -274,18 +269,13 @@ export function CalendarPage() {
   }));
 
   useEffect(() => {
-    if (!isFilterMenuOpen) {
-      return;
-    }
-
+    if (!isFilterMenuOpen) return;
     const handlePointerDown = (event: MouseEvent) => {
       if (filterMenuRef.current && !filterMenuRef.current.contains(event.target as Node)) {
         setIsFilterMenuOpen(false);
       }
     };
-
     document.addEventListener('mousedown', handlePointerDown);
-
     return () => {
       document.removeEventListener('mousedown', handlePointerDown);
     };
@@ -295,7 +285,7 @@ export function CalendarPage() {
     setDraftEntry((previous) => ({
       ...previous,
       startDateKey: selectedDateKey,
-      endDateKey: selectedDateKey, // Syncs end date automatically to avoid validation errors
+      endDateKey: selectedDateKey,
     }));
   }, [selectedDateKey]);
 
@@ -306,30 +296,60 @@ export function CalendarPage() {
   useEffect(() => {
     const loadEntries = async () => {
       try {
-        const data = await getCalendarEntries();
+        const rawData: any = await getCalendarEntries();
 
-        if (Array.isArray(data) && data.length > 0) {
-          const formattedEntries: CalendarEntry[] = data.map((item: any) => {
+        let dataArray: any[] = [];
+        if (Array.isArray(rawData)) {
+          dataArray = rawData;
+        } else if (rawData?.entries && Array.isArray(rawData.entries)) {
+          dataArray = rawData.entries;
+        } else if (rawData?.data && Array.isArray(rawData.data)) {
+          dataArray = rawData.data;
+        }
+
+        if (dataArray.length > 0) {
+          const formattedEntries: CalendarEntry[] = dataArray.map((item: any) => {
             const rawLabel = String(item.label || item.type || 'Task');
             const formattedLabel =
               rawLabel.charAt(0).toUpperCase() + rawLabel.slice(1).toLowerCase();
 
+            const actualId =
+              item._id || item.id || item.entryId || item.eventId || item.uuid || createEntryId();
+
+            let startKey = item.startDateKey || item.date || item.createdAt || '';
+            if (startKey && startKey.includes('T')) startKey = startKey.split('T')[0];
+
+            let endKey = item.endDateKey || item.endDate || startKey;
+            if (endKey && endKey.includes('T')) endKey = endKey.split('T')[0];
+
+            // ROBUST TIME EXTRACTION - Prevents the 12:00 AM bug!
+            let extractedStartTime = item.startTime || item.time || '';
+            if (!extractedStartTime && item.date && item.date.includes('T')) {
+              extractedStartTime = item.date.split('T')[1].substring(0, 5);
+            }
+
+            let extractedEndTime = item.endTime || '';
+            if (!extractedEndTime && item.endDate && item.endDate.includes('T')) {
+              extractedEndTime = item.endDate.split('T')[1].substring(0, 5);
+            }
+
             return {
-              id: item.entryId || item.id || createEntryId(),
+              id: String(actualId),
               title: item.title || 'Untitled',
-              startDateKey: item.startDateKey || '',
-              startTime: item.startTime || '00:00',
-              endDateKey: item.endDateKey || item.startDateKey || '',
-              endTime: item.endTime || '00:00',
+              startDateKey: startKey,
+              startTime: extractedStartTime || '00:00',
+              endDateKey: endKey,
+              endTime: extractedEndTime || '00:00',
               label: formattedLabel as CalendarLabel,
               location: item.location || '',
               description: item.description || '',
               eventType: item.eventType || 'General',
-              isDone: Boolean(item.isDone || item.status === 'Completed'),
+              isDone: Boolean(item.isDone || item.status === 'Completed' || item.status === true),
             };
           });
-
           setEntries(formattedEntries);
+        } else {
+          setEntries([]);
         }
       } catch (error) {
         console.error('Failed to load calendar entries:', error);
@@ -345,7 +365,6 @@ export function CalendarPage() {
     if (viewMode === 'weekly') {
       return buildWeeklyViewDays(selectedDate);
     }
-
     return buildMonthlyViewDays(displayMonth);
   }, [displayMonth, selectedDate, viewMode]);
 
@@ -355,31 +374,26 @@ export function CalendarPage() {
         if (isBaseCalendarLabel(entry.label)) {
           return labelFilters[entry.label];
         }
-
         return true;
       })
       .sort((a, b) => {
         if (a.startDateKey === b.startDateKey) {
           return compareEntriesByTime(a, b);
         }
-
         return a.startDateKey.localeCompare(b.startDateKey);
       });
   }, [entries, labelFilters]);
 
   const entriesByDate = useMemo(() => {
     const map: Record<string, CalendarEntry[]> = {};
-
     filteredEntries.forEach((entry) => {
       getDateKeysInRange(entry.startDateKey, entry.endDateKey).forEach((dateKey) => {
         if (!map[dateKey]) {
           map[dateKey] = [];
         }
-
         map[dateKey].push(entry);
       });
     });
-
     return map;
   }, [filteredEntries]);
 
@@ -412,14 +426,11 @@ export function CalendarPage() {
     if (viewMode === 'monthly') {
       return monthTitleFormatter.format(displayMonth);
     }
-
     const weekStart = visibleDays[0];
     const weekEnd = visibleDays[visibleDays.length - 1];
-
     if (!weekStart || !weekEnd) {
       return '';
     }
-
     return `${shortDateFormatter.format(weekStart)} - ${shortDateFormatter.format(weekEnd)}`;
   }, [displayMonth, viewMode, visibleDays]);
 
@@ -434,7 +445,6 @@ export function CalendarPage() {
       setDisplayMonth((current) => new Date(current.getFullYear(), current.getMonth() - 1, 1));
       return;
     }
-
     handleSelectDate(addDays(selectedDate, -7));
   };
 
@@ -443,7 +453,6 @@ export function CalendarPage() {
       setDisplayMonth((current) => new Date(current.getFullYear(), current.getMonth() + 1, 1));
       return;
     }
-
     handleSelectDate(addDays(selectedDate, 7));
   };
 
@@ -464,21 +473,17 @@ export function CalendarPage() {
 
   const handleCreateCustomLabel = () => {
     const nextLabel = customLabelDraft.trim();
-
     if (!nextLabel) {
       setCustomLabelError('Enter a label name first.');
       return;
     }
-
     const alreadyExists = selectableLabels.some(
       (existingLabel) => existingLabel.toLowerCase() === nextLabel.toLowerCase()
     );
-
     if (alreadyExists) {
       setCustomLabelError('Label already exists.');
       return;
     }
-
     setCustomLabels((previous) => [...previous, nextLabel]);
     setDraftEntry((previous) => ({
       ...previous,
@@ -528,8 +533,9 @@ export function CalendarPage() {
       location: draftEntry.location.trim(),
       description: draftEntry.description.trim(),
       eventType: draftEntry.eventType,
-      date: new Date(startDateTime).toISOString(),
-      endDate: new Date(endDateTime).toISOString(),
+      // JUST USE EXACT DATES AS SHOWN IN YOUR SWAGGER
+      date: normalizedStartDateKey,
+      endDate: normalizedEndDateKey,
     };
 
     try {
@@ -543,8 +549,15 @@ export function CalendarPage() {
         setEditingId(null);
       } else {
         const createdItem = await createCalendarEntry(payload);
+        const newId =
+          createdItem?.entryId ||
+          createdItem?._id ||
+          createdItem?.id ||
+          createdItem?.eventId ||
+          createEntryId();
+
         const newEntry: CalendarEntry = {
-          id: createdItem?.entryId || createdItem?.id || createEntryId(),
+          id: String(newId),
           ...payload,
           label: draftEntry.label as CalendarLabel,
           isDone: false,
@@ -914,7 +927,7 @@ export function CalendarPage() {
                     </div>
 
                     {isAddingCustomLabel ? (
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2 pt-1">
                         <Input
                           value={customLabelDraft}
                           onChange={(event) => {
@@ -1347,4 +1360,3 @@ export function CalendarPage() {
     </section>
   );
 }
-//kahit ano
