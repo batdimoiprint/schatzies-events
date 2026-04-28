@@ -1,4 +1,4 @@
-import { useMemo, useState, type ChangeEvent, type FormEvent } from 'react';
+import { useMemo, useState, type ChangeEvent, type DragEvent, type FormEvent } from 'react';
 import {
   CalendarDays,
   ChevronLeft,
@@ -38,6 +38,24 @@ type TaskCard = {
     done: boolean;
   }>;
 };
+
+type TaskLane = 'todo' | 'in-progress' | 'completed';
+
+type PlannerBoardTask = {
+  id: string;
+  title: string;
+  details: string;
+  editorType: TaskEditorType;
+  lane: TaskLane;
+  checklist?: Array<{
+    id: string;
+    label: string;
+    done: boolean;
+    doneAt?: string;
+  }>;
+};
+
+type TaskEditorType = 'Text' | 'Toggle List' | 'Bulleted List' | 'Numbered List' | 'Divider';
 
 type PlannerQuickNote = {
   id: string;
@@ -130,13 +148,75 @@ const taskCards: TaskCard[] = [
   },
 ];
 
+const initialBoardTasks: PlannerBoardTask[] = [
+  {
+    id: 'board-task-food',
+    title: 'Food Setup Checklist',
+    details: 'Finalize buffet lineup and serving order for event day.',
+    editorType: 'Text',
+    lane: 'todo',
+    checklist: [],
+  },
+  {
+    id: 'board-task-decor',
+    title: 'Decorations Final Pass',
+    details: 'Confirm stage decor, photo wall, and table centerpiece placement.',
+    editorType: 'Bulleted List',
+    lane: 'in-progress',
+    checklist: [],
+  },
+  {
+    id: 'board-task-photo',
+    title: 'Photobooth Layout',
+    details: 'Validate backdrop area, queue flow, and props table position.',
+    editorType: 'Numbered List',
+    lane: 'completed',
+    checklist: [],
+  },
+];
+
+const taskLaneConfig: Array<{
+  id: TaskLane;
+  label: string;
+  dotClassName: string;
+  panelClassName: string;
+  cardOuterClassName: string;
+  cardTitleClassName: string;
+}> = [
+  {
+    id: 'todo',
+    label: 'To Do',
+    dotClassName: 'bg-[#e6d81d]',
+    panelClassName: 'border-[#e4e4d0] bg-[#fafaf4]',
+    cardOuterClassName: 'border-[#cae4cb] bg-[#dff0e0]',
+    cardTitleClassName: 'text-[#4f8759]',
+  },
+  {
+    id: 'in-progress',
+    label: 'In Progress',
+    dotClassName: 'bg-[#2ea4ff]',
+    panelClassName: 'border-[#d3e7f7] bg-[#f4f9ff]',
+    cardOuterClassName: 'border-[#ead4e9] bg-[#f0ddf0]',
+    cardTitleClassName: 'text-[#712466]',
+  },
+  {
+    id: 'completed',
+    label: 'Completed',
+    dotClassName: 'bg-[#2ec24f]',
+    panelClassName: 'border-[#d8eddc] bg-[#f5fcf7]',
+    cardOuterClassName: 'border-[#d4dfec] bg-[#deebf8]',
+    cardTitleClassName: 'text-[#1f4c82]',
+  },
+];
+
 const overviewCards = [
   {
     id: 'overview-package',
     label: 'Event Package',
-    value: 'Blooms Package',
+    value: 'Blooms\nPackage',
     imageSrc: '/Pictures/organizerpics/event-package-illustration.png',
     accent: 'text-[#6b2aa5] bg-[#fbf6ff] border-[#eee3fb]',
+    valueClassName: 'text-[14px] font-semibold leading-[1.15] text-[#6d677b]',
   },
   {
     id: 'overview-pax',
@@ -144,13 +224,15 @@ const overviewCards = [
     value: '40',
     imageSrc: '/Pictures/organizerpics/event-pax-illustration.png',
     accent: 'text-[#88511a] bg-[#fff8ef] border-[#f3e2cc]',
+    valueClassName: 'text-[32px] font-semibold leading-none tracking-tight text-[#4f4a58]',
   },
   {
     id: 'overview-type',
     label: 'Event Type',
-    value: 'Debut',
+    value: 'Debut\nEvent Type',
     imageSrc: '/Pictures/organizerpics/event-type-illustration.png',
     accent: 'text-[#1f6ea6] bg-[#f3f8ff] border-[#d7e7f7]',
+    valueClassName: 'text-[12px] font-semibold leading-[1.15] text-[#6d677b]',
   },
   {
     id: 'overview-cost',
@@ -158,6 +240,7 @@ const overviewCards = [
     value: '50,000',
     imageSrc: '/Pictures/organizerpics/event-cost-illustration.png',
     accent: 'text-[#a6541d] bg-[#fff4ec] border-[#f3dccb]',
+    valueClassName: 'text-[32px] font-semibold leading-none tracking-tight text-[#4f4a58]',
   },
 ];
 
@@ -939,8 +1022,20 @@ const overviewScheduleSummary = [
 
 export function EventPlannerPage() {
   const [selectedProjectId, setSelectedProjectId] = useState(1);
-  const [activeTab, setActiveTab] = useState<PlannerTab>('task');
+  const [activeTab, setActiveTab] = useState<PlannerTab>('overview');
   const [plannerTaskCards, setPlannerTaskCards] = useState<TaskCard[]>(taskCards);
+  const [boardTasks, setBoardTasks] = useState<PlannerBoardTask[]>(initialBoardTasks);
+  const [isTaskPreviewOpen, setIsTaskPreviewOpen] = useState(false);
+  const [selectedBoardTaskId, setSelectedBoardTaskId] = useState<string | null>(null);
+  const [taskPreviewTitle, setTaskPreviewTitle] = useState('');
+  const [taskPreviewDetails, setTaskPreviewDetails] = useState('');
+  const [taskPreviewChecklist, setTaskPreviewChecklist] = useState<
+    Array<{ id: string; label: string; done: boolean; doneAt?: string }>
+  >([]);
+  const [taskActionMessage, setTaskActionMessage] = useState('');
+  const [taskActionTone, setTaskActionTone] = useState<'success' | 'info' | 'error'>('info');
+  const [taskCardMenuOpenFor, setTaskCardMenuOpenFor] = useState<string | null>(null);
+  const [draggedTaskId, setDraggedTaskId] = useState<string | null>(null);
   const [checklistDeleteTarget, setChecklistDeleteTarget] = useState<{
     id: string;
     label: string;
@@ -957,6 +1052,14 @@ export function EventPlannerPage() {
   const selectedProject = useMemo(() => {
     return projectSlots.find((project) => project.id === selectedProjectId) ?? projectSlots[0];
   }, [selectedProjectId]);
+
+  const selectedBoardTask = useMemo(() => {
+    if (!selectedBoardTaskId) {
+      return null;
+    }
+
+    return boardTasks.find((task) => task.id === selectedBoardTaskId) ?? null;
+  }, [boardTasks, selectedBoardTaskId]);
 
   const resetNoteDraft = () => {
     setNoteDraftTitle('');
@@ -1056,19 +1159,246 @@ export function EventPlannerPage() {
     );
   };
 
-  const handleCompleteTaskCard = (cardId: string) => {
-    setPlannerTaskCards((previousCards) =>
-      previousCards.map((card) => {
-        if (card.id !== cardId) {
-          return card;
+  const handleAddEmptyTask = () => {
+    const nextTask: PlannerBoardTask = {
+      id: `board-task-${Date.now()}`,
+      title: '',
+      details: '',
+      editorType: 'Text',
+      lane: 'todo',
+    };
+
+    setBoardTasks((previous) => [nextTask, ...previous]);
+  };
+
+  const handleDragTaskStart = (event: DragEvent<HTMLElement>, taskId: string) => {
+    const task = boardTasks.find((t) => t.id === taskId);
+    if (!task || task.lane === 'completed') {
+      event.preventDefault();
+      return;
+    }
+
+    event.dataTransfer.setData('text/plain', taskId);
+    event.dataTransfer.effectAllowed = 'move';
+    setDraggedTaskId(taskId);
+  };
+
+  const handleDragTaskEnd = () => {
+    setDraggedTaskId(null);
+  };
+
+  const handleLaneDragOver = (event: DragEvent<HTMLElement>) => {
+    event.preventDefault();
+    event.dataTransfer.dropEffect = 'move';
+  };
+
+  const handleDropTaskToLane = (event: DragEvent<HTMLElement>, lane: TaskLane) => {
+    event.preventDefault();
+    const droppedId = event.dataTransfer.getData('text/plain') || draggedTaskId;
+
+    if (!droppedId) {
+      return;
+    }
+
+    // find current task to inspect its lane
+    const current = boardTasks.find((t) => t.id === droppedId);
+    if (!current) return;
+
+    // disallow dragging back to To Do once it has been moved to In Progress
+    if (current.lane === 'in-progress' && lane === 'todo') {
+      return;
+    }
+
+    // disallow moving completed tasks back to other lanes
+    if (current.lane === 'completed' && lane !== 'completed') {
+      return;
+    }
+
+    setBoardTasks((previousTasks) =>
+      previousTasks.map((task) => {
+        if (task.id !== droppedId) return task;
+
+        // when moving from To Do -> In Progress, auto-convert to a checklist if none exists
+        if (task.lane === 'todo' && lane === 'in-progress') {
+          const hasChecklist = Array.isArray(task.checklist) && task.checklist.length > 0;
+          if (!hasChecklist) {
+            const items = task.details
+              .split('\n')
+              .map((s) => s.trim())
+              .filter(Boolean)
+              .map((line, idx) => ({ id: `${task.id}-chk-${idx}`, label: line, done: false }));
+
+            if (items.length === 0) {
+              items.push({ id: `${task.id}-chk-0`, label: 'New checklist item', done: false });
+            }
+
+            return { ...task, lane, checklist: items };
+          }
         }
 
+        if (lane === 'completed') {
+          const timestamp = new Date().toISOString();
+          const checklistSource: Array<{
+            id: string;
+            label: string;
+            done: boolean;
+            doneAt?: string;
+          }> =
+            Array.isArray(task.checklist) && task.checklist.length > 0
+              ? task.checklist
+              : task.details
+                  .split('\n')
+                  .map((s) => s.trim())
+                  .filter(Boolean)
+                  .map((line, idx) => ({ id: `${task.id}-chk-${idx}`, label: line, done: false }));
+
+          const checklist =
+            checklistSource.length > 0
+              ? checklistSource.map((item) => ({
+                  ...item,
+                  done: true,
+                  doneAt: item.doneAt ?? timestamp,
+                }))
+              : [
+                  {
+                    id: `${task.id}-chk-0`,
+                    label: 'Task completed',
+                    done: true,
+                    doneAt: timestamp,
+                  },
+                ];
+
+          return { ...task, lane, checklist };
+        }
+
+        return { ...task, lane };
+      })
+    );
+
+    setDraggedTaskId(null);
+  };
+
+  const openTaskPreview = (taskId: string) => {
+    const selectedTask = boardTasks.find((task) => task.id === taskId);
+    setSelectedBoardTaskId(taskId);
+    setTaskPreviewTitle(selectedTask?.title ?? '');
+    setTaskPreviewDetails(selectedTask?.details ?? '');
+    setTaskPreviewChecklist(
+      selectedTask?.lane === 'todo'
+        ? selectedTask?.checklist?.length
+          ? selectedTask.checklist
+          : (selectedTask?.details ?? '')
+              .split('\n')
+              .map((line) => line.trim())
+              .filter(Boolean)
+              .map((line, index) => ({
+                id: `${selectedTask?.id ?? taskId}-chk-${index}`,
+                label: line,
+                done: false,
+              }))
+        : (selectedTask?.checklist ?? []).map((item) => ({
+            ...item,
+            doneAt: item.doneAt,
+          }))
+    );
+    setTaskActionMessage(`Editing ${selectedTask?.title || 'task'}.`);
+    setTaskActionTone('info');
+    setIsTaskPreviewOpen(true);
+  };
+
+  const handleSaveTaskPreview = () => {
+    if (!selectedBoardTaskId || selectedBoardTask?.lane !== 'todo') {
+      return;
+    }
+
+    const normalizedChecklist = taskPreviewChecklist
+      .map((item) => ({
+        ...item,
+        label: item.label.trim(),
+      }))
+      .filter((item) => item.label.length > 0)
+      .map((item) => ({
+        id: item.id,
+        label: item.label,
+        done: false,
+      }));
+
+    setBoardTasks((previousTasks) =>
+      previousTasks.map((task) =>
+        task.id === selectedBoardTaskId
+          ? {
+              ...task,
+              title: taskPreviewTitle,
+              details: normalizedChecklist.map((item) => item.label).join('\n'),
+              checklist: normalizedChecklist,
+            }
+          : task
+      )
+    );
+
+    setTaskActionMessage(`Saved ${taskPreviewTitle || 'task'} successfully.`);
+    setTaskActionTone('success');
+
+    setIsTaskPreviewOpen(false);
+    setSelectedBoardTaskId(null);
+  };
+
+  const handleDeleteBoardTask = (taskId: string) => {
+    const targetTask = boardTasks.find((task) => task.id === taskId);
+    setBoardTasks((previousTasks) => previousTasks.filter((task) => task.id !== taskId));
+    setTaskCardMenuOpenFor(null);
+    setTaskActionMessage(`Deleted ${targetTask?.title || 'task'} successfully.`);
+    setTaskActionTone('error');
+  };
+
+  const handleToggleBoardTaskChecklistItem = (taskId: string, itemId: string) => {
+    const timestamp = new Date().toISOString();
+    setBoardTasks((previousTasks) =>
+      previousTasks.map((task) => {
+        if (task.id !== taskId || !Array.isArray(task.checklist)) return task;
+
         return {
-          ...card,
-          items: card.items.map((item) => ({ ...item, done: true })),
+          ...task,
+          checklist: task.checklist.map((item) =>
+            item.id === itemId
+              ? {
+                  ...item,
+                  done: !item.done,
+                  doneAt: !item.done ? timestamp : undefined,
+                }
+              : item
+          ),
         };
       })
     );
+  };
+
+  const formatChecklistTimestamp = (value?: string) => {
+    if (!value) {
+      return 'Pending';
+    }
+
+    return new Date(value).toLocaleString([], {
+      dateStyle: 'medium',
+      timeStyle: 'short',
+    });
+  };
+
+  const handleAddTodoChecklistItem = () => {
+    setTaskPreviewChecklist((previous) => [
+      ...previous,
+      { id: `todo-item-${Date.now()}`, label: '', done: false },
+    ]);
+  };
+
+  const handleUpdateTodoChecklistItem = (itemId: string, label: string) => {
+    setTaskPreviewChecklist((previous) =>
+      previous.map((item) => (item.id === itemId ? { ...item, label } : item))
+    );
+  };
+
+  const handleRemoveTodoChecklistItem = (itemId: string) => {
+    setTaskPreviewChecklist((previous) => previous.filter((item) => item.id !== itemId));
   };
 
   const checklistTaskCard = useMemo(() => {
@@ -1282,22 +1612,30 @@ export function EventPlannerPage() {
           </div>
 
           {activeTab === 'overview' ? (
-            <section className="rounded-2xl border border-[#ddd8e8] bg-white p-4 shadow-[0_6px_14px_rgba(31,18,54,0.05)]">
-              <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+            <section className="rounded-[16px] border border-[#d8d3df] bg-[#f7f5f9] p-2.5 shadow-[0_6px_14px_rgba(31,18,54,0.05)]">
+              <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
                 {overviewCards.map((card) => (
                   <article
                     key={card.id}
-                    className={`rounded-xl border px-3 py-2.5 shadow-[0_4px_10px_rgba(31,18,54,0.06)] ${card.accent}`}
+                    className={`min-h-[74px] rounded-lg border px-3 py-2 shadow-[0_2px_5px_rgba(31,18,54,0.06)] ${card.accent}`}
                   >
-                    <p className="text-[11px] font-semibold text-[#6f687f]">{card.label}</p>
-                    <div className="mt-2 flex items-center justify-between gap-2">
-                      <p className="text-[18px] font-black leading-tight text-[#2f2b39]">
+                    <p className="truncate text-[11px] font-semibold text-[#6f687f]">
+                      {card.label}
+                    </p>
+                    <div className="mt-1.5 flex items-center justify-between gap-2">
+                      <p
+                        className={[
+                          'min-w-0 flex-1 whitespace-pre-line',
+                          card.valueClassName ??
+                            'text-[24px] font-black leading-none tracking-tight text-[#2f2b39]',
+                        ].join(' ')}
+                      >
                         {card.value}
                       </p>
                       <img
                         src={card.imageSrc}
                         alt=""
-                        className="h-10 w-12 object-contain"
+                        className="h-9 w-10 shrink-0 object-contain"
                         loading="lazy"
                       />
                     </div>
@@ -1305,45 +1643,60 @@ export function EventPlannerPage() {
                 ))}
               </div>
 
-              <div className="mt-4 grid gap-3 xl:grid-cols-[1.4fr_1fr_0.9fr_0.9fr]">
-                <article className="rounded-xl border border-[#e4dfee] bg-white p-3 shadow-[0_4px_10px_rgba(31,18,54,0.06)]">
-                  <p className="text-[11px] font-semibold text-[#6f687f]">Service Requirements</p>
-                  <div className="mt-2 space-y-1 text-[11px] text-[#6f687f]">
-                    {overviewServiceRequirements.map((item, index) => (
-                      <p key={`${item}-${index}`}>{item}</p>
-                    ))}
-                  </div>
-                </article>
+              <div className="mt-2 grid gap-2 xl:grid-cols-[0.95fr_1fr_0.92fr_0.98fr]">
+                <div className="space-y-2">
+                  <article className="min-h-[166px] rounded-lg border border-[#ded9e7] bg-white p-3 shadow-[0_2px_6px_rgba(31,18,54,0.05)]">
+                    <p className="text-[12px] font-bold text-[#5e586d]">Service Requirements</p>
+                    <div className="mt-2 space-y-1 text-[11px] leading-snug text-[#6f687f]">
+                      {overviewServiceRequirements.map((item, index) => (
+                        <p key={`${item}-${index}`}>{item}</p>
+                      ))}
+                    </div>
+                  </article>
 
-                <article className="rounded-xl border border-[#e4dfee] bg-white p-3 shadow-[0_4px_10px_rgba(31,18,54,0.06)]">
-                  <p className="text-[11px] font-semibold text-[#6f687f]">Allocation Resources</p>
+                  <article className="min-h-[112px] rounded-lg border border-[#ded9e7] bg-white p-3 shadow-[0_2px_6px_rgba(31,18,54,0.05)]">
+                    <p className="text-[12px] font-bold text-[#5e586d]">Decorations</p>
+                    <div className="mt-2 text-[10px] leading-snug text-[#6f687f]">
+                      <p>Theme: Enchanted Forest</p>
+                      <p>Fairy greens, hanging vines, twinkle lights, wood accents.</p>
+                      <p className="mt-1 font-semibold text-[#5a546a]">Materials</p>
+                      <p>1. Recycled crate centerpieces</p>
+                      <p>2. Rustic lantern lighting</p>
+                      <p>3. Willow arch and floral drapes</p>
+                      <p>4. Moss runner tablescape</p>
+                    </div>
+                  </article>
+                </div>
+
+                <article className="min-h-[286px] rounded-lg border border-[#ded9e7] bg-white p-3 shadow-[0_2px_6px_rgba(31,18,54,0.05)]">
+                  <p className="text-[12px] font-bold text-[#5e586d]">Allocation Resources</p>
                   <div className="mt-2 space-y-2">
                     {overviewAllocationResources.map((resource) => (
                       <div
                         key={resource.title}
-                        className="rounded-lg border border-[#ece8f0] bg-[#fbf9fe] p-2 text-[10px] text-[#6f687f]"
+                        className="rounded-md border border-[#ece8f0] bg-[#fbf9fe] p-2.5 text-[10px] leading-snug text-[#6f687f]"
                       >
-                        <p className="text-[11px] font-semibold text-[#3a3442]">{resource.title}</p>
-                        <p className="text-[10px]">{resource.detail}</p>
-                        {resource.time ? <p className="text-[10px]">{resource.time}</p> : null}
+                        <p className="text-[11px] font-black text-[#3a3442]">{resource.title}</p>
+                        <p className="mt-0.5 whitespace-pre-line break-words">{resource.detail}</p>
+                        {resource.time ? (
+                          <p className="mt-1 text-[10px] text-[#8c8498]">{resource.time}</p>
+                        ) : null}
                       </div>
                     ))}
                   </div>
                 </article>
 
-                <article className="rounded-xl border border-[#e4dfee] bg-white p-3 shadow-[0_4px_10px_rgba(31,18,54,0.06)]">
-                  <p className="text-[11px] font-semibold text-[#6f687f]">
-                    Checklist &amp; Meeting
-                  </p>
-                  <div className="mt-2 space-y-2 text-[10px] text-[#6f687f]">
-                    <div>
-                      <p className="text-[11px] font-semibold text-[#3a3442]">Meetings</p>
+                <article className="min-h-[286px] rounded-lg border border-[#ded9e7] bg-white p-3 shadow-[0_2px_6px_rgba(31,18,54,0.05)]">
+                  <p className="text-[12px] font-bold text-[#5e586d]">Checklist &amp; Meeting</p>
+                  <div className="mt-2 space-y-2 text-[11px] leading-snug text-[#6f687f]">
+                    <div className="min-h-[82px] rounded-md border border-[#ece8f0] bg-[#fbf9fe] p-2">
+                      <p className="text-[11px] font-black text-[#3a3442]">Meetings</p>
                       {overviewMeetings.map((meeting) => (
                         <p key={meeting}>{meeting}</p>
                       ))}
                     </div>
-                    <div>
-                      <p className="text-[11px] font-semibold text-[#3a3442]">Checked</p>
+                    <div className="min-h-[162px] rounded-md border border-[#ece8f0] bg-[#fbf9fe] p-2">
+                      <p className="text-[11px] font-black text-[#3a3442]">Checked</p>
                       {overviewChecklist.map((item) => (
                         <p key={item}>• {item}</p>
                       ))}
@@ -1351,20 +1704,18 @@ export function EventPlannerPage() {
                   </div>
                 </article>
 
-                <article className="rounded-xl border border-[#e4dfee] bg-white p-3 shadow-[0_4px_10px_rgba(31,18,54,0.06)]">
-                  <p className="text-[11px] font-semibold text-[#6f687f]">Program Flow</p>
-                  <div className="mt-2 space-y-3">
+                <article className="min-h-[286px] rounded-lg border border-[#ded9e7] bg-white p-3 shadow-[0_2px_6px_rgba(31,18,54,0.05)]">
+                  <p className="text-[12px] font-bold text-[#5e586d]">Program Flow</p>
+                  <div className="mt-2 space-y-2">
                     {overviewScheduleSummary.map((summary) => (
                       <div
                         key={summary.id}
-                        className="grid grid-cols-[90px_1fr] gap-3 text-[10px] text-[#6f687f]"
+                        className="grid grid-cols-[76px_1fr] gap-2 text-[10px] leading-snug text-[#6f687f]"
                       >
                         <p>{summary.timeRange}</p>
-                        <div className="border-l border-[#ebe6f0] pl-3">
-                          <p className="text-[11px] font-semibold text-[#3a3442]">
-                            {summary.title}
-                          </p>
-                          <p className="mt-1 text-[10px] italic leading-relaxed text-[#8a8495]">
+                        <div className="border-l border-[#ebe6f0] pl-2">
+                          <p className="text-[11px] font-black text-[#3a3442]">{summary.title}</p>
+                          <p className="mt-0.5 line-clamp-3 text-[10px] italic text-[#8a8495]">
                             {summary.body}
                           </p>
                         </div>
@@ -1382,95 +1733,214 @@ export function EventPlannerPage() {
                     Task Board
                   </p>
                   <p className="text-sm font-semibold text-[#5e586f]">
-                    Connected to Event Manager, RSVP, Vendors, and Cost Breakdown
+                    Drag tasks across To Do, In Progress, and Completed.
                   </p>
                 </div>
-                <span className="inline-flex rounded-full border border-[#e2dbee] bg-[#f8f4fd] px-3 py-1 text-xs font-black text-[#7c1cc9]">
-                  {plannerTaskCards.reduce(
-                    (count, card) => count + card.items.filter((item) => item.done).length,
-                    0
-                  )}
-                  /{plannerTaskCards.reduce((count, card) => count + card.items.length, 0)} tasks
-                  done
-                </span>
+
+                <button
+                  type="button"
+                  onClick={handleAddEmptyTask}
+                  className="inline-flex h-9 items-center gap-2 rounded-lg border border-[#e1d8ef] bg-white px-4 text-xs font-black text-[#7c1cc9] transition hover:bg-[#f8f3ff]"
+                >
+                  <Plus className="size-4" />
+                  Add Task
+                </button>
               </div>
 
-              <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-2">
-                {plannerTaskCards.map((taskCard) => {
-                  const completedCount = taskCard.items.filter((item) => item.done).length;
-                  const totalItems = taskCard.items.length;
-                  const progress =
-                    totalItems > 0 ? Math.round((completedCount / totalItems) * 100) : 0;
+              {taskActionMessage ? (
+                <div
+                  className={[
+                    'mb-3 rounded-lg border px-3 py-2 text-[12px] font-semibold',
+                    taskActionTone === 'success'
+                      ? 'border-[#c9e9cb] bg-[#edf9ee] text-[#2e6b37]'
+                      : taskActionTone === 'error'
+                        ? 'border-[#f4c8d4] bg-[#fff0f5] text-[#b53e66]'
+                        : 'border-[#d9e3f4] bg-[#f4f8ff] text-[#3f5f9a]',
+                  ].join(' ')}
+                >
+                  {taskActionMessage}
+                </div>
+              ) : null}
+
+              <div className="grid gap-3 xl:grid-cols-3">
+                {taskLaneConfig.map((lane) => {
+                  const laneTasks = boardTasks.filter((task) => task.lane === lane.id);
 
                   return (
                     <article
-                      key={taskCard.id}
-                      className={`overflow-hidden rounded-2xl border p-3 shadow-[0_2px_8px_rgba(32,20,52,0.04)] ${taskCard.frameClassName}`}
+                      key={lane.id}
+                      className={[
+                        'rounded-xl border p-2.5 shadow-[0_2px_8px_rgba(32,20,52,0.04)]',
+                        lane.panelClassName,
+                      ].join(' ')}
                     >
+                      <div className="mb-2 flex items-center gap-2 px-1">
+                        <span
+                          className={`inline-flex size-2.5 rounded-full ${lane.dotClassName}`}
+                        />
+                        <h3 className="text-[18px] font-black tracking-tight text-[#2f2b39]">
+                          {lane.label} ({laneTasks.length})
+                        </h3>
+                      </div>
+
                       <div
-                        className={`flex h-full min-h-[260px] flex-col rounded-xl bg-linear-to-br p-4 ${taskCard.accentClassName}`}
+                        className="min-h-[340px] space-y-2 rounded-lg border border-dashed border-[#d8d2e2] bg-white/60 p-2"
+                        onDragOver={handleLaneDragOver}
+                        onDrop={(event) => handleDropTaskToLane(event, lane.id)}
                       >
-                        <div className="flex items-center justify-between">
-                          <h3 className="text-[15px] font-black tracking-tight">
-                            {taskCard.title}
-                          </h3>
-                          <span className="rounded-full bg-white/65 px-2 py-0.5 text-[10px] font-black uppercase tracking-wide">
-                            {taskCard.badge}
-                          </span>
-                        </div>
+                        {laneTasks.map((task) => (
+                          <article
+                            key={task.id}
+                            draggable={task.lane !== 'completed'}
+                            onDragStart={(event) => handleDragTaskStart(event, task.id)}
+                            onDragEnd={handleDragTaskEnd}
+                            onClick={() => openTaskPreview(task.id)}
+                            className={[
+                              'group relative cursor-grab rounded-xl border p-3 shadow-[0_2px_6px_rgba(31,18,54,0.06)] active:cursor-grabbing',
+                              lane.cardOuterClassName,
+                            ].join(' ')}
+                          >
+                            <div className="mb-2 flex items-center justify-between gap-2">
+                              <p
+                                className={[
+                                  'truncate text-[32px] font-black leading-none',
+                                  lane.cardTitleClassName,
+                                ].join(' ')}
+                              >
+                                {task.title || 'Note Title Here'}
+                              </p>
 
-                        <div className="mt-4 flex-1 rounded-2xl border border-white/70 bg-white/95 p-4 text-[#352f40] shadow-[0_10px_24px_rgba(32,20,52,0.08)]">
-                          <div className="flex items-center justify-between text-[11px] font-semibold text-[#7f7891]">
-                            <span>{taskCard.due}</span>
-                            <span>{taskCard.owner}</span>
-                          </div>
-
-                          <div className="mt-3 h-2 rounded-full bg-[#ebe6f3] p-[2px]">
-                            <div
-                              className="h-full rounded-full bg-linear-to-r from-[#f347a5] to-[#8f1fd1]"
-                              style={{ width: `${progress}%` }}
-                            />
-                          </div>
-                          <p className="mt-1 text-[10px] font-bold uppercase tracking-wide text-[#8e869e]">
-                            {completedCount}/{totalItems} completed
-                          </p>
-
-                          <ul className="mt-3 space-y-2">
-                            {taskCard.items.map((item) => (
-                              <li key={item.id} className="flex items-start gap-2">
+                              <div
+                                className="relative"
+                                onClick={(event) => event.stopPropagation()}
+                              >
                                 <button
                                   type="button"
-                                  onClick={() => handleToggleTaskItem(taskCard.id, item.id)}
-                                  className={[
-                                    'mt-0.5 inline-flex size-4 shrink-0 items-center justify-center rounded border text-[10px] font-black transition-all',
-                                    item.done
-                                      ? 'border-[#7c1cc9] bg-[#f4eefb] text-[#7c1cc9]'
-                                      : 'border-[#cfc7dc] bg-white text-transparent hover:border-[#7c1cc9] hover:text-[#7c1cc9]',
-                                  ].join(' ')}
-                                  aria-label={`${item.done ? 'Uncheck' : 'Check'} ${item.label}`}
+                                  onClick={() =>
+                                    setTaskCardMenuOpenFor((previous) =>
+                                      previous === task.id ? null : task.id
+                                    )
+                                  }
+                                  className="inline-flex size-7 items-center justify-center rounded-md text-[18px] leading-none text-[#3e384b] transition hover:bg-white/70"
+                                  aria-label="Task options"
                                 >
-                                  ✓
+                                  ⋯
                                 </button>
-                                <span
-                                  className={[
-                                    'text-[12px] leading-relaxed',
-                                    item.done ? 'text-[#8a8397] line-through' : 'text-[#4f4960]',
-                                  ].join(' ')}
-                                >
-                                  {item.label}
-                                </span>
-                              </li>
-                            ))}
-                          </ul>
 
-                          <button
-                            type="button"
-                            onClick={() => handleCompleteTaskCard(taskCard.id)}
-                            className="mt-3 inline-flex rounded-full border border-[#d9d0e7] px-3 py-1 text-[10px] font-black uppercase tracking-wide text-[#6b637e] transition hover:bg-[#f7f3fb]"
-                          >
-                            Complete all
-                          </button>
-                        </div>
+                                {taskCardMenuOpenFor === task.id ? (
+                                  <div className="absolute right-0 top-8 z-20 w-28 rounded-md border border-[#ddd7e8] bg-white py-1 shadow-[0_10px_20px_rgba(35,20,57,0.14)]">
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        setTaskCardMenuOpenFor(null);
+                                        openTaskPreview(task.id);
+                                      }}
+                                      className="flex w-full items-center px-3 py-1.5 text-left text-[12px] font-semibold text-[#4d465a] transition hover:bg-[#f7f3fb]"
+                                    >
+                                      Edit
+                                    </button>
+                                    <button
+                                      type="button"
+                                      onClick={() => handleDeleteBoardTask(task.id)}
+                                      className="flex w-full items-center px-3 py-1.5 text-left text-[12px] font-semibold text-[#4d465a] transition hover:bg-[#f7f3fb]"
+                                    >
+                                      Delete
+                                    </button>
+                                  </div>
+                                ) : null}
+                              </div>
+                            </div>
+
+                            <div className="rounded-2xl border border-[#e4dfeb] bg-white p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.6)]">
+                              <span className="inline-flex rounded-full bg-[#ffe7ef] px-2 py-0.5 text-[9px] font-bold text-[#cf3a79]">
+                                1 Service
+                              </span>
+
+                              {task.title.trim() || task.details.trim() ? (
+                                <>
+                                  <p className="mt-2 text-[43px] font-black leading-none text-[#1e1b26]">
+                                    {(task.title || 'Task').split(' ')[0]}
+                                  </p>
+                                  <p className="mt-2 line-clamp-6 text-[12px] leading-snug text-[#6f687f]">
+                                    {task.details || 'No details yet.'}
+                                  </p>
+                                </>
+                              ) : (
+                                <p className="mt-2 text-[12px] font-semibold italic text-[#8f879f]">
+                                  This task is empty
+                                </p>
+                              )}
+                              {lane.id === 'in-progress' &&
+                              Array.isArray(task.checklist) &&
+                              task.checklist.length > 0 ? (
+                                <div className="mt-4">
+                                  {/* progress bar */}
+                                  <div className="mb-2 flex items-center justify-between gap-2">
+                                    <div className="flex-1">
+                                      <div className="h-2 w-full rounded-full bg-[#eee]">
+                                        <div
+                                          className="h-2 rounded-full bg-[#2ea4ff]"
+                                          style={{
+                                            width: `${Math.round(
+                                              (task.checklist.filter((i) => i.done).length /
+                                                task.checklist.length) *
+                                                100 || 0
+                                            )}%`,
+                                          }}
+                                        />
+                                      </div>
+                                    </div>
+                                    <div className="ml-3 w-14 text-right text-[12px] font-bold text-[#2f2b39]">
+                                      {`${Math.round(
+                                        (task.checklist.filter((i) => i.done).length /
+                                          task.checklist.length) *
+                                          100 || 0
+                                      )}%`}
+                                    </div>
+                                  </div>
+
+                                  <ul className="space-y-2">
+                                    {task.checklist.map((item) => (
+                                      <li key={item.id} className="flex items-start gap-2">
+                                        <input
+                                          type="checkbox"
+                                          checked={!!item.done}
+                                          onChange={(e) => {
+                                            e.stopPropagation();
+                                            handleToggleBoardTaskChecklistItem(task.id, item.id);
+                                          }}
+                                          onClick={(e) => e.stopPropagation()}
+                                          className="mt-1 h-4 w-4 cursor-pointer rounded border-[#d9d9df]"
+                                        />
+                                        <span
+                                          className={`text-[12px] leading-snug ${item.done ? 'line-through text-[#9b94a7]' : 'text-[#6f687f]'}`}
+                                        >
+                                          {item.label}
+                                        </span>
+                                      </li>
+                                    ))}
+                                  </ul>
+                                </div>
+                              ) : null}
+                              {task.lane === 'completed' ? (
+                                <div className="mt-4 flex items-center justify-between gap-2">
+                                  <div className="text-[13px] font-black text-[#1f1f21]">
+                                    Completed
+                                  </div>
+                                  <div className="text-[12px] font-semibold text-[#6f687f]">
+                                    This task is completed
+                                  </div>
+                                </div>
+                              ) : null}
+                            </div>
+                          </article>
+                        ))}
+
+                        {laneTasks.length === 0 ? (
+                          <p className="px-1 py-4 text-center text-[12px] font-semibold text-[#8e869e]">
+                            Drop task here
+                          </p>
+                        ) : null}
                       </div>
                     </article>
                   );
@@ -1684,6 +2154,258 @@ export function EventPlannerPage() {
       </div>
 
       <Dialog
+        open={isTaskPreviewOpen}
+        onOpenChange={(open) => {
+          setIsTaskPreviewOpen(open);
+          if (!open) {
+            setSelectedBoardTaskId(null);
+            setTaskPreviewTitle('');
+            setTaskPreviewDetails('');
+            setTaskPreviewChecklist([]);
+          }
+        }}
+      >
+        <DialogContent
+          showCloseButton={false}
+          className="max-w-[calc(100%-1rem)] rounded-xl border border-[#e3dfea] bg-white p-0 sm:max-w-[760px]"
+        >
+          {selectedBoardTask ? (
+            <article>
+              <header className="flex items-center justify-between border-b border-[#eee9f2] px-4 py-2">
+                <p className="text-[12px] font-semibold text-[#6f687f]">
+                  {selectedBoardTask.title || 'Untitled Task'}
+                </p>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsTaskPreviewOpen(false);
+                    setSelectedBoardTaskId(null);
+                    setTaskPreviewTitle('');
+                    setTaskPreviewDetails('');
+                    setTaskPreviewChecklist([]);
+                  }}
+                  className="inline-flex size-7 items-center justify-center rounded-full text-[#9f97ad] transition hover:bg-[#f3eff8]"
+                  aria-label="Close task preview"
+                >
+                  <X className="size-4" />
+                </button>
+              </header>
+
+              <div className="h-16 border-b border-[#e4efe6] bg-[#dff0e0]" />
+
+              {taskActionMessage ? (
+                <div className="px-6 pt-4">
+                  <div
+                    className={[
+                      'rounded-lg border px-3 py-2 text-[12px] font-semibold',
+                      taskActionTone === 'success'
+                        ? 'border-[#c9e9cb] bg-[#edf9ee] text-[#2e6b37]'
+                        : taskActionTone === 'error'
+                          ? 'border-[#f4c8d4] bg-[#fff0f5] text-[#b53e66]'
+                          : 'border-[#d9e3f4] bg-[#f4f8ff] text-[#3f5f9a]',
+                    ].join(' ')}
+                  >
+                    {taskActionMessage}
+                  </div>
+                </div>
+              ) : null}
+
+              {selectedBoardTask?.lane === 'todo' ? (
+                <div className="grid gap-4 px-6 py-5 sm:grid-cols-[220px_minmax(0,1fr)]">
+                  <aside className="rounded-lg border border-[#ece8f0] bg-white p-3">
+                    <img
+                      src="/Pictures/organizerpics/event-package-illustration.png"
+                      alt="Task preview art"
+                      className="h-20 w-full object-contain"
+                    />
+                    <p className="mt-2 text-[28px] font-black leading-none text-[#2f2b39]">
+                      {(taskPreviewTitle || 'Untitled').split(' ')[0]}
+                    </p>
+                    <span className="mt-2 inline-flex rounded-sm bg-[#ffe7ef] px-2 py-0.5 text-[9px] font-bold text-[#cf3a79]">
+                      1 Service
+                    </span>
+                  </aside>
+
+                  <div className="space-y-3 rounded-lg border border-[#ece8f0] bg-white p-4">
+                    <div>
+                      <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[#8b84a0]">
+                        Editing To Do
+                      </p>
+                      <h4 className="mt-1 text-[22px] font-black leading-tight text-[#2f2b39]">
+                        {taskPreviewTitle || 'Untitled Task'}
+                      </h4>
+                    </div>
+
+                    <div>
+                      <Label
+                        htmlFor="task-preview-title"
+                        className="text-[11px] font-semibold text-[#746e85]"
+                      >
+                        Title
+                      </Label>
+                      <Input
+                        id="task-preview-title"
+                        value={taskPreviewTitle}
+                        onChange={(event) => setTaskPreviewTitle(event.target.value)}
+                        placeholder="Enter task title"
+                        className="mt-1 h-10 border-[#ddd7e8] text-[13px] font-semibold text-[#302c39]"
+                      />
+                    </div>
+
+                    <div className="rounded-md border border-[#ece8f0] bg-[#faf8fd] p-3">
+                      <div className="flex items-center justify-between gap-2">
+                        <Label className="text-[11px] font-semibold text-[#746e85]">
+                          To Do Lists
+                        </Label>
+                        <button
+                          type="button"
+                          onClick={handleAddTodoChecklistItem}
+                          className="inline-flex h-8 items-center gap-1 rounded-md border border-[#e1d8ef] bg-white px-2 text-[11px] font-semibold text-[#6f26b4] transition hover:bg-[#f8f3ff]"
+                        >
+                          <Plus className="size-3.5" />
+                          Add item
+                        </button>
+                      </div>
+
+                      <div className="mt-3 space-y-2">
+                        {taskPreviewChecklist.length > 0 ? (
+                          taskPreviewChecklist.map((item, index) => (
+                            <div
+                              key={item.id}
+                              className="flex items-start gap-2 rounded-md border border-[#e9e3f1] bg-white px-2.5 py-2"
+                            >
+                              <span className="mt-2 text-[11px] font-bold text-[#8b84a0]">-</span>
+                              <div className="min-w-0 flex-1">
+                                <Label className="mb-1 block text-[10px] font-semibold uppercase tracking-[0.08em] text-[#8b84a0]">
+                                  Item {index + 1}
+                                </Label>
+                                <Input
+                                  value={item.label}
+                                  onChange={(event) =>
+                                    handleUpdateTodoChecklistItem(item.id, event.target.value)
+                                  }
+                                  placeholder="Enter list item"
+                                  className="h-9 border-[#ddd7e8] text-[12px] text-[#302c39]"
+                                />
+                              </div>
+                              <button
+                                type="button"
+                                onClick={() => handleRemoveTodoChecklistItem(item.id)}
+                                className="inline-flex size-8 items-center justify-center rounded-md border border-[#e1d8ef] bg-white text-[#7b6f90] transition hover:border-[#f1589e] hover:text-[#f1589e]"
+                                aria-label="Remove list item"
+                              >
+                                <Trash2 className="size-3.5" />
+                              </button>
+                            </div>
+                          ))
+                        ) : (
+                          <p className="rounded-md border border-dashed border-[#d8d2e2] bg-white px-3 py-4 text-[12px] italic text-[#8b84a0]">
+                            Add list items to build this task.
+                          </p>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="flex justify-end">
+                      <button
+                        type="button"
+                        onClick={handleSaveTaskPreview}
+                        className="inline-flex h-9 items-center justify-center rounded-md bg-[#8f1fd1] px-4 text-[11px] font-black uppercase tracking-[0.08em] text-white shadow-[0_8px_18px_rgba(143,31,209,0.3)]"
+                      >
+                        Save
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="px-6 py-5">
+                  <div className="rounded-lg border border-[#ece8f0] bg-white p-4">
+                    <div className="flex flex-wrap items-start justify-between gap-3">
+                      <div>
+                        <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[#8b84a0]">
+                          {selectedBoardTask?.lane === 'completed'
+                            ? 'Completed task'
+                            : 'In progress task'}
+                        </p>
+                        <h4 className="mt-1 text-[24px] font-black leading-tight text-[#2f2b39]">
+                          {taskPreviewTitle || 'Untitled Task'}
+                        </h4>
+                      </div>
+
+                      {selectedBoardTask?.lane === 'completed' ? (
+                        <span className="inline-flex rounded-full bg-[#deebf8] px-2 py-1 text-[10px] font-bold text-[#1f4c82]">
+                          This task is completed
+                        </span>
+                      ) : (
+                        <span className="inline-flex rounded-full bg-[#e8f3ff] px-2 py-1 text-[10px] font-bold text-[#2a6fb0]">
+                          In progress
+                        </span>
+                      )}
+                    </div>
+
+                    <div className="mt-4 rounded-md border border-[#ece8f0] bg-[#faf8fd] p-3">
+                      <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[#8b84a0]">
+                        Details
+                      </p>
+                      <p className="mt-2 whitespace-pre-line text-[13px] leading-relaxed text-[#5f596c]">
+                        {taskPreviewDetails || 'No details provided.'}
+                      </p>
+                    </div>
+
+                    <div className="mt-4 rounded-md border border-[#ece8f0] bg-white p-3">
+                      <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[#8b84a0]">
+                        {selectedBoardTask?.lane === 'completed'
+                          ? 'Checklist breakdown'
+                          : 'Checklist'}
+                      </p>
+
+                      <div className="mt-3 space-y-2">
+                        {(selectedBoardTask?.checklist ?? []).length > 0 ? (
+                          (selectedBoardTask?.checklist ?? []).map((item) => (
+                            <div
+                              key={item.id}
+                              className="rounded-md border border-[#ece8f0] bg-[#faf8fd] px-3 py-2"
+                            >
+                              <div className="flex items-start gap-2">
+                                <span
+                                  className={[
+                                    'mt-1 inline-flex size-4 items-center justify-center rounded-full text-[10px] font-black',
+                                    item.done
+                                      ? 'bg-[#2ec24f] text-white'
+                                      : 'border border-[#d8d2e2] bg-white text-[#8b84a0]',
+                                  ].join(' ')}
+                                >
+                                  {item.done ? '✓' : '•'}
+                                </span>
+                                <div className="min-w-0 flex-1">
+                                  <p className="text-[13px] font-semibold text-[#302c39]">
+                                    {item.label}
+                                  </p>
+                                  <p className="mt-1 text-[11px] text-[#7a728d]">
+                                    {item.done
+                                      ? `Done ${formatChecklistTimestamp(item.doneAt)}`
+                                      : 'Pending'}
+                                  </p>
+                                </div>
+                              </div>
+                            </div>
+                          ))
+                        ) : (
+                          <p className="text-[12px] italic text-[#8b84a0]">
+                            No checklist items available.
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </article>
+          ) : null}
+        </DialogContent>
+      </Dialog>
+
+      <Dialog
         open={Boolean(checklistDeleteTarget)}
         onOpenChange={(open) => {
           if (!open) {
@@ -1743,10 +2465,11 @@ export function EventPlannerPage() {
               >
                 Cancel
               </button>
-              <button>
-                type="submit" className="inline-flex h-9 items-center justify-center rounded-lg
-                bg-[#cf1f65] px-4 text-xs font-black uppercase tracking-[0.08em] text-white
-                shadow-[0_8px_18px_rgba(172,31,90,0.34)]" Delete item
+              <button
+                type="submit"
+                className="inline-flex h-9 items-center justify-center rounded-lg bg-[#cf1f65] px-4 text-xs font-black uppercase tracking-[0.08em] text-white shadow-[0_8px_18px_rgba(172,31,90,0.34)]"
+              >
+                Delete item
               </button>
             </div>
           </form>
