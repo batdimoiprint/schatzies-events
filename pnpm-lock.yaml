@@ -32,9 +32,12 @@ importers:
       html2canvas:
         specifier: ^1.4.1
         version: 1.4.1
+<<<<<<< HEAD
+=======
       html5-qrcode:
         specifier: ^2.3.8
         version: 2.3.8
+>>>>>>> 1344b3984893b84b9684da098bf70c88ca46bd3e
       lucide-react:
         specifier: ^1.7.0
         version: 1.7.0(react@19.2.4)
@@ -2234,9 +2237,12 @@ packages:
     resolution: {integrity: sha512-fPU6BHNpsyIhr8yyMpTLLxAbkaK8ArIBcmZIRiBLiDhjeqvXolaEmDGmELFuX9I4xDcaKKcJl+TKZLqruBbmWA==}
     engines: {node: '>=8.0.0'}
 
+<<<<<<< HEAD
+=======
   html5-qrcode@2.3.8:
     resolution: {integrity: sha512-jsr4vafJhwoLVEDW3n1KvPnCCXWaQfRng0/EEYk1vNcQGcG/htAdhJX0be8YyqMoSz7+hZvOZSTAepsabiuhiQ==}
 
+>>>>>>> 1344b3984893b84b9684da098bf70c88ca46bd3e
   http-errors@2.0.1:
     resolution: {integrity: sha512-4FbRdAX+bSdmo4AUFuS0WNiPz8NgFt+r8ThgNWmlrjQjt1Q7ZR9+zTlce2859x4KSXrwIsaeTqDoKQmtP8pLmQ==}
     engines: {node: '>= 0.8'}
@@ -5626,8 +5632,11 @@ snapshots:
       css-line-break: 2.1.0
       text-segmentation: 1.0.3
 
+<<<<<<< HEAD
+=======
   html5-qrcode@2.3.8: {}
 
+>>>>>>> 1344b3984893b84b9684da098bf70c88ca46bd3e
   http-errors@2.0.1:
     dependencies:
       depd: 2.0.0

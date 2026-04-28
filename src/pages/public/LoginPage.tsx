@@ -28,7 +28,20 @@ export function LoginPage() {
   const navigate = useNavigate();
 
   const onSubmit = async (values: LoginFormValues) => {
-    const user = await login(values.email, values.password);
+    const result = await login(values.email, values.password);
+    const user = result.user;
+
+    if (result.requiresPasswordReset) {
+      navigate('/force-reset-password', {
+        replace: true,
+        state: {
+          email: values.email,
+          resetToken: result.resetToken,
+        },
+      });
+      return;
+    }
+
     if (user) {
       switch (user.role) {
         case 'ADMIN':

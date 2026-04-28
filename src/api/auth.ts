@@ -1,17 +1,28 @@
 import axiosInstance from './axios-instance';
-import type { User } from '@/types/auth';
+import type { User, LoginResult } from '@/types/auth';
 
-export const login = async (email: string, password: string): Promise<User | null> => {
+export const login = async (email: string, password: string): Promise<LoginResult> => {
   const response = await axiosInstance.post('/auth/login', {
     email,
     password,
   });
 
-  if (response.data && response.data.user) {
-    return response.data.user;
+  const data = response.data;
+
+  // Backend signals a forced password reset (e.g. Cognito NEW_PASSWORD_REQUIRED)
+  if (data?.challengeName === 'NEW_PASSWORD_REQUIRED' || data?.requiresPasswordReset) {
+    return {
+      user: null,
+      requiresPasswordReset: true,
+      resetToken: data.session || data.resetToken || null,
+    };
   }
 
-  return null;
+  return {
+    user: data?.user ?? null,
+    requiresPasswordReset: false,
+    resetToken: null,
+  };
 };
 
 export const verifyToken = async (): Promise<User | null> => {

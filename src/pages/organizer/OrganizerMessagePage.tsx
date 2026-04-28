@@ -1,157 +1,283 @@
-import { useRef, useState } from 'react';
-import type * as React from 'react';
-import { Search, MoreVertical, Paperclip, Send, X } from 'lucide-react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { Search, MoreVertical, Send, X, Loader2, MessageSquare, RefreshCw } from 'lucide-react';
+import { useAuth } from '@/hooks/useAuth';
+import {
+  getConversationMessages,
+  getMessageConversations,
+  sendConversationMessage,
+  type ChatMessage,
+  type Conversation,
+  type ConversationParticipant,
+} from '@/api/messages';
 
-// DUMMY DATA FOR API PREPARATION - Added Contact Details
-const dummyChats = [
-  {
-    id: 1,
-    name: 'Christian Dace Juliales',
-    initial: 'C',
-    color: 'bg-[#db4b88]',
-    lastMsg: 'I will send the details later today.',
-    time: '11:11 AM',
-    unread: 2,
-    online: true,
-    email: 'christian.juliales@example.com',
-    phone: '+63 912 345 6789',
-    location: 'Quezon City, Philippines',
-    role: 'Client',
-    statusText: 'Excited for the upcoming event preparations!',
-  },
-  {
-    id: 2,
-    name: 'Diane M. Rotono',
-    initial: 'D',
-    color: 'bg-[#4bc783]',
-    lastMsg: 'Oh yes! I have seen that earlier. But I have some...',
-    time: '11:11 AM',
-    unread: 0,
-    online: false,
-    email: 'diane.rotono@example.com',
-    phone: '+63 998 765 4321',
-    location: 'Makati City, Philippines',
-    role: 'Client',
-    statusText: 'Reviewing the new event packages.',
-  },
-  {
-    id: 3,
-    name: 'Sabrina Carpenter',
-    initial: 'S',
-    color: 'bg-[#5b54e3]',
-    lastMsg: 'Thank you for the updates.',
-    time: '11:11 AM',
-    unread: 0,
-    online: true,
-    email: 'sabrina.carpenter@example.com',
-    phone: '+63 945 123 9876',
-    location: 'Bonifacio Global City, PH',
-    role: 'Vendor',
-    statusText: 'Available for bookings this December.',
-  },
+/* ─── helpers ──────────────────────────────────────────────────────────── */
+
+function normalizeRole(role?: string): string {
+  return String(role || '').trim().toLowerCase();
+}
+
+/** Get the "other" participant — the client in the conversation. */
+function getClientParticipant(
+  conversation: Conversation | null,
+  myUserId?: string
+): ConversationParticipant | null {
+  if (!conversation) return null;
+
+  // Try the participants array first — find anyone who is NOT the organizer
+  const client = conversation.participants?.find((p) => {
+    const r = normalizeRole(p.role);
+    if (r === 'client') return true;
+    if (myUserId && p.id !== myUserId && r !== 'organizer') return true;
+    return false;
+  });
+
+  return client ?? conversation.participants?.[0] ?? null;
+}
+
+function getInitialFromName(name?: string): string {
+  const trimmed = String(name || '').trim();
+  if (!trimmed) return '?';
+  return trimmed.charAt(0).toUpperCase();
+}
+
+function isOutgoingMessage(msg: ChatMessage, userId?: string): boolean {
+  const role = normalizeRole(msg.senderRole || msg.senderType);
+  if (role === 'organizer') return true;
+  if (userId && msg.senderId === userId) return true;
+  return false;
+}
+
+function formatMessageTime(iso?: string): string {
+  if (!iso) return '';
+  const date = new Date(iso);
+  if (isNaN(date.getTime())) return '';
+  return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+}
+
+function formatRelativeTime(iso?: string): string {
+  if (!iso) return '';
+  const date = new Date(iso);
+  if (isNaN(date.getTime())) return '';
+
+  const now = new Date();
+  const diffMs = now.getTime() - date.getTime();
+  const diffMin = Math.floor(diffMs / 60_000);
+
+  if (diffMin < 1) return 'Just now';
+  if (diffMin < 60) return `${diffMin}m ago`;
+  const diffHr = Math.floor(diffMin / 60);
+  if (diffHr < 24) return `${diffHr}h ago`;
+  return date.toLocaleDateString([], { month: 'short', day: 'numeric' });
+}
+
+// Deterministic avatar color palette
+const AVATAR_COLORS = [
+  'bg-[#db4b88]',
+  'bg-[#4bc783]',
+  'bg-[#5b54e3]',
+  'bg-[#e3a854]',
+  'bg-[#54b4e3]',
+  'bg-[#e35454]',
+  'bg-[#8854e3]',
+  'bg-[#54e3a8]',
 ];
 
-const initialConversations: Record<number, any[]> = {
-  1: [
-    {
-      id: 1,
-      senderId: 1,
-      text: 'Hi! Are you available for a meeting? I would like to discuss the new event package.',
-      time: '10:30 AM',
-      isMe: false,
-    },
-    {
-      id: 2,
-      senderId: 'me',
-      text: 'Hello! Yes, I am available this afternoon. What time works best for you?',
-      time: '10:45 AM',
-      isMe: true,
-    },
-    {
-      id: 3,
-      senderId: 1,
-      text: 'I will send the details later today.',
-      time: '11:11 AM',
-      isMe: false,
-    },
-  ],
-  2: [
-    {
-      id: 4,
-      senderId: 2,
-      text: 'Oh yes! I have seen that earlier. But I have some revisions.',
-      time: '9:00 AM',
-      isMe: false,
-    },
-  ],
-  3: [
-    { id: 5, senderId: 3, text: 'Thank you for the updates.', time: '8:30 AM', isMe: false },
-    {
-      id: 6,
-      senderId: 'me',
-      text: 'You are welcome! Let me know if you need anything else.',
-      time: '8:45 AM',
-      isMe: true,
-    },
-  ],
-};
+function getAvatarColor(id: string): string {
+  let hash = 0;
+  for (let i = 0; i < id.length; i++) {
+    hash = (hash * 31 + id.charCodeAt(i)) | 0;
+  }
+  return AVATAR_COLORS[Math.abs(hash) % AVATAR_COLORS.length];
+}
+
+const POLL_INTERVAL = 8_000;
+
+/* ─── component ────────────────────────────────────────────────────────── */
 
 export function OrganizerMessagePage() {
-  const [activeChatId, setActiveChatId] = useState(1);
-  const [messageText, setMessageText] = useState('');
-  const [showDetails, setShowDetails] = useState(false);
-  const [conversations, setConversations] = useState(initialConversations);
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [searchQuery, setSearchQuery] = useState('');
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const { user } = useAuth();
 
-  const activeChat = dummyChats.find((c) => c.id === activeChatId) || dummyChats[0];
-  const currentMessages = conversations[activeChatId] || [];
-  const filteredChats = dummyChats.filter(
-    (chat) =>
-      chat.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      chat.lastMsg.toLowerCase().includes(searchQuery.toLowerCase())
+  /* ── state ──────────────────────────────────────────────────────────── */
+  const [conversations, setConversations] = useState<Conversation[]>([]);
+  const [activeConvId, setActiveConvId] = useState<string | null>(null);
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [messageText, setMessageText] = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [showDetails, setShowDetails] = useState(false);
+  const [isLoadingList, setIsLoadingList] = useState(true);
+  const [isLoadingMessages, setIsLoadingMessages] = useState(false);
+  const [isSending, setIsSending] = useState(false);
+  const [listError, setListError] = useState<string | null>(null);
+  const [msgError, setMsgError] = useState<string | null>(null);
+  const [sendError, setSendError] = useState<string | null>(null);
+
+  const bottomRef = useRef<HTMLDivElement>(null);
+  const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  /* ── derived ────────────────────────────────────────────────────────── */
+  const activeConv = useMemo(
+    () => conversations.find((c) => c.id === activeConvId) ?? null,
+    [conversations, activeConvId]
   );
 
-  // API-ready handler: replace local update with API call when backend is connected.
-  const handleSendMessage = () => {
-    const trimmedMessage = messageText.trim();
-    if (!trimmedMessage && !selectedFile) return;
+  const activePeer = useMemo(
+    () => getClientParticipant(activeConv, user?.user_id),
+    [activeConv, user?.user_id]
+  );
 
-    const newMessage = {
-      id: Date.now(),
-      senderId: 'me',
-      text: trimmedMessage || (selectedFile ? `Sent a file: ${selectedFile.name}` : ''),
-      time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-      isMe: true,
+  const filteredConversations = useMemo(() => {
+    if (!searchQuery.trim()) return conversations;
+    const q = searchQuery.toLowerCase();
+    return conversations.filter((c) => {
+      const peer = getClientParticipant(c, user?.user_id);
+      const name = (peer?.name || '').toLowerCase();
+      const last = (c.lastMessage || '').toLowerCase();
+      return name.includes(q) || last.includes(q);
+    });
+  }, [conversations, searchQuery, user?.user_id]);
+
+  /* ── auto-scroll ────────────────────────────────────────────────────── */
+  useEffect(() => {
+    bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages]);
+
+  /* ── load conversation list ─────────────────────────────────────────── */
+  const loadConversations = useCallback(async () => {
+    setIsLoadingList(true);
+    setListError(null);
+
+    try {
+      const data = await getMessageConversations();
+      setConversations(data);
+
+      // Auto-select first if nothing is selected
+      if (!activeConvId && data.length > 0) {
+        setActiveConvId(data[0].id);
+      }
+    } catch {
+      setListError('Unable to load conversations.');
+    } finally {
+      setIsLoadingList(false);
+    }
+  }, [activeConvId]);
+
+  /* ── load messages for active conversation ──────────────────────────── */
+  const loadMessages = useCallback(async (convId: string) => {
+    setIsLoadingMessages(true);
+    setMsgError(null);
+
+    try {
+      const data = await getConversationMessages(convId);
+      setMessages(data);
+    } catch {
+      setMsgError('Unable to load messages.');
+      setMessages([]);
+    } finally {
+      setIsLoadingMessages(false);
+    }
+  }, []);
+
+  /* ── poll for new messages ──────────────────────────────────────────── */
+  const pollMessages = useCallback(async () => {
+    if (!activeConvId) return;
+    try {
+      const data = await getConversationMessages(activeConvId);
+      setMessages(data);
+    } catch {
+      /* silently ignore */
+    }
+  }, [activeConvId]);
+
+  /* ── effects ────────────────────────────────────────────────────────── */
+  useEffect(() => {
+    void loadConversations();
+  }, [loadConversations]);
+
+  useEffect(() => {
+    if (activeConvId) {
+      void loadMessages(activeConvId);
+    } else {
+      setMessages([]);
+    }
+  }, [activeConvId, loadMessages]);
+
+  useEffect(() => {
+    if (!activeConvId) return;
+    pollRef.current = setInterval(() => void pollMessages(), POLL_INTERVAL);
+    return () => {
+      if (pollRef.current) clearInterval(pollRef.current);
+    };
+  }, [activeConvId, pollMessages]);
+
+  /* ── send message ───────────────────────────────────────────────────── */
+  const handleSendMessage = async () => {
+    const body = messageText.trim();
+    if (!body || !activeConvId || isSending) return;
+
+    const tempId = `temp-${Date.now()}`;
+    const tempMessage: ChatMessage = {
+      id: tempId,
+      conversationId: activeConvId,
+      body,
+      senderRole: 'ORGANIZER',
+      senderId: user?.user_id,
+      createdAt: new Date().toISOString(),
     };
 
-    setConversations((prev) => ({
-      ...prev,
-      [activeChatId]: [...(prev[activeChatId] || []), newMessage],
-    }));
     setMessageText('');
-    setSelectedFile(null); // Reset file after sending
-  };
+    setIsSending(true);
+    setSendError(null);
+    setMessages((prev) => [...prev, tempMessage]);
 
-  const handleAttachmentClick = () => {
-    fileInputRef.current?.click();
-  };
+    try {
+      const saved = await sendConversationMessage(activeConvId, body);
+      if (saved) {
+        setMessages((prev) =>
+          prev.map((m) => (m.id === tempId ? saved : m))
+        );
+      }
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files.length > 0) {
-      setSelectedFile(e.target.files[0]);
-      // You can immediately trigger send here or wait for text
+      // Update last message in the sidebar
+      setConversations((prev) =>
+        prev.map((c) =>
+          c.id === activeConvId
+            ? { ...c, lastMessage: body, lastMessageAt: new Date().toISOString() }
+            : c
+        )
+      );
+    } catch {
+      setMessages((prev) => prev.filter((m) => m.id !== tempId));
+      setMessageText(body);
+      setSendError('Failed to send message. Please try again.');
+    } finally {
+      setIsSending(false);
     }
   };
 
+  /* ── select a conversation ──────────────────────────────────────────── */
+  const handleSelectConversation = (convId: string) => {
+    if (convId === activeConvId) return;
+    setActiveConvId(convId);
+    setSendError(null);
+  };
+
+  /* ─── render ─────────────────────────────────────────────────────────── */
   return (
-    //part ng size ng whole page.
     <div className="flex h-[calc(100vh-150px)] w-full gap-6 bg-transparent pb-4">
-      {/* ---------------- LEFT SIDEBAR (INBOX LIST) ---------------- */}
+      {/* ─────────── LEFT SIDEBAR (INBOX LIST) ─────────── */}
       <div className="flex w-[340px] shrink-0 flex-col overflow-hidden rounded-2xl border border-[#e2deea] bg-white shadow-sm">
         <div className="border-b border-[#f0edf4] p-4">
-          <h2 className="mb-4 text-lg font-bold text-[#2d2834]">Message Inbox</h2>
+          <div className="mb-4 flex items-center justify-between">
+            <h2 className="text-lg font-bold text-[#2d2834]">Message Inbox</h2>
+            <button
+              type="button"
+              onClick={() => void loadConversations()}
+              className="rounded-full p-1.5 text-[#a49cb3] transition hover:bg-[#f6f5f8] hover:text-[#df2b80]"
+              title="Refresh"
+            >
+              <RefreshCw className="size-3.5" />
+            </button>
+          </div>
           <div className="relative">
             <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-[#b2acbf]" />
             <input
@@ -165,165 +291,221 @@ export function OrganizerMessagePage() {
         </div>
 
         <div className="scrollbar-thin flex-1 overflow-y-auto">
-          {filteredChats.length > 0 ? (
-            filteredChats.map((chat) => (
-              <div
-                key={chat.id}
-                onClick={() => setActiveChatId(chat.id)}
-                className={`flex cursor-pointer items-center gap-3 border-b border-[#f0edf4] p-4 transition-colors ${
-                  activeChatId === chat.id
-                    ? 'border-l-4 border-l-[#df2b80] bg-[#fafafa]'
-                    : 'border-l-4 border-l-transparent hover:bg-[#fafafa]'
-                }`}
+          {isLoadingList ? (
+            <div className="flex items-center justify-center gap-2 p-8">
+              <Loader2 className="size-4 animate-spin text-[#df2b80]" />
+              <span className="text-sm text-[#a49cb3]">Loading...</span>
+            </div>
+          ) : listError ? (
+            <div className="flex flex-col items-center gap-2 p-8 text-center">
+              <p className="text-sm text-red-400">{listError}</p>
+              <button
+                type="button"
+                onClick={() => void loadConversations()}
+                className="text-xs font-semibold text-[#df2b80] hover:underline"
               >
+                Retry
+              </button>
+            </div>
+          ) : filteredConversations.length > 0 ? (
+            filteredConversations.map((conv) => {
+              const peer = getClientParticipant(conv, user?.user_id);
+              const initial = peer?.initial || getInitialFromName(peer?.name);
+              const color = getAvatarColor(conv.id);
+
+              return (
                 <div
-                  className={`relative flex size-12 shrink-0 items-center justify-center rounded-full text-lg font-bold text-white ${chat.color}`}
+                  key={conv.id}
+                  onClick={() => handleSelectConversation(conv.id)}
+                  className={`flex cursor-pointer items-center gap-3 border-b border-[#f0edf4] p-4 transition-colors ${
+                    activeConvId === conv.id
+                      ? 'border-l-4 border-l-[#df2b80] bg-[#fafafa]'
+                      : 'border-l-4 border-l-transparent hover:bg-[#fafafa]'
+                  }`}
                 >
-                  {chat.initial}
-                  {chat.online && (
-                    <span className="absolute bottom-0 right-0 size-3 rounded-full border-2 border-white bg-[#4bc783]"></span>
-                  )}
-                </div>
-                <div className="min-w-0 flex-1">
-                  <div className="mb-1 flex items-center justify-between">
-                    <h4 className="truncate text-sm font-bold text-[#2d2834]">{chat.name}</h4>
-                    <span className="ml-2 whitespace-nowrap text-[10px] font-semibold text-[#a49cb3]">
-                      {chat.time}
-                    </span>
+                  <div
+                    className={`relative flex size-12 shrink-0 items-center justify-center rounded-full text-lg font-bold text-white ${color}`}
+                  >
+                    {initial}
                   </div>
-                  <div className="flex items-center justify-between">
-                    <p className="truncate text-xs font-medium text-[#696373]">{chat.lastMsg}</p>
-                    {chat.unread > 0 && (
-                      <span className="ml-2 flex size-4 items-center justify-center rounded-full bg-[#df2b80] text-[9px] font-bold text-white">
-                        {chat.unread}
+                  <div className="min-w-0 flex-1">
+                    <div className="mb-1 flex items-center justify-between">
+                      <h4 className="truncate text-sm font-bold text-[#2d2834]">
+                        {peer?.name || 'Client'}
+                      </h4>
+                      <span className="ml-2 whitespace-nowrap text-[10px] font-semibold text-[#a49cb3]">
+                        {formatRelativeTime(conv.lastMessageAt || conv.updatedAt)}
                       </span>
-                    )}
+                    </div>
+                    <p className="truncate text-xs font-medium text-[#696373]">
+                      {conv.lastMessage || 'No messages yet'}
+                    </p>
                   </div>
                 </div>
-              </div>
-            ))
+              );
+            })
           ) : (
             <div className="p-8 text-center text-sm font-medium text-[#a49cb3]">
-              No conversations found.
+              {conversations.length === 0
+                ? 'No conversations yet.'
+                : 'No conversations found.'}
             </div>
           )}
         </div>
       </div>
 
-      {/* ---------------- MIDDLE SIDE (CHAT AREA) ---------------- */}
+      {/* ─────────── MIDDLE (CHAT AREA) ─────────── */}
       <div className="flex flex-1 flex-col overflow-hidden rounded-2xl border border-[#e2deea] bg-white shadow-sm transition-all duration-300">
-        {/* Chat Header */}
-        <div className="flex items-center justify-between border-b border-[#f0edf4] px-6 py-4">
-          <div className="flex items-center gap-3">
-            <div
-              className={`relative flex size-10 shrink-0 items-center justify-center rounded-full font-bold text-white ${activeChat.color}`}
-            >
-              {activeChat.initial}
+        {activeConv ? (
+          <>
+            {/* Chat Header */}
+            <div className="flex items-center justify-between border-b border-[#f0edf4] px-6 py-4">
+              <div className="flex items-center gap-3">
+                <div
+                  className={`relative flex size-10 shrink-0 items-center justify-center rounded-full font-bold text-white ${getAvatarColor(activeConv.id)}`}
+                >
+                  {activePeer?.initial || getInitialFromName(activePeer?.name)}
+                </div>
+                <div>
+                  <h3 className="text-base font-bold text-[#2d2834]">
+                    {activePeer?.name || 'Client'}
+                  </h3>
+                  <p className="text-xs font-semibold capitalize text-[#4bc783]">
+                    {normalizeRole(activePeer?.role) || 'client'}
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center gap-3 text-[#8f879f]">
+                <button
+                  type="button"
+                  onClick={() => void pollMessages()}
+                  className="rounded-full p-2 transition hover:bg-[#f6f5f8] hover:text-[#df2b80]"
+                  title="Refresh messages"
+                >
+                  <RefreshCw className="size-4" />
+                </button>
+                <button
+                  onClick={() => setShowDetails(!showDetails)}
+                  className={`rounded-full p-2 transition ${showDetails ? 'text-[#df2b80]' : 'hover:bg-[#f6f5f8] hover:text-[#df2b80]'}`}
+                >
+                  <MoreVertical className="size-5" />
+                </button>
+              </div>
             </div>
+
+            {/* Chat Bubbles */}
+            <div className="flex-1 overflow-y-auto bg-[#fafafa] p-6">
+              {isLoadingMessages ? (
+                <div className="flex items-center justify-center gap-2 py-12">
+                  <Loader2 className="size-5 animate-spin text-[#df2b80]" />
+                  <span className="text-sm text-[#a49cb3]">Loading messages...</span>
+                </div>
+              ) : msgError ? (
+                <div className="flex flex-col items-center gap-2 py-12 text-center">
+                  <p className="text-sm text-red-400">{msgError}</p>
+                  <button
+                    type="button"
+                    onClick={() => void loadMessages(activeConvId!)}
+                    className="text-xs font-semibold text-[#df2b80] hover:underline"
+                  >
+                    Retry
+                  </button>
+                </div>
+              ) : messages.length === 0 ? (
+                <div className="flex flex-col items-center justify-center gap-3 py-12 text-center">
+                  <MessageSquare className="size-8 text-[#d4d0dc]" />
+                  <p className="text-sm font-medium text-[#a49cb3]">
+                    No messages yet. Send one to start the conversation.
+                  </p>
+                </div>
+              ) : (
+                <div className="flex flex-col gap-4">
+                  {messages.map((msg) => {
+                    const outgoing = isOutgoingMessage(msg, user?.user_id);
+                    return (
+                      <div
+                        key={msg.id}
+                        className={`flex w-full ${outgoing ? 'justify-end' : 'justify-start'}`}
+                      >
+                        <div className="flex max-w-[70%] flex-col gap-1">
+                          <div
+                            className={`rounded-2xl px-4 py-3 text-sm ${
+                              outgoing
+                                ? 'rounded-br-none bg-gradient-to-r from-[#df2b80] to-[#8f1fd1] text-white'
+                                : 'rounded-bl-none border border-[#e2deea] bg-white text-[#4f4a56] shadow-sm'
+                            }`}
+                          >
+                            {msg.body}
+                          </div>
+                          <span
+                            className={`text-[10px] font-semibold text-[#a49cb3] ${
+                              outgoing ? 'text-right' : 'text-left'
+                            }`}
+                          >
+                            {formatMessageTime(msg.createdAt)}
+                          </span>
+                        </div>
+                      </div>
+                    );
+                  })}
+                  <div ref={bottomRef} />
+                </div>
+              )}
+            </div>
+
+            {/* Chat Input */}
+            <div className="border-t border-[#f0edf4] bg-white p-4">
+              {sendError && (
+                <p className="mb-2 rounded-lg bg-red-50 px-3 py-2 text-xs font-medium text-red-500">
+                  {sendError}
+                </p>
+              )}
+              <div className="flex items-center gap-3">
+                <div className="flex flex-1 items-center rounded-full bg-[#f3f1f5] px-5 py-2.5">
+                  <input
+                    type="text"
+                    value={messageText}
+                    onChange={(e) => setMessageText(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' && !e.shiftKey) {
+                        e.preventDefault();
+                        void handleSendMessage();
+                      }
+                    }}
+                    placeholder="Write something..."
+                    className="flex-1 bg-transparent text-sm text-[#2d2834] outline-none placeholder:text-[#a49cb3]"
+                  />
+                  <button
+                    onClick={() => void handleSendMessage()}
+                    disabled={isSending || !messageText.trim()}
+                    className="ml-2 flex items-center justify-center text-[#8f1fd1] transition-colors hover:text-[#7a18b3] disabled:opacity-40"
+                  >
+                    {isSending ? (
+                      <Loader2 className="size-5 animate-spin" />
+                    ) : (
+                      <Send className="size-5" />
+                    )}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </>
+        ) : (
+          /* No conversation selected placeholder */
+          <div className="flex flex-1 flex-col items-center justify-center gap-4 text-center">
+            <MessageSquare className="size-12 text-[#d4d0dc]" />
             <div>
-              <h3 className="text-base font-bold text-[#2d2834]">{activeChat.name}</h3>
-              <p className="text-xs font-semibold text-[#4bc783]">
-                {activeChat.online ? 'Online' : 'Offline'}
+              <p className="text-lg font-bold text-[#2d2834]">Your Messages</p>
+              <p className="mt-1 text-sm text-[#a49cb3]">
+                Select a conversation to start messaging.
               </p>
             </div>
           </div>
-          <div className="flex items-center gap-4 text-[#8f879f]">
-            {/* TOGGLE DETAILS BUTTON */}
-            <button
-              onClick={() => setShowDetails(!showDetails)}
-              className={`transition-colors ${showDetails ? 'text-[#df2b80]' : 'hover:text-[#df2b80]'}`}
-            >
-              <MoreVertical className="size-5" />
-            </button>
-          </div>
-        </div>
-
-        {/* Chat Bubbles */}
-        <div className="flex-1 overflow-y-auto bg-[#fafafa] p-6">
-          <div className="flex flex-col gap-4">
-            {currentMessages.map((msg) => (
-              <div
-                key={msg.id}
-                className={`flex w-full ${msg.isMe ? 'justify-end' : 'justify-start'}`}
-              >
-                <div className="flex max-w-[70%] flex-col gap-1">
-                  <div
-                    className={`rounded-2xl px-4 py-3 text-sm ${
-                      msg.isMe
-                        ? 'rounded-br-none bg-gradient-to-r from-[#df2b80] to-[#8f1fd1] text-white'
-                        : 'rounded-bl-none border border-[#e2deea] bg-white text-[#4f4a56] shadow-sm'
-                    }`}
-                  >
-                    {msg.text}
-                  </div>
-                  <span
-                    className={`text-[10px] font-semibold text-[#a49cb3] ${
-                      msg.isMe ? 'text-right' : 'text-left'
-                    }`}
-                  >
-                    {msg.time}
-                  </span>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Chat Input */}
-        <div className="border-t border-[#f0edf4] bg-white p-4">
-          {/* File Preview (Optional, shows if a file is selected) */}
-          {selectedFile && (
-            <div className="mb-2 flex items-center justify-between rounded-lg bg-[#f6f5f8] px-4 py-2 text-sm text-[#4f4a56]">
-              <span className="truncate pr-4 font-medium">{selectedFile.name}</span>
-              <button
-                onClick={() => setSelectedFile(null)}
-                className="text-[#df2b80] hover:text-[#c92472]"
-              >
-                <X className="size-4" />
-              </button>
-            </div>
-          )}
-
-          <div className="flex items-center gap-3">
-            {/* Hidden File Input */}
-            <input type="file" ref={fileInputRef} onChange={handleFileChange} className="hidden" />
-
-            {/* Purple Attachment Button */}
-            <button
-              onClick={handleAttachmentClick}
-              className="flex size-[42px] shrink-0 items-center justify-center rounded-[14px] bg-[#8f1fd1] text-white transition-colors hover:bg-[#7a18b3]"
-            >
-              <Paperclip className="size-5" />
-            </button>
-
-            {/* Gray Pill Input Wrapper */}
-            <div className="flex flex-1 items-center rounded-full bg-[#f3f1f5] px-5 py-2.5">
-              <input
-                type="text"
-                value={messageText}
-                onChange={(e) => setMessageText(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
-                    e.preventDefault();
-                    handleSendMessage();
-                  }
-                }}
-                placeholder="Write something......"
-                className="flex-1 bg-transparent text-sm text-[#2d2834] outline-none placeholder:text-[#a49cb3]"
-              />
-              <button
-                onClick={handleSendMessage}
-                className="ml-2 flex items-center justify-center text-[#8f1fd1] transition-colors hover:text-[#7a18b3]"
-              >
-                <Send className="size-5" />
-              </button>
-            </div>
-          </div>
-        </div>
+        )}
       </div>
 
-      {/* ---------------- RIGHT SIDE (CONTACT DETAILS) ---------------- */}
-      {showDetails && (
+      {/* ─────────── RIGHT SIDE (CONTACT DETAILS) ─────────── */}
+      {showDetails && activeConv && (
         <div className="animate-in slide-in-from-right-4 fade-in flex w-[320px] shrink-0 flex-col overflow-y-auto overflow-x-hidden rounded-2xl border border-[#e2deea] bg-white shadow-sm duration-300">
           {/* Header */}
           <div className="sticky top-0 z-10 flex items-center justify-between border-b border-[#f0edf4] bg-white px-6 py-4">
@@ -336,20 +518,19 @@ export function OrganizerMessagePage() {
             </button>
           </div>
 
-          {/* Profile Picture & Name */}
+          {/* Profile */}
           <div className="flex flex-col items-center px-6 pb-6 pt-8 text-center">
             <div
-              className={`mb-4 flex size-24 items-center justify-center rounded-full text-4xl font-bold text-white shadow-md ${activeChat.color}`}
+              className={`mb-4 flex size-24 items-center justify-center rounded-full text-4xl font-bold text-white shadow-md ${getAvatarColor(activeConv.id)}`}
             >
-              {activeChat.initial}
+              {activePeer?.initial || getInitialFromName(activePeer?.name)}
             </div>
-            <h4 className="text-lg font-bold leading-tight text-[#2d2834]">{activeChat.name}</h4>
+            <h4 className="text-lg font-bold leading-tight text-[#2d2834]">
+              {activePeer?.name || 'Client'}
+            </h4>
             <span className="mt-2 rounded-full bg-[#f8f5fe] px-4 py-1 text-xs font-bold uppercase tracking-wide text-[#8f1fd1]">
-              {activeChat.role}
+              {normalizeRole(activePeer?.role) || 'client'}
             </span>
-            <p className="mt-4 text-sm font-medium italic text-[#696373]">
-              "{activeChat.statusText}"
-            </p>
           </div>
 
           {/* Information List */}
@@ -359,20 +540,16 @@ export function OrganizerMessagePage() {
                 Email Address
               </p>
               <p className="mt-1 break-all text-sm font-semibold text-[#2d2834]">
-                {activeChat.email}
+                {activePeer?.email || '-'}
               </p>
             </div>
             <div>
               <p className="text-[11px] font-bold uppercase tracking-wider text-[#a49cb3]">
                 Phone Number
               </p>
-              <p className="mt-1 text-sm font-semibold text-[#2d2834]">{activeChat.phone}</p>
-            </div>
-            <div>
-              <p className="text-[11px] font-bold uppercase tracking-wider text-[#a49cb3]">
-                Location
+              <p className="mt-1 text-sm font-semibold text-[#2d2834]">
+                {activePeer?.contactNumber || '-'}
               </p>
-              <p className="mt-1 text-sm font-semibold text-[#2d2834]">{activeChat.location}</p>
             </div>
           </div>
         </div>
