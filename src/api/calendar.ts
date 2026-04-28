@@ -16,7 +16,6 @@ export interface CalendarEntryPayload {
   date?: string;
   endDate?: string;
   type?: string;
-  eventId?: string;
 }
 
 export const getCalendarEntries = async (filters: any = {}): Promise<any[]> => {

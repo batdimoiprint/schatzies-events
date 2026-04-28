@@ -1,10 +1,6 @@
 import { updateUser } from '@/api/users';
 import type { UserResponse } from '@/api/users';
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from '@/components/ui/popover';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import {
   Select,
   SelectContent,
@@ -40,19 +36,14 @@ export function UserDetailsPopover({ user, onUpdate, children }: UserDetailsPopo
     }
   };
 
-  const address = [
-    user.houseNumber,
-    user.street,
-    user.barangay,
-    user.city,
-    user.country
-  ].filter(Boolean).join(', ') || '-';
+  const address =
+    [user.houseNumber, user.street, user.barangay, user.city, user.country]
+      .filter(Boolean)
+      .join(', ') || '-';
 
   return (
     <Popover>
-      <PopoverTrigger asChild>
-        {children}
-      </PopoverTrigger>
+      <PopoverTrigger asChild>{children}</PopoverTrigger>
       <PopoverContent className="w-80 p-4">
         <div className="grid gap-4">
           <div className="space-y-1">
@@ -65,7 +56,8 @@ export function UserDetailsPopover({ user, onUpdate, children }: UserDetailsPopo
             <div className="grid grid-cols-3 items-start gap-4">
               <Label className="text-right pt-1">Name</Label>
               <div className="col-span-2 text-sm font-medium">
-                {user.firstName} {user.middleName ? `${user.middleName} ` : ''}{user.lastName}
+                {user.firstName} {user.middleName ? `${user.middleName} ` : ''}
+                {user.lastName}
               </div>
             </div>
             <div className="grid grid-cols-3 items-start gap-4">
@@ -73,7 +65,9 @@ export function UserDetailsPopover({ user, onUpdate, children }: UserDetailsPopo
               <div className="col-span-2 text-sm break-all">{user.email}</div>
             </div>
             <div className="grid grid-cols-3 items-center gap-4">
-              <Label htmlFor="role" className="text-right">Role</Label>
+              <Label htmlFor="role" className="text-right">
+                Role
+              </Label>
               <div className="col-span-2 flex items-center gap-2">
                 <Select
                   defaultValue={user.role}
@@ -103,17 +97,17 @@ export function UserDetailsPopover({ user, onUpdate, children }: UserDetailsPopo
             <div className="grid grid-cols-3 items-start gap-4">
               <Label className="text-right pt-1">Created</Label>
               <div className="col-span-2 text-sm">
-                {user.created_at ? new Date(user.created_at).toLocaleDateString(undefined, {
-                  year: 'numeric',
-                  month: 'long',
-                  day: 'numeric'
-                }) : '-'}
+                {user.created_at
+                  ? new Date(user.created_at).toLocaleDateString(undefined, {
+                      year: 'numeric',
+                      month: 'long',
+                      day: 'numeric',
+                    })
+                  : '-'}
               </div>
             </div>
           </div>
-          {error && (
-            <p className="text-xs text-red-500 mt-2 text-center">{error}</p>
-          )}
+          {error && <p className="text-xs text-red-500 mt-2 text-center">{error}</p>}
         </div>
       </PopoverContent>
     </Popover>

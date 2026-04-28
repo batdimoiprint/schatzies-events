@@ -33,4 +33,3 @@ export interface AuthContextType {
   verifyToken: () => Promise<User | null>;
   setAuthenticatedUser: (user: User | null) => void;
 }
-
