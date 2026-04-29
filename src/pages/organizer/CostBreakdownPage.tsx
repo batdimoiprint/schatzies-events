@@ -1,6 +1,11 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { ArrowRight, CalendarDays, ChevronDown, Download } from 'lucide-react';
-import { exportCostBreakdown, getCostBreakdown } from '@/api/cost-breakdown';
+import {
+  exportCostBreakdown,
+  getCostBreakdown,
+  updateCostBreakdown,
+  createCostBreakdown,
+} from '@/api/cost-breakdown';
 import { getEvents, getEventVendors } from '@/api/events';
 
 import { Button } from '@/components/ui/button';
@@ -178,8 +183,14 @@ export function CostBreakdownPage() {
 
       try {
         const [costResult, vendorsResult] = await Promise.all([
-          getCostBreakdown(selectedEventId),
-          getEventVendors(selectedEventId),
+          getCostBreakdown(selectedEventId).catch(() => {
+            console.warn('Cost breakdown not found for this event.');
+            return null;
+          }),
+          getEventVendors(selectedEventId).catch(() => {
+            console.warn('No vendors found or failed to fetch vendors.');
+            return [];
+          }),
         ]);
 
         const costPayload =
@@ -428,6 +439,39 @@ export function CostBreakdownPage() {
     setExportMenuOpen(false);
   };
 
+  const [isSaving, setIsSaving] = useState(false);
+
+  const handleSaveCostBreakdown = async () => {
+    if (!selectedEventId) return;
+    setIsSaving(true);
+    try {
+      const payload = {
+        packagePricePerPax: resolvedPackagePrice,
+        eventPax: resolvedEventPax,
+        manpowerCost: 0, // Fallback as this isn't currently managed in the UI
+        additionalCharges: displayedAdditionalCharges,
+      };
+
+      try {
+        // Attempt to update first (PUT)
+        await updateCostBreakdown(selectedEventId, payload);
+      } catch (err: any) {
+        // If it fails with a 404 (doesn't exist yet), create it (POST)
+        if (err.response?.status === 404) {
+          await createCostBreakdown(selectedEventId, payload);
+        } else {
+          throw err;
+        }
+      }
+      alert('Cost breakdown saved successfully!');
+    } catch (error) {
+      console.error('Failed to save cost breakdown', error);
+      alert('Failed to save. Please try again.');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
   return (
     <section className="space-y-6 pb-6">
       <div className="hidden print:block">
@@ -592,7 +636,14 @@ export function CostBreakdownPage() {
               </div>
             </div>
 
-            <div className="relative">
+            <div className="relative flex items-center gap-2">
+              <Button
+                onClick={handleSaveCostBreakdown}
+                disabled={isSaving}
+                className="rounded-full bg-white border border-[#e4d9ef] text-[#8f1fd1] px-5 font-bold shadow-sm hover:bg-[#faf6fd] disabled:opacity-50"
+              >
+                {isSaving ? 'Saving...' : 'Save Changes'}
+              </Button>
               <Button
                 onClick={() => setExportMenuOpen((open) => !open)}
                 className="rounded-full bg-linear-to-r from-[#f34da7] to-[#8f1fd1] px-5 text-white shadow-[0_10px_24px_rgba(165,44,180,0.28)] hover:opacity-95"
@@ -938,4 +989,3 @@ export function CostBreakdownPage() {
     </section>
   );
 }
-// paayos api cata

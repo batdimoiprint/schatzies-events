@@ -629,7 +629,10 @@ function FlowNotesBoard() {
 
       const left = 2 + slotIndex * (slotWidth + slotGap) + (startParts.minute / 60) * minuteShift;
       const width = Math.max(20, slotWidth - Math.min(slotIndex, 2) * 2);
-      const height = Math.max(hourRowHeight - 4, Math.ceil((durationMinutes / 60) * hourRowHeight) - 4);
+      const height = Math.max(
+        hourRowHeight - 4,
+        Math.ceil((durationMinutes / 60) * hourRowHeight) - 4
+      );
 
       return {
         ...block,
@@ -664,9 +667,7 @@ function FlowNotesBoard() {
     <>
       <section className="rounded-2xl border border-[#ddd8e8] bg-linear-to-b from-white to-[#fbf8fd] p-4 shadow-[0_6px_14px_rgba(31,18,54,0.05)]">
         <div className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-[#e3ddea] bg-white px-4 py-3 shadow-[0_4px_10px_rgba(27,16,45,0.06)]">
-          <p className="text-[11px] font-black uppercase tracking-[0.12em] text-[#8a8399]">
-            Flow
-          </p>
+          <p className="text-[11px] font-black uppercase tracking-[0.12em] text-[#8a8399]">Flow</p>
           <div className="flex items-center gap-2">
             <button
               type="button"
@@ -925,7 +926,7 @@ function FlowNotesBoard() {
                   <button
                     type="button"
                     onClick={() => selectedActivity && handleDeleteActivity(selectedActivity.id)}
-                      className="inline-flex size-9 items-center justify-center rounded-full border border-[#f5d9e7] text-[#f33d93] transition hover:bg-[#fdf0f6]"
+                    className="inline-flex size-9 items-center justify-center rounded-full border border-[#f5d9e7] text-[#f33d93] transition hover:bg-[#fdf0f6]"
                     aria-label="Delete activity"
                   >
                     <Trash2 className="size-4" />
@@ -1477,7 +1478,8 @@ export function EventPlannerPage() {
           ? {
               ...task,
               title: taskPreviewTitle,
-              details: normalizedDetails || normalizedChecklist.map((item) => item.label).join('\n'),
+              details:
+                normalizedDetails || normalizedChecklist.map((item) => item.label).join('\n'),
               checklist: normalizedChecklist,
             }
           : task
@@ -2021,14 +2023,16 @@ export function EventPlannerPage() {
                                   {(task.details ?? '')
                                     .split('\n')
                                     .map((line) => line.trim())
-                                    .filter(Boolean)
-                                    .length > 0 ? (
+                                    .filter(Boolean).length > 0 ? (
                                     (task.details ?? '')
                                       .split('\n')
                                       .map((line) => line.trim())
                                       .filter(Boolean)
                                       .map((line, index) => (
-                                        <p key={`${task.id}-detail-${index}`} className="break-words">
+                                        <p
+                                          key={`${task.id}-detail-${index}`}
+                                          className="break-words"
+                                        >
                                           {line}
                                         </p>
                                       ))
@@ -2041,7 +2045,15 @@ export function EventPlannerPage() {
                               {task.lane === 'in-progress' && (task.checklist ?? []).length > 0 ? (
                                 <div className="mt-3 max-h-32 space-y-1 overflow-y-auto rounded-lg border border-[#ede9f4] bg-[#faf8fc] p-2 [scrollbar-width:thin]">
                                   {(task.checklist ?? []).map((item) => {
-                                    const palette = ['#f347a5', '#8f1fd1', '#f1589e', '#2ea4ff', '#2ec24f', '#ffb86b', '#6f26b4'];
+                                    const palette = [
+                                      '#f347a5',
+                                      '#8f1fd1',
+                                      '#f1589e',
+                                      '#2ea4ff',
+                                      '#2ec24f',
+                                      '#ffb86b',
+                                      '#6f26b4',
+                                    ];
                                     const colorIndex = (task.checklist ?? []).findIndex(
                                       (x) => x.id === item.id
                                     );
@@ -2133,15 +2145,21 @@ export function EventPlannerPage() {
                       onClick={() => openPlannerNotePreview(note)}
                       className={`relative flex h-[360px] cursor-pointer flex-col overflow-hidden rounded-2xl border p-4 shadow-[0_10px_22px_rgba(27,16,45,0.08)] transition-transform duration-200 hover:-translate-y-1 hover:shadow-[0_16px_30px_rgba(27,16,45,0.12)] ${noteTheme.shellClassName}`}
                     >
-                      <div className={`absolute inset-x-0 top-0 h-1.5 bg-linear-to-r ${noteTheme.headerClassName}`} />
+                      <div
+                        className={`absolute inset-x-0 top-0 h-1.5 bg-linear-to-r ${noteTheme.headerClassName}`}
+                      />
 
                       <div className="flex items-start justify-between gap-3 pt-1">
                         <div className="min-w-0">
-                          <p className="truncate text-[14px] font-black text-inherit">{note.title}</p>
+                          <p className="truncate text-[14px] font-black text-inherit">
+                            {note.title}
+                          </p>
                           <div
                             className={`mt-1 inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.12em] ${noteTheme.badgeClassName}`}
                           >
-                            <span className={`size-1.5 rounded-full ${noteTheme.accentClassName}`} />
+                            <span
+                              className={`size-1.5 rounded-full ${noteTheme.accentClassName}`}
+                            />
                             Note Tile
                           </div>
                         </div>
@@ -2186,7 +2204,9 @@ export function EventPlannerPage() {
                         </div>
                       </div>
 
-                      <div className={`mt-3 flex-1 overflow-hidden rounded-xl border ${noteTheme.footerClassName}`}>
+                      <div
+                        className={`mt-3 flex-1 overflow-hidden rounded-xl border ${noteTheme.footerClassName}`}
+                      >
                         {note.imageDataUrl ? (
                           <img
                             src={note.imageDataUrl}
@@ -2194,18 +2214,26 @@ export function EventPlannerPage() {
                             className="h-[150px] w-full object-cover"
                           />
                         ) : (
-                          <div className={`flex h-[150px] w-full items-center justify-center bg-linear-to-br ${noteTheme.headerClassName}`}>
+                          <div
+                            className={`flex h-[150px] w-full items-center justify-center bg-linear-to-br ${noteTheme.headerClassName}`}
+                          >
                             <div className="flex flex-col items-center gap-2 text-center">
-                              <span className={`inline-flex size-10 items-center justify-center rounded-2xl ${noteTheme.badgeClassName}`}>
+                              <span
+                                className={`inline-flex size-10 items-center justify-center rounded-2xl ${noteTheme.badgeClassName}`}
+                              >
                                 <ImagePlus className="size-5" />
                               </span>
-                              <p className="text-[11px] font-semibold text-inherit">No attachment</p>
+                              <p className="text-[11px] font-semibold text-inherit">
+                                No attachment
+                              </p>
                             </div>
                           </div>
                         )}
 
                         <div className="flex h-[130px] flex-col gap-2 px-3 py-3">
-                          <p className={`line-clamp-4 whitespace-pre-line text-[12px] leading-snug ${noteTheme.bodyClassName}`}>
+                          <p
+                            className={`line-clamp-4 whitespace-pre-line text-[12px] leading-snug ${noteTheme.bodyClassName}`}
+                          >
                             {note.body}
                           </p>
                         </div>
@@ -2238,69 +2266,82 @@ export function EventPlannerPage() {
                 </div>
               </div>
 
-                  <div className="overflow-hidden rounded-2xl border border-[#ece8f0] bg-white">
-                    <ul className="divide-y divide-[#f0ecf6]">
-                      {checklistItems.map((item, index) => {
-                        const palette = ['#f347a5', '#8f1fd1', '#f1589e', '#2ea4ff', '#2ec24f', '#ffb86b', '#6f26b4'];
-                        const color = palette[index % palette.length];
+              <div className="overflow-hidden rounded-2xl border border-[#ece8f0] bg-white">
+                <ul className="divide-y divide-[#f0ecf6]">
+                  {checklistItems.map((item, index) => {
+                    const palette = [
+                      '#f347a5',
+                      '#8f1fd1',
+                      '#f1589e',
+                      '#2ea4ff',
+                      '#2ec24f',
+                      '#ffb86b',
+                      '#6f26b4',
+                    ];
+                    const color = palette[index % palette.length];
 
-                        return (
-                          <li
-                            key={item.id}
-                            className="flex min-h-[56px] items-center justify-between px-4"
+                    return (
+                      <li
+                        key={item.id}
+                        className="flex min-h-[56px] items-center justify-between px-4"
+                      >
+                        <div className="flex min-w-0 items-center gap-3">
+                          <button
+                            type="button"
+                            onClick={() =>
+                              handleToggleTaskItem(checklistTaskCard?.id ?? '', item.id)
+                            }
+                            aria-label={`${item.done ? 'Uncheck' : 'Check'} ${item.label}`}
+                            className="inline-flex h-8 w-8 items-center justify-center rounded-md border-2 transition-all"
+                            style={{
+                              borderColor: color,
+                              background: item.done ? color : 'white',
+                              color: item.done ? 'white' : color,
+                            }}
                           >
-                            <div className="flex min-w-0 items-center gap-3">
-                              <button
-                                type="button"
-                                onClick={() => handleToggleTaskItem(checklistTaskCard?.id ?? '', item.id)}
-                                aria-label={`${item.done ? 'Uncheck' : 'Check'} ${item.label}`}
-                                className="inline-flex h-8 w-8 items-center justify-center rounded-md border-2 transition-all"
-                                style={{
-                                  borderColor: color,
-                                  background: item.done ? color : 'white',
-                                  color: item.done ? 'white' : color,
-                                }}
-                              >
-                                {item.done ? '✓' : ''}
-                              </button>
+                            {item.done ? '✓' : ''}
+                          </button>
 
-                              <span className="inline-flex h-2 w-2 shrink-0 rounded-full" style={{ background: color }} />
+                          <span
+                            className="inline-flex h-2 w-2 shrink-0 rounded-full"
+                            style={{ background: color }}
+                          />
 
-                              <span className="truncate text-[15px] font-medium text-[#302c39]">
-                                {item.label}
-                              </span>
-                            </div>
+                          <span className="truncate text-[15px] font-medium text-[#302c39]">
+                            {item.label}
+                          </span>
+                        </div>
 
-                            <div className="ml-3 flex shrink-0 items-center gap-2">
-                              {item.id === 'cost-2' ? (
-                                <span className="inline-flex items-center gap-1 rounded-md border border-[#d8d3de] bg-[#f6f5f8] px-2 py-1 text-[9px] font-semibold text-[#6f697e]">
-                                  <CalendarDays className="size-3" />
-                                  Due Jan 2
-                                </span>
-                              ) : null}
+                        <div className="ml-3 flex shrink-0 items-center gap-2">
+                          {item.id === 'cost-2' ? (
+                            <span className="inline-flex items-center gap-1 rounded-md border border-[#d8d3de] bg-[#f6f5f8] px-2 py-1 text-[9px] font-semibold text-[#6f697e]">
+                              <CalendarDays className="size-3" />
+                              Due Jan 2
+                            </span>
+                          ) : null}
 
-                              <button
-                                type="button"
-                                onClick={() =>
-                                  openChecklistDeleteValidation({ id: item.id, label: item.label })
-                                }
-                                className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-[#e8e0ea] bg-white text-[#7a728d] transition hover:border-[#f1589e] hover:text-[#f1589e]"
-                                aria-label={`Delete ${item.label}`}
-                              >
-                                <Trash2 className="size-4" />
-                              </button>
-                            </div>
-                          </li>
-                        );
-                      })}
-                    </ul>
+                          <button
+                            type="button"
+                            onClick={() =>
+                              openChecklistDeleteValidation({ id: item.id, label: item.label })
+                            }
+                            className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-[#e8e0ea] bg-white text-[#7a728d] transition hover:border-[#f1589e] hover:text-[#f1589e]"
+                            aria-label={`Delete ${item.label}`}
+                          >
+                            <Trash2 className="size-4" />
+                          </button>
+                        </div>
+                      </li>
+                    );
+                  })}
+                </ul>
 
-                    {checklistItems.length === 0 ? (
-                      <div className="px-3 py-8 text-center text-sm font-semibold text-[#777184]">
-                        No checklist items yet. Add one to start tracking tasks.
-                      </div>
-                    ) : null}
+                {checklistItems.length === 0 ? (
+                  <div className="px-3 py-8 text-center text-sm font-semibold text-[#777184]">
+                    No checklist items yet. Add one to start tracking tasks.
                   </div>
+                ) : null}
+              </div>
 
               <button
                 type="button"
@@ -2386,7 +2427,9 @@ export function EventPlannerPage() {
                         <div className="mx-auto inline-flex size-16 items-center justify-center rounded-2xl bg-[#f1589e]/10 text-[#f1589e]">
                           <ImagePlus className="size-8" />
                         </div>
-                        <p className="mt-3 text-sm font-semibold text-[#746e85]">No attachment on this note</p>
+                        <p className="mt-3 text-sm font-semibold text-[#746e85]">
+                          No attachment on this note
+                        </p>
                       </div>
                     </div>
                   )}
@@ -2485,7 +2528,9 @@ export function EventPlannerPage() {
                     <p className="text-xs font-semibold uppercase tracking-[0.08em] text-[#8b84a0]">
                       Attachment
                     </p>
-                    <p className="text-[12px] text-[#6f687f]">Add an image if the note needs one.</p>
+                    <p className="text-[12px] text-[#6f687f]">
+                      Add an image if the note needs one.
+                    </p>
                   </div>
 
                   <label className="inline-flex cursor-pointer items-center justify-center gap-2 rounded-md border border-[#d9d3e2] bg-white px-3 py-2 text-[12px] font-semibold text-[#4a4654] transition hover:border-[#b7b0c4]">
@@ -2646,7 +2691,10 @@ export function EventPlannerPage() {
                     </div>
 
                     <div>
-                      <Label htmlFor="task-preview-description" className="mt-3 text-[11px] font-semibold text-[#746e85]">
+                      <Label
+                        htmlFor="task-preview-description"
+                        className="mt-3 text-[11px] font-semibold text-[#746e85]"
+                      >
                         Description
                       </Label>
                       <textarea
@@ -2776,7 +2824,10 @@ export function EventPlannerPage() {
                                 <button
                                   type="button"
                                   onClick={() =>
-                                    handleToggleBoardTaskChecklistItem(selectedBoardTask.id, item.id)
+                                    handleToggleBoardTaskChecklistItem(
+                                      selectedBoardTask.id,
+                                      item.id
+                                    )
                                   }
                                   aria-label={`${item.done ? 'Uncheck' : 'Check'} ${item.label}`}
                                   className={[
