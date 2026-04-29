@@ -186,3 +186,13 @@ export async function getVendorsByEventIds(eventIds: string[]): Promise<EventMan
 
   return Array.from(deduped.values());
 }
+
+export async function assignVendorToEvent(vendorId: string, eventId: string) {
+  const response = await axiosInstance.post(`/vendors/${vendorId}/assign-event`, { eventId });
+  return response.data;
+}
+
+export async function unassignVendorFromEvent(vendorId: string) {
+  const response = await axiosInstance.delete(`/vendors/${vendorId}/unassign-event`);
+  return response.data;
+}

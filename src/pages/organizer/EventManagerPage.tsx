@@ -12,8 +12,19 @@ import {
 } from '@/components/ui/table';
 import type { OrganizerLayoutOutletContext } from '@/components/layouts/OrganizerLayout';
 import { getEventManagerEvents, updateEvent, type EventManagerEvent } from '@/api/events';
-import { getVendorsByEventId, type EventManagerVendor } from '@/api/vendors';
-import { getWorkers, type EventWorker } from '@/api/workers';
+import {
+  assignVendorToEvent,
+  getVendors,
+  type EventManagerVendor,
+  unassignVendorFromEvent,
+} from '@/api/vendors';
+import {
+  assignWorkerToEvent,
+  getWorkers,
+  type EventWorker,
+  unassignWorkerFromEvent,
+} from '@/api/workers';
+import { getRSVPList } from '@/api/rsvp';
 
 type VendorStatus = EventManagerVendor['status'];
 type EventManagerTab = 'Events' | 'Vendor' | 'Workers';
@@ -65,17 +76,28 @@ export function EventManagerPage() {
     }
   }, []);
 
-  const fetchVendors = useCallback(async (eventId: string) => {
-    if (!eventId) {
-      setVendors([]);
-      return;
-    }
-
+  const fetchVendors = useCallback(async () => {
+    setIsLoading(true);
     try {
-      const vendorRows = await getVendorsByEventId(eventId);
-      setVendors(vendorRows);
+      const vendorRows = await getVendors();
+      const mapped = vendorRows.map((v) => ({
+        id: v.id,
+        eventId: v.eventId || '',
+        name: v.vendorName || v.name || 'Unnamed vendor',
+        contactPerson: v.contactPerson || '-',
+        email: v.contactEmail || '-',
+        phone: v.contactPhone || '-',
+        service: v.serviceType || '-',
+        status:
+          v.status === 'Active' || String(v.availabilityStatus).toLowerCase() === 'active'
+            ? 'Active'
+            : ('Inactive' as VendorStatus),
+      }));
+      setVendors(mapped);
     } catch {
       setVendors([]);
+    } finally {
+      setIsLoading(false);
     }
   }, []);
 
@@ -91,7 +113,7 @@ export function EventManagerPage() {
   const handleRefreshAll = useCallback(async () => {
     setIsRefreshing(true);
     try {
-      await Promise.all([fetchEvents(), fetchVendors(selectedEventId), fetchWorkers()]);
+      await Promise.all([fetchEvents(), fetchVendors(), fetchWorkers()]);
     } finally {
       // Optional: 500ms delay so the user can clearly see the animation even if the API is fast
       setTimeout(() => {
@@ -99,7 +121,7 @@ export function EventManagerPage() {
         setIsActionsOpen(false);
       }, 500);
     }
-  }, [fetchEvents, fetchVendors, fetchWorkers, selectedEventId]);
+  }, [fetchEvents, fetchVendors, fetchWorkers]);
 
   useEffect(() => {
     void fetchEvents();
@@ -107,8 +129,8 @@ export function EventManagerPage() {
   }, [fetchEvents, fetchWorkers]);
 
   useEffect(() => {
-    void fetchVendors(selectedEventId);
-  }, [fetchVendors, selectedEventId]);
+    void fetchVendors();
+  }, [fetchVendors]);
 
   const handleUpdateEventTitle = useCallback(
     async (event: EventManagerEvent) => {
@@ -190,8 +212,85 @@ export function EventManagerPage() {
   }, [activeTab, events, searchTerm, vendors, workers]);
 
   const [rsvpModalEvent, setRsvpModalEvent] = useState<EventManagerEvent | null>(null);
+  const [modalRsvps, setModalRsvps] = useState<any[]>([]);
+  const [isLoadingModalRsvps, setIsLoadingModalRsvps] = useState(false);
   const [isActionsOpen, setIsActionsOpen] = useState(false);
   const [isStatusOpen, setIsStatusOpen] = useState(false);
+  const [isAssignVendorModalOpen, setIsAssignVendorModalOpen] = useState(false);
+  const [isUnassignVendorModalOpen, setIsUnassignVendorModalOpen] = useState(false);
+  const [assignToEventId, setAssignToEventId] = useState('');
+  const [isAssignWorkerModalOpen, setIsAssignWorkerModalOpen] = useState(false);
+  const [isUnassignWorkerModalOpen, setIsUnassignWorkerModalOpen] = useState(false);
+  const [assignWorkerToEventId, setAssignWorkerToEventId] = useState('');
+
+  useEffect(() => {
+    const fetchModalRsvps = async () => {
+      if (!rsvpModalEvent) {
+        setModalRsvps([]);
+        return;
+      }
+
+      setIsLoadingModalRsvps(true);
+      try {
+        let rawData = await getRSVPList(rsvpModalEvent.id);
+
+        // Fallback for EVENT# prefix
+        if ((!rawData || rawData.length === 0) && !rsvpModalEvent.id.startsWith('EVENT#')) {
+          try {
+            const altData = await getRSVPList(`EVENT#${rsvpModalEvent.id}`);
+            if (altData && altData.length > 0) rawData = altData;
+          } catch {}
+        }
+
+        // Bulletproof recursive flattening (handles [], [[]], etc.)
+        const flatArray: any[] = [];
+        const processData = (item: any) => {
+          if (Array.isArray(item)) item.forEach(processData);
+          else if (item && typeof item === 'object') flatArray.push(item);
+        };
+        processData(rawData);
+
+        const mappedData = flatArray.map((item: any) => {
+          // Extract names and physically destroy literal 'undefined' strings
+          const fName = String(item.firstName || item.first_name || item.guestfirstName || '')
+            .replace(/undefined/gi, '')
+            .trim();
+          const lName = String(item.lastName || item.last_name || item.guestlastName || '')
+            .replace(/undefined/gi, '')
+            .trim();
+
+          // Aggressive case-insensitive status check
+          const statusStr = String(item.status || '')
+            .trim()
+            .toUpperCase();
+          const isAttending =
+            item.isScanned === true ||
+            item.isScanned === 'true' ||
+            statusStr === 'ATTENDING' ||
+            statusStr === 'CONFIRMED';
+
+          const time =
+            item.updatedAt || item.scannedAt || item.createdAt || new Date().toISOString();
+
+          return {
+            id: item.id || item.guestId || item.SK || Math.random().toString(),
+            firstName: fName || 'Guest',
+            lastName: lName,
+            isScanned: isAttending,
+            scannedAt: time,
+          };
+        });
+
+        setModalRsvps(mappedData);
+      } catch (error) {
+        console.error('Failed to fetch RSVPs for modal', error);
+      } finally {
+        setIsLoadingModalRsvps(false);
+      }
+    };
+
+    fetchModalRsvps();
+  }, [rsvpModalEvent]);
 
   return (
     <div className="relative space-y-4 bg-transparent font-sans">
@@ -273,16 +372,29 @@ export function EventManagerPage() {
                     </button>
                   )}
                   {activeTab === 'Vendor' && selectedVendorId && (
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setIsActionsOpen(false);
-                        window.alert('Backend setup required for Unassign Vendor');
-                      }}
-                      className="w-full px-4 py-2.5 text-left text-xs font-bold text-[#5c546a] transition-colors hover:bg-[#faf9fc] hover:text-[#df1b8b]"
-                    >
-                      Unassign Vendor
-                    </button>
+                    <>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setIsActionsOpen(false);
+                          setAssignToEventId(events[0]?.id || '');
+                          setIsAssignVendorModalOpen(true);
+                        }}
+                        className="w-full px-4 py-2.5 text-left text-xs font-bold text-[#5c546a] transition-colors hover:bg-[#faf9fc] hover:text-[#df1b8b]"
+                      >
+                        Assign Vendor
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setIsActionsOpen(false);
+                          setIsUnassignVendorModalOpen(true);
+                        }}
+                        className="w-full px-4 py-2.5 text-left text-xs font-bold text-[#5c546a] transition-colors hover:bg-[#faf9fc] hover:text-[#df1b8b]"
+                      >
+                        Unassign Vendor
+                      </button>
+                    </>
                   )}
                   {activeTab === 'Workers' && selectedWorkerId && (
                     <>
@@ -290,7 +402,8 @@ export function EventManagerPage() {
                         type="button"
                         onClick={() => {
                           setIsActionsOpen(false);
-                          window.alert('Assign Modal logic to be added');
+                          setAssignWorkerToEventId(events[0]?.id || '');
+                          setIsAssignWorkerModalOpen(true);
                         }}
                         className="w-full px-4 py-2.5 text-left text-xs font-bold text-[#5c546a] transition-colors hover:bg-[#faf9fc] hover:text-[#df1b8b]"
                       >
@@ -300,7 +413,7 @@ export function EventManagerPage() {
                         type="button"
                         onClick={() => {
                           setIsActionsOpen(false);
-                          window.alert('Backend setup required for Unassign Worker');
+                          setIsUnassignWorkerModalOpen(true);
                         }}
                         className="w-full px-4 py-2.5 text-left text-xs font-bold text-[#5c546a] transition-colors hover:bg-[#faf9fc] hover:text-[#df1b8b]"
                       >
@@ -638,9 +751,13 @@ export function EventManagerPage() {
               <div className="flex flex-1 flex-col justify-center gap-1 text-[11px] font-bold text-[#352f44]">
                 <p>DETAILS:</p>
                 <p className="font-semibold text-[#716885]">
-                  FINAL HEADCOUNT: {rsvpModalEvent.rsvp}
+                  FINAL HEADCOUNT:{' '}
+                  {isLoadingModalRsvps ? '...' : modalRsvps.filter((r) => r.isScanned).length}
                 </p>
-                <p className="font-semibold text-[#716885]">ABSENTEES: 0</p>
+                <p className="font-semibold text-[#716885]">
+                  ABSENTEES:{' '}
+                  {isLoadingModalRsvps ? '...' : modalRsvps.filter((r) => !r.isScanned).length}
+                </p>
               </div>
             </div>
 
@@ -657,23 +774,251 @@ export function EventManagerPage() {
                     </tr>
                   </thead>
                   <tbody>
-                    {[
-                      'Jeremy Urmenita',
-                      'Diana Rose Urmenita',
-                      'Meryl C. Alcantra',
-                      'Stefani Vienne R. Carcer',
-                      'Aleah Missy Cabria',
-                    ].map((name, i) => (
-                      <tr key={i} className="border-b border-[#f9f7fb] last:border-0">
-                        <td className="py-2.5 font-bold text-[#453e54]">
-                          {i + 1}. {name}
+                    {isLoadingModalRsvps ? (
+                      <tr>
+                        <td colSpan={2} className="py-4 text-center text-xs text-[#8e879c]">
+                          Loading guests...
                         </td>
-                        <td className="py-2.5 text-right font-semibold text-[#8e879c]">00:00 AM</td>
                       </tr>
-                    ))}
+                    ) : modalRsvps.filter((r) => r.isScanned).length === 0 ? (
+                      <tr>
+                        <td colSpan={2} className="py-4 text-center text-xs text-[#8e879c]">
+                          No attendees arrived yet.
+                        </td>
+                      </tr>
+                    ) : (
+                      modalRsvps
+                        .filter((r) => r.isScanned)
+                        .map((guest, i) => {
+                          const scanTime = new Date(guest.scannedAt).toLocaleTimeString('en-US', {
+                            hour: '2-digit',
+                            minute: '2-digit',
+                          });
+                          return (
+                            <tr
+                              key={guest.id || i}
+                              className="border-b border-[#f9f7fb] last:border-0"
+                            >
+                              <td className="py-2.5 font-bold text-[#453e54]">
+                                {i + 1}. {guest.firstName} {guest.lastName}
+                              </td>
+                              <td className="py-2.5 text-right font-semibold text-[#8e879c]">
+                                {scanTime}
+                              </td>
+                            </tr>
+                          );
+                        })
+                    )}
                   </tbody>
                 </table>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Assign Vendor Modal */}
+      {isAssignVendorModalOpen && (
+        <div className="fixed inset-0 z-[1000] flex min-h-full items-center justify-center bg-[#1a1423]/60 backdrop-blur-md p-4">
+          <div className="w-full max-w-md animate-in zoom-in-95 fade-in rounded-2xl bg-white p-6 shadow-2xl">
+            <h2 className="mb-2 text-xl font-black text-[#2e2837]">Assign Vendor to Event</h2>
+            <p className="mb-4 text-xs text-[#7c758d]">
+              Select the event you want to assign this vendor to.
+            </p>
+
+            <select
+              className="w-full rounded-lg border border-gray-200 bg-gray-50 p-2.5 text-sm outline-none focus:border-[#df1b8b]"
+              value={assignToEventId}
+              onChange={(e) => setAssignToEventId(e.target.value)}
+            >
+              <option value="" disabled>
+                Select an event...
+              </option>
+              {events.map((e) => (
+                <option key={e.id} value={e.id}>
+                  {e.title}
+                </option>
+              ))}
+            </select>
+
+            <div className="mt-6 flex justify-end gap-3">
+              <button
+                onClick={() => setIsAssignVendorModalOpen(false)}
+                className="rounded-lg px-4 py-2 text-xs font-bold text-[#696373] transition-colors hover:bg-gray-100"
+                disabled={isMutating}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={async () => {
+                  if (!assignToEventId) return window.alert('Please select an event');
+                  setIsMutating(true);
+                  try {
+                    await assignVendorToEvent(selectedVendorId, assignToEventId);
+                    await fetchVendors();
+                    setIsAssignVendorModalOpen(false);
+                  } catch (e) {
+                    window.alert('Failed to assign vendor. Please try again.');
+                  } finally {
+                    setIsMutating(false);
+                  }
+                }}
+                disabled={isMutating}
+                className="rounded-lg bg-[#df1b8b] px-5 py-2 text-xs font-bold text-white transition-colors hover:bg-[#c11776] disabled:opacity-50"
+              >
+                {isMutating ? 'Assigning...' : 'Assign Vendor'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Unassign Vendor Modal */}
+      {isUnassignVendorModalOpen && (
+        <div className="fixed inset-0 z-[1000] flex min-h-full items-center justify-center bg-[#1a1423]/60 backdrop-blur-md p-4">
+          <div className="w-full max-w-sm animate-in zoom-in-95 fade-in rounded-2xl bg-white p-6 text-center shadow-2xl">
+            <h2 className="mb-2 text-xl font-black text-[#2e2837]">Unassign Vendor</h2>
+            <p className="mb-6 text-xs text-[#7c758d]">
+              Are you sure you want to unassign this vendor from its current event?
+            </p>
+
+            <div className="flex justify-center gap-3">
+              <button
+                onClick={() => setIsUnassignVendorModalOpen(false)}
+                className="rounded-lg px-4 py-2 text-xs font-bold text-[#696373] transition-colors hover:bg-gray-100"
+                disabled={isMutating}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={async () => {
+                  setIsMutating(true);
+                  try {
+                    await unassignVendorFromEvent(selectedVendorId);
+                    await fetchVendors();
+                    setIsUnassignVendorModalOpen(false);
+                  } catch (e) {
+                    window.alert('Failed to unassign vendor. Please try again.');
+                  } finally {
+                    setIsMutating(false);
+                  }
+                }}
+                disabled={isMutating}
+                className="rounded-lg bg-red-500 px-5 py-2 text-xs font-bold text-white transition-colors hover:bg-red-600 disabled:opacity-50"
+              >
+                {isMutating ? 'Unassigning...' : 'Yes, Unassign'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Assign Worker Modal */}
+      {isAssignWorkerModalOpen && (
+        <div className="fixed inset-0 z-[1000] flex min-h-full items-center justify-center bg-[#1a1423]/60 backdrop-blur-md p-4">
+          <div className="w-full max-w-md animate-in zoom-in-95 fade-in rounded-2xl bg-white p-6 shadow-2xl">
+            <h2 className="mb-2 text-xl font-black text-[#2e2837]">Assign Worker to Event</h2>
+            <p className="mb-4 text-xs text-[#7c758d]">
+              Select the event you want to assign this worker to.
+            </p>
+            <select
+              className="w-full rounded-lg border border-gray-200 bg-gray-50 p-2.5 text-sm outline-none focus:border-[#df1b8b]"
+              value={assignWorkerToEventId}
+              onChange={(e) => setAssignWorkerToEventId(e.target.value)}
+            >
+              <option value="" disabled>
+                Select an event...
+              </option>
+              {events.map((e) => (
+                <option key={e.id} value={e.id}>
+                  {e.title}
+                </option>
+              ))}
+            </select>
+            <div className="mt-6 flex justify-end gap-3">
+              <button
+                onClick={() => setIsAssignWorkerModalOpen(false)}
+                className="rounded-lg px-4 py-2 text-xs font-bold text-[#696373] transition-colors hover:bg-gray-100"
+                disabled={isMutating}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={async () => {
+                  if (!assignWorkerToEventId) return window.alert('Please select an event');
+                  const worker = workers.find((w) => w.id === selectedWorkerId);
+                  if (!worker?.vendorId)
+                    return window.alert('Error: Worker is missing a Vendor ID.');
+
+                  setIsMutating(true);
+                  try {
+                    await assignWorkerToEvent(
+                      worker.vendorId,
+                      selectedWorkerId,
+                      assignWorkerToEventId
+                    );
+                    await fetchWorkers();
+                    setIsAssignWorkerModalOpen(false);
+                    window.alert('Worker assigned successfully!');
+                  } catch (e) {
+                    window.alert('Failed to assign worker. Please try again.');
+                  } finally {
+                    setIsMutating(false);
+                  }
+                }}
+                disabled={isMutating}
+                className="rounded-lg bg-[#df1b8b] px-5 py-2 text-xs font-bold text-white transition-colors hover:bg-[#c11776] disabled:opacity-50"
+              >
+                {isMutating ? 'Assigning...' : 'Assign Worker'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Unassign Worker Modal */}
+      {isUnassignWorkerModalOpen && (
+        <div className="fixed inset-0 z-[1000] flex min-h-full items-center justify-center bg-[#1a1423]/60 backdrop-blur-md p-4">
+          <div className="w-full max-w-sm animate-in zoom-in-95 fade-in rounded-2xl bg-white p-6 text-center shadow-2xl">
+            <h2 className="mb-2 text-xl font-black text-[#2e2837]">Unassign Worker</h2>
+            <p className="mb-6 text-xs text-[#7c758d]">
+              {(() => {
+                const worker = workers.find((w) => w.id === selectedWorkerId);
+                const evt = events.find((e) => e.id === worker?.eventId);
+                return `Are you sure you want to unassign this worker from "${evt ? evt.title : 'its current event'}"?`;
+              })()}
+            </p>
+            <div className="flex justify-center gap-3">
+              <button
+                onClick={() => setIsUnassignWorkerModalOpen(false)}
+                className="rounded-lg px-4 py-2 text-xs font-bold text-[#696373] transition-colors hover:bg-gray-100"
+                disabled={isMutating}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={async () => {
+                  const worker = workers.find((w) => w.id === selectedWorkerId);
+                  if (!worker?.vendorId)
+                    return window.alert('Error: Worker is missing a Vendor ID.');
+
+                  setIsMutating(true);
+                  try {
+                    await unassignWorkerFromEvent(worker.vendorId, selectedWorkerId);
+                    await fetchWorkers();
+                    setIsUnassignWorkerModalOpen(false);
+                    window.alert('Worker unassigned successfully!');
+                  } catch (e) {
+                    window.alert('Failed to unassign worker. Please try again.');
+                  } finally {
+                    setIsMutating(false);
+                  }
+                }}
+                disabled={isMutating}
+                className="rounded-lg bg-red-500 px-5 py-2 text-xs font-bold text-white transition-colors hover:bg-red-600 disabled:opacity-50"
+              >
+                {isMutating ? 'Unassigning...' : 'Yes, Unassign'}
+              </button>
             </div>
           </div>
         </div>
