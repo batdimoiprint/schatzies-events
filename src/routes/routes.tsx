@@ -43,173 +43,178 @@ import { CostBreakdownPage } from '@/pages/organizer/CostBreakdownPage';
 import { OrganizerProfilePage } from '@/pages/organizer/OrganizerProfilePage';
 import { InvitationPage } from '@/pages/public/InvitationPage';
 
-const router = createBrowserRouter([
+const router = createBrowserRouter(
+  [
+    {
+      path: 'invitation/:eventId/:qrId',
+      Component: InvitationPage,
+    },
+    {
+      path: 'login',
+      Component: LoginPage,
+    },
+    {
+      path: 'force-reset-password',
+      Component: ForceResetPasswordPage,
+    },
+    {
+      path: '/',
+      Component: PublicLayout,
+      children: [
+        {
+          index: true,
+          Component: LandingPage,
+        },
+        {
+          path: 'event-packages',
+          Component: EventPackagesPage,
+        },
+        {
+          path: 'services',
+          Component: ServicesPage,
+        },
+        {
+          path: 'about-us',
+          Component: AboutUsPage,
+        },
+        {
+          path: 'contact',
+          Component: ContactPage,
+        },
+        {
+          path: 'forgot-password',
+          Component: ForgotPasswordPage,
+        },
+      ],
+    },
+    {
+      path: 'rsvp',
+      Component: RSVPPage,
+    },
+    {
+      path: 'admin',
+      Component: AdminLayout,
+      children: [
+        {
+          index: true,
+          Component: AdminDashboardPage,
+        },
+        {
+          path: 'users',
+          Component: UsersManagement,
+        },
+        {
+          path: 'calendar',
+          Component: AdminCalendarPage,
+        },
+        {
+          path: 'event-manager',
+          Component: AdminEventManagerPage,
+        },
+        {
+          path: 'event-planner',
+          Component: AdminEventPlannerPage,
+        },
+        {
+          path: 'rsvp',
+          Component: AdminRSVPPage,
+        },
+        {
+          path: 'costs',
+          Component: AdminCostBreakdownPage,
+        },
+        {
+          path: 'vendors',
+          Component: AdminVendorPoolPage,
+        },
+        {
+          path: 'inquiries',
+          Component: AdminInquiriesPage,
+        },
+        {
+          path: 'notifications',
+          Component: AdminNotificationsPage,
+        },
+      ],
+    },
+    {
+      path: 'organizer',
+      Component: OrganizerLayout,
+      children: [
+        {
+          index: true,
+          Component: OrganizerDashboard,
+        },
+        {
+          path: 'calendar',
+          Component: CalendarPage,
+        },
+        {
+          path: 'event-planner',
+          Component: EventPlannerPage,
+        },
+        {
+          path: 'event-manager',
+          Component: EventManagerPage,
+        },
+        {
+          path: 'rsvp',
+          Component: OrganizerRSVPPage,
+        },
+        {
+          path: 'message',
+          Component: OrganizerMessagePage,
+        },
+        {
+          path: 'cost-breakdown',
+          Component: CostBreakdownPage,
+        },
+        {
+          path: 'profile',
+          Component: OrganizerProfilePage,
+        },
+      ],
+    },
+    {
+      path: 'client',
+      Component: ClientLayout,
+      children: [
+        {
+          index: true,
+          Component: ClientDashboardPage,
+        },
+        {
+          path: 'event-plan',
+          Component: EventPlanViewingPage,
+        },
+        {
+          path: 'message',
+          Component: MessagePage,
+        },
+        {
+          path: 'rsvp',
+          Component: QrCodePage,
+        },
+        {
+          path: 'notifications',
+          Component: NotificationsPage,
+        },
+        {
+          path: 'profile',
+          Component: ProfilePage,
+        },
+        {
+          path: 'settings',
+          Component: SettingsPage,
+        },
+        // Add more client routes here as needed
+      ],
+    },
+  ],
   {
-    path: 'invitation/:eventId/:qrId',
-    Component: InvitationPage,
-  },
-  {
-    path: 'login',
-    Component: LoginPage,
-  },
-  {
-    path: 'force-reset-password',
-    Component: ForceResetPasswordPage,
-  },
-  {
-    path: '/',
-    Component: PublicLayout,
-    children: [
-      {
-        index: true,
-        Component: LandingPage,
-      },
-      {
-        path: 'event-packages',
-        Component: EventPackagesPage,
-      },
-      {
-        path: 'services',
-        Component: ServicesPage,
-      },
-      {
-        path: 'about-us',
-        Component: AboutUsPage,
-      },
-      {
-        path: 'contact',
-        Component: ContactPage,
-      },
-      {
-        path: 'forgot-password',
-        Component: ForgotPasswordPage,
-      },
-    ],
-  },
-  {
-    path: 'rsvp',
-    Component: RSVPPage,
-  },
-  {
-    path: 'admin',
-    Component: AdminLayout,
-    children: [
-      {
-        index: true,
-        Component: AdminDashboardPage,
-      },
-      {
-        path: 'users',
-        Component: UsersManagement,
-      },
-      {
-        path: 'calendar',
-        Component: AdminCalendarPage,
-      },
-      {
-        path: 'event-manager',
-        Component: AdminEventManagerPage,
-      },
-      {
-        path: 'event-planner',
-        Component: AdminEventPlannerPage,
-      },
-      {
-        path: 'rsvp',
-        Component: AdminRSVPPage,
-      },
-      {
-        path: 'costs',
-        Component: AdminCostBreakdownPage,
-      },
-      {
-        path: 'vendors',
-        Component: AdminVendorPoolPage,
-      },
-      {
-        path: 'inquiries',
-        Component: AdminInquiriesPage,
-      },
-      {
-        path: 'notifications',
-        Component: AdminNotificationsPage,
-      },
-    ],
-  },
-  {
-    path: 'organizer',
-    Component: OrganizerLayout,
-    children: [
-      {
-        index: true,
-        Component: OrganizerDashboard,
-      },
-      {
-        path: 'calendar',
-        Component: CalendarPage,
-      },
-      {
-        path: 'event-planner',
-        Component: EventPlannerPage,
-      },
-      {
-        path: 'event-manager',
-        Component: EventManagerPage,
-      },
-      {
-        path: 'rsvp',
-        Component: OrganizerRSVPPage,
-      },
-      {
-        path: 'message',
-        Component: OrganizerMessagePage,
-      },
-      {
-        path: 'cost-breakdown',
-        Component: CostBreakdownPage,
-      },
-      {
-        path: 'profile',
-        Component: OrganizerProfilePage,
-      },
-    ],
-  },
-  {
-    path: 'client',
-    Component: ClientLayout,
-    children: [
-      {
-        index: true,
-        Component: ClientDashboardPage,
-      },
-      {
-        path: 'event-plan',
-        Component: EventPlanViewingPage,
-      },
-      {
-        path: 'message',
-        Component: MessagePage,
-      },
-      {
-        path: 'rsvp',
-        Component: QrCodePage,
-      },
-      {
-        path: 'notifications',
-        Component: NotificationsPage,
-      },
-      {
-        path: 'profile',
-        Component: ProfilePage,
-      },
-      {
-        path: 'settings',
-        Component: SettingsPage,
-      },
-      // Add more client routes here as needed
-    ],
-  },
-]);
+    basename: import.meta.env.BASE_URL,
+  }
+);
 
 export function AppRoutes() {
   return <RouterProvider router={router} />;
