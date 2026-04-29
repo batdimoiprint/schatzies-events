@@ -133,6 +133,10 @@ const router = createBrowserRouter(
           Component: AdminInquiriesPage,
         },
         {
+          path: 'message',
+          Component: AdminInquiriesPage,
+        },
+        {
           path: 'notifications',
           Component: AdminNotificationsPage,
         },
