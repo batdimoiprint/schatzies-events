@@ -263,7 +263,7 @@ export function ProfilePage() {
     const currentUserId = user?.user_id;
     if (!currentUserId) return;
     setShowConfirmModal(false);
-    setIsLoading(true); // Show loading screen
+    setIsSaving(true);
     try {
       let result;
       if (selectedFile) {
@@ -310,7 +310,7 @@ export function ProfilePage() {
     } catch (error) {
       console.error('Failed to update profile:', error);
     } finally {
-      setIsLoading(false);
+      setIsSaving(false);
     }
   };
 

@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
-import { Camera, Mail, Phone, MapPin, Calendar, Save, X } from 'lucide-react';
+import { Camera, Mail, Phone, MapPin, Calendar } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -62,10 +62,10 @@ export function OrganizerProfilePage() {
     return localStorage.getItem('organizer_cover_url') || '';
   });
   
-  const [avatarPos, setAvatarPos] = useState(() => {
+  const [avatarPos] = useState(() => {
     return Number(localStorage.getItem('organizer_avatar_pos')) || 50;
   });
-  const [coverPos, setCoverPos] = useState(() => {
+  const [coverPos] = useState(() => {
     return Number(localStorage.getItem('organizer_cover_pos')) || 50;
   });
 
