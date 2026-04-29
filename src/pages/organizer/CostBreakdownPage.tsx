@@ -542,8 +542,8 @@ export function CostBreakdownPage() {
       </div>
 
       <div className="overflow-x-auto pb-2">
-        <div className="min-w-[1140px] space-y-6 pr-1">
-          <div className="flex items-center justify-between gap-4 rounded-3xl border border-[#eadfec] bg-white p-4 shadow-sm print:hidden">
+        <div className="w-full max-w-[1600px] mx-auto space-y-6 pr-1">
+          <div className="flex flex-wrap lg:flex-nowrap items-center justify-between gap-4 rounded-3xl border border-[#eadfec] bg-white p-4 shadow-sm print:hidden">
             <div className="flex items-center gap-3">
               <div className="relative">
                 <Select value={selectedEventId} onValueChange={setSelectedEventId}>
@@ -625,7 +625,7 @@ export function CostBreakdownPage() {
           </div>
 
           <div className="overflow-hidden rounded-2xl border border-[#e7dfef] bg-white shadow-sm">
-            <div className="grid h-[168px] grid-cols-4 divide-x divide-[#ece6f3]">
+            <div className="grid h-auto min-h-[168px] grid-cols-1 md:grid-cols-2 lg:grid-cols-4 divide-y md:divide-y-0 md:divide-x divide-[#ece6f3]">
               <div className="p-5">
                 <p className="inline-flex items-center gap-2 text-sm font-semibold text-[#7a7186]">
                   <span className="size-2.5 rounded-full bg-[#8f23cf] ring-2 ring-[#efe4fb]" />
