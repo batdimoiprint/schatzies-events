@@ -1,13 +1,13 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
+import { InputOTP, InputOTPGroup, InputOTPSlot } from '@/components/ui/input-otp';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import LoadingScreen from '@/components/ui/LoadingScreen';
-
-const sampleOtp = '0000';
+import { requestPasswordReset, resetPassword, verifyPasswordResetCode } from '@/api/auth';
 
 function emailIsValid(email: string) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
@@ -23,10 +23,12 @@ function passwordRequirements(value: string) {
 }
 
 export function ForgotPasswordPage() {
+  const navigate = useNavigate();
   const [step, setStep] = useState<'request' | 'verify' | 'reset' | 'success'>('request');
   const [isLoading, setIsLoading] = useState(false);
   const [email, setEmail] = useState('');
   const [otp, setOtp] = useState('');
+  const [resetToken, setResetToken] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState('');
@@ -41,24 +43,35 @@ export function ForgotPasswordPage() {
     }
 
     setIsLoading(true);
-    await new Promise((resolve) => setTimeout(resolve, 750));
-    setIsLoading(false);
-    setStep('verify');
+
+    try {
+      const response = await requestPasswordReset(email.trim());
+      if (response.verificationCode) {
+        setOtp(response.verificationCode.slice(0, 6));
+      }
+      setStep('verify');
+    } catch (submitError) {
+      setError(submitError instanceof Error ? submitError.message : 'Unable to send reset code.');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleOtpSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setError('');
 
-    if (otp.trim() !== sampleOtp) {
-      setError('OTP invalid. Use 0000 to continue.');
-      return;
-    }
-
     setIsLoading(true);
-    await new Promise((resolve) => setTimeout(resolve, 650));
-    setIsLoading(false);
-    setStep('reset');
+
+    try {
+      const response = await verifyPasswordResetCode(email.trim(), otp.trim());
+      setResetToken(response.resetToken);
+      setStep('reset');
+    } catch (submitError) {
+      setError(submitError instanceof Error ? submitError.message : 'Unable to verify the code.');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handlePasswordSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
@@ -79,9 +92,15 @@ export function ForgotPasswordPage() {
     }
 
     setIsLoading(true);
-    await new Promise((resolve) => setTimeout(resolve, 900));
-    setIsLoading(false);
-    setStep('success');
+
+    try {
+      await resetPassword(resetToken, password);
+      setStep('success');
+    } catch (submitError) {
+      setError(submitError instanceof Error ? submitError.message : 'Unable to reset password.');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const requirements = passwordRequirements(password);
@@ -90,9 +109,9 @@ export function ForgotPasswordPage() {
     <>
       <LoadingScreen isLoading={isLoading} />
 
-      <div className="relative min-h-screen overflow-hidden bg-gradient-to-b from-[#fff5fb] via-[#ffe3f1] to-[#ffd6e6] py-12 sm:py-16 lg:py-24">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(255,255,255,0.95),_transparent_35%)]" />
-        <div className="absolute inset-x-0 top-0 h-72 bg-gradient-to-b from-white via-white/80 to-transparent" />
+      <div className="relative  overflow-hidden bg-linear-to-b from-[#fff5fb] via-[#ffe3f1] to-[#ffd6e6]">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.95),transparent_35%)]" />
+        <div className="absolute inset-x-0 top-0 h-72 bg-linear-to-b from-white via-white/80 to-transparent" />
         <div className="relative mx-auto flex min-h-[calc(100vh-4rem)] max-w-2xl items-center justify-center px-4 sm:px-6 lg:px-8">
           <Card className="w-full rounded-[2rem] border border-white/80 bg-white/95 p-6 shadow-[0_30px_80px_rgba(177,63,134,0.14)] backdrop-blur-sm sm:p-10">
             <CardHeader className="pb-0">
@@ -122,11 +141,11 @@ export function ForgotPasswordPage() {
                   {step === 'reset' && 'Change Password'}
                   {step === 'success' && 'Password Changed!'}
                 </h1>
-                <p className="mx-auto max-w-[26rem] text-sm leading-7 text-[#5a3f57] sm:text-base">
+                <p className="mx-auto max-w-104 text-sm leading-7 text-[#5a3f57] sm:text-base">
                   {step === 'request' && 'Enter your email to recover your password.'}
                   {step === 'verify' && (
                     <>
-                      Please enter the 4-digit code sent to{' '}
+                      Please enter the 6-digit code sent to{' '}
                       <span className="font-semibold text-[#44264e]">{email || 'your email'}</span>.
                     </>
                   )}
@@ -163,7 +182,7 @@ export function ForgotPasswordPage() {
 
                   <Button
                     type="submit"
-                    className="w-full rounded-full bg-gradient-to-r from-[#ff5fa1] to-[#b049f0] px-6 py-4 text-sm font-bold text-white shadow-xl shadow-[#da89cd]/20 transition hover:brightness-110"
+                    className="w-full rounded-full bg-linear-to-r from-[#ff5fa1] to-[#b049f0] px-6 py-4 text-sm font-bold text-white shadow-xl shadow-[#da89cd]/20 transition hover:brightness-110"
                   >
                     Send Code
                   </Button>
@@ -173,25 +192,24 @@ export function ForgotPasswordPage() {
               {step === 'verify' && (
                 <form onSubmit={handleOtpSubmit} className="space-y-6">
                   <div className="space-y-4">
-                    <div className="grid grid-cols-4 gap-3">
-                      {[0, 1, 2, 3].map((index) => (
-                        <input
-                          key={index}
-                          aria-label={`OTP digit ${index + 1}`}
-                          value={otp[index] || ''}
-                          onChange={(event) => {
-                            const next = event.target.value.replace(/[^0-9]/g, '').slice(0, 1);
-                            const newOtp = otp.split('').slice(0, 4);
-                            newOtp[index] = next;
-                            setOtp(newOtp.join(''));
-                            const nextInput = event.target
-                              .nextElementSibling as HTMLInputElement | null;
-                            if (next && nextInput) nextInput.focus();
-                          }}
-                          className="h-14 rounded-3xl border-b-2 border-[#d6bdd3] bg-transparent text-center text-xl font-bold tracking-[0.55em] text-[#462c4f] outline-none transition focus:border-[#d63384]"
-                        />
-                      ))}
-                    </div>
+                    <InputOTP
+                      maxLength={6}
+                      value={otp}
+                      onChange={(value) => setOtp(value.replace(/[^0-9]/g, '').slice(0, 6))}
+                      inputMode="numeric"
+                      autoComplete="one-time-code"
+                      pattern="\d*"
+                      containerClassName="justify-center"
+                    >
+                      <InputOTPGroup>
+                        <InputOTPSlot index={0} />
+                        <InputOTPSlot index={1} />
+                        <InputOTPSlot index={2} />
+                        <InputOTPSlot index={3} />
+                        <InputOTPSlot index={4} />
+                        <InputOTPSlot index={5} />
+                      </InputOTPGroup>
+                    </InputOTP>
 
                     <div className="flex items-center justify-between text-sm text-[#6d4b6e]">
                       <span>Code expires in 03:25</span>
@@ -215,7 +233,8 @@ export function ForgotPasswordPage() {
 
                   <Button
                     type="submit"
-                    className="w-full rounded-full bg-gradient-to-r from-[#ff5fa1] to-[#b049f0] px-6 py-4 text-sm font-bold text-white shadow-xl shadow-[#da89cd]/20 transition hover:brightness-110"
+                    disabled={otp.length !== 6}
+                    className="w-full rounded-full bg-linear-to-r from-[#ff5fa1] to-[#b049f0] px-6 py-4 text-sm font-bold text-white shadow-xl shadow-[#da89cd]/20 transition hover:brightness-110"
                   >
                     Verify
                   </Button>
@@ -281,7 +300,7 @@ export function ForgotPasswordPage() {
 
                   <Button
                     type="submit"
-                    className="w-full rounded-full bg-gradient-to-r from-[#ff5fa1] to-[#b049f0] px-6 py-4 text-sm font-bold text-white shadow-xl shadow-[#da89cd]/20 transition hover:brightness-110"
+                    className="w-full rounded-full bg-linear-to-r from-[#ff5fa1] to-[#b049f0] px-6 py-4 text-sm font-bold text-white shadow-xl shadow-[#da89cd]/20 transition hover:brightness-110"
                   >
                     Confirm
                   </Button>
@@ -302,7 +321,7 @@ export function ForgotPasswordPage() {
 
                   <Button
                     type="button"
-                    onClick={() => setStep('request')}
+                    onClick={() => navigate('/login', { replace: true })}
                     className="mt-8 w-full rounded-full bg-[#32d77f] px-6 py-4 text-sm font-bold text-white shadow-xl shadow-[#90e3b0]/30 transition hover:brightness-105"
                   >
                     Done

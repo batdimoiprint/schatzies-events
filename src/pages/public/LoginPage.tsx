@@ -1,10 +1,11 @@
+import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { User, Lock } from 'lucide-react';
+import { Eye, EyeOff, User, Lock } from 'lucide-react';
 import LoadingScreen from '@/components/ui/LoadingScreen';
 
 interface LoginFormValues {
@@ -13,6 +14,7 @@ interface LoginFormValues {
 }
 
 export function LoginPage() {
+  const [showPassword, setShowPassword] = useState(false);
   const {
     register,
     handleSubmit,
@@ -65,7 +67,7 @@ export function LoginPage() {
 
       <div className="relative min-h-screen overflow-hidden">
         {/* Background gradient overlay */}
-        <div className="absolute inset-0 bg-gradient-to-br from-[#FF589C]/30 via-[#FD78AD]/20 to-transparent" />
+        <div className="absolute inset-0 bg-linear-to-br from-[#FF589C]/30 via-[#FD78AD]/20 to-transparent" />
 
         {/* Main content - centered vertically */}
         <div className="relative z-10 flex min-h-screen items-center justify-center px-4 py-12">
@@ -81,7 +83,7 @@ export function LoginPage() {
 
                 <p className="text-sm font-medium font-sans text-[#3d2052]">
                   Your{' '}
-                  <span className="font-bold uppercase bg-gradient-to-r from-[#FF0066] to-[#4A1053] bg-clip-text text-transparent">
+                  <span className="font-bold uppercase bg-linear-to-r from-[#FF0066] to-[#4A1053] bg-clip-text text-transparent">
                     MOST TRUSTED
                   </span>{' '}
                   team!
@@ -120,14 +122,22 @@ export function LoginPage() {
                   </div>
                   <Input
                     id="password"
-                    type="password"
+                    type={showPassword ? 'text' : 'password'}
                     placeholder="Password"
                     autoComplete="current-password"
-                    className="h-11 w-full rounded-xl border-gray-200 bg-white/80 pl-10 text-sm font-sans placeholder:text-gray-400 focus:border-[#FF0066] focus:ring-[#FF0066]/20"
+                    className="h-11 w-full rounded-xl border-gray-200 bg-white/80 pl-10 pr-10 text-sm font-sans placeholder:text-gray-400 focus:border-[#FF0066] focus:ring-[#FF0066]/20"
                     {...register('password', {
                       required: 'Password is required.',
                     })}
                   />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword((current) => !current)}
+                    aria-label={showPassword ? 'Hide password' : 'Show password'}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-[#FF0066] transition-colors hover:text-[#4A1053]"
+                  >
+                    {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                  </button>
                   {errors.password && (
                     <p className="mt-1 text-xs text-red-600 font-sans">{errors.password.message}</p>
                   )}
@@ -156,7 +166,7 @@ export function LoginPage() {
                 <Button
                   type="submit"
                   disabled={isLoading || isSubmitting}
-                  className="h-12 w-full rounded-full bg-gradient-to-b from-[#FF0066] to-[#700F81] text-base font-bold uppercase tracking-wide text-white shadow-lg transition-all duration-300 hover:brightness-110 hover:shadow-xl disabled:opacity-50 font-sans"
+                  className="h-12 w-full rounded-full bg-linear-to-b from-[#FF0066] to-[#700F81] text-base font-bold uppercase tracking-wide text-white shadow-lg transition-all duration-300 hover:brightness-110 hover:shadow-xl disabled:opacity-50 font-sans"
                 >
                   {isLoading || isSubmitting ? 'Signing in...' : 'Login'}
                 </Button>
