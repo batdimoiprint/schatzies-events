@@ -23,6 +23,8 @@ import { AdminCostBreakdownPage } from '@/pages/admin/AdminCostBreakdownPage';
 import { AdminVendorPoolPage } from '@/pages/admin/AdminVendorPoolPage';
 import { AdminInquiriesPage } from '@/pages/admin/AdminInquiriesPage';
 import { AdminNotificationsPage } from '@/pages/admin/AdminNotificationsPage';
+import { AdminSettingsPage } from '@/pages/admin/AdminSettingsPage';
+import { ProfilePage } from '@/pages/admin/ProfilePage';
 
 // Organizer Pages
 import { OrganizerDashboard } from '@/pages/organizer/OrganizerDashboard';
@@ -31,7 +33,6 @@ import { EventPlanViewingPage } from '@/pages/client/EventPlanViewingPage';
 import { MessagePage } from '@/pages/client/MessagePage';
 import { QrCodePage } from '@/pages/client/QrCodePage';
 import { NotificationsPage } from '@/pages/client/NotificationsPage';
-import { ProfilePage } from '@/pages/client/ProfilePage';
 import { SettingsPage } from '@/pages/client/SettingsPage';
 import { CalendarPage } from '@/pages/organizer/CalendarPage';
 import { EventPlannerPage } from '@/pages/organizer/EventPlannerPage';
@@ -134,6 +135,14 @@ const router = createBrowserRouter(
         {
           path: 'notifications',
           Component: AdminNotificationsPage,
+        },
+        {
+          path: 'settings',
+          Component: AdminSettingsPage,
+        },
+        {
+          path: 'profile',
+          Component: ProfilePage,
         },
       ],
     },

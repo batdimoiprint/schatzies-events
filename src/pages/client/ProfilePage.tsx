@@ -4,8 +4,6 @@ import LoadingScreen from '@/components/ui/LoadingScreen';
 import { useAuth } from '@/hooks/useAuth';
 import { getUserById, updateUser } from '@/api/users';
 
-const AVATAR_SRC = '/Pictures/organizerpics/Profile Picture.png';
-
 // Fallback image in case the main avatar fails to load
 const FALLBACK_AVATAR = '/Pictures/business-logo.png';
 
@@ -16,6 +14,7 @@ const EMPTY_PROFILE = {
   phone: '',
   address: '',
   birthday: '',
+  profilePic: '',
 };
 
 // Simple in-memory cache so repeat visits don't re-fetch
@@ -32,6 +31,7 @@ function mapUserToProfile(fetchedUser: {
   city?: string;
   country?: string;
   birthDate?: string;
+  profilePic?: string;
 }) {
   let phone = fetchedUser.contactNumber || '';
   if (phone.startsWith('+63')) phone = phone.slice(3).trim();
@@ -54,6 +54,7 @@ function mapUserToProfile(fetchedUser: {
       .filter(Boolean)
       .join(', '),
     birthday: fetchedUser.birthDate || '',
+    profilePic: fetchedUser.profilePic || '',
   };
 }
 
@@ -67,11 +68,13 @@ export function ProfilePage() {
   const [emailError, setEmailError] = useState('');
   const [phoneError, setPhoneError] = useState('');
   const [isLoading, setIsLoading] = useState(true);
-  const [avatarSrc, setAvatarSrc] = useState(AVATAR_SRC);
+  const [avatarSrc, setAvatarSrc] = useState(FALLBACK_AVATAR);
   const [avatarLoading, setAvatarLoading] = useState(true);
   const [fetchError, setFetchError] = useState<string | null>(null);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
-  const { user } = useAuth();
+  const { user, setAuthenticatedUser } = useAuth();
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Track which user ID we've already loaded to prevent duplicate fetches
   const loadedUserIdRef = useRef<string | null>(null);
@@ -82,6 +85,7 @@ export function ProfilePage() {
     if (loadedUserIdRef.current === userId && profileCache?.userId === userId) {
       setProfile(profileCache.data);
       setOriginalProfile(profileCache.data);
+      setAvatarSrc(profileCache.data.profilePic || FALLBACK_AVATAR);
       setIsLoading(false);
       return;
     }
@@ -105,6 +109,7 @@ export function ProfilePage() {
 
       setProfile(mapped);
       setOriginalProfile(mapped);
+      setAvatarSrc(mapped.profilePic || FALLBACK_AVATAR);
     } catch (error: unknown) {
       // Don't update state if aborted
       if (error instanceof DOMException && error.name === 'AbortError') return;
@@ -200,6 +205,18 @@ export function ProfilePage() {
     return true;
   };
 
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setSelectedFile(file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setAvatarSrc(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
   const handleEmailChange = (value: string) => {
     validateEmail(value);
     setProfile((prev) => ({ ...prev, email: value }));
@@ -246,33 +263,61 @@ export function ProfilePage() {
     const currentUserId = user?.user_id;
     if (!currentUserId) return;
     setShowConfirmModal(false);
-    setIsSaving(true);
+    setIsLoading(true); // Show loading screen
     try {
-      await updateUser(currentUserId, {
-        firstName: profile.firstName,
-        lastName: profile.lastName,
-        email: profile.email,
-        contactNumber: `+63${profile.phone}`,
-        birthDate: profile.birthday || undefined,
-      });
-      setOriginalProfile(profile);
+      let result;
+      if (selectedFile) {
+        const formData = new FormData();
+        formData.append('firstName', profile.firstName);
+        formData.append('lastName', profile.lastName);
+        formData.append('email', profile.email);
+        formData.append('contactNumber', `+63${profile.phone}`);
+        if (profile.birthday) formData.append('birthDate', profile.birthday);
+        formData.append('profilePic', selectedFile);
+
+        result = await updateUser(currentUserId, formData);
+      } else {
+        result = await updateUser(currentUserId, {
+          firstName: profile.firstName,
+          lastName: profile.lastName,
+          email: profile.email,
+          contactNumber: `+63${profile.phone}`,
+          birthDate: profile.birthday || undefined,
+        });
+      }
+
+      const updatedProfile = mapUserToProfile(result);
+      setProfile(updatedProfile);
+      setOriginalProfile(updatedProfile);
+      setAvatarSrc(updatedProfile.profilePic || FALLBACK_AVATAR);
+      setSelectedFile(null);
+
+      // Keep auth context in sync so top bars update immediately.
+      if (user) {
+        setAuthenticatedUser({
+          ...user,
+          ...result,
+          profilePic: result.profilePic || '',
+        });
+      }
 
       // Update cache with saved data
-      profileCache = { userId: currentUserId, data: profile };
+      profileCache = { userId: currentUserId, data: updatedProfile };
 
       setEditing(false);
       setSaved(true);
       setTimeout(() => setSaved(false), 2000);
     } catch (error) {
       console.error('Failed to update profile:', error);
-      // Handle error, perhaps show error message
     } finally {
-      setIsSaving(false);
+      setIsLoading(false);
     }
   };
 
   const handleCancel = () => {
     setProfile(originalProfile);
+    setAvatarSrc(originalProfile.profilePic || FALLBACK_AVATAR);
+    setSelectedFile(null);
     setEditing(false);
     setShowConfirmModal(false);
     setEmailError('');
@@ -301,26 +346,36 @@ export function ProfilePage() {
     };
 
     (Object.keys(profile) as Array<keyof typeof profile>).forEach((key) => {
+      if (key === 'profilePic') return;
+
       if (profile[key] !== originalProfile[key]) {
         let displayOldValue = originalProfile[key];
         let displayNewValue = profile[key];
 
         if (key === 'birthday') {
-          displayOldValue = new Date(originalProfile[key]).toLocaleDateString('en-US', {
-            year: 'numeric',
-            month: 'long',
-            day: 'numeric',
-          });
-          displayNewValue = new Date(profile[key]).toLocaleDateString('en-US', {
-            year: 'numeric',
-            month: 'long',
-            day: 'numeric',
-          });
+          displayOldValue = originalProfile[key]
+            ? new Date(originalProfile[key]).toLocaleDateString('en-US', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric',
+              })
+            : 'Not set';
+          displayNewValue = profile[key]
+            ? new Date(profile[key]).toLocaleDateString('en-US', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric',
+              })
+            : 'Not set';
         }
 
         if (key === 'phone') {
-          displayOldValue = `+63 ${originalProfile[key].slice(0, 3)} ${originalProfile[key].slice(3, 6)} ${originalProfile[key].slice(6)}`;
-          displayNewValue = `+63 ${profile[key].slice(0, 3)} ${profile[key].slice(3, 6)} ${profile[key].slice(6)}`;
+          displayOldValue = originalProfile[key]
+            ? `+63 ${originalProfile[key].slice(0, 3)} ${originalProfile[key].slice(3, 6)} ${originalProfile[key].slice(6)}`
+            : 'Not set';
+          displayNewValue = profile[key]
+            ? `+63 ${profile[key].slice(0, 3)} ${profile[key].slice(3, 6)} ${profile[key].slice(6)}`
+            : 'Not set';
         }
 
         changes.push({
@@ -330,6 +385,15 @@ export function ProfilePage() {
         });
       }
     });
+
+    if (selectedFile) {
+      changes.push({
+        field: 'Profile Picture',
+        oldValue: originalProfile.profilePic ? 'Current photo' : 'No photo',
+        newValue: 'New photo selected',
+      });
+    }
+
     return changes;
   };
 
@@ -410,7 +474,17 @@ export function ProfilePage() {
             {/* Avatar */}
             <div className="absolute -bottom-12 left-6">
               <div className="relative">
-                <div className="relative">
+                <input
+                  type="file"
+                  ref={fileInputRef}
+                  onChange={handleFileChange}
+                  accept="image/*"
+                  className="hidden"
+                />
+                <div
+                  className={`relative ${editing ? 'cursor-pointer' : ''}`}
+                  onClick={() => editing && fileInputRef.current?.click()}
+                >
                   {avatarLoading && (
                     <div className="absolute inset-0 flex items-center justify-center bg-gray-100 rounded-full">
                       <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#df2b80]"></div>
@@ -421,7 +495,7 @@ export function ProfilePage() {
                     alt="Profile"
                     className={`size-24 rounded-full border-4 border-white object-cover shadow-lg transition-opacity duration-300 ${
                       avatarLoading ? 'opacity-0' : 'opacity-100'
-                    }`}
+                    } ${editing ? 'hover:brightness-90' : ''}`}
                     onError={() => {
                       console.warn('Profile image failed to load, using fallback');
                       setAvatarSrc(FALLBACK_AVATAR);
@@ -431,13 +505,21 @@ export function ProfilePage() {
                       setAvatarLoading(false);
                     }}
                   />
+                  {editing && (
+                    <div className="absolute inset-0 flex items-center justify-center rounded-full bg-black/20 opacity-0 transition-opacity hover:opacity-100">
+                      <Camera className="size-6 text-white" />
+                    </div>
+                  )}
                 </div>
-                <button
-                  className="absolute bottom-0 right-0 flex size-8 items-center justify-center rounded-full bg-[#df2b80] text-white shadow-md transition hover:bg-[#c41e6d]"
-                  aria-label="Change photo"
-                >
-                  <Camera className="size-4" />
-                </button>
+                {editing && (
+                  <button
+                    onClick={() => fileInputRef.current?.click()}
+                    className="absolute bottom-0 right-0 flex size-8 items-center justify-center rounded-full bg-[#df2b80] text-white shadow-md transition hover:bg-[#c41e6d]"
+                    aria-label="Change photo"
+                  >
+                    <Camera className="size-4" />
+                  </button>
+                )}
               </div>
             </div>
           </div>
