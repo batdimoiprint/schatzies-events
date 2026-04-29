@@ -11,19 +11,142 @@ import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Calendar as CalendarIcon, Check, Copy, Eye, EyeOff, Loader2 } from 'lucide-react';
+import { createEvent } from '@/api/events';
 import { updateCalendarEntry } from '@/api/calendar';
 import { checkUserRegistered, updateInquiryStatus } from '@/api/inquiries';
 import { createUser } from '@/api/users';
 
+interface InquiryMeetingDetails {
+  entryId?: string;
+  organizerId?: string;
+  title?: string;
+  date?: string;
+  time?: string;
+  startTime?: string;
+  startDateKey?: string;
+  endDateKey?: string;
+  endTime?: string;
+  location?: string;
+  description?: string;
+  eventType?: string;
+  label?: string;
+  inquiryUserId?: string;
+}
+
+interface InquiryRecord {
+  id?: string;
+  _id?: string;
+  firstName?: string;
+  lastName?: string;
+  email?: string;
+  contactNumber?: string;
+  status?: string;
+  eventType?: string;
+  subject?: string;
+  title?: string;
+  date?: string;
+  createdAt?: string;
+  created_at?: string;
+  eventPackage?: string;
+  eventPackageKey?: string;
+  eventPax?: number;
+  message?: string;
+  userId?: string;
+  user_id?: string;
+  is_Account_Created?: boolean;
+  venue?: string;
+  location?: string;
+  meetingDetails?: InquiryMeetingDetails;
+}
+
+interface OrganizerRecord {
+  user_id: string;
+  firstName?: string;
+  lastName?: string;
+  middleName?: string;
+  email?: string;
+}
+
 interface InquiryDetailsDialogProps {
   isDialogOpen: boolean;
   setIsDialogOpen: (open: boolean) => void;
-  selectedInquiry: any;
+  selectedInquiry: InquiryRecord | null;
   getOrganizerLabel: (id: string) => string;
-  organizers: any[];
+  organizers: OrganizerRecord[];
   organizersLoading: boolean;
   setIsScheduleModalOpen: (open: boolean) => void;
-  onInquiryUpdated: (updatedInquiry: any) => void;
+  onInquiryUpdated: (updatedInquiry: InquiryRecord) => void;
+}
+
+type InquiryStatusOption = {
+  value: string;
+  label: string;
+  disabled?: boolean;
+};
+
+function normalizeInquiryStatus(status?: string) {
+  const normalized = String(status || '').trim().toLowerCase();
+
+  if (!normalized || normalized === 'new' || normalized === 'pending') {
+    return 'Pending Review';
+  }
+
+  if (normalized === 'resolved') {
+    return 'Approved';
+  }
+
+  if (normalized === 'in progress') {
+    return 'Requires Clarification';
+  }
+
+  return String(status || '').trim();
+}
+
+function getInquiryStatusOptions(currentStatus?: string): InquiryStatusOption[] {
+  const normalized = String(currentStatus || '').trim().toLowerCase();
+  const displayStatus = normalizeInquiryStatus(currentStatus);
+
+  if (normalized === 'pending review' || normalized === 'new' || normalized === 'pending') {
+    return [
+      { value: displayStatus, label: displayStatus, disabled: true },
+      { value: 'Requires Clarification', label: 'Requires Clarification' },
+      { value: 'Approved', label: 'Approved', disabled: true },
+      { value: 'Declined', label: 'Declined', disabled: true },
+    ];
+  }
+
+  const options: InquiryStatusOption[] = [
+    { value: 'Requires Clarification', label: 'Requires Clarification' },
+    { value: 'Approved', label: 'Approved' },
+    { value: 'Declined', label: 'Declined' },
+  ];
+
+  if (displayStatus && !options.some((option) => option.value === displayStatus)) {
+    options.unshift({ value: displayStatus, label: displayStatus, disabled: true });
+  } else {
+    const currentIndex = options.findIndex((option) => option.value === displayStatus);
+    if (currentIndex >= 0) {
+      options[currentIndex] = { ...options[currentIndex], disabled: true };
+    }
+  }
+
+  return options;
+}
+
+function buildEventDateTime(dateValue?: string, timeValue?: string) {
+  const normalizedDate = String(dateValue || '').trim();
+  if (!normalizedDate) {
+    return '';
+  }
+
+  if (normalizedDate.includes('T')) {
+    const parsedDate = new Date(normalizedDate);
+    return Number.isNaN(parsedDate.getTime()) ? '' : parsedDate.toISOString();
+  }
+
+  const normalizedTime = String(timeValue || '').trim().slice(0, 5) || '00:00';
+  const parsedDate = new Date(`${normalizedDate}T${normalizedTime}:00.000Z`);
+  return Number.isNaN(parsedDate.getTime()) ? '' : parsedDate.toISOString();
 }
 
 export function InquiryDetailsDialog({
@@ -51,10 +174,11 @@ export function InquiryDetailsDialog({
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
   const [pendingStatus, setPendingStatus] = useState('');
   const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
+  const [statusChangeError, setStatusChangeError] = useState('');
   const [isOrgConfirmOpen, setIsOrgConfirmOpen] = useState(false);
   const [pendingOrganizerId, setPendingOrganizerId] = useState('');
 
-  const getInquiryKey = (inquiry: any) =>
+  const getInquiryKey = (inquiry?: InquiryRecord | null) =>
     String(inquiry?.id || inquiry?._id || inquiry?.email || '').trim();
 
   const selectedInquiryKey = selectedInquiry ? getInquiryKey(selectedInquiry) : '';
@@ -91,21 +215,114 @@ export function InquiryDetailsDialog({
   }, [selectedInquiry]);
 
   const handleStatusChange = (newStatus: string) => {
-    if (!selectedInquiry || newStatus === selectedInquiry.status) return;
+    if (!selectedInquiry || newStatus === normalizeInquiryStatus(selectedInquiry.status)) return;
+    setStatusChangeError('');
     setPendingStatus(newStatus);
     setIsConfirmOpen(true);
   };
 
   const confirmStatusChange = async () => {
     if (!selectedInquiry || !pendingStatus) return;
-    const id = selectedInquiry.id || selectedInquiry._id;
+    const id = String(selectedInquiry.id || selectedInquiry._id || '').trim();
+    if (!id) {
+      setStatusChangeError('Inquiry ID is required to update the status.');
+      return;
+    }
+    const previousStatus = normalizeInquiryStatus(selectedInquiry.status) || 'New';
+
+    const clientId = String(selectedInquiry.userId || selectedInquiry.user_id || '').trim();
+    const organizerId = String(
+      selectedInquiry?.meetingDetails?.organizerId || selectedMeetingOrganizerId || ''
+    ).trim();
+    const eventDateSource = String(
+      selectedInquiry?.meetingDetails?.date || selectedInquiry.date || ''
+    ).trim();
+    const eventTimeSource = String(
+      selectedInquiry?.meetingDetails?.time || selectedInquiry?.meetingDetails?.startTime || ''
+    ).trim();
+    const eventLocation = String(
+      selectedInquiry?.meetingDetails?.location || selectedInquiry.location || selectedInquiry.venue || ''
+    ).trim();
+    const eventTitle = String(
+      selectedInquiry?.title ||
+        selectedInquiry?.subject ||
+        selectedInquiry?.meetingDetails?.title ||
+        `${selectedInquiry.firstName || 'Client'} ${selectedInquiry.lastName || 'Inquiry'} Event`
+    ).trim();
+
+    const canCreateApprovedEvent = pendingStatus === 'Approved';
+
+    if (canCreateApprovedEvent) {
+      if (!clientId) {
+        setStatusChangeError('Create the client account before approving this inquiry.');
+        return;
+      }
+
+      if (!organizerId) {
+        setStatusChangeError('Assign an organizer before approving this inquiry.');
+        return;
+      }
+
+      if (!eventDateSource) {
+        setStatusChangeError('Inquiry date is required before creating the event.');
+        return;
+      }
+    }
+
     try {
       setIsUpdatingStatus(true);
+      setStatusChangeError('');
       await updateInquiryStatus(id, pendingStatus);
-      onInquiryUpdated({ ...selectedInquiry, status: pendingStatus });
+
+      if (canCreateApprovedEvent) {
+        const eventDate = buildEventDateTime(eventDateSource, eventTimeSource);
+
+        if (!eventDate) {
+          throw new Error('Unable to build a valid event date for approval.');
+        }
+
+        try {
+          await createEvent({
+            title: eventTitle,
+            startDate: eventDate,
+            client_id: clientId,
+            organizer_id: organizerId,
+            eventType: String(selectedInquiry.eventType || '').trim() || 'General',
+            eventPackageKey: String(
+              selectedInquiry.eventPackageKey || selectedInquiry.eventPackage || ''
+            ).trim(),
+            eventPackage: String(selectedInquiry.eventPackage || '').trim(),
+            eventPax:
+              selectedInquiry.eventPax !== undefined && selectedInquiry.eventPax !== null
+                ? Number(selectedInquiry.eventPax)
+                : undefined,
+            eventDate,
+            eventTime: eventTimeSource || '00:00',
+            eventLocation,
+            venue: eventLocation,
+            status: 'Planning',
+          });
+        } catch (createError) {
+          try {
+            await updateInquiryStatus(id, previousStatus);
+          } catch (rollbackError) {
+            console.error('Failed to roll back approved inquiry status', rollbackError);
+          }
+
+          throw createError;
+        }
+      }
+
+      onInquiryUpdated({
+        ...selectedInquiry,
+        status: pendingStatus,
+        userId: selectedInquiry.userId || selectedInquiry.user_id || '',
+      });
       setIsConfirmOpen(false);
       setPendingStatus('');
     } catch (error) {
+      const message = error instanceof Error ? error.message : 'Failed to update status';
+      setStatusChangeError(message);
       console.error('Failed to update status', error);
     } finally {
       setIsUpdatingStatus(false);
@@ -124,13 +341,25 @@ export function InquiryDetailsDialog({
     try {
       setIsUpdatingMeetingOrganizer(true);
       const existingMeeting = selectedInquiry.meetingDetails;
-      await updateCalendarEntry(existingMeeting.entryId, {
+      const entryId = String(existingMeeting.entryId || '').trim();
+      if (!entryId) {
+        throw new Error('Meeting entry ID is required to update the organizer.');
+      }
+
+      const startDateKey = String(
+        existingMeeting.startDateKey || existingMeeting.date || selectedInquiry.date || ''
+      ).trim();
+      const endDateKey = String(
+        existingMeeting.endDateKey || existingMeeting.date || selectedInquiry.date || ''
+      ).trim();
+
+      await updateCalendarEntry(entryId, {
         title:
           existingMeeting.title ||
           `Meeting with ${selectedInquiry.firstName || ''} ${selectedInquiry.lastName || ''}`.trim(),
-        startDateKey: existingMeeting.startDateKey || existingMeeting.date || selectedInquiry.date,
+        startDateKey,
         startTime: existingMeeting.startTime || existingMeeting.time || '09:00',
-        endDateKey: existingMeeting.endDateKey || existingMeeting.date || selectedInquiry.date,
+        endDateKey,
         endTime: existingMeeting.endTime || '10:00',
         label: existingMeeting.label || 'Meeting',
         organizerId: pendingOrganizerId,
@@ -194,7 +423,7 @@ export function InquiryDetailsDialog({
       setAccountCreateError('');
       setAccountCreateSuccess('');
 
-      await createUser({
+      const createdUser = await createUser({
         firstName: selectedInquiry.firstName || 'Client',
         lastName: selectedInquiry.lastName || 'User',
         email,
@@ -216,12 +445,26 @@ export function InquiryDetailsDialog({
         setShowPasswordByInquiry((prev) => ({ ...prev, [inquiryKey]: false }));
       }
 
+      onInquiryUpdated({
+        ...selectedInquiry,
+        is_Account_Created: true,
+        userId: createdUser.user_id,
+      });
+
       setAccountCreateSuccess('Account created successfully.');
-    } catch (error: any) {
+    } catch (error: unknown) {
       const serverMessage =
-        error?.response?.data?.error ||
-        error?.response?.data?.message ||
-        'Unable to create account right now. Please try again.';
+        typeof error === 'object' && error !== null && 'response' in error
+          ? (error as {
+              response?: { data?: { error?: string; message?: string } };
+            })?.response?.data?.error ||
+            (error as {
+              response?: { data?: { error?: string; message?: string } };
+            })?.response?.data?.message ||
+            'Unable to create account right now. Please try again.'
+          : error instanceof Error && error.message
+            ? error.message
+            : 'Unable to create account right now. Please try again.';
       setAccountCreateError(String(serverMessage));
       setAccountCreateSuccess('');
     } finally {
@@ -373,7 +616,7 @@ export function InquiryDetailsDialog({
                   <span className="h-px w-4 bg-[#d5c9e4]"></span>
                   Client Message
                 </h3>
-                <div className="min-h-[120px] whitespace-pre-wrap rounded-2xl border border-[#ece4f5] bg-[#faf7ff] p-5 text-sm text-[#4e4560] leading-relaxed italic shadow-inner">
+                <div className="min-h-30 whitespace-pre-wrap rounded-2xl border border-[#ece4f5] bg-[#faf7ff] p-5 text-sm text-[#4e4560] leading-relaxed italic shadow-inner">
                   "{selectedInquiry.message || 'No additional message provided.'}"
                 </div>
               </section>
@@ -390,20 +633,25 @@ export function InquiryDetailsDialog({
                     Change State
                   </Label>
                   <Select
-                    value={selectedInquiry.status || 'New'}
+                    value={normalizeInquiryStatus(selectedInquiry.status)}
                     onValueChange={handleStatusChange}
                   >
                     <SelectTrigger className="w-full h-11 border-[#e5ddee] bg-white rounded-xl font-bold text-[#4e4560]">
                       <SelectValue placeholder="Update status" />
                     </SelectTrigger>
                     <SelectContent className="rounded-xl border-[#e5ddee]">
-                      <SelectItem value="Pending Review">Pending Review</SelectItem>
-                      <SelectItem value="Requires Clarification">Requires Clarification</SelectItem>
-                      <SelectItem value="Meeting Scheduled">Meeting Scheduled</SelectItem>
-                      <SelectItem value="Approved">Approved</SelectItem>
-                      <SelectItem value="Declined">Declined</SelectItem>
+                      {getInquiryStatusOptions(selectedInquiry.status).map((option) => (
+                        <SelectItem key={option.value} value={option.value} disabled={option.disabled}>
+                          {option.label}
+                        </SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
+                  {statusChangeError && (
+                    <p className="mt-2 text-[11px] font-semibold text-red-600">
+                      {statusChangeError}
+                    </p>
+                  )}
                 </div>
               </section>
 
@@ -420,7 +668,7 @@ export function InquiryDetailsDialog({
                         </div>
                         <div>
                           <p className="text-sm font-black text-[#5f4f7a]">
-                            {new Date(selectedInquiry.meetingDetails.date).toLocaleDateString(
+                            {new Date(selectedInquiry.meetingDetails.date || Date.now()).toLocaleDateString(
                               'en-US',
                               { month: 'short', day: 'numeric', year: 'numeric' }
                             )}
@@ -603,7 +851,7 @@ export function InquiryDetailsDialog({
 
       {/* Status Change Confirmation Dialog */}
       <Dialog open={isConfirmOpen} onOpenChange={setIsConfirmOpen}>
-        <DialogContent className="sm:max-w-[400px] p-0 overflow-hidden border-none rounded-2xl">
+        <DialogContent className="sm:max-w-100 p-0 overflow-hidden border-none rounded-2xl">
           <div className="p-6 text-center">
             <div className="h-12 w-12 rounded-full bg-amber-50 text-amber-500 flex items-center justify-center mx-auto mb-4">
               <CalendarIcon className="h-6 w-6" />
@@ -643,7 +891,7 @@ export function InquiryDetailsDialog({
 
       {/* Organizer Change Confirmation Dialog */}
       <Dialog open={isOrgConfirmOpen} onOpenChange={setIsOrgConfirmOpen}>
-        <DialogContent className="sm:max-w-[400px] p-0 overflow-hidden border-none rounded-2xl">
+        <DialogContent className="sm:max-w-100 p-0 overflow-hidden border-none rounded-2xl">
           <div className="p-6 text-center">
             <div className="h-12 w-12 rounded-full bg-linear-to-br from-[#f347a5]/10 to-[#8f1fd1]/10 text-[#8f1fd1] flex items-center justify-center mx-auto mb-4">
               <CalendarIcon className="h-6 w-6" />
