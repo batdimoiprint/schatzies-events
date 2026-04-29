@@ -14,17 +14,19 @@ import {
 /* ─── helpers ──────────────────────────────────────────────────────────── */
 
 function normalizeRole(role?: string): string {
-  return String(role || '').trim().toLowerCase();
+  return String(role || '')
+    .trim()
+    .toLowerCase();
 }
 
-function getOrganizerParticipant(conversation: Conversation | null): ConversationParticipant | null {
+function getOrganizerParticipant(
+  conversation: Conversation | null
+): ConversationParticipant | null {
   if (!conversation) return null;
 
   if (conversation.organizer) return conversation.organizer;
 
-  const organizer = conversation.participants?.find(
-    (p) => normalizeRole(p.role) === 'organizer'
-  );
+  const organizer = conversation.participants?.find((p) => normalizeRole(p.role) === 'organizer');
   return organizer ?? null;
 }
 
@@ -34,11 +36,7 @@ function getInitialFromName(name?: string): string {
   return trimmed.charAt(0).toUpperCase();
 }
 
-function isOutgoingMessage(
-  message: ChatMessage,
-  userId?: string,
-  clientId?: string
-): boolean {
+function isOutgoingMessage(message: ChatMessage, userId?: string, clientId?: string): boolean {
   const role = normalizeRole(message.senderRole || message.senderType);
   if (role === 'client') return true;
   if (userId && message.senderId === userId) return true;
@@ -87,9 +85,7 @@ export function MessagePage() {
     try {
       const conversations = await getMessageConversations();
       const selected =
-        conversations.find((c) => getOrganizerParticipant(c) !== null) ??
-        conversations[0] ??
-        null;
+        conversations.find((c) => getOrganizerParticipant(c) !== null) ?? conversations[0] ?? null;
 
       setActiveConversation(selected);
 
@@ -156,9 +152,7 @@ export function MessagePage() {
         // Existing conversation → send to it
         const saved = await sendConversationMessage(activeConversation.id, body);
         if (saved) {
-          setMessages((prev) =>
-            prev.map((m) => (m.id === tempId ? saved : m))
-          );
+          setMessages((prev) => prev.map((m) => (m.id === tempId ? saved : m)));
         }
       } else {
         // No conversation yet → initiate one (auto-routes to assigned organizer)
@@ -185,9 +179,7 @@ export function MessagePage() {
           {/* Chat Header */}
           <div className="flex shrink-0 items-center justify-between rounded-t-xl bg-pink-400 px-4 py-3 sm:p-4">
             <div>
-              <p className="text-xl font-bold text-white">
-                {organizer?.name || 'Your Organizer'}
-              </p>
+              <p className="text-xl font-bold text-white">{organizer?.name || 'Your Organizer'}</p>
               <div className="mt-0.5 flex items-center gap-1.5">
                 <span className="h-2 w-2 rounded-full bg-green-400" />
                 <span className="text-sm text-white">Active</span>
@@ -208,9 +200,7 @@ export function MessagePage() {
             {isLoading ? (
               <div className="flex flex-1 items-center justify-center">
                 <Loader2 className="size-6 animate-spin text-pink-400" />
-                <span className="ml-2 text-sm font-medium text-gray-500">
-                  Loading messages...
-                </span>
+                <span className="ml-2 text-sm font-medium text-gray-500">Loading messages...</span>
               </div>
             ) : loadError ? (
               <div className="flex flex-col items-center justify-center gap-3 py-12">
@@ -313,9 +303,7 @@ export function MessagePage() {
           </div>
 
           {/* Name + badge */}
-          <p className="mt-4 text-2xl font-bold text-[#2d2834]">
-            {organizer?.name || 'Organizer'}
-          </p>
+          <p className="mt-4 text-2xl font-bold text-[#2d2834]">{organizer?.name || 'Organizer'}</p>
           <span className="mt-2 rounded-full bg-pink-400 px-4 py-1 text-sm text-white">
             Assigned Organizer
           </span>

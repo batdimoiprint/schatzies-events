@@ -13,7 +13,9 @@ import {
 /* ─── helpers ──────────────────────────────────────────────────────────── */
 
 function normalizeRole(role?: string): string {
-  return String(role || '').trim().toLowerCase();
+  return String(role || '')
+    .trim()
+    .toLowerCase();
 }
 
 /** Get the "other" participant — the client in the conversation. */
@@ -232,9 +234,7 @@ export function OrganizerMessagePage() {
     try {
       const saved = await sendConversationMessage(activeConvId, body);
       if (saved) {
-        setMessages((prev) =>
-          prev.map((m) => (m.id === tempId ? saved : m))
-        );
+        setMessages((prev) => prev.map((m) => (m.id === tempId ? saved : m)));
       }
 
       // Update last message in the sidebar
@@ -346,9 +346,7 @@ export function OrganizerMessagePage() {
             })
           ) : (
             <div className="p-8 text-center text-sm font-medium text-[#a49cb3]">
-              {conversations.length === 0
-                ? 'No conversations yet.'
-                : 'No conversations found.'}
+              {conversations.length === 0 ? 'No conversations yet.' : 'No conversations found.'}
             </div>
           )}
         </div>

@@ -27,7 +27,14 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { getUsers, createUser, deleteUser, updateUser, type UserResponse, type UserPayload } from '@/api/users';
+import {
+  getUsers,
+  createUser,
+  deleteUser,
+  updateUser,
+  type UserResponse,
+  type UserPayload,
+} from '@/api/users';
 import { Plus, Trash2, Users, UserCircle, Briefcase, Shield } from 'lucide-react';
 import { UserDetailsPopover } from '@/components/admin/UserDetailsPopover';
 
@@ -55,7 +62,7 @@ export function UsersManagement() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [formData, setFormData] = useState<UserPayload>(initialFormState);
   const [submitting, setSubmitting] = useState(false);
-  
+
   // State for role confirmation dialog
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
   const [pendingChange, setPendingChange] = useState<{
@@ -112,9 +119,14 @@ export function UsersManagement() {
     }
   };
 
-  const handleRoleChange = async (userId: string, userName: string, currentRole: string, newRole: string) => {
+  const handleRoleChange = async (
+    userId: string,
+    userName: string,
+    currentRole: string,
+    newRole: string
+  ) => {
     if (currentRole === newRole) return;
-    
+
     setPendingChange({ userId, userName, oldRole: currentRole, newRole });
     setIsConfirmOpen(true);
   };
@@ -416,11 +428,11 @@ export function UsersManagement() {
                       <div onClick={(e) => e.stopPropagation()}>
                         <Select
                           value={user.role}
-                          onValueChange={(value) => 
+                          onValueChange={(value) =>
                             handleRoleChange(
-                              user.user_id, 
-                              `${user.firstName} ${user.lastName}`, 
-                              user.role, 
+                              user.user_id,
+                              `${user.firstName} ${user.lastName}`,
+                              user.role,
                               value
                             )
                           }
@@ -467,8 +479,8 @@ export function UsersManagement() {
           <DialogHeader>
             <DialogTitle>Confirm Role Change</DialogTitle>
             <DialogDescription>
-              Are you sure you want to change the role of <strong>{pendingChange?.userName}</strong> from{' '}
-              <span className="font-semibold">{pendingChange?.oldRole}</span> to{' '}
+              Are you sure you want to change the role of <strong>{pendingChange?.userName}</strong>{' '}
+              from <span className="font-semibold">{pendingChange?.oldRole}</span> to{' '}
               <span className="font-semibold">{pendingChange?.newRole}</span>?
             </DialogDescription>
           </DialogHeader>
@@ -487,7 +499,8 @@ export function UsersManagement() {
           <DialogHeader>
             <DialogTitle>Confirm Delete User</DialogTitle>
             <DialogDescription>
-              Are you sure you want to delete <strong>{userToDelete?.name}</strong>? This action cannot be undone.
+              Are you sure you want to delete <strong>{userToDelete?.name}</strong>? This action
+              cannot be undone.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>

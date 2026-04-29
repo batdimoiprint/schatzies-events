@@ -623,7 +623,7 @@ export function OrganizerDashboard() {
             </CardContent>
           </Card>
 
-          <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1.5fr_1fr]">
+          <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1.5fr_1fr] xl:grid-cols-1 2xl:grid-cols-[1.5fr_1fr]">
             <Card className="border-[#e8e3ef] bg-white py-0 shadow-sm transition-all duration-300 ease-out hover:-translate-y-1.5 hover:shadow-lg hover:border-[#d0c8db]">
               <CardHeader className="pt-6 pb-4 px-6">
                 <CardTitle className="text-lg font-bold text-[#4a4a4a] font-sans">

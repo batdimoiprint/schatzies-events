@@ -8,22 +8,22 @@ export interface CostBreakdownPayload {
 }
 
 export const createCostBreakdown = async (eventId: string, data: CostBreakdownPayload) => {
-  const response = await api.post(`/api/events/${eventId}/cost-breakdown`, data);
+  const response = await api.post(`/events/${eventId}/cost-breakdown`, data);
   return response.data;
 };
 
 export const getCostBreakdown = async (eventId: string) => {
-  const response = await api.get(`/api/events/${eventId}/cost-breakdown`);
+  const response = await api.get(`/events/${eventId}/cost-breakdown`);
   return response.data;
 };
 
 export const updateCostBreakdown = async (eventId: string, data: CostBreakdownPayload) => {
-  const response = await api.put(`/api/events/${eventId}/cost-breakdown`, data);
+  const response = await api.put(`/events/${eventId}/cost-breakdown`, data);
   return response.data;
 };
 
 export const exportCostBreakdown = async (eventId: string) => {
-  const response = await api.get(`/api/events/${eventId}/cost-breakdown/export`, {
+  const response = await api.get(`/events/${eventId}/cost-breakdown/export`, {
     responseType: 'blob', // Important for downloading files
   });
   return response.data;

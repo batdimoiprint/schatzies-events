@@ -146,7 +146,8 @@ export function InquiryForm({ onClose, selectedPackageId, selectedEventType }: I
     return minDate;
   };
 
-  const selectedPaxOptions = watchedEventPackage === 'Blooms' ? bloomsPaxOptions : defaultPaxOptions;
+  const selectedPaxOptions =
+    watchedEventPackage === 'Blooms' ? bloomsPaxOptions : defaultPaxOptions;
 
   // Pick packages based on selected event type
   const packageOptions = watchedEventType
@@ -689,7 +690,11 @@ export function InquiryForm({ onClose, selectedPackageId, selectedEventType }: I
                                     )}
                                   >
                                     <CalendarIcon className="mr-2 h-4 w-4" />
-                                    {field.value ? format(new Date(field.value), "PPP") : <span>Pick a date</span>}
+                                    {field.value ? (
+                                      format(new Date(field.value), 'PPP')
+                                    ) : (
+                                      <span>Pick a date</span>
+                                    )}
                                   </Button>
                                 </PopoverTrigger>
                                 <PopoverContent
@@ -699,7 +704,9 @@ export function InquiryForm({ onClose, selectedPackageId, selectedEventType }: I
                                   <Calendar
                                     mode="single"
                                     selected={field.value ? new Date(field.value) : undefined}
-                                    defaultMonth={field.value ? new Date(field.value) : getMinDate()}
+                                    defaultMonth={
+                                      field.value ? new Date(field.value) : getMinDate()
+                                    }
                                     onSelect={(date) => field.onChange(date?.toISOString())}
                                     disabled={(date) => date < getMinDate()}
                                     initialFocus
@@ -763,7 +770,6 @@ export function InquiryForm({ onClose, selectedPackageId, selectedEventType }: I
                                 </Select>
                               )}
                             />
-                            
                           </div>
                         </Field>
                         <Field error={errors.eventPax?.message}>
@@ -779,8 +785,8 @@ export function InquiryForm({ onClose, selectedPackageId, selectedEventType }: I
                               >
                                 <SelectTrigger className={fieldBase}>
                                   <SelectValue
-                                      placeholder={
-                                        !watchedEventPackage
+                                    placeholder={
+                                      !watchedEventPackage
                                         ? 'Select Event Package First'
                                         : 'Event Pax'
                                     }
