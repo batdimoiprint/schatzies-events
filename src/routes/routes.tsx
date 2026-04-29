@@ -54,6 +54,10 @@ const router = createBrowserRouter(
       Component: LoginPage,
     },
     {
+      path: 'forgot-password',
+      Component: ForgotPasswordPage,
+    },
+    {
       path: 'force-reset-password',
       Component: ForceResetPasswordPage,
     },
@@ -80,10 +84,6 @@ const router = createBrowserRouter(
         {
           path: 'contact',
           Component: ContactPage,
-        },
-        {
-          path: 'forgot-password',
-          Component: ForgotPasswordPage,
         },
       ],
     },

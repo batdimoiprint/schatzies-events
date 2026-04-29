@@ -46,6 +46,14 @@ interface BackendEventDetails extends BackendEvent {
 export interface CreateEventPayload {
   title: string;
   startDate: string;
+  client_id?: string;
+  clientId?: string;
+  organizer_id?: string;
+  organizerId?: string;
+  eventPackageKey?: string;
+  eventLocation?: string;
+  eventDate?: string;
+  eventTime?: string;
   endDate?: string;
   eventType?: string;
   eventPackage?: string;

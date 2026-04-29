@@ -1,6 +1,19 @@
 import axiosInstance from './axios-instance';
 import type { User, LoginResult } from '@/types/auth';
 
+function getApiErrorMessage(error: unknown, fallback: string) {
+  if (
+    typeof error === 'object' &&
+    error !== null &&
+    'response' in error &&
+    typeof (error as { response?: { data?: { error?: string } } }).response?.data?.error === 'string'
+  ) {
+    return (error as { response?: { data?: { error?: string } } }).response?.data?.error ?? fallback;
+  }
+
+  return error instanceof Error ? error.message : fallback;
+}
+
 export const login = async (email: string, password: string): Promise<LoginResult> => {
   const response = await axiosInstance.post('/auth/login', {
     email,
@@ -49,4 +62,34 @@ export const logout = async (): Promise<void> => {
   } catch {
     // Some environments invalidate session through cookie expiration only.
   }
+};
+
+export const requestPasswordReset = async (
+  email: string
+): Promise<{ message: string; verificationCode?: string }> => {
+  try {
+    const response = await axiosInstance.post('/auth/forgot-password', { email });
+    return response.data;
+  } catch (error) {
+    throw new Error(getApiErrorMessage(error, 'Unable to send reset code.'));
+  }
+};
+
+export const verifyPasswordResetCode = async (
+  email: string,
+  code: string
+): Promise<{ message: string; resetToken: string; user: User | null }> => {
+  const response = await axiosInstance.post('/auth/forgot-password/verify', { email, code });
+  return response.data;
+};
+
+export const resetPassword = async (
+  resetToken: string,
+  password: string
+): Promise<{ message: string; user: User | null }> => {
+  const response = await axiosInstance.post('/auth/forgot-password/reset', {
+    resetToken,
+    password,
+  });
+  return response.data;
 };
