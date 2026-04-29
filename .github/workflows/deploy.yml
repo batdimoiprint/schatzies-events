@@ -40,7 +40,9 @@ jobs:
           fi
 
       - name: Build frontend
-        run: VITE_BASE_PATH=${{ steps.target.outputs.base_path }} pnpm build
+        env:
+          VITE_BASE_PATH: ${{ steps.target.outputs.base_path }}
+        run: pnpm build
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v2
