@@ -15,6 +15,7 @@ export interface User {
   contactNumber?: string;
   email: string;
   role: string;
+  profilePic?: string;
   created_at?: string;
 }
 
