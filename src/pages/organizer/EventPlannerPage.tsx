@@ -2,11 +2,11 @@ import { useMemo, useState, type ChangeEvent, type DragEvent, type FormEvent } f
 import {
   CalendarDays,
   ChevronLeft,
-  CheckCircle2,
   ClipboardList,
   Download,
   ImagePlus,
   ListChecks,
+  MoreVertical,
   Pencil,
   Plus,
   Trash2,
@@ -302,7 +302,7 @@ function FlowNotesBoard() {
       endHour: 6,
       left: '2%',
       width: '27%',
-      tone: 'bg-[#d7d7d7]',
+      tone: 'border-[#f0bfd8] bg-[#fdeaf3] text-[#7b295f]',
     },
     {
       id: 'timeline-secondary',
@@ -314,7 +314,7 @@ function FlowNotesBoard() {
       endHour: 9,
       left: '31%',
       width: '26%',
-      tone: 'bg-[#cfcfcf]',
+      tone: 'border-[#cfe0f3] bg-[#eef6ff] text-[#2a5f91]',
     },
     {
       id: 'timeline-third',
@@ -326,7 +326,7 @@ function FlowNotesBoard() {
       endHour: 11,
       left: '2%',
       width: '27%',
-      tone: 'bg-[#d7d7d7]',
+      tone: 'border-[#dbe8dc] bg-[#f1fbf3] text-[#2d6640]',
     },
   ]);
 
@@ -344,7 +344,7 @@ function FlowNotesBoard() {
     endHour: 6,
     left: '2%',
     width: '27%',
-    tone: 'bg-[#d7d7d7]',
+    tone: 'border-[#f0bfd8] bg-[#fdeaf3] text-[#7b295f]',
   });
 
   const timelineHours = Array.from(
@@ -426,6 +426,27 @@ function FlowNotesBoard() {
     return `${hour12}:${minute} AM`;
   };
 
+  const parseTimeParts = (value: string, fallbackHour: number) => {
+    const normalized = toTimeInputValue(value, fallbackHour);
+    const match = normalized.match(/^([01]\d|2[0-3]):([0-5]\d)$/);
+    if (!match) {
+      return {
+        hour: fallbackHour,
+        minute: 0,
+        totalMinutes: fallbackHour * 60,
+      };
+    }
+
+    const hour = Number(match[1]);
+    const minute = Number(match[2]);
+
+    return {
+      hour,
+      minute,
+      totalMinutes: hour * 60 + minute,
+    };
+  };
+
   const openActivityInfo = (activityId: string) => {
     const activity = timelineBlocks.find((block) => block.id === activityId);
     if (!activity) {
@@ -467,7 +488,7 @@ function FlowNotesBoard() {
       endHour: 6,
       left: '2%',
       width: '27%',
-      tone: 'bg-[#d7d7d7]',
+      tone: 'border-[#f0bfd8] bg-[#fdeaf3] text-[#7b295f]',
     });
     setIsEditingActivity(true);
     setIsActivityInfoOpen(true);
@@ -567,6 +588,58 @@ function FlowNotesBoard() {
       }));
   }, [timelineBlocks]);
 
+  const positionedTimelineBlocks = useMemo(() => {
+    const sortedSameHourBlocks = new Map<number, typeof timelineBlocks>();
+
+    timelineBlocks.forEach((block) => {
+      const sameHourBlocks = sortedSameHourBlocks.get(block.startHour) ?? [];
+      sameHourBlocks.push(block);
+      sortedSameHourBlocks.set(block.startHour, sameHourBlocks);
+    });
+
+    sortedSameHourBlocks.forEach((blocks, startHour) => {
+      blocks.sort((first, second) => {
+        const firstParts = parseTimeParts(first.from, first.startHour);
+        const secondParts = parseTimeParts(second.from, second.startHour);
+
+        if (firstParts.minute !== secondParts.minute) {
+          return firstParts.minute - secondParts.minute;
+        }
+
+        if (firstParts.totalMinutes !== secondParts.totalMinutes) {
+          return firstParts.totalMinutes - secondParts.totalMinutes;
+        }
+
+        return first.id.localeCompare(second.id);
+      });
+
+      sortedSameHourBlocks.set(startHour, blocks);
+    });
+
+    const slotWidth = 25;
+    const slotGap = 2.5;
+    const minuteShift = 4;
+
+    return timelineBlocks.map((block) => {
+      const startParts = parseTimeParts(block.from, block.startHour);
+      const endParts = parseTimeParts(block.to, block.endHour);
+      const sameHourBlocks = sortedSameHourBlocks.get(block.startHour) ?? [];
+      const slotIndex = sameHourBlocks.findIndex((item) => item.id === block.id);
+      const durationMinutes = Math.max(30, endParts.totalMinutes - startParts.totalMinutes);
+
+      const left = 2 + slotIndex * (slotWidth + slotGap) + (startParts.minute / 60) * minuteShift;
+      const width = Math.max(20, slotWidth - Math.min(slotIndex, 2) * 2);
+      const height = Math.max(hourRowHeight - 4, Math.ceil((durationMinutes / 60) * hourRowHeight) - 4);
+
+      return {
+        ...block,
+        left: `${left}%`,
+        width: `${width}%`,
+        height,
+      };
+    });
+  }, [timelineBlocks, hourRowHeight]);
+
   const handleExportSummary = () => {
     const header = ['Time Range', 'Title', 'Description'];
     const rows = scheduleSummaries.map((summary) => [
@@ -589,23 +662,23 @@ function FlowNotesBoard() {
 
   return (
     <>
-      <section className="rounded-2xl border border-[#ddd8e8] bg-white p-3 shadow-[0_6px_14px_rgba(31,18,54,0.05)]">
-        <div className="mb-3 flex items-center justify-between">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[#9b94a7]">
+      <section className="rounded-2xl border border-[#ddd8e8] bg-linear-to-b from-white to-[#fbf8fd] p-4 shadow-[0_6px_14px_rgba(31,18,54,0.05)]">
+        <div className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-[#e3ddea] bg-white px-4 py-3 shadow-[0_4px_10px_rgba(27,16,45,0.06)]">
+          <p className="text-[11px] font-black uppercase tracking-[0.12em] text-[#8a8399]">
             Flow
           </p>
           <div className="flex items-center gap-2">
             <button
               type="button"
               onClick={() => setHideScheduleSummary((prev) => !prev)}
-              className="inline-flex h-7 items-center gap-1.5 rounded-md border border-[#d6d1dc] bg-white px-3 text-[11px] font-bold text-[#5a5470]"
+              className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-[#d7d0e2] bg-white px-3.5 text-[11px] font-bold text-[#5a5670] transition hover:bg-[#f6f2fb]"
             >
               {hideScheduleSummary ? 'Show Summary' : 'Hide Summary'}
             </button>
             <button
               type="button"
               onClick={openCreateActivity}
-              className="inline-flex h-7 items-center gap-1.5 rounded-md bg-[#8f1fd1] px-3 text-[11px] font-bold text-white shadow-[0_4px_10px_rgba(143,31,209,0.3)]"
+              className="inline-flex h-9 items-center gap-1.5 rounded-lg bg-linear-to-r from-[#f1589e] via-[#d735b3] to-[#8a1fd0] px-4 text-[11px] font-black text-white shadow-[0_10px_20px_rgba(125,31,186,0.24)] transition hover:brightness-105"
             >
               <Plus className="size-3.5" />
               Add
@@ -613,7 +686,7 @@ function FlowNotesBoard() {
             <button
               type="button"
               onClick={handleExportSummary}
-              className="inline-flex h-7 items-center gap-1.5 rounded-md border border-[#d6d1dc] bg-white px-3 text-[11px] font-bold text-[#5a5470]"
+              className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-[#d7d0e2] bg-white px-3.5 text-[11px] font-bold text-[#5a5670] transition hover:bg-[#f6f2fb]"
             >
               <Download className="size-3.5" />
               Export
@@ -627,16 +700,16 @@ function FlowNotesBoard() {
             hideScheduleSummary ? 'grid-cols-1' : 'xl:grid-cols-[minmax(0,1fr)_280px]',
           ].join(' ')}
         >
-          <article className="overflow-hidden rounded-xl border border-[#e2dee9] bg-white">
-            <div className="flex flex-wrap items-start justify-between gap-2 px-5 py-3">
+          <article className="overflow-hidden rounded-2xl border border-[#e2dee9] bg-white shadow-[0_8px_18px_rgba(31,18,54,0.05)]">
+            <div className="flex flex-wrap items-start justify-between gap-3 border-b border-[#eee9f2] bg-[#fcfbfe] px-5 py-4">
               <div>
-                <h4 className="text-[13px] font-black leading-tight text-[#2f2b39]">
+                <h4 className="text-[16px] font-black leading-tight text-[#2f2b39]">
                   JANUARY 3, 2025
                 </h4>
-                <p className="text-[10px] font-semibold text-[#6d6679]">Event Flow</p>
+                <p className="text-[11px] font-semibold text-[#6d6679]">Event Flow</p>
               </div>
 
-              <label className="inline-flex items-center gap-2 text-[10px] font-semibold text-[#9b94a7]">
+              <label className="inline-flex items-center gap-2 rounded-full border border-[#e4ddea] bg-white px-3 py-1.5 text-[10px] font-semibold text-[#7a728d] shadow-[0_2px_5px_rgba(31,18,54,0.04)]">
                 <span>Hide empty time slots</span>
                 <input
                   type="checkbox"
@@ -647,14 +720,14 @@ function FlowNotesBoard() {
               </label>
             </div>
 
-            <div className="grid grid-cols-[56px_minmax(0,1fr)] border-t border-[#ece8f0]">
-              <div className="bg-white">
+            <div className="grid grid-cols-[72px_minmax(0,1fr)] border-t border-[#ece8f0]">
+              <div className="bg-[#fcfbfe]">
                 {visibleHours.map((hour) => {
                   const labelHour = hour === 12 ? 12 : ((hour + 11) % 12) + 1;
                   return (
                     <div
                       key={hour}
-                      className="flex items-start justify-end border-b border-[#ece8f0] pr-2 pt-2 text-[10px] font-semibold text-[#8e8796]"
+                      className="flex items-start justify-end border-b border-[#ece8f0] pr-3 pt-2 text-[10px] font-semibold text-[#8e8796]"
                       style={{ height: `${hourRowHeight}px` }}
                     >
                       {labelHour}AM
@@ -663,20 +736,20 @@ function FlowNotesBoard() {
                 })}
               </div>
 
-              <div className="relative overflow-x-auto overflow-y-auto">
+              <div className="relative overflow-x-auto overflow-y-auto bg-[linear-gradient(180deg,#ffffff_0%,#faf7fc_100%)]">
                 <div
-                  className="relative min-w-[720px]"
+                  className="relative min-w-[760px]"
                   style={{ height: `${visibleHours.length * hourRowHeight}px` }}
                 >
                   {visibleHours.map((hour, index) => (
                     <div
                       key={`${hour}-line`}
-                      className="absolute left-0 right-0 border-t border-[#ece8f0]"
+                      className="absolute left-0 right-0 border-t border-[#eee6f3]"
                       style={{ top: `${index * hourRowHeight}px` }}
                     />
                   ))}
 
-                  {timelineBlocks.map((block) => {
+                  {positionedTimelineBlocks.map((block) => {
                     const visibleDuration = visibleHours.filter(
                       (hour) => hour >= block.startHour && hour < block.endHour
                     ).length;
@@ -702,23 +775,23 @@ function FlowNotesBoard() {
                             openActivityInfo(block.id);
                           }
                         }}
-                        className="absolute overflow-hidden rounded-sm border border-[#cfcfcf] bg-[#dedede] px-2.5 py-1.5 text-[#5f596b]"
+                        className={`absolute overflow-hidden rounded-xl border px-3 py-2 text-[#5f596b] shadow-[0_6px_12px_rgba(31,18,54,0.08)] ${block.tone}`}
                         style={{
                           top: `${startIndex * hourRowHeight + 2}px`,
-                          height: `${duration * hourRowHeight - 4}px`,
+                          height: `${block.height ?? duration * hourRowHeight - 4}px`,
                           left: block.left,
                           width: block.width,
                           zIndex: block.id === selectedActivityId ? 30 : 10,
                         }}
                       >
-                        <p className="truncate text-[10px] font-black uppercase leading-tight text-[#4e4858]">
+                        <p className="truncate text-[11px] font-black uppercase leading-tight text-inherit">
                           {block.title}
                         </p>
-                        <p className="mt-1 truncate text-[10px] font-semibold leading-tight text-[#6d667a]">
+                        <p className="mt-1 truncate text-[10px] font-semibold leading-tight text-inherit/80">
                           Time: {formatDisplayTime(block.from, block.startHour)} -{' '}
                           {formatDisplayTime(block.to, block.endHour)}
                         </p>
-                        <p className="mt-1 truncate text-[10px] leading-tight text-[#6c6678]">
+                        <p className="mt-1 truncate text-[10px] leading-tight text-inherit/80">
                           {block.description}
                         </p>
                       </article>
@@ -730,7 +803,7 @@ function FlowNotesBoard() {
           </article>
 
           {!hideScheduleSummary ? (
-            <aside className="rounded-xl border border-[#e2dee9] bg-white px-4 py-3">
+            <aside className="rounded-2xl border border-[#e2dee9] bg-white px-4 py-4 shadow-[0_8px_18px_rgba(31,18,54,0.05)]">
               <p className="text-[12px] font-black uppercase tracking-[0.12em] text-[#6b6476]">
                 Schedule Summary
               </p>
@@ -740,8 +813,8 @@ function FlowNotesBoard() {
                   <div key={summary.id} className="grid grid-cols-[92px_1fr] gap-4">
                     <p className="text-[10px] font-semibold text-[#6b6476]">{summary.timeRange}</p>
                     <div>
-                      <p className="text-[12px] font-black text-[#2f2b39]">{summary.title}</p>
-                      <p className="mt-1 text-[11px] italic leading-relaxed text-[#8a8495]">
+                      <p className="text-[13px] font-black text-[#2f2b39]">{summary.title}</p>
+                      <p className="mt-1 text-[11px] leading-relaxed text-[#8a8495]">
                         {summary.body}
                       </p>
                     </div>
@@ -752,7 +825,7 @@ function FlowNotesBoard() {
               <button
                 type="button"
                 onClick={handleAddSummary}
-                className="mt-6 inline-flex w-full items-center justify-center gap-2 rounded-md border border-[#d6d1dc] bg-white py-2 text-[11px] font-bold text-[#5a5470]"
+                className="mt-6 inline-flex h-10 w-full items-center justify-center gap-2 rounded-lg border border-[#d7d0e2] bg-white text-[11px] font-black text-[#5a5670] transition hover:bg-[#f6f2fb]"
               >
                 <Plus className="size-3.5" />
                 Add summary
@@ -773,7 +846,7 @@ function FlowNotesBoard() {
       >
         <DialogContent
           showCloseButton={false}
-          className="max-w-[calc(100%-1rem)] rounded-2xl border border-[#e3dfea] bg-white p-0 sm:max-w-[560px]"
+          className="max-w-[calc(100%-1rem)] rounded-2xl border border-[#e3dfea] bg-white p-0 sm:max-w-[640px]"
         >
           <form className="px-6 py-5" onSubmit={handleSaveActivity}>
             <div className="mb-4 flex items-start justify-between gap-3 border-b border-[#eee9f2] pb-4">
@@ -852,7 +925,7 @@ function FlowNotesBoard() {
                   <button
                     type="button"
                     onClick={() => selectedActivity && handleDeleteActivity(selectedActivity.id)}
-                    className="inline-flex size-8 items-center justify-center rounded-full border border-[#f5d9e7] text-[#f33d93] transition hover:bg-[#fdf0f6]"
+                      className="inline-flex size-9 items-center justify-center rounded-full border border-[#f5d9e7] text-[#f33d93] transition hover:bg-[#fdf0f6]"
                     aria-label="Delete activity"
                   >
                     <Trash2 className="size-4" />
@@ -871,7 +944,7 @@ function FlowNotesBoard() {
                       setActivityDraft((previous) => ({ ...previous, title: event.target.value }))
                     }
                     placeholder="Enter activity title"
-                    className="mt-2 h-10 rounded-lg border border-[#e5deec] bg-[#f7f5fa] text-sm text-[#4d4a54] shadow-none"
+                    className="mt-2 h-11 rounded-lg border border-[#e5deec] bg-[#f7f5fa] text-sm text-[#4d4a54] shadow-none"
                   />
                 </div>
 
@@ -894,7 +967,7 @@ function FlowNotesBoard() {
                       min={minAllowedTime}
                       max={maxAllowedTime}
                       step={1800}
-                      className="mt-2 h-10 rounded-lg border border-[#e5deec] bg-[#f7f5fa] text-sm text-[#4d4a54] shadow-none"
+                      className="mt-2 h-11 rounded-lg border border-[#e5deec] bg-[#f7f5fa] text-sm text-[#4d4a54] shadow-none"
                     />
                   </div>
 
@@ -932,17 +1005,17 @@ function FlowNotesBoard() {
                       }))
                     }
                     placeholder="Add activity details"
-                    className="mt-2 h-24 w-full resize-none rounded-lg border border-[#e5deec] bg-[#f7f5fa] px-3 py-2 text-sm text-[#4d4a54] outline-none"
+                    className="mt-2 h-28 w-full resize-none rounded-lg border border-[#e5deec] bg-[#f7f5fa] px-3 py-2 text-sm text-[#4d4a54] outline-none"
                   />
                 </div>
               </div>
             ) : selectedActivity ? (
               <div className="space-y-4">
-                <div className="rounded-md bg-[#f1dce8] px-3 py-2 text-base font-black leading-tight text-[#2f2b39]">
+                <div className="rounded-2xl bg-linear-to-r from-[#f1589e] via-[#d735b3] to-[#8a1fd0] px-4 py-3 text-base font-black leading-tight text-white shadow-[0_10px_20px_rgba(125,31,186,0.18)]">
                   {selectedActivity.title}
                 </div>
 
-                <div className="grid grid-cols-2 gap-3 rounded-lg border border-[#ebe5f1] bg-[#faf8fc] px-3 py-2.5 text-sm">
+                <div className="grid grid-cols-2 gap-3 rounded-2xl border border-[#ebe5f1] bg-[#faf8fc] px-4 py-3 text-sm">
                   <p>
                     <span className="font-bold text-[#9d97a8]">From</span>
                     <span className="ml-2 font-black text-[#2f2b39]">
@@ -957,7 +1030,7 @@ function FlowNotesBoard() {
                   </p>
                 </div>
 
-                <div className="rounded-lg border border-[#ebe5f1] bg-[#faf8fc] px-3 py-3">
+                <div className="rounded-2xl border border-[#ebe5f1] bg-[#faf8fc] px-4 py-4">
                   <p className="text-xs font-black uppercase tracking-[0.12em] text-[#9d97a8]">
                     Description
                   </p>
@@ -967,7 +1040,7 @@ function FlowNotesBoard() {
                 </div>
               </div>
             ) : (
-              <div className="rounded-lg border border-dashed border-[#e5deec] bg-[#faf8fc] px-3 py-6 text-center">
+              <div className="rounded-2xl border border-dashed border-[#e5deec] bg-[#faf8fc] px-4 py-8 text-center">
                 <p className="text-sm font-semibold text-[#7f7a89]">
                   Select an activity card to view details.
                 </p>
@@ -992,6 +1065,43 @@ const initialPlannerNotes: PlannerQuickNote[] = [
     body: 'Avoid serving nuts\n(guest allergy concern)',
   },
 ];
+
+const noteTileThemes = [
+  {
+    shellClassName: 'border-[#edd9e6] bg-[#fff7fb] text-[#6f295a]',
+    headerClassName: 'from-[#ffdaea] via-[#ffeef5] to-[#fff7fb]',
+    badgeClassName: 'bg-[#ffd7e7] text-[#a83f73]',
+    accentClassName: 'bg-[#f1589e]',
+    bodyClassName: 'text-[#5d5364]',
+    footerClassName: 'border-[#ead8e6] bg-[#fffafd]',
+  },
+  {
+    shellClassName: 'border-[#d8e3f0] bg-[#f7fbff] text-[#24476b]',
+    headerClassName: 'from-[#d9ecff] via-[#eef7ff] to-[#f7fbff]',
+    badgeClassName: 'bg-[#d8ebff] text-[#2c6aa5]',
+    accentClassName: 'bg-[#2ea4ff]',
+    bodyClassName: 'text-[#546273]',
+    footerClassName: 'border-[#dbe6f2] bg-[#fbfdff]',
+  },
+  {
+    shellClassName: 'border-[#dce9dd] bg-[#f7fcf8] text-[#2b5c37]',
+    headerClassName: 'from-[#dff2e1] via-[#effaf1] to-[#f7fcf8]',
+    badgeClassName: 'bg-[#d9f0dc] text-[#2e6b37]',
+    accentClassName: 'bg-[#2ec24f]',
+    bodyClassName: 'text-[#55645a]',
+    footerClassName: 'border-[#dbe8de] bg-[#fbfdfb]',
+  },
+  {
+    shellClassName: 'border-[#eadfcb] bg-[#fffaf1] text-[#70511f]',
+    headerClassName: 'from-[#ffe8c7] via-[#fff4e0] to-[#fffaf1]',
+    badgeClassName: 'bg-[#ffe0b8] text-[#9a6426]',
+    accentClassName: 'bg-[#f0a12b]',
+    bodyClassName: 'text-[#6a5b46]',
+    footerClassName: 'border-[#eadfcb] bg-[#fffdf8]',
+  },
+];
+
+type PlannerNoteTheme = (typeof noteTileThemes)[number];
 
 const overviewScheduleSummary = [
   {
@@ -1048,6 +1158,10 @@ export function EventPlannerPage() {
   const [noteDraftImageDataUrl, setNoteDraftImageDataUrl] = useState<string | undefined>(undefined);
   const [noteDraftError, setNoteDraftError] = useState('');
   const [editingPlannerNoteId, setEditingPlannerNoteId] = useState<string | null>(null);
+  const [isNoteModalOpen, setIsNoteModalOpen] = useState(false);
+  const [activeNoteMenuFor, setActiveNoteMenuFor] = useState<string | null>(null);
+  const [isNotePreviewOpen, setIsNotePreviewOpen] = useState(false);
+  const [selectedPlannerNote, setSelectedPlannerNote] = useState<PlannerQuickNote | null>(null);
 
   const selectedProject = useMemo(() => {
     return projectSlots.find((project) => project.id === selectedProjectId) ?? projectSlots[0];
@@ -1067,6 +1181,26 @@ export function EventPlannerPage() {
     setNoteDraftImageDataUrl(undefined);
     setNoteDraftError('');
     setEditingPlannerNoteId(null);
+  };
+
+  const openPlannerNoteModal = () => {
+    resetNoteDraft();
+    setIsNoteModalOpen(true);
+  };
+
+  const closePlannerNoteModal = () => {
+    setIsNoteModalOpen(false);
+    resetNoteDraft();
+  };
+
+  const openPlannerNotePreview = (note: PlannerQuickNote) => {
+    setSelectedPlannerNote(note);
+    setIsNotePreviewOpen(true);
+  };
+
+  const closePlannerNotePreview = () => {
+    setIsNotePreviewOpen(false);
+    setSelectedPlannerNote(null);
   };
 
   const handlePlannerNoteImageChange = (event: ChangeEvent<HTMLInputElement>) => {
@@ -1105,6 +1239,7 @@ export function EventPlannerPage() {
     const normalizedBody = noteDraftBody.trim();
 
     if (!normalizedTitle && !normalizedBody && !noteDraftImageDataUrl) {
+      setNoteDraftError('Enter a title, note detail, or add an image before saving.');
       return;
     }
 
@@ -1123,7 +1258,7 @@ export function EventPlannerPage() {
       return [nextNote, ...previousNotes];
     });
 
-    resetNoteDraft();
+    closePlannerNoteModal();
   };
 
   const handleEditPlannerNote = (note: PlannerQuickNote) => {
@@ -1132,10 +1267,13 @@ export function EventPlannerPage() {
     setNoteDraftBody(note.body);
     setNoteDraftImageDataUrl(note.imageDataUrl ?? undefined);
     setNoteDraftError('');
+    setActiveNoteMenuFor(null);
+    setIsNoteModalOpen(true);
   };
 
   const handleDeletePlannerNote = (noteId: string) => {
     setPlannerNotes((previousNotes) => previousNotes.filter((note) => note.id !== noteId));
+    setActiveNoteMenuFor(null);
 
     if (editingPlannerNoteId === noteId) {
       resetNoteDraft();
@@ -1212,6 +1350,14 @@ export function EventPlannerPage() {
     // disallow moving completed tasks back to other lanes
     if (current.lane === 'completed' && lane !== 'completed') {
       return;
+    }
+
+    // only allow In Progress -> Completed when every checklist item is checked
+    if (current.lane === 'in-progress' && lane === 'completed') {
+      const checklist = Array.isArray(current.checklist) ? current.checklist : [];
+      if (checklist.length === 0 || checklist.some((item) => !item.done)) {
+        return;
+      }
     }
 
     setBoardTasks((previousTasks) =>
@@ -1323,13 +1469,15 @@ export function EventPlannerPage() {
         done: false,
       }));
 
+    const normalizedDetails = taskPreviewDetails.trim();
+
     setBoardTasks((previousTasks) =>
       previousTasks.map((task) =>
         task.id === selectedBoardTaskId
           ? {
               ...task,
               title: taskPreviewTitle,
-              details: normalizedChecklist.map((item) => item.label).join('\n'),
+              details: normalizedDetails || normalizedChecklist.map((item) => item.label).join('\n'),
               checklist: normalizedChecklist,
             }
           : task
@@ -1353,9 +1501,12 @@ export function EventPlannerPage() {
 
   const handleToggleBoardTaskChecklistItem = (taskId: string, itemId: string) => {
     const timestamp = new Date().toISOString();
+
     setBoardTasks((previousTasks) =>
       previousTasks.map((task) => {
-        if (task.id !== taskId || !Array.isArray(task.checklist)) return task;
+        if (task.id !== taskId || !Array.isArray(task.checklist)) {
+          return task;
+        }
 
         return {
           ...task,
@@ -1406,6 +1557,11 @@ export function EventPlannerPage() {
   }, [plannerTaskCards]);
 
   const checklistItems = checklistTaskCard?.items ?? [];
+
+  const checklistDoneCount = checklistItems.filter((it) => it.done).length;
+  const checklistProgress = checklistItems.length
+    ? Math.round((checklistDoneCount / checklistItems.length) * 100)
+    : 0;
 
   const handleAddChecklistItem = () => {
     if (!checklistTaskCard) {
@@ -1778,7 +1934,7 @@ export function EventPlannerPage() {
                         <span
                           className={`inline-flex size-2.5 rounded-full ${lane.dotClassName}`}
                         />
-                        <h3 className="text-[18px] font-black tracking-tight text-[#2f2b39]">
+                        <h3 className="text-[20px] font-black tracking-tight text-[#2f2b39]">
                           {lane.label} ({laneTasks.length})
                         </h3>
                       </div>
@@ -1796,134 +1952,132 @@ export function EventPlannerPage() {
                             onDragEnd={handleDragTaskEnd}
                             onClick={() => openTaskPreview(task.id)}
                             className={[
-                              'group relative cursor-grab rounded-xl border p-3 shadow-[0_2px_6px_rgba(31,18,54,0.06)] active:cursor-grabbing',
+                              'group relative flex h-[320px] cursor-grab rounded-xl border p-3 shadow-[0_2px_6px_rgba(31,18,54,0.06)] active:cursor-grabbing',
                               lane.cardOuterClassName,
                             ].join(' ')}
                           >
-                            <div className="mb-2 flex items-center justify-between gap-2">
-                              <p
-                                className={[
-                                  'truncate text-[32px] font-black leading-none',
-                                  lane.cardTitleClassName,
-                                ].join(' ')}
-                              >
-                                {task.title || 'Note Title Here'}
-                              </p>
-
+                            <div className="flex min-h-0 flex-1 flex-col rounded-2xl border border-[#e4dfeb] bg-white p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.6)]">
                               <div
-                                className="relative"
-                                onClick={(event) => event.stopPropagation()}
+                                className="mb-3 flex items-start justify-between gap-3 rounded-2xl px-4 py-3"
+                                style={{
+                                  background:
+                                    'linear-gradient(135deg, rgba(255,255,255,0.55), rgba(255,255,255,0.1))',
+                                }}
                               >
-                                <button
-                                  type="button"
-                                  onClick={() =>
-                                    setTaskCardMenuOpenFor((previous) =>
-                                      previous === task.id ? null : task.id
-                                    )
-                                  }
-                                  className="inline-flex size-7 items-center justify-center rounded-md text-[18px] leading-none text-[#3e384b] transition hover:bg-white/70"
-                                  aria-label="Task options"
+                                <div className="min-w-0 flex-1">
+                                  <p
+                                    className={[
+                                      'truncate text-[24px] font-black leading-none',
+                                      lane.cardTitleClassName,
+                                    ].join(' ')}
+                                  >
+                                    {task.title || 'Note Title Here'}
+                                  </p>
+                                </div>
+
+                                <div
+                                  className="relative shrink-0"
+                                  onClick={(event) => event.stopPropagation()}
                                 >
-                                  ⋯
-                                </button>
+                                  <button
+                                    type="button"
+                                    onClick={() =>
+                                      setTaskCardMenuOpenFor((previous) =>
+                                        previous === task.id ? null : task.id
+                                      )
+                                    }
+                                    className="inline-flex size-7 items-center justify-center rounded-md text-[18px] leading-none text-[#3e384b] transition hover:bg-white/70"
+                                    aria-label="Task options"
+                                  >
+                                    ⋯
+                                  </button>
 
-                                {taskCardMenuOpenFor === task.id ? (
-                                  <div className="absolute right-0 top-8 z-20 w-28 rounded-md border border-[#ddd7e8] bg-white py-1 shadow-[0_10px_20px_rgba(35,20,57,0.14)]">
-                                    <button
-                                      type="button"
-                                      onClick={() => {
-                                        setTaskCardMenuOpenFor(null);
-                                        openTaskPreview(task.id);
-                                      }}
-                                      className="flex w-full items-center px-3 py-1.5 text-left text-[12px] font-semibold text-[#4d465a] transition hover:bg-[#f7f3fb]"
-                                    >
-                                      Edit
-                                    </button>
-                                    <button
-                                      type="button"
-                                      onClick={() => handleDeleteBoardTask(task.id)}
-                                      className="flex w-full items-center px-3 py-1.5 text-left text-[12px] font-semibold text-[#4d465a] transition hover:bg-[#f7f3fb]"
-                                    >
-                                      Delete
-                                    </button>
-                                  </div>
-                                ) : null}
+                                  {taskCardMenuOpenFor === task.id ? (
+                                    <div className="absolute right-0 top-8 z-20 w-28 rounded-md border border-[#ddd7e8] bg-white py-1 shadow-[0_10px_20px_rgba(35,20,57,0.14)]">
+                                      <button
+                                        type="button"
+                                        onClick={() => {
+                                          setTaskCardMenuOpenFor(null);
+                                          openTaskPreview(task.id);
+                                        }}
+                                        className="flex w-full items-center px-3 py-1.5 text-left text-[12px] font-semibold text-[#4d465a] transition hover:bg-[#f7f3fb]"
+                                      >
+                                        Edit
+                                      </button>
+                                      <button
+                                        type="button"
+                                        onClick={() => handleDeleteBoardTask(task.id)}
+                                        className="flex w-full items-center px-3 py-1.5 text-left text-[12px] font-semibold text-[#4d465a] transition hover:bg-[#f7f3fb]"
+                                      >
+                                        Delete
+                                      </button>
+                                    </div>
+                                  ) : null}
+                                </div>
                               </div>
-                            </div>
 
-                            <div className="rounded-2xl border border-[#e4dfeb] bg-white p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.6)]">
-                              <span className="inline-flex rounded-full bg-[#ffe7ef] px-2 py-0.5 text-[9px] font-bold text-[#cf3a79]">
-                                1 Service
-                              </span>
+                              <div className="min-h-0 flex-1 overflow-y-auto pr-2 text-[12px] leading-snug text-[#6f687f] [scrollbar-width:thin]">
+                                <div className="space-y-1">
+                                  {(task.details ?? '')
+                                    .split('\n')
+                                    .map((line) => line.trim())
+                                    .filter(Boolean)
+                                    .length > 0 ? (
+                                    (task.details ?? '')
+                                      .split('\n')
+                                      .map((line) => line.trim())
+                                      .filter(Boolean)
+                                      .map((line, index) => (
+                                        <p key={`${task.id}-detail-${index}`} className="break-words">
+                                          {line}
+                                        </p>
+                                      ))
+                                  ) : (
+                                    <p>No details yet.</p>
+                                  )}
+                                </div>
+                              </div>
 
-                              {task.title.trim() || task.details.trim() ? (
-                                <>
-                                  <p className="mt-2 text-[43px] font-black leading-none text-[#1e1b26]">
-                                    {(task.title || 'Task').split(' ')[0]}
-                                  </p>
-                                  <p className="mt-2 line-clamp-6 text-[12px] leading-snug text-[#6f687f]">
-                                    {task.details || 'No details yet.'}
-                                  </p>
-                                </>
-                              ) : (
-                                <p className="mt-2 text-[12px] font-semibold italic text-[#8f879f]">
-                                  This task is empty
-                                </p>
-                              )}
-                              {lane.id === 'in-progress' &&
-                              Array.isArray(task.checklist) &&
-                              task.checklist.length > 0 ? (
-                                <div className="mt-4">
-                                  {/* progress bar */}
-                                  <div className="mb-2 flex items-center justify-between gap-2">
-                                    <div className="flex-1">
-                                      <div className="h-2 w-full rounded-full bg-[#eee]">
-                                        <div
-                                          className="h-2 rounded-full bg-[#2ea4ff]"
-                                          style={{
-                                            width: `${Math.round(
-                                              (task.checklist.filter((i) => i.done).length /
-                                                task.checklist.length) *
-                                                100 || 0
-                                            )}%`,
-                                          }}
-                                        />
-                                      </div>
-                                    </div>
-                                    <div className="ml-3 w-14 text-right text-[12px] font-bold text-[#2f2b39]">
-                                      {`${Math.round(
-                                        (task.checklist.filter((i) => i.done).length /
-                                          task.checklist.length) *
-                                          100 || 0
-                                      )}%`}
-                                    </div>
-                                  </div>
+                              {task.lane === 'in-progress' && (task.checklist ?? []).length > 0 ? (
+                                <div className="mt-3 max-h-32 space-y-1 overflow-y-auto rounded-lg border border-[#ede9f4] bg-[#faf8fc] p-2 [scrollbar-width:thin]">
+                                  {(task.checklist ?? []).map((item) => {
+                                    const palette = ['#f347a5', '#8f1fd1', '#f1589e', '#2ea4ff', '#2ec24f', '#ffb86b', '#6f26b4'];
+                                    const colorIndex = (task.checklist ?? []).findIndex(
+                                      (x) => x.id === item.id
+                                    );
+                                    const color = palette[colorIndex % palette.length];
 
-                                  <ul className="space-y-2">
-                                    {task.checklist.map((item) => (
-                                      <li key={item.id} className="flex items-start gap-2">
+                                    return (
+                                      <div
+                                        key={item.id}
+                                        className="flex items-center gap-2 rounded-md p-1.5"
+                                      >
                                         <input
                                           type="checkbox"
                                           checked={!!item.done}
-                                          onChange={(e) => {
-                                            e.stopPropagation();
-                                            handleToggleBoardTaskChecklistItem(task.id, item.id);
+                                          disabled
+                                          className="size-4 cursor-not-allowed"
+                                          style={{
+                                            accentColor: color,
                                           }}
-                                          onClick={(e) => e.stopPropagation()}
-                                          className="mt-1 h-4 w-4 cursor-pointer rounded border-[#d9d9df]"
                                         />
                                         <span
-                                          className={`text-[12px] leading-snug ${item.done ? 'line-through text-[#9b94a7]' : 'text-[#6f687f]'}`}
+                                          className={`min-w-0 flex-1 truncate text-[11px] font-medium ${
+                                            item.done
+                                              ? 'text-[#a29faf] line-through'
+                                              : 'text-[#5a546a]'
+                                          }`}
                                         >
                                           {item.label}
                                         </span>
-                                      </li>
-                                    ))}
-                                  </ul>
+                                      </div>
+                                    );
+                                  })}
                                 </div>
                               ) : null}
+
                               {task.lane === 'completed' ? (
-                                <div className="mt-4 flex items-center justify-between gap-2">
+                                <div className="mt-4 rounded-xl border border-[#dde8eb] bg-[#f5fbfc] px-3 py-2">
                                   <div className="text-[13px] font-black text-[#1f1f21]">
                                     Completed
                                   </div>
@@ -1949,187 +2103,204 @@ export function EventPlannerPage() {
             </section>
           ) : activeTab === 'notes' ? (
             <section className="rounded-2xl border border-[#ddd8e8] bg-[#f6f4f7] p-4 shadow-[0_6px_14px_rgba(31,18,54,0.05)]">
-              <div className="mx-auto max-w-[460px] rounded-md border border-[#c9c3d3] bg-white p-3 shadow-[0_4px_10px_rgba(27,16,45,0.08)]">
-                <div className="rounded-md border border-[#c9c3d3] bg-white px-3 py-2">
-                  <input
-                    type="text"
-                    value={noteDraftTitle}
-                    onChange={(event) => setNoteDraftTitle(event.target.value)}
-                    placeholder="Title"
-                    className="w-full border-0 bg-transparent text-[13px] font-semibold text-[#4f4a58] outline-none placeholder:text-[#8a8495]"
-                  />
-
-                  <textarea
-                    value={noteDraftBody}
-                    onChange={(event) => setNoteDraftBody(event.target.value)}
-                    placeholder="Take note"
-                    className="mt-2 h-12 w-full resize-none border-0 bg-transparent text-[11px] text-[#5f596b] outline-none placeholder:text-[#8a8495]"
-                  />
-
-                  {noteDraftImageDataUrl ? (
-                    <div className="mt-2 overflow-hidden rounded border border-[#e0dbe6] bg-white">
-                      <img
-                        src={noteDraftImageDataUrl}
-                        alt="Uploaded note evidence"
-                        className="h-28 w-full object-cover"
-                      />
-                    </div>
-                  ) : null}
-
-                  {noteDraftError ? (
-                    <p className="mt-2 text-[10px] font-semibold text-[#c13a74]">
-                      {noteDraftError}
-                    </p>
-                  ) : null}
-
-                  <div className="mt-2 flex items-center justify-between border-t border-[#e1dce8] pt-2">
-                    <div className="flex items-center gap-2 text-[#6f697c]">
-                      <button
-                        type="button"
-                        onClick={handleSavePlannerNote}
-                        className="inline-flex size-6 items-center justify-center rounded-sm border border-[#d9d3e2] text-[#4a4654] transition hover:border-[#b7b0c4]"
-                        aria-label="Save note"
-                      >
-                        <CheckCircle2 className="size-3.5" />
-                      </button>
-                      <label className="inline-flex cursor-pointer items-center justify-center rounded-sm border border-[#d9d3e2] p-1 text-[#4a4654] transition hover:border-[#b7b0c4]">
-                        <ImagePlus className="size-3.5" />
-                        <input
-                          type="file"
-                          accept="image/*"
-                          className="hidden"
-                          onChange={handlePlannerNoteImageChange}
-                        />
-                      </label>
-                      {noteDraftImageDataUrl ? (
-                        <button
-                          type="button"
-                          onClick={() => setNoteDraftImageDataUrl(undefined)}
-                          className="inline-flex size-6 items-center justify-center rounded-sm border border-[#d9d3e2] text-[#6f697c] transition hover:border-[#b7b0c4]"
-                          aria-label="Remove image"
-                        >
-                          <X className="size-3.5" />
-                        </button>
-                      ) : null}
-                    </div>
-
-                    <button
-                      type="button"
-                      onClick={resetNoteDraft}
-                      className="text-[10px] font-semibold text-[#6f697c] transition hover:text-[#393443]"
-                    >
-                      Close
-                    </button>
-                  </div>
+              <div className="mb-4 flex items-center justify-between gap-3 rounded-2xl border border-[#e3ddea] bg-white px-4 py-3 shadow-[0_4px_10px_rgba(27,16,45,0.06)]">
+                <div>
+                  <p className="text-xs font-black uppercase tracking-[0.12em] text-[#8a8399]">
+                    Planner Notes
+                  </p>
+                  <p className="text-sm font-semibold text-[#5d566d]">
+                    Capture reminders, requests, and references in quick note tiles.
+                  </p>
                 </div>
+
+                <button
+                  type="button"
+                  onClick={openPlannerNoteModal}
+                  className="inline-flex h-10 items-center gap-2 rounded-lg bg-linear-to-r from-[#f1589e] via-[#d735b3] to-[#8a1fd0] px-4 text-sm font-black text-white shadow-[0_10px_20px_rgba(125,31,186,0.24)] transition hover:brightness-105"
+                >
+                  <Plus className="size-4" />
+                  Add Note
+                </button>
               </div>
 
-              <div className="mt-6 flex flex-wrap gap-4">
-                {plannerNotes.map((note) => (
-                  <article
-                    key={note.id}
-                    className="w-full max-w-[190px] rounded-md border border-[#b9b3c2] bg-white p-3 shadow-[0_2px_6px_rgba(27,16,45,0.08)]"
-                  >
-                    <p className="text-[13px] font-black text-[#2f2a38]">{note.title}</p>
+              <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+                {plannerNotes.map((note, index) => {
+                  const noteTheme: PlannerNoteTheme = noteTileThemes[index % noteTileThemes.length];
 
-                    {note.imageDataUrl ? (
-                      <div className="mt-2 overflow-hidden rounded border border-[#d6d1dc] bg-white">
-                        <img
-                          src={note.imageDataUrl}
-                          alt={`${note.title} evidence`}
-                          className="h-24 w-full object-cover"
-                        />
+                  return (
+                    <article
+                      key={note.id}
+                      onClick={() => openPlannerNotePreview(note)}
+                      className={`relative flex h-[360px] cursor-pointer flex-col overflow-hidden rounded-2xl border p-4 shadow-[0_10px_22px_rgba(27,16,45,0.08)] transition-transform duration-200 hover:-translate-y-1 hover:shadow-[0_16px_30px_rgba(27,16,45,0.12)] ${noteTheme.shellClassName}`}
+                    >
+                      <div className={`absolute inset-x-0 top-0 h-1.5 bg-linear-to-r ${noteTheme.headerClassName}`} />
+
+                      <div className="flex items-start justify-between gap-3 pt-1">
+                        <div className="min-w-0">
+                          <p className="truncate text-[14px] font-black text-inherit">{note.title}</p>
+                          <div
+                            className={`mt-1 inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.12em] ${noteTheme.badgeClassName}`}
+                          >
+                            <span className={`size-1.5 rounded-full ${noteTheme.accentClassName}`} />
+                            Note Tile
+                          </div>
+                        </div>
+
+                        <div
+                          className="relative shrink-0"
+                          onClick={(event) => event.stopPropagation()}
+                        >
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setActiveNoteMenuFor((previous) =>
+                                previous === note.id ? null : note.id
+                              )
+                            }
+                            className="inline-flex size-8 items-center justify-center rounded-full border border-[#e1dbe8] text-[#6f697c] transition hover:border-[#b7b0c4] hover:bg-[#f7f4fb]"
+                            aria-label={`Open actions for ${note.title}`}
+                          >
+                            <MoreVertical className="size-4" />
+                          </button>
+
+                          {activeNoteMenuFor === note.id ? (
+                            <div className="absolute right-0 top-10 z-20 w-32 overflow-hidden rounded-xl border border-[#ddd7e8] bg-white shadow-[0_12px_24px_rgba(35,20,57,0.14)]">
+                              <button
+                                type="button"
+                                onClick={() => handleEditPlannerNote(note)}
+                                className="flex w-full items-center gap-2 px-3 py-2 text-left text-[12px] font-semibold text-[#4d465a] transition hover:bg-[#f7f3fb]"
+                              >
+                                <Pencil className="size-3.5" />
+                                Edit
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => handleDeletePlannerNote(note.id)}
+                                className="flex w-full items-center gap-2 px-3 py-2 text-left text-[12px] font-semibold text-[#4d465a] transition hover:bg-[#f7f3fb]"
+                              >
+                                <Trash2 className="size-3.5" />
+                                Delete
+                              </button>
+                            </div>
+                          ) : null}
+                        </div>
                       </div>
-                    ) : null}
 
-                    <p className="mt-2 whitespace-pre-line text-[11px] font-semibold leading-snug text-[#4d4858]">
-                      {note.body}
-                    </p>
+                      <div className={`mt-3 flex-1 overflow-hidden rounded-xl border ${noteTheme.footerClassName}`}>
+                        {note.imageDataUrl ? (
+                          <img
+                            src={note.imageDataUrl}
+                            alt={`${note.title} evidence`}
+                            className="h-[150px] w-full object-cover"
+                          />
+                        ) : (
+                          <div className={`flex h-[150px] w-full items-center justify-center bg-linear-to-br ${noteTheme.headerClassName}`}>
+                            <div className="flex flex-col items-center gap-2 text-center">
+                              <span className={`inline-flex size-10 items-center justify-center rounded-2xl ${noteTheme.badgeClassName}`}>
+                                <ImagePlus className="size-5" />
+                              </span>
+                              <p className="text-[11px] font-semibold text-inherit">No attachment</p>
+                            </div>
+                          </div>
+                        )}
 
-                    <div className="mt-4 flex items-center justify-end gap-2 text-[#6b6578]">
-                      <button
-                        type="button"
-                        onClick={() => handleEditPlannerNote(note)}
-                        className="inline-flex size-6 items-center justify-center rounded-md border border-[#d6d1dc] transition hover:border-[#a9a3b5]"
-                        aria-label={`Edit ${note.title}`}
-                      >
-                        <Pencil className="size-3.5" />
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => handleDeletePlannerNote(note.id)}
-                        className="inline-flex size-6 items-center justify-center rounded-md border border-[#d6d1dc] transition hover:border-[#a9a3b5]"
-                        aria-label={`Delete ${note.title}`}
-                      >
-                        <Trash2 className="size-3.5" />
-                      </button>
-                    </div>
-                  </article>
-                ))}
+                        <div className="flex h-[130px] flex-col gap-2 px-3 py-3">
+                          <p className={`line-clamp-4 whitespace-pre-line text-[12px] leading-snug ${noteTheme.bodyClassName}`}>
+                            {note.body}
+                          </p>
+                        </div>
+                      </div>
+                    </article>
+                  );
+                })}
               </div>
             </section>
           ) : activeTab === 'checklist' ? (
-            <section className="rounded-xl border border-[#ddd8e8] bg-white p-3 shadow-[0_6px_14px_rgba(31,18,54,0.05)]">
+            <section className="rounded-2xl border border-[#ddd8e8] bg-[#fbfafd] p-3 shadow-[0_6px_14px_rgba(31,18,54,0.05)]">
               <h3 className="mb-3 text-[18px] font-bold tracking-tight text-[#18151f]">
                 Checklist ({checklistItems.length} Items)
               </h3>
 
-              <div className="overflow-hidden rounded-sm border border-[#e7e3ea] bg-white">
-                <ul className="divide-y divide-[#dcd7df]">
-                  {checklistItems.map((item) => (
-                    <li
-                      key={item.id}
-                      className="flex min-h-[46px] items-center justify-between px-3"
-                    >
-                      <div className="flex min-w-0 items-center gap-3">
-                        <button
-                          type="button"
-                          onClick={() => handleToggleTaskItem(checklistTaskCard?.id ?? '', item.id)}
-                          className={[
-                            'inline-flex size-5 shrink-0 items-center justify-center rounded-[3px] border-2 text-[10px] font-black transition-all',
-                            item.done
-                              ? 'border-[#ff1f7a] bg-[#ff1f7a] text-white'
-                              : 'border-[#ff1f7a] bg-white text-transparent hover:text-[#ff1f7a]',
-                          ].join(' ')}
-                          aria-label={`${item.done ? 'Uncheck' : 'Check'} ${item.label}`}
-                        >
-                          ✓
-                        </button>
+              <div className="mb-4">
+                <div className="mb-2 flex items-center justify-between">
+                  <p className="text-sm font-semibold text-[#6f687f]">Overall Progress</p>
+                  <p className="text-sm font-bold text-[#2f2b39]">{checklistProgress}%</p>
+                </div>
 
-                        <span className="truncate text-[15px] font-medium text-[#302c39]">
-                          {item.label}
-                        </span>
-                      </div>
-
-                      <div className="ml-3 flex shrink-0 items-center gap-2">
-                        {item.id === 'cost-2' ? (
-                          <span className="inline-flex items-center gap-1 rounded-md border border-[#d8d3de] bg-[#f6f5f8] px-2 py-1 text-[9px] font-semibold text-[#6f697e]">
-                            <CalendarDays className="size-3" />
-                            Due Jan 2
-                          </span>
-                        ) : null}
-
-                        <button
-                          type="button"
-                          onClick={() =>
-                            openChecklistDeleteValidation({ id: item.id, label: item.label })
-                          }
-                          className="inline-flex h-6 w-6 items-center justify-center rounded-sm border border-[#d7d0e2] bg-white text-[#7a728d] transition hover:border-[#f1589e] hover:text-[#f1589e]"
-                          aria-label={`Delete ${item.label}`}
-                        >
-                          <Trash2 className="size-3" />
-                        </button>
-                      </div>
-                    </li>
-                  ))}
-                </ul>
-
-                {checklistItems.length === 0 ? (
-                  <div className="px-3 py-8 text-center text-sm font-semibold text-[#777184]">
-                    No checklist items yet. Add one to start tracking tasks.
-                  </div>
-                ) : null}
+                <div className="h-2 w-full rounded-full bg-[#f3eefb]">
+                  <div
+                    className="h-2 rounded-full"
+                    style={{
+                      width: `${checklistProgress}%`,
+                      background: 'linear-gradient(90deg, #f347a5, #8f1fd1)',
+                    }}
+                  />
+                </div>
               </div>
+
+                  <div className="overflow-hidden rounded-2xl border border-[#ece8f0] bg-white">
+                    <ul className="divide-y divide-[#f0ecf6]">
+                      {checklistItems.map((item, index) => {
+                        const palette = ['#f347a5', '#8f1fd1', '#f1589e', '#2ea4ff', '#2ec24f', '#ffb86b', '#6f26b4'];
+                        const color = palette[index % palette.length];
+
+                        return (
+                          <li
+                            key={item.id}
+                            className="flex min-h-[56px] items-center justify-between px-4"
+                          >
+                            <div className="flex min-w-0 items-center gap-3">
+                              <button
+                                type="button"
+                                onClick={() => handleToggleTaskItem(checklistTaskCard?.id ?? '', item.id)}
+                                aria-label={`${item.done ? 'Uncheck' : 'Check'} ${item.label}`}
+                                className="inline-flex h-8 w-8 items-center justify-center rounded-md border-2 transition-all"
+                                style={{
+                                  borderColor: color,
+                                  background: item.done ? color : 'white',
+                                  color: item.done ? 'white' : color,
+                                }}
+                              >
+                                {item.done ? '✓' : ''}
+                              </button>
+
+                              <span className="inline-flex h-2 w-2 shrink-0 rounded-full" style={{ background: color }} />
+
+                              <span className="truncate text-[15px] font-medium text-[#302c39]">
+                                {item.label}
+                              </span>
+                            </div>
+
+                            <div className="ml-3 flex shrink-0 items-center gap-2">
+                              {item.id === 'cost-2' ? (
+                                <span className="inline-flex items-center gap-1 rounded-md border border-[#d8d3de] bg-[#f6f5f8] px-2 py-1 text-[9px] font-semibold text-[#6f697e]">
+                                  <CalendarDays className="size-3" />
+                                  Due Jan 2
+                                </span>
+                              ) : null}
+
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  openChecklistDeleteValidation({ id: item.id, label: item.label })
+                                }
+                                className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-[#e8e0ea] bg-white text-[#7a728d] transition hover:border-[#f1589e] hover:text-[#f1589e]"
+                                aria-label={`Delete ${item.label}`}
+                              >
+                                <Trash2 className="size-4" />
+                              </button>
+                            </div>
+                          </li>
+                        );
+                      })}
+                    </ul>
+
+                    {checklistItems.length === 0 ? (
+                      <div className="px-3 py-8 text-center text-sm font-semibold text-[#777184]">
+                        No checklist items yet. Add one to start tracking tasks.
+                      </div>
+                    ) : null}
+                  </div>
 
               <button
                 type="button"
@@ -2152,6 +2323,228 @@ export function EventPlannerPage() {
           )}
         </section>
       </div>
+
+      <Dialog
+        open={isNotePreviewOpen}
+        onOpenChange={(open) => {
+          setIsNotePreviewOpen(open);
+          if (!open) {
+            setSelectedPlannerNote(null);
+          }
+        }}
+      >
+        <DialogContent
+          showCloseButton={false}
+          className="max-w-[calc(100%-1rem)] rounded-2xl border border-[#e3dfea] bg-white p-0 sm:max-w-[860px]"
+        >
+          {selectedPlannerNote ? (
+            <article className="overflow-hidden rounded-2xl bg-white">
+              <header className="flex items-center justify-between border-b border-[#eee9f2] px-5 py-4">
+                <div>
+                  <p className="text-xs font-black uppercase tracking-[0.12em] text-[#8a8399]">
+                    Note Preview
+                  </p>
+                  <h3 className="mt-1 text-[24px] font-black tracking-tight text-[#1f1f21]">
+                    {selectedPlannerNote.title}
+                  </h3>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      closePlannerNotePreview();
+                      handleEditPlannerNote(selectedPlannerNote);
+                    }}
+                    className="inline-flex h-9 items-center gap-2 rounded-lg border border-[#d7d0e2] px-3 text-xs font-bold text-[#5d5670] transition hover:bg-[#f4f1f8]"
+                  >
+                    <Pencil className="size-3.5" />
+                    Edit
+                  </button>
+                  <button
+                    type="button"
+                    onClick={closePlannerNotePreview}
+                    className="inline-flex size-9 items-center justify-center rounded-full text-[#9f97ad] transition hover:bg-[#f3eff8]"
+                    aria-label="Close note preview"
+                  >
+                    <X className="size-4" />
+                  </button>
+                </div>
+              </header>
+
+              <div className="grid gap-0 md:grid-cols-[1.08fr_0.92fr]">
+                <div className="border-b border-[#eee9f2] md:border-b-0 md:border-r">
+                  {selectedPlannerNote.imageDataUrl ? (
+                    <img
+                      src={selectedPlannerNote.imageDataUrl}
+                      alt={`${selectedPlannerNote.title} attachment`}
+                      className="h-full min-h-[280px] w-full object-cover"
+                    />
+                  ) : (
+                    <div className="flex min-h-[280px] items-center justify-center bg-linear-to-br from-[#fbf6ff] via-[#f8f5fb] to-[#fff7fb] px-6 text-center">
+                      <div>
+                        <div className="mx-auto inline-flex size-16 items-center justify-center rounded-2xl bg-[#f1589e]/10 text-[#f1589e]">
+                          <ImagePlus className="size-8" />
+                        </div>
+                        <p className="mt-3 text-sm font-semibold text-[#746e85]">No attachment on this note</p>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                <div className="p-5">
+                  <div className="inline-flex rounded-full bg-[#ffe7ef] px-3 py-1 text-[10px] font-bold text-[#cf3a79]">
+                    Expanded view
+                  </div>
+
+                  <div className="mt-4 rounded-2xl border border-[#ece8f0] bg-[#faf8fd] p-4">
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[#8b84a0]">
+                      Details
+                    </p>
+                    <p className="mt-2 whitespace-pre-line text-[14px] leading-relaxed text-[#4d4858]">
+                      {selectedPlannerNote.body}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </article>
+          ) : null}
+        </DialogContent>
+      </Dialog>
+
+      <Dialog
+        open={isNoteModalOpen}
+        onOpenChange={(open) => {
+          setIsNoteModalOpen(open);
+          if (!open) {
+            resetNoteDraft();
+          }
+        }}
+      >
+        <DialogContent
+          showCloseButton={false}
+          className="max-w-[calc(100%-1rem)] rounded-2xl border border-[#e3dfea] bg-white p-0 sm:max-w-[620px]"
+        >
+          <form
+            className="px-6 py-5"
+            onSubmit={(event) => {
+              event.preventDefault();
+              handleSavePlannerNote();
+            }}
+          >
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <p className="text-xs font-black uppercase tracking-[0.12em] text-[#8a8399]">
+                  {editingPlannerNoteId ? 'Edit Note' : 'Add Note'}
+                </p>
+                <h3 className="mt-1 text-[24px] font-black tracking-tight text-[#1f1f21]">
+                  {editingPlannerNoteId ? 'Update your note' : 'Create a new note'}
+                </h3>
+              </div>
+
+              <button
+                type="button"
+                onClick={closePlannerNoteModal}
+                className="inline-flex size-8 items-center justify-center rounded-full text-[#9f97ad] transition hover:bg-[#f3eff8]"
+                aria-label="Close note modal"
+              >
+                <X className="size-4" />
+              </button>
+            </div>
+
+            <div className="mt-4 space-y-4">
+              <div>
+                <Label htmlFor="note-title" className="text-xs font-semibold text-[#746e85]">
+                  Title
+                </Label>
+                <Input
+                  id="note-title"
+                  value={noteDraftTitle}
+                  onChange={(event) => setNoteDraftTitle(event.target.value)}
+                  placeholder="Enter note title"
+                  className="mt-1 h-11 border-[#ddd7e8] text-[13px] font-semibold text-[#302c39]"
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="note-body" className="text-xs font-semibold text-[#746e85]">
+                  Details
+                </Label>
+                <textarea
+                  id="note-body"
+                  value={noteDraftBody}
+                  onChange={(event) => setNoteDraftBody(event.target.value)}
+                  placeholder="Write the note details"
+                  className="mt-1 h-32 w-full rounded-lg border border-[#ddd7e8] bg-white px-3 py-2 text-[13px] text-[#302c39] outline-none placeholder:text-[#8a8495] focus:border-[#b29ace]"
+                />
+              </div>
+
+              <div className="rounded-xl border border-[#ece8f0] bg-[#faf8fd] p-3">
+                <div className="flex items-center justify-between gap-3">
+                  <div>
+                    <p className="text-xs font-semibold uppercase tracking-[0.08em] text-[#8b84a0]">
+                      Attachment
+                    </p>
+                    <p className="text-[12px] text-[#6f687f]">Add an image if the note needs one.</p>
+                  </div>
+
+                  <label className="inline-flex cursor-pointer items-center justify-center gap-2 rounded-md border border-[#d9d3e2] bg-white px-3 py-2 text-[12px] font-semibold text-[#4a4654] transition hover:border-[#b7b0c4]">
+                    <ImagePlus className="size-4" />
+                    Upload image
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={handlePlannerNoteImageChange}
+                    />
+                  </label>
+                </div>
+
+                {noteDraftImageDataUrl ? (
+                  <div className="mt-3 overflow-hidden rounded-lg border border-[#e0dbe6] bg-white">
+                    <img
+                      src={noteDraftImageDataUrl}
+                      alt="Uploaded note attachment"
+                      className="h-40 w-full object-cover"
+                    />
+                    <div className="flex items-center justify-between gap-2 border-t border-[#e0dbe6] px-3 py-2">
+                      <p className="text-[11px] font-semibold text-[#6f697c]">Image attached</p>
+                      <button
+                        type="button"
+                        onClick={() => setNoteDraftImageDataUrl(undefined)}
+                        className="inline-flex items-center gap-1 rounded-md border border-[#d9d3e2] px-2 py-1 text-[11px] font-semibold text-[#6f697c] transition hover:border-[#b7b0c4]"
+                      >
+                        <X className="size-3.5" />
+                        Remove
+                      </button>
+                    </div>
+                  </div>
+                ) : null}
+              </div>
+
+              {noteDraftError ? (
+                <p className="text-sm font-semibold text-[#c13a74]">{noteDraftError}</p>
+              ) : null}
+            </div>
+
+            <div className="mt-6 flex items-center justify-end gap-2">
+              <button
+                type="button"
+                onClick={closePlannerNoteModal}
+                className="inline-flex h-10 items-center justify-center rounded-lg border border-[#d7d0e2] px-4 text-sm font-bold text-[#5d5670] transition hover:bg-[#f4f1f8]"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                className="inline-flex h-10 items-center justify-center rounded-lg bg-linear-to-r from-[#f1589e] via-[#d735b3] to-[#8a1fd0] px-4 text-sm font-black text-white shadow-[0_10px_22px_rgba(125,31,186,0.34)]"
+              >
+                Save note
+              </button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
 
       <Dialog
         open={isTaskPreviewOpen}
@@ -2252,6 +2645,19 @@ export function EventPlannerPage() {
                       />
                     </div>
 
+                    <div>
+                      <Label htmlFor="task-preview-description" className="mt-3 text-[11px] font-semibold text-[#746e85]">
+                        Description
+                      </Label>
+                      <textarea
+                        id="task-preview-description"
+                        value={taskPreviewDetails}
+                        onChange={(e) => setTaskPreviewDetails(e.target.value)}
+                        placeholder="Enter a short description"
+                        className="mt-1 h-24 w-full rounded-lg border border-[#ddd7e8] bg-white px-3 py-2 text-[13px] text-[#302c39] outline-none placeholder:text-[#8a8495] focus:border-[#b29ace]"
+                      />
+                    </div>
+
                     <div className="rounded-md border border-[#ece8f0] bg-[#faf8fd] p-3">
                       <div className="flex items-center justify-between gap-2">
                         <Label className="text-[11px] font-semibold text-[#746e85]">
@@ -2274,11 +2680,11 @@ export function EventPlannerPage() {
                               key={item.id}
                               className="flex items-start gap-2 rounded-md border border-[#e9e3f1] bg-white px-2.5 py-2"
                             >
-                              <span className="mt-2 text-[11px] font-bold text-[#8b84a0]">-</span>
+                              <span className="mt-2 inline-flex w-4 shrink-0 justify-center text-[14px] font-black leading-none text-[#8b84a0]">
+                                -
+                              </span>
                               <div className="min-w-0 flex-1">
-                                <Label className="mb-1 block text-[10px] font-semibold uppercase tracking-[0.08em] text-[#8b84a0]">
-                                  Item {index + 1}
-                                </Label>
+                                <Label className="sr-only">Checklist item {index + 1}</Label>
                                 <Input
                                   value={item.label}
                                   onChange={(event) =>
@@ -2359,7 +2765,7 @@ export function EventPlannerPage() {
                           : 'Checklist'}
                       </p>
 
-                      <div className="mt-3 space-y-2">
+                      <div className="mt-3 max-h-[280px] space-y-2 overflow-y-auto pr-1 [scrollbar-width:thin]">
                         {(selectedBoardTask?.checklist ?? []).length > 0 ? (
                           (selectedBoardTask?.checklist ?? []).map((item) => (
                             <div
@@ -2367,16 +2773,21 @@ export function EventPlannerPage() {
                               className="rounded-md border border-[#ece8f0] bg-[#faf8fd] px-3 py-2"
                             >
                               <div className="flex items-start gap-2">
-                                <span
+                                <button
+                                  type="button"
+                                  onClick={() =>
+                                    handleToggleBoardTaskChecklistItem(selectedBoardTask.id, item.id)
+                                  }
+                                  aria-label={`${item.done ? 'Uncheck' : 'Check'} ${item.label}`}
                                   className={[
-                                    'mt-1 inline-flex size-4 items-center justify-center rounded-full text-[10px] font-black',
+                                    'mt-1 inline-flex size-4 shrink-0 items-center justify-center rounded-full border text-[10px] font-black transition',
                                     item.done
-                                      ? 'bg-[#2ec24f] text-white'
-                                      : 'border border-[#d8d2e2] bg-white text-[#8b84a0]',
+                                      ? 'border-[#2ec24f] bg-[#2ec24f] text-white'
+                                      : 'border-[#d8d2e2] bg-white text-[#8b84a0] hover:border-[#b8b0c3]',
                                   ].join(' ')}
                                 >
-                                  {item.done ? '✓' : '•'}
-                                </span>
+                                  {item.done ? '✓' : ''}
+                                </button>
                                 <div className="min-w-0 flex-1">
                                   <p className="text-[13px] font-semibold text-[#302c39]">
                                     {item.label}
