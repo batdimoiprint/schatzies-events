@@ -85,7 +85,9 @@ type InquiryStatusOption = {
 };
 
 function normalizeInquiryStatus(status?: string) {
-  const normalized = String(status || '').trim().toLowerCase();
+  const normalized = String(status || '')
+    .trim()
+    .toLowerCase();
 
   if (!normalized || normalized === 'new' || normalized === 'pending') {
     return 'Pending Review';
@@ -103,7 +105,9 @@ function normalizeInquiryStatus(status?: string) {
 }
 
 function getInquiryStatusOptions(currentStatus?: string): InquiryStatusOption[] {
-  const normalized = String(currentStatus || '').trim().toLowerCase();
+  const normalized = String(currentStatus || '')
+    .trim()
+    .toLowerCase();
   const displayStatus = normalizeInquiryStatus(currentStatus);
 
   if (normalized === 'pending review' || normalized === 'new' || normalized === 'pending') {
@@ -144,7 +148,10 @@ function buildEventDateTime(dateValue?: string, timeValue?: string) {
     return Number.isNaN(parsedDate.getTime()) ? '' : parsedDate.toISOString();
   }
 
-  const normalizedTime = String(timeValue || '').trim().slice(0, 5) || '00:00';
+  const normalizedTime =
+    String(timeValue || '')
+      .trim()
+      .slice(0, 5) || '00:00';
   const parsedDate = new Date(`${normalizedDate}T${normalizedTime}:00.000Z`);
   return Number.isNaN(parsedDate.getTime()) ? '' : parsedDate.toISOString();
 }
@@ -241,7 +248,10 @@ export function InquiryDetailsDialog({
       selectedInquiry?.meetingDetails?.time || selectedInquiry?.meetingDetails?.startTime || ''
     ).trim();
     const eventLocation = String(
-      selectedInquiry?.meetingDetails?.location || selectedInquiry.location || selectedInquiry.venue || ''
+      selectedInquiry?.meetingDetails?.location ||
+        selectedInquiry.location ||
+        selectedInquiry.venue ||
+        ''
     ).trim();
     const eventTitle = String(
       selectedInquiry?.title ||
@@ -455,12 +465,16 @@ export function InquiryDetailsDialog({
     } catch (error: unknown) {
       const serverMessage =
         typeof error === 'object' && error !== null && 'response' in error
-          ? (error as {
-              response?: { data?: { error?: string; message?: string } };
-            })?.response?.data?.error ||
-            (error as {
-              response?: { data?: { error?: string; message?: string } };
-            })?.response?.data?.message ||
+          ? (
+              error as {
+                response?: { data?: { error?: string; message?: string } };
+              }
+            )?.response?.data?.error ||
+            (
+              error as {
+                response?: { data?: { error?: string; message?: string } };
+              }
+            )?.response?.data?.message ||
             'Unable to create account right now. Please try again.'
           : error instanceof Error && error.message
             ? error.message
@@ -641,7 +655,11 @@ export function InquiryDetailsDialog({
                     </SelectTrigger>
                     <SelectContent className="rounded-xl border-[#e5ddee]">
                       {getInquiryStatusOptions(selectedInquiry.status).map((option) => (
-                        <SelectItem key={option.value} value={option.value} disabled={option.disabled}>
+                        <SelectItem
+                          key={option.value}
+                          value={option.value}
+                          disabled={option.disabled}
+                        >
                           {option.label}
                         </SelectItem>
                       ))}
@@ -668,10 +686,13 @@ export function InquiryDetailsDialog({
                         </div>
                         <div>
                           <p className="text-sm font-black text-[#5f4f7a]">
-                            {new Date(selectedInquiry.meetingDetails.date || Date.now()).toLocaleDateString(
-                              'en-US',
-                              { month: 'short', day: 'numeric', year: 'numeric' }
-                            )}
+                            {new Date(
+                              selectedInquiry.meetingDetails.date || Date.now()
+                            ).toLocaleDateString('en-US', {
+                              month: 'short',
+                              day: 'numeric',
+                              year: 'numeric',
+                            })}
                           </p>
                           <p className="text-xs font-bold text-[#8f1fd1]">
                             at {selectedInquiry.meetingDetails.time || 'TBD'}

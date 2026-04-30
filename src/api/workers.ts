@@ -91,3 +91,8 @@ export const unassignWorkerFromEvent = async (vendorId: string, workerId: string
   );
   return response.data;
 };
+
+export async function getWorkerAssignedEvents(workerId: string) {
+  const response = await axiosInstance.get(`/vendors/workers/${workerId}/events`);
+  return Array.isArray(response.data) ? response.data : response.data.events || [];
+}

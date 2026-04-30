@@ -5,8 +5,6 @@ import LoadingScreen from '@/components/ui/LoadingScreen';
 import { logout } from '@/api/auth';
 import { useAuth } from '@/hooks/useAuth';
 
-
-
 const FALLBACK_AVATAR = '/Pictures/business-logo.png';
 
 type ProfilePageProps = {
@@ -85,7 +83,11 @@ export function ProfilePage({ profilePath = '/admin/profile' }: ProfilePageProps
         {profileOpen && (
           <div className="absolute right-0 top-full z-50 mt-2 w-56 overflow-hidden rounded-xl border border-[#ece7f2] bg-white shadow-lg shadow-black/10">
             <div className="flex items-center gap-3 border-b border-[#ece7f2] px-4 py-3">
-              <img src={userAvatar} alt="User avatar" className="size-9 rounded-full object-cover" />
+              <img
+                src={userAvatar}
+                alt="User avatar"
+                className="size-9 rounded-full object-cover"
+              />
               <div className="min-w-0">
                 <p className="truncate text-sm font-semibold text-[#2d2834]">{displayName}</p>
                 <p className="truncate text-xs text-[#696373]">{displayRole}</p>

@@ -6,9 +6,12 @@ function getApiErrorMessage(error: unknown, fallback: string) {
     typeof error === 'object' &&
     error !== null &&
     'response' in error &&
-    typeof (error as { response?: { data?: { error?: string } } }).response?.data?.error === 'string'
+    typeof (error as { response?: { data?: { error?: string } } }).response?.data?.error ===
+      'string'
   ) {
-    return (error as { response?: { data?: { error?: string } } }).response?.data?.error ?? fallback;
+    return (
+      (error as { response?: { data?: { error?: string } } }).response?.data?.error ?? fallback
+    );
   }
 
   return error instanceof Error ? error.message : fallback;

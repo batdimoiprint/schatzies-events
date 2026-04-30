@@ -29,7 +29,7 @@ const organizerNavItems = [
   {
     label: 'Message',
     to: '/organizer/message',
-    icon: '/Pictures/organizerpics/email.png',
+    icon: '/Pictures/organizerpics/Message.png',
   },
   {
     label: 'Cost Breakdown',
@@ -86,7 +86,11 @@ export function OrganizerLayout() {
             type="button"
             aria-label={isSidebarOpen ? 'Collapse sidebar' : 'Expand sidebar'}
           >
-            {isSidebarOpen ? <ChevronLeft className="size-4" /> : <ChevronRight className="size-4" />}
+            {isSidebarOpen ? (
+              <ChevronLeft className="size-4" />
+            ) : (
+              <ChevronRight className="size-4" />
+            )}
           </button>
 
           <div className="w-full">

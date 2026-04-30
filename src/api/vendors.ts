@@ -196,3 +196,8 @@ export async function unassignVendorFromEvent(vendorId: string) {
   const response = await axiosInstance.delete(`/vendors/${vendorId}/unassign-event`);
   return response.data;
 }
+
+export async function getVendorAssignedEvents(vendorId: string) {
+  const response = await axiosInstance.get(`/vendors/${vendorId}/events`);
+  return Array.isArray(response.data) ? response.data : response.data.events || [];
+}
