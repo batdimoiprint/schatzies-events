@@ -7,6 +7,9 @@ import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import LoadingScreen from '@/components/ui/LoadingScreen';
 import { submitInquiry } from '@/api/inquiries';
 import { getPackageById, getPackagesByType } from '@/data/packages';
@@ -133,6 +136,15 @@ export function InquiryForm({ onClose, selectedPackageId, selectedEventType }: I
     }
   }, [watchedEventPackage, setValue, selectedPackage]);
 
+  // Prevent body scroll when modal is open
+  useEffect(() => {
+    const originalStyle = document.documentElement.style.overflow;
+    document.documentElement.style.overflow = 'hidden';
+    return () => {
+      document.documentElement.style.overflow = originalStyle;
+    };
+  }, []);
+
   // Get currently selected package details from dropdown
   const currentSelectedPackage =
     watchedEventType && watchedEventPackage
@@ -196,240 +208,185 @@ export function InquiryForm({ onClose, selectedPackageId, selectedEventType }: I
       <LoadingScreen isLoading={isLoading} />
 
       {/* Terms and Conditions Modal */}
-      {showTerms && (
-        <div
-          className="fixed inset-0 z-[10000] flex items-center justify-center bg-black/60 px-4 backdrop-blur-sm"
-          onClick={() => setShowTerms(false)}
-        >
-          <div
-            className="flex w-full max-w-[600px] flex-col rounded-2xl bg-white shadow-2xl"
-            style={{ maxHeight: '80vh' }}
-            onClick={(e) => e.stopPropagation()}
-          >
-            {/* Header */}
-            <div className="flex items-center justify-between border-b border-gray-200 px-6 py-4">
-              <h3 className="text-[1.3rem] font-bold text-[#1a1225]">Terms and Conditions</h3>
-              <button
-                onClick={() => setShowTerms(false)}
-                className="flex h-7 w-7 items-center justify-center rounded-full text-gray-400 transition hover:text-gray-600"
-              >
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  className="h-5 w-5"
-                >
-                  <line x1="18" y1="6" x2="6" y2="18" />
-                  <line x1="6" y1="6" x2="18" y2="18" />
-                </svg>
-              </button>
-            </div>
+      <Dialog open={showTerms} onOpenChange={setShowTerms}>
+        <DialogContent className="max-w-[600px] max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="text-[1.3rem] font-bold text-[#1a1225]">
+              Terms and Conditions
+            </DialogTitle>
+          </DialogHeader>
 
-            {/* Scrollable Content */}
-            <div className="flex-1 overflow-y-auto px-6 py-6 text-[0.9rem] text-gray-700 space-y-4">
-              <section>
-                <h4 className="font-bold text-[#1a1225] mb-2">1. Event Booking</h4>
-                <p>
-                  By submitting an inquiry through this form, you are requesting booking services
-                  from Schatzies Events. All bookings are subject to our availability and
-                  confirmation.
-                </p>
-              </section>
+          {/* Scrollable Content */}
+          <div className="text-[0.9rem] text-gray-700 space-y-4">
+            <section>
+              <h4 className="font-bold text-[#1a1225] mb-2">1. Event Booking</h4>
+              <p>
+                By submitting an inquiry through this form, you are requesting booking services from
+                Schatzies Events. All bookings are subject to our availability and confirmation.
+              </p>
+            </section>
 
-              <section>
-                <h4 className="font-bold text-[#1a1225] mb-2">2. Advance Booking Requirement</h4>
-                <p>
-                  Events must be booked at least 1 month in advance. We cannot accommodate booking
-                  requests for dates within 30 days from today. Event dates must be selected
-                  accordingly.
-                </p>
-              </section>
+            <section>
+              <h4 className="font-bold text-[#1a1225] mb-2">2. Advance Booking Requirement</h4>
+              <p>
+                Events must be booked at least 1 month in advance. We cannot accommodate booking
+                requests for dates within 30 days from today. Event dates must be selected
+                accordingly.
+              </p>
+            </section>
 
-              <section>
-                <h4 className="font-bold text-[#1a1225] mb-2">3. Inquiry Process</h4>
-                <p>
-                  After submitting your inquiry, our team will review your request and contact you
-                  within 2-3 business days with a personalized proposal and available options for
-                  your event.
-                </p>
-              </section>
+            <section>
+              <h4 className="font-bold text-[#1a1225] mb-2">3. Inquiry Process</h4>
+              <p>
+                After submitting your inquiry, our team will review your request and contact you
+                within 2-3 business days with a personalized proposal and available options for your
+                event.
+              </p>
+            </section>
 
-              <section>
-                <h4 className="font-bold text-[#1a1225] mb-2">4. Information Accuracy</h4>
-                <p>
-                  You agree to provide accurate and complete information in this form. Any false or
-                  misleading information may result in cancellation of your booking or inquiry.
-                </p>
-              </section>
+            <section>
+              <h4 className="font-bold text-[#1a1225] mb-2">4. Information Accuracy</h4>
+              <p>
+                You agree to provide accurate and complete information in this form. Any false or
+                misleading information may result in cancellation of your booking or inquiry.
+              </p>
+            </section>
 
-              <section>
-                <h4 className="font-bold text-[#1a1225] mb-2">5. Confidentiality</h4>
-                <p>
-                  We are committed to protecting your personal information. Your contact details and
-                  inquiry information will be used solely for the purpose of processing your event
-                  inquiry.
-                </p>
-              </section>
+            <section>
+              <h4 className="font-bold text-[#1a1225] mb-2">5. Confidentiality</h4>
+              <p>
+                We are committed to protecting your personal information. Your contact details and
+                inquiry information will be used solely for the purpose of processing your event
+                inquiry.
+              </p>
+            </section>
 
-              <section>
-                <h4 className="font-bold text-[#1a1225] mb-2">6. Cancellation Policy</h4>
-                <p>
-                  Cancellation policies will be discussed during your booking confirmation.
-                  Different packages may have different cancellation terms.
-                </p>
-              </section>
+            <section>
+              <h4 className="font-bold text-[#1a1225] mb-2">6. Cancellation Policy</h4>
+              <p>
+                Cancellation policies will be discussed during your booking confirmation. Different
+                packages may have different cancellation terms.
+              </p>
+            </section>
 
-              <section>
-                <h4 className="font-bold text-[#1a1225] mb-2">7. Liability</h4>
-                <p>
-                  Schatzies Events shall not be liable for any indirect, incidental, or
-                  consequential damages arising from the use of this inquiry form or the services
-                  provided.
-                </p>
-              </section>
+            <section>
+              <h4 className="font-bold text-[#1a1225] mb-2">7. Liability</h4>
+              <p>
+                Schatzies Events shall not be liable for any indirect, incidental, or consequential
+                damages arising from the use of this inquiry form or the services provided.
+              </p>
+            </section>
 
-              <section>
-                <h4 className="font-bold text-[#1a1225] mb-2">8. Agreement</h4>
-                <p>
-                  By submitting this inquiry form, you acknowledge that you have read, understood,
-                  and agree to comply with these Terms and Conditions.
-                </p>
-              </section>
-            </div>
-
-            {/* Footer */}
-            <div className="flex gap-3 border-t border-gray-200 px-6 py-4">
-              <button
-                onClick={() => setShowTerms(false)}
-                className="flex-1 h-10 rounded-full bg-gray-200 text-gray-700 font-bold transition hover:bg-gray-300"
-              >
-                Close
-              </button>
-              <button
-                onClick={() => {
-                  setValue('termsAccepted', true, { shouldValidate: true });
-                  setShowTerms(false);
-                }}
-                className="flex-1 h-10 rounded-full bg-gradient-to-r from-[#FF0066] to-[#700F81] text-white font-bold transition hover:brightness-110"
-              >
-                Accept
-              </button>
-            </div>
+            <section>
+              <h4 className="font-bold text-[#1a1225] mb-2">8. Agreement</h4>
+              <p>
+                By submitting this inquiry form, you acknowledge that you have read, understood, and
+                agree to comply with these Terms and Conditions.
+              </p>
+            </section>
           </div>
-        </div>
-      )}
+
+          {/* Footer Buttons */}
+          <div className="flex gap-3 pt-4">
+            <Button
+              variant="outline"
+              onClick={() => setShowTerms(false)}
+              className="flex-1 h-10 rounded-full"
+            >
+              Close
+            </Button>
+            <Button
+              onClick={() => {
+                setValue('termsAccepted', true, { shouldValidate: true });
+                setShowTerms(false);
+              }}
+              className="flex-1 h-10 rounded-full bg-gradient-to-r from-[#FF0066] to-[#700F81] text-white font-bold hover:brightness-110"
+            >
+              Accept
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* Package Details Modal */}
-      {showPackageDetails && (currentSelectedPackage || selectedPackage) && (
-        <div
-          className="fixed inset-0 z-[10000] flex items-center justify-center bg-black/60 px-4 backdrop-blur-sm"
-          onClick={() => setShowPackageDetails(false)}
-        >
-          <div
-            className="flex w-full max-w-[700px] flex-col rounded-2xl bg-white shadow-2xl"
-            style={{ maxHeight: '85vh' }}
-            onClick={(e) => e.stopPropagation()}
-          >
-            {/* Header */}
-            <div className="flex items-center justify-between border-b border-gray-200 px-6 py-5">
-              <h3 className="text-[1.5rem] font-bold text-[#1a1225]">
-                {(currentSelectedPackage || selectedPackage)?.name} Package Details
-              </h3>
-              <button
-                onClick={() => setShowPackageDetails(false)}
-                className="flex h-8 w-8 items-center justify-center rounded-full text-gray-400 transition hover:text-gray-600"
-              >
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  className="h-5 w-5"
-                >
-                  <line x1="18" y1="6" x2="6" y2="18" />
-                  <line x1="6" y1="6" x2="18" y2="18" />
-                </svg>
-              </button>
+      <Dialog open={showPackageDetails} onOpenChange={setShowPackageDetails}>
+        <DialogContent className="max-w-[700px] max-h-[85vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="text-[1.5rem] font-bold text-[#1a1225]">
+              {(currentSelectedPackage || selectedPackage)?.name} Package Details
+            </DialogTitle>
+          </DialogHeader>
+
+          {/* Scrollable Content */}
+          <div>
+            {/* Package Note */}
+            <div className="mb-6 rounded-lg bg-[#fff0f7] p-4 border-l-4 border-[#FF0066]">
+              <p className="text-[0.95rem] text-gray-700 leading-relaxed">
+                {(currentSelectedPackage || selectedPackage)?.modal.note}
+              </p>
             </div>
 
-            {/* Scrollable Content */}
-            <div className="flex-1 overflow-y-auto px-6 py-6">
-              {/* Package Note */}
-              <div className="mb-6 rounded-lg bg-[#fff0f7] p-4 border-l-4 border-[#FF0066]">
-                <p className="text-[0.95rem] text-gray-700 leading-relaxed">
-                  {(currentSelectedPackage || selectedPackage)?.modal.note}
-                </p>
-              </div>
+            {/* Package Categories */}
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+              {(currentSelectedPackage || selectedPackage)?.modal.categories.map((cat, idx) => {
+                const iconMap = {
+                  user: User,
+                  utensils: Utensils,
+                  scissors: Scissors,
+                  video: Video,
+                };
+                const Icon = iconMap[cat.iconName as keyof typeof iconMap];
 
-              {/* Package Categories */}
-              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                {(currentSelectedPackage || selectedPackage)?.modal.categories.map((cat, idx) => {
-                  const iconMap = {
-                    user: User,
-                    utensils: Utensils,
-                    scissors: Scissors,
-                    video: Video,
-                  };
-                  const Icon = iconMap[cat.iconName as keyof typeof iconMap];
-
-                  return (
-                    <div key={idx} className="rounded-xl bg-[#ede0f5] p-4">
-                      <div className="mb-3 flex items-center gap-2">
-                        <Icon className="h-5 w-5 text-[#c2649b]" />
-                        <span className="font-bold text-[#3d1a5e] text-[0.95rem]">{cat.title}</span>
-                      </div>
-                      <ul className="space-y-2">
-                        {cat.items.map((item) => {
-                          const isHighlight = typeof item === 'object';
-                          const text = typeof item === 'object' ? item.text : item;
-                          return (
-                            <li
-                              key={text}
-                              className={`flex items-start gap-2 text-[0.85rem] ${
-                                isHighlight ? 'text-[#FF0066] font-semibold' : 'text-gray-700'
-                              }`}
-                            >
-                              <span className="mt-0.5 flex h-3 w-3 shrink-0 items-center justify-center rounded-full bg-[#e61f83]">
-                                <svg
-                                  viewBox="0 0 10 10"
-                                  className="h-1.5 w-1.5 fill-none stroke-white stroke-[2]"
-                                >
-                                  <polyline points="2 5 4 7 8 3" />
-                                </svg>
-                              </span>
-                              <span>{text}</span>
-                            </li>
-                          );
-                        })}
-                      </ul>
+                return (
+                  <div key={idx} className="rounded-xl bg-[#ede0f5] p-4">
+                    <div className="mb-3 flex items-center gap-2">
+                      <Icon className="h-5 w-5 text-[#c2649b]" />
+                      <span className="font-bold text-[#3d1a5e] text-[0.95rem]">{cat.title}</span>
                     </div>
-                  );
-                })}
-              </div>
-            </div>
-
-            {/* Footer */}
-            <div className="border-t border-gray-200 px-6 py-4">
-              <button
-                onClick={() => setShowPackageDetails(false)}
-                className="w-full h-10 rounded-full bg-gradient-to-r from-[#FF0066] to-[#700F81] text-white font-bold transition hover:brightness-110"
-              >
-                Close
-              </button>
+                    <ul className="space-y-2">
+                      {cat.items.map((item) => {
+                        const isHighlight = typeof item === 'object';
+                        const text = typeof item === 'object' ? item.text : item;
+                        return (
+                          <li
+                            key={text}
+                            className={`flex items-start gap-2 text-[0.85rem] ${
+                              isHighlight ? 'text-[#FF0066] font-semibold' : 'text-gray-700'
+                            }`}
+                          >
+                            <span className="mt-0.5 flex h-3 w-3 shrink-0 items-center justify-center rounded-full bg-[#e61f83]">
+                              <svg
+                                viewBox="0 0 10 10"
+                                className="h-1.5 w-1.5 fill-none stroke-white stroke-[2]"
+                              >
+                                <polyline points="2 5 4 7 8 3" />
+                              </svg>
+                            </span>
+                            <span>{text}</span>
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  </div>
+                );
+              })}
             </div>
           </div>
-        </div>
-      )}
+
+          {/* Footer */}
+          <div className="pt-4">
+            <Button
+              onClick={() => setShowPackageDetails(false)}
+              className="w-full h-10 rounded-full bg-gradient-to-r from-[#FF0066] to-[#700F81] text-white font-bold hover:brightness-110"
+            >
+              Close
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       <div
-        className="fixed inset-0 z-[9998] flex items-center justify-center bg-black/60 px-4 backdrop-blur-sm"
+        className="fixed inset-0 z-[9998] flex items-center justify-center bg-black/60 px-4 backdrop-blur-sm [scrollbar-gutter:stable]"
         onClick={onClose}
       >
         {/* ── Success confirmation overlay ── */}
@@ -561,7 +518,7 @@ export function InquiryForm({ onClose, selectedPackageId, selectedEventType }: I
               </div>
 
               {/* Scrollable form body */}
-              <div className="flex-1 overflow-y-auto px-4 pb-4 sm:px-7 sm:pb-6">
+              <div className="flex-1 overflow-y-auto px-4 pb-4 sm:px-7 sm:pb-6 [scrollbar-gutter:stable]">
                 {error && (
                   <div className="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600">
                     {error}
@@ -847,7 +804,7 @@ export function InquiryForm({ onClose, selectedPackageId, selectedEventType }: I
                   <section>
                     <p className="mb-2.5 text-[0.9rem] font-bold text-[#1a1225]">Message</p>
                     <Field error={errors.message?.message}>
-                      <textarea
+                      <Textarea
                         {...register('message', {
                           maxLength: { value: 1000, message: 'Maximum 1000 characters' },
                         })}
@@ -862,13 +819,19 @@ export function InquiryForm({ onClose, selectedPackageId, selectedEventType }: I
                   <section>
                     <Field error={errors.termsAccepted?.message}>
                       <div className="flex items-start gap-2">
-                        <Input
-                          type="checkbox"
-                          id="termsAccepted"
-                          {...register('termsAccepted', {
-                            required: 'You must accept the terms and conditions',
-                          })}
-                          className="mt-1 h-4 w-4 cursor-pointer rounded border-gray-300 bg-white p-0 accent-[#700F81]"
+                        <Controller
+                          control={control}
+                          name="termsAccepted"
+                          rules={{ required: 'You must accept the terms and conditions' }}
+                          render={({ field }) => (
+                            <Checkbox
+                              id="termsAccepted"
+                              checked={field.value}
+                              onCheckedChange={field.onChange}
+                              onBlur={field.onBlur}
+                              className="mt-1 h-4 w-4 cursor-pointer accent-[#700F81]"
+                            />
+                          )}
                         />
                         <label
                           htmlFor="termsAccepted"
