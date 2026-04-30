@@ -153,8 +153,7 @@ export function RSVPPage() {
       console.error('Error submitting RSVP:', error);
       // Capture backend error messages like "Event capacity has been reached"
       const axiosError = error as AxiosError<{ message: string }>;
-      const message =
-        axiosError.response?.data?.message || 'Failed to submit RSVP. Please try again.';
+      const message = axiosError.response?.data?.message || 'Failed to submit RSVP. Please try again.';
       setFormErrors({ submit: message });
     } finally {
       setLoading(false);

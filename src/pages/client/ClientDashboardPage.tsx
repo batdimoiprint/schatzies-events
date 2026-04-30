@@ -52,18 +52,17 @@ export function ClientDashboardPage() {
       setIsLoadingGuests(true);
       try {
         const events = await getEventManagerEvents();
-
+        
         // Filter events: Clients only see their own, Admins/Organizers see everything
-        const userEvents =
-          user?.role === 'CLIENT' ? events.filter((e) => e.clientId === user.user_id) : events;
-
+        const userEvents = user?.role === 'CLIENT' ? events.filter((e) => e.clientId === user.user_id) : events;
+        
         // Get the first event for the current user
         const userEvent = userEvents.length > 0 ? userEvents[0] : null;
-
+        
         if (userEvent) {
           // Fetch RSVP list for this event
           let rsvpList = await getRSVPList(userEvent.id);
-
+          
           // If no data, try with the EVENT# prefix just in case the backend requires it
           if ((!rsvpList || rsvpList.length === 0) && !userEvent.id.startsWith('EVENT#')) {
             try {
@@ -73,26 +72,22 @@ export function ClientDashboardPage() {
               /* ignore fallback error */
             }
           }
-
+          
           // Map the RSVP data to guest list format
           const mappedGuests = (Array.isArray(rsvpList) ? rsvpList : []).map((rsvp: any) => {
             const rawStatus = (rsvp.status || '').toString().toUpperCase();
-            const isAttending =
-              rawStatus === 'ATTENDING' || rawStatus === 'CONFIRMED' || rawStatus === 'TRUE';
-            const isDeclined =
-              rawStatus === 'NOT_ATTENDING' ||
-              rawStatus === 'NOT ATTENDING' ||
-              rawStatus === 'FALSE';
-
+            const isAttending = rawStatus === 'ATTENDING' || rawStatus === 'CONFIRMED' || rawStatus === 'TRUE';
+            const isDeclined = rawStatus === 'NOT_ATTENDING' || rawStatus === 'NOT ATTENDING' || rawStatus === 'FALSE';
+            
             const firstName = rsvp.guestfirstName || rsvp.firstName || rsvp.first_name || '';
             const lastName = rsvp.guestlastName || rsvp.lastName || rsvp.last_name || '';
-
+            
             return {
               name: `${firstName} ${lastName}`.trim() || 'Guest',
               status: isAttending ? 'Confirmed' : isDeclined ? 'Declined' : 'Pending',
             };
           });
-
+          
           setGuests(mappedGuests);
         } else {
           setGuests([]);
