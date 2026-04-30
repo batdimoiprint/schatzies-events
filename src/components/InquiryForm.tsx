@@ -211,7 +211,9 @@ export function InquiryForm({ onClose, selectedPackageId, selectedEventType }: I
       <Dialog open={showTerms} onOpenChange={setShowTerms}>
         <DialogContent className="max-w-[600px] max-h-[80vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle className="text-[1.3rem] font-bold text-[#1a1225]">Terms and Conditions</DialogTitle>
+            <DialogTitle className="text-[1.3rem] font-bold text-[#1a1225]">
+              Terms and Conditions
+            </DialogTitle>
           </DialogHeader>
 
           {/* Scrollable Content */}
@@ -219,9 +221,8 @@ export function InquiryForm({ onClose, selectedPackageId, selectedEventType }: I
             <section>
               <h4 className="font-bold text-[#1a1225] mb-2">1. Event Booking</h4>
               <p>
-                By submitting an inquiry through this form, you are requesting booking services
-                from Schatzies Events. All bookings are subject to our availability and
-                confirmation.
+                By submitting an inquiry through this form, you are requesting booking services from
+                Schatzies Events. All bookings are subject to our availability and confirmation.
               </p>
             </section>
 
@@ -238,8 +239,8 @@ export function InquiryForm({ onClose, selectedPackageId, selectedEventType }: I
               <h4 className="font-bold text-[#1a1225] mb-2">3. Inquiry Process</h4>
               <p>
                 After submitting your inquiry, our team will review your request and contact you
-                within 2-3 business days with a personalized proposal and available options for
-                your event.
+                within 2-3 business days with a personalized proposal and available options for your
+                event.
               </p>
             </section>
 
@@ -263,25 +264,24 @@ export function InquiryForm({ onClose, selectedPackageId, selectedEventType }: I
             <section>
               <h4 className="font-bold text-[#1a1225] mb-2">6. Cancellation Policy</h4>
               <p>
-                Cancellation policies will be discussed during your booking confirmation.
-                Different packages may have different cancellation terms.
+                Cancellation policies will be discussed during your booking confirmation. Different
+                packages may have different cancellation terms.
               </p>
             </section>
 
             <section>
               <h4 className="font-bold text-[#1a1225] mb-2">7. Liability</h4>
               <p>
-                Schatzies Events shall not be liable for any indirect, incidental, or
-                consequential damages arising from the use of this inquiry form or the services
-                provided.
+                Schatzies Events shall not be liable for any indirect, incidental, or consequential
+                damages arising from the use of this inquiry form or the services provided.
               </p>
             </section>
 
             <section>
               <h4 className="font-bold text-[#1a1225] mb-2">8. Agreement</h4>
               <p>
-                By submitting this inquiry form, you acknowledge that you have read, understood,
-                and agree to comply with these Terms and Conditions.
+                By submitting this inquiry form, you acknowledge that you have read, understood, and
+                agree to comply with these Terms and Conditions.
               </p>
             </section>
           </div>
