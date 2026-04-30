@@ -22,13 +22,27 @@ import {
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { getBoardTasks } from '@/api/planner-tasks';
+import {
+  getBoardTasks,
+  createBoardTask,
+  updateBoardTask,
+  moveBoardTask,
+  deleteBoardTask,
+} from '@/api/planner-tasks';
+import { getEvents } from '@/api/events';
 
 type PlannerTab = 'overview' | 'task' | 'notes' | 'flow' | 'checklist';
 
 type ProjectSlot = {
   id: string;
   title: string;
+  startDate?: string;
+  endDate?: string;
+  eventType?: string;
+  eventPackage?: string;
+  eventPax?: number;
+  clientName?: string;
+  eventCost?: string | number;
 };
 
 type TaskCard = {
@@ -70,16 +84,6 @@ type PlannerQuickNote = {
   body: string;
   imageDataUrl?: string;
 };
-
-const projectSlots: ProjectSlot[] = [
-  { id: '1', title: "Angela's 18 Birthday" },
-  { id: '2', title: '' },
-  { id: '3', title: '' },
-  { id: '4', title: '' },
-  { id: '5', title: '' },
-  { id: '6', title: '' },
-  { id: '7', title: '' },
-];
 
 const tabs: Array<{ id: PlannerTab; label: string }> = [
   { id: 'overview', label: 'Overview' },
@@ -186,41 +190,6 @@ const taskLaneConfig: Array<{
     panelClassName: 'border-[#d8eddc] bg-[#f5fcf7]',
     cardOuterClassName: 'border-[#d4dfec] bg-[#deebf8]',
     cardTitleClassName: 'text-[#1f4c82]',
-  },
-];
-
-const overviewCards = [
-  {
-    id: 'overview-package',
-    label: 'Event Package',
-    value: 'Blooms\nPackage',
-    imageSrc: '/Pictures/organizerpics/event-package-illustration.png',
-    accent: 'text-[#6b2aa5] bg-[#fbf6ff] border-[#eee3fb]',
-    valueClassName: 'text-[14px] font-semibold leading-[1.15] text-[#6d677b]',
-  },
-  {
-    id: 'overview-pax',
-    label: 'Event Pax',
-    value: '40',
-    imageSrc: '/Pictures/organizerpics/event-pax-illustration.png',
-    accent: 'text-[#88511a] bg-[#fff8ef] border-[#f3e2cc]',
-    valueClassName: 'text-[32px] font-semibold leading-none tracking-tight text-[#4f4a58]',
-  },
-  {
-    id: 'overview-type',
-    label: 'Event Type',
-    value: 'Debut\nEvent Type',
-    imageSrc: '/Pictures/organizerpics/event-type-illustration.png',
-    accent: 'text-[#1f6ea6] bg-[#f3f8ff] border-[#d7e7f7]',
-    valueClassName: 'text-[12px] font-semibold leading-[1.15] text-[#6d677b]',
-  },
-  {
-    id: 'overview-cost',
-    label: 'Event Cost',
-    value: '50,000',
-    imageSrc: '/Pictures/organizerpics/event-cost-illustration.png',
-    accent: 'text-[#a6541d] bg-[#fff4ec] border-[#f3dccb]',
-    valueClassName: 'text-[32px] font-semibold leading-none tracking-tight text-[#4f4a58]',
   },
 ];
 
@@ -345,6 +314,12 @@ const mapBackendStatusToLane = (status: string): TaskLane => {
   if (status === 'IN_PROGRESS') return 'in-progress';
   if (status === 'COMPLETED') return 'completed';
   return 'todo';
+};
+
+const mapLaneToBackendStatus = (lane: TaskLane): string => {
+  if (lane === 'in-progress') return 'IN_PROGRESS';
+  if (lane === 'completed') return 'COMPLETED';
+  return 'TODO';
 };
 
 function FlowNotesBoard() {
@@ -1118,10 +1093,61 @@ const overviewScheduleSummary = [
 ];
 
 export function EventPlannerPage() {
-  const [selectedEventId, setSelectedEventId] = useState('1');
+  const [selectedEventId, setSelectedEventId] = useState('');
+  const [projectSlots, setProjectSlots] = useState<ProjectSlot[]>([]);
   const [activeTab, setActiveTab] = useState<PlannerTab>('overview');
   const [plannerTaskCards, setPlannerTaskCards] = useState<TaskCard[]>(taskCards);
   const [boardTasks, setBoardTasks] = useState<PlannerBoardTask[]>([]);
+
+  useEffect(() => {
+    let isMounted = true;
+    const fetchEvents = async () => {
+      try {
+        const events = await getEvents();
+        if (!isMounted) return;
+        const formatDateReadable = (dateString?: string) => {
+          if (!dateString) return null;
+          const date = new Date(dateString);
+          if (isNaN(date.getTime())) return null;
+          return date.toLocaleDateString('en-US', {
+            month: 'short',
+            day: 'numeric',
+            year: 'numeric',
+          });
+        };
+
+        const isUUID = (str: string) =>
+          /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(str);
+
+        const mapped = events.map((e: any) => {
+          const clientVal = e.clientRealName || e.clientName || e.clientId;
+          const displayClient = clientVal && isUUID(clientVal) ? 'Valued Client' : clientVal;
+
+          return {
+            id: e.id,
+            title: e.title || 'Untitled Event',
+            startDate: formatDateReadable(e.startDate || e.eventDate) || 'No Date Set',
+            endDate: formatDateReadable(e.endDate) || 'TBD',
+            eventType: e.eventType,
+            eventPackage: e.eventPackage,
+            eventPax: e.eventPax || 0,
+            clientName: displayClient,
+            eventCost: e.eventCost || e.cost,
+          };
+        });
+        setProjectSlots(mapped);
+        if (mapped.length > 0) {
+          setSelectedEventId(mapped[0].id);
+        }
+      } catch (error) {
+        console.error('Failed to fetch events for planner:', error);
+      }
+    };
+    fetchEvents();
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   useEffect(() => {
     let isMounted = true;
@@ -1224,8 +1250,49 @@ export function EventPlannerPage() {
   };
 
   const selectedProject = useMemo(() => {
-    return projectSlots.find((project) => project.id === selectedEventId) ?? projectSlots[0];
-  }, [selectedEventId]);
+    return (
+      projectSlots.find((project) => project.id === selectedEventId) ??
+      projectSlots[0] ?? { id: '', title: '' }
+    );
+  }, [selectedEventId, projectSlots]);
+
+  const dynamicOverviewCards = useMemo(
+    () => [
+      {
+        id: 'overview-package',
+        label: 'Event Package',
+        value: selectedProject.eventPackage || 'N/A',
+        imageSrc: '/Pictures/organizerpics/event-package-illustration.png',
+        accent: 'text-[#6b2aa5] bg-[#fbf6ff] border-[#eee3fb]',
+        valueClassName: 'text-[14px] font-semibold leading-[1.15] text-[#6d677b]',
+      },
+      {
+        id: 'overview-pax',
+        label: 'Event Pax',
+        value: String(selectedProject.eventPax || '0'),
+        imageSrc: '/Pictures/organizerpics/event-pax-illustration.png',
+        accent: 'text-[#88511a] bg-[#fff8ef] border-[#f3e2cc]',
+        valueClassName: 'text-[32px] font-semibold leading-none tracking-tight text-[#4f4a58]',
+      },
+      {
+        id: 'overview-type',
+        label: 'Event Type',
+        value: selectedProject.eventType || 'N/A',
+        imageSrc: '/Pictures/organizerpics/event-type-illustration.png',
+        accent: 'text-[#1f6ea6] bg-[#f3f8ff] border-[#d7e7f7]',
+        valueClassName: 'text-[12px] font-semibold leading-[1.15] text-[#6d677b]',
+      },
+      {
+        id: 'overview-cost',
+        label: 'Event Cost',
+        value: selectedProject.eventCost ? String(selectedProject.eventCost) : 'TBD',
+        imageSrc: '/Pictures/organizerpics/event-cost-illustration.png',
+        accent: 'text-[#a6541d] bg-[#fff4ec] border-[#f3dccb]',
+        valueClassName: 'text-[32px] font-semibold leading-none tracking-tight text-[#4f4a58]',
+      },
+    ],
+    [selectedProject]
+  );
 
   const selectedBoardTask = useMemo(() => {
     if (!selectedBoardTaskId) {
@@ -1383,7 +1450,7 @@ export function EventPlannerPage() {
     event.dataTransfer.dropEffect = 'move';
   };
 
-  const handleDropTaskToLane = (event: DragEvent<HTMLElement>, lane: TaskLane) => {
+  const handleDropTaskToLane = async (event: DragEvent<HTMLElement>, lane: TaskLane) => {
     event.preventDefault();
     const droppedId = event.dataTransfer.getData('text/plain') || draggedTaskId;
 
@@ -1412,6 +1479,8 @@ export function EventPlannerPage() {
         return;
       }
     }
+
+    const previousTasksState = [...boardTasks];
 
     setBoardTasks((previousTasks) =>
       previousTasks.map((task) => {
@@ -1475,6 +1544,20 @@ export function EventPlannerPage() {
     );
 
     setDraggedTaskId(null);
+
+    try {
+      if (droppedId.startsWith('board-task-')) {
+        throw new Error('Please edit and save this new task first before moving it.');
+      }
+      const newStatus = mapLaneToBackendStatus(lane);
+      await moveBoardTask(selectedEventId, droppedId, {
+        newStatus,
+        newOrder: 0,
+      });
+    } catch (error) {
+      setBoardTasks(previousTasksState);
+      alert(error instanceof Error ? error.message : 'Failed to move task. Please try again.');
+    }
   };
 
   const openTaskPreview = (taskId: string) => {
@@ -1505,7 +1588,7 @@ export function EventPlannerPage() {
     setIsTaskPreviewOpen(true);
   };
 
-  const handleSaveTaskPreview = () => {
+  const handleSaveTaskPreview = async () => {
     if (!selectedBoardTaskId || selectedBoardTask?.lane !== 'todo') {
       return;
     }
@@ -1523,59 +1606,109 @@ export function EventPlannerPage() {
       }));
 
     const normalizedDetails = taskPreviewDetails.trim();
+    const finalDetails =
+      normalizedDetails || normalizedChecklist.map((item) => item.label).join('\n');
 
+    const payload = {
+      title: taskPreviewTitle.trim(),
+      description: finalDetails,
+    };
+
+    try {
+      let savedTask;
+      if (selectedBoardTaskId.startsWith('board-task-')) {
+        savedTask = await createBoardTask(selectedEventId, payload);
+      } else {
+        savedTask = await updateBoardTask(selectedEventId, selectedBoardTaskId, payload);
+      }
+
+      setBoardTasks((previousTasks) =>
+        previousTasks.map((task) =>
+          task.id === selectedBoardTaskId
+            ? {
+                ...task,
+                id: savedTask.id,
+                title: savedTask.title,
+                details: savedTask.description || finalDetails,
+                checklist: normalizedChecklist,
+              }
+            : task
+        )
+      );
+
+      setTaskActionMessage(`Saved ${taskPreviewTitle || 'task'} successfully.`);
+      setTaskActionTone('success');
+
+      setIsTaskPreviewOpen(false);
+      setSelectedBoardTaskId(null);
+    } catch (error) {
+      alert(error instanceof Error ? error.message : 'An error occurred while saving the task.');
+    }
+  };
+
+  const handleDeleteBoardTask = async (taskId: string) => {
+    const targetTask = boardTasks.find((task) => task.id === taskId);
+
+    try {
+      if (!taskId.startsWith('board-task-')) {
+        await deleteBoardTask(selectedEventId, taskId);
+      }
+
+      setBoardTasks((previousTasks) => previousTasks.filter((task) => task.id !== taskId));
+      setTaskCardMenuOpenFor(null);
+      setTaskActionMessage(`Deleted ${targetTask?.title || 'task'} successfully.`);
+      setTaskActionTone('error');
+    } catch (error) {
+      alert(error instanceof Error ? error.message : 'Failed to delete task. Please try again.');
+    }
+  };
+
+  const handleToggleBoardTaskChecklistItem = async (taskId: string, itemId: string) => {
+    if (!selectedEventId) return;
+    const timestamp = new Date().toISOString();
+
+    // Find the target task to prepare the updated checklist
+    const targetTask = boardTasks.find((t) => t.id === taskId);
+    if (!targetTask || !Array.isArray(targetTask.checklist)) return;
+
+    // Calculate the new checklist state
+    const updatedChecklist = targetTask.checklist.map((item) =>
+      item.id === itemId
+        ? {
+            ...item,
+            done: !item.done,
+            doneAt: !item.done ? timestamp : undefined,
+          }
+        : item
+    );
+
+    const previousTasksState = [...boardTasks];
+
+    // Optimistic UI update
     setBoardTasks((previousTasks) =>
       previousTasks.map((task) =>
-        task.id === selectedBoardTaskId
-          ? {
-              ...task,
-              title: taskPreviewTitle,
-              details:
-                normalizedDetails || normalizedChecklist.map((item) => item.label).join('\n'),
-              checklist: normalizedChecklist,
-            }
-          : task
+        task.id === taskId ? { ...task, checklist: updatedChecklist } : task
       )
     );
 
-    setTaskActionMessage(`Saved ${taskPreviewTitle || 'task'} successfully.`);
-    setTaskActionTone('success');
+    try {
+      if (taskId.startsWith('board-task-')) {
+        // Can't toggle unpersisted items in the backend yet
+        throw new Error('Please edit and save this new task first before modifying its checklist.');
+      }
 
-    setIsTaskPreviewOpen(false);
-    setSelectedBoardTaskId(null);
-  };
+      const payload = {
+        title: targetTask.title,
+        description: targetTask.details,
+        checklist: updatedChecklist,
+      };
 
-  const handleDeleteBoardTask = (taskId: string) => {
-    const targetTask = boardTasks.find((task) => task.id === taskId);
-    setBoardTasks((previousTasks) => previousTasks.filter((task) => task.id !== taskId));
-    setTaskCardMenuOpenFor(null);
-    setTaskActionMessage(`Deleted ${targetTask?.title || 'task'} successfully.`);
-    setTaskActionTone('error');
-  };
-
-  const handleToggleBoardTaskChecklistItem = (taskId: string, itemId: string) => {
-    const timestamp = new Date().toISOString();
-
-    setBoardTasks((previousTasks) =>
-      previousTasks.map((task) => {
-        if (task.id !== taskId || !Array.isArray(task.checklist)) {
-          return task;
-        }
-
-        return {
-          ...task,
-          checklist: task.checklist.map((item) =>
-            item.id === itemId
-              ? {
-                  ...item,
-                  done: !item.done,
-                  doneAt: !item.done ? timestamp : undefined,
-                }
-              : item
-          ),
-        };
-      })
-    );
+      await updateBoardTask(selectedEventId, taskId, payload);
+    } catch (error) {
+      // Revert on failure
+      setBoardTasks(previousTasksState);
+      alert(error instanceof Error ? error.message : 'Failed to update checklist item.');
+    }
   };
 
   const formatChecklistTimestamp = (value?: string) => {
@@ -1706,7 +1839,7 @@ export function EventPlannerPage() {
             </header>
 
             <div className="space-y-1.5">
-              {projectSlots.map((project) => {
+              {projectSlots.map((project, index) => {
                 const isSelected = project.id === selectedEventId;
                 return (
                   <button
@@ -1726,7 +1859,7 @@ export function EventPlannerPage() {
                         isSelected ? 'bg-white/20 text-white' : 'bg-[#ebe6f2] text-[#6e6680]',
                       ].join(' ')}
                     >
-                      {project.id}
+                      {index + 1}
                     </span>
                     <span className="truncate text-xs font-semibold">
                       {project.title || 'Pending project slot'}
@@ -1792,10 +1925,17 @@ export function EventPlannerPage() {
                   Event Planner
                 </p>
                 <h2 className="text-lg font-black">{selectedProject.title || 'Pending Project'}</h2>
-                <p className="text-[11px] text-white/80">January 3, 2026 • Start Date - End Date</p>
+                <p className="text-[11px] text-white/80">
+                  {selectedProject.startDate || 'No Date Set'}{' '}
+                  {selectedProject.endDate && selectedProject.endDate !== 'TBD'
+                    ? `• ${selectedProject.endDate}`
+                    : ''}
+                </p>
               </div>
               <div className="flex items-center gap-2 text-[10px] font-semibold text-white/90">
-                <span className="rounded-full bg-white/20 px-3 py-1">Client: Example Name</span>
+                <span className="rounded-full bg-white/20 px-3 py-1">
+                  Client: {selectedProject.clientName || 'Unknown'}
+                </span>
                 <span className="rounded-full bg-white/20 px-3 py-1">Contact: 0912-345-6789</span>
               </div>
             </div>
@@ -1824,7 +1964,7 @@ export function EventPlannerPage() {
           {activeTab === 'overview' ? (
             <section className="rounded-[16px] border border-[#d8d3df] bg-[#f7f5f9] p-2.5 shadow-[0_6px_14px_rgba(31,18,54,0.05)]">
               <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
-                {overviewCards.map((card) => (
+                {dynamicOverviewCards.map((card) => (
                   <article
                     key={card.id}
                     className={`min-h-[74px] rounded-lg border px-3 py-2 shadow-[0_2px_5px_rgba(31,18,54,0.06)] ${card.accent}`}

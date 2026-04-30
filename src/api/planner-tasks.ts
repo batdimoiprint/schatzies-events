@@ -17,6 +17,12 @@ export interface TasksResponse {
 export interface BoardTaskPayload {
   title: string;
   description: string;
+  checklist?: Array<{
+    id: string;
+    label: string;
+    done: boolean;
+    doneAt?: string;
+  }>;
 }
 
 export interface MoveBoardTaskPayload {
