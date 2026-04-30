@@ -17,14 +17,17 @@ import {
   getVendors,
   type EventManagerVendor,
   unassignVendorFromEvent,
+  getVendorAssignedEvents,
 } from '@/api/vendors';
 import {
   assignWorkerToEvent,
   getWorkers,
   type EventWorker,
   unassignWorkerFromEvent,
+  getWorkerAssignedEvents,
 } from '@/api/workers';
 import { getRSVPList } from '@/api/rsvp';
+import { CalendarDays, X } from 'lucide-react';
 
 type VendorStatus = EventManagerVendor['status'];
 type EventManagerTab = 'Events' | 'Vendor' | 'Workers';
@@ -115,7 +118,6 @@ export function EventManagerPage() {
     try {
       await Promise.all([fetchEvents(), fetchVendors(), fetchWorkers()]);
     } finally {
-      // Optional: 500ms delay so the user can clearly see the animation even if the API is fast
       setTimeout(() => {
         setIsRefreshing(false);
         setIsActionsOpen(false);
@@ -151,6 +153,24 @@ export function EventManagerPage() {
       }
     },
     [fetchEvents]
+  );
+
+  const handleUpdateEventStatus = useCallback(
+    async (newStatus: string) => {
+      if (!selectedEventId) return window.alert('Please select an event first.');
+      setIsMutating(true);
+      setError('');
+      try {
+        await updateEvent(selectedEventId, { status: newStatus });
+        await fetchEvents();
+      } catch {
+        setError('Unable to update event status.');
+      } finally {
+        setIsMutating(false);
+        setIsStatusOpen(false);
+      }
+    },
+    [selectedEventId, fetchEvents]
   );
 
   const filteredData = useMemo(() => {
@@ -223,6 +243,39 @@ export function EventManagerPage() {
   const [isUnassignWorkerModalOpen, setIsUnassignWorkerModalOpen] = useState(false);
   const [assignWorkerToEventId, setAssignWorkerToEventId] = useState('');
 
+  const [isAssignedEventsModalOpen, setIsAssignedEventsModalOpen] = useState(false);
+  const [assignedEventsList, setAssignedEventsList] = useState<any[]>([]);
+  const [isLoadingAssignedEvents, setIsLoadingAssignedEvents] = useState(false);
+  const [assignedEventsTargetName, setAssignedEventsTargetName] = useState('');
+
+  const handleOpenAssignedEvents = useCallback(
+    async (type: 'Vendor' | 'Worker') => {
+      setIsActionsOpen(false);
+      setIsAssignedEventsModalOpen(true);
+      setIsLoadingAssignedEvents(true);
+      setAssignedEventsList([]);
+
+      try {
+        let eventsData = [];
+        if (type === 'Vendor') {
+          const vendor = vendors.find((v) => v.id === selectedVendorId);
+          setAssignedEventsTargetName(vendor?.name || 'Vendor');
+          eventsData = await getVendorAssignedEvents(selectedVendorId);
+        } else {
+          const worker = workers.find((w) => w.id === selectedWorkerId);
+          setAssignedEventsTargetName(worker ? `${worker.firstName} ${worker.lastName}` : 'Worker');
+          eventsData = await getWorkerAssignedEvents(selectedWorkerId);
+        }
+        setAssignedEventsList(eventsData);
+      } catch (error) {
+        console.error('Failed to fetch assigned events', error);
+      } finally {
+        setIsLoadingAssignedEvents(false);
+      }
+    },
+    [selectedVendorId, selectedWorkerId, vendors, workers]
+  );
+
   useEffect(() => {
     const fetchModalRsvps = async () => {
       if (!rsvpModalEvent) {
@@ -234,7 +287,6 @@ export function EventManagerPage() {
       try {
         let rawData = await getRSVPList(rsvpModalEvent.id);
 
-        // Fallback for EVENT# prefix
         if ((!rawData || rawData.length === 0) && !rsvpModalEvent.id.startsWith('EVENT#')) {
           try {
             const altData = await getRSVPList(`EVENT#${rsvpModalEvent.id}`);
@@ -242,7 +294,6 @@ export function EventManagerPage() {
           } catch {}
         }
 
-        // Bulletproof recursive flattening (handles [], [[]], etc.)
         const flatArray: any[] = [];
         const processData = (item: any) => {
           if (Array.isArray(item)) item.forEach(processData);
@@ -251,7 +302,6 @@ export function EventManagerPage() {
         processData(rawData);
 
         const mappedData = flatArray.map((item: any) => {
-          // Extract names and physically destroy literal 'undefined' strings
           const fName = String(item.firstName || item.first_name || item.guestfirstName || '')
             .replace(/undefined/gi, '')
             .trim();
@@ -259,7 +309,6 @@ export function EventManagerPage() {
             .replace(/undefined/gi, '')
             .trim();
 
-          // Aggressive case-insensitive status check
           const statusStr = String(item.status || '')
             .trim()
             .toUpperCase();
@@ -302,11 +351,8 @@ export function EventManagerPage() {
         </Card>
       ) : null}
 
-      {/* Main Content Area */}
       <div className="flex-1 flex flex-col rounded-xl border border-[#eef0f4] bg-white p-6 shadow-sm overflow-hidden min-h-[calc(100vh-150px)]">
-        {/* Controls Row */}
         <div className="mb-4 flex flex-wrap items-center justify-between border-b border-[#f1eef5] pb-0">
-          {/* Folder Tabs */}
           <div className="flex gap-1">
             {EVENT_MANAGER_TABS.map((tabLabel) => {
               const internalTab = tabLabel;
@@ -329,9 +375,7 @@ export function EventManagerPage() {
             })}
           </div>
 
-          {/* Actions & Status Buttons */}
           <div className="mb-2 flex items-center gap-3">
-            {/* Custom Actions Dropdown */}
             <div className="relative">
               <button
                 type="button"
@@ -357,7 +401,7 @@ export function EventManagerPage() {
                 </svg>
               </button>
               {isActionsOpen && (
-                <div className="absolute right-0 z-20 mt-2 w-36 overflow-hidden rounded-xl border border-[#f1eef5] bg-white py-1 shadow-lg">
+                <div className="absolute right-0 z-20 mt-2 w-48 overflow-hidden rounded-xl border border-[#f1eef5] bg-white py-1 shadow-lg">
                   {activeTab === 'Events' && selectedEventId && (
                     <button
                       type="button"
@@ -373,6 +417,13 @@ export function EventManagerPage() {
                   )}
                   {activeTab === 'Vendor' && selectedVendorId && (
                     <>
+                      <button
+                        type="button"
+                        onClick={() => handleOpenAssignedEvents('Vendor')}
+                        className="w-full px-4 py-2.5 text-left text-xs font-bold text-[#5c546a] transition-colors hover:bg-[#faf9fc] hover:text-[#df1b8b]"
+                      >
+                        View Assigned Events
+                      </button>
                       <button
                         type="button"
                         onClick={() => {
@@ -398,6 +449,13 @@ export function EventManagerPage() {
                   )}
                   {activeTab === 'Workers' && selectedWorkerId && (
                     <>
+                      <button
+                        type="button"
+                        onClick={() => handleOpenAssignedEvents('Worker')}
+                        className="w-full px-4 py-2.5 text-left text-xs font-bold text-[#5c546a] transition-colors hover:bg-[#faf9fc] hover:text-[#df1b8b]"
+                      >
+                        View Assigned Events
+                      </button>
                       <button
                         type="button"
                         onClick={() => {
@@ -457,15 +515,15 @@ export function EventManagerPage() {
               )}
             </div>
 
-            {/* Custom Status Dropdown */}
             <div className="relative">
               <button
                 type="button"
+                disabled={isMutating || activeTab !== 'Events' || !selectedEventId}
                 onClick={() => {
                   setIsStatusOpen(!isStatusOpen);
                   setIsActionsOpen(false);
                 }}
-                className="flex h-9 items-center gap-2 rounded-full bg-[#9f1baf] px-5 font-sans text-xs font-bold text-white shadow-sm transition-all hover:shadow-md"
+                className="flex h-9 items-center gap-2 rounded-full bg-[#9f1baf] px-5 font-sans text-xs font-bold text-white shadow-sm transition-all hover:shadow-md disabled:cursor-not-allowed disabled:opacity-60"
               >
                 Status
                 <svg
@@ -481,11 +539,11 @@ export function EventManagerPage() {
                   <path d="m6 9 6 6 6-6" />
                 </svg>
               </button>
-              {isStatusOpen && (
+              {isStatusOpen && activeTab === 'Events' && selectedEventId && (
                 <div className="absolute right-0 z-20 mt-2 w-32 overflow-hidden rounded-xl border border-[#f1eef5] bg-white py-1 shadow-lg">
                   <button
                     type="button"
-                    onClick={() => setIsStatusOpen(false)}
+                    onClick={() => handleUpdateEventStatus('Pending')}
                     className="flex w-full items-center gap-2 px-4 py-2.5 text-left text-xs font-bold text-[#5c546a] hover:bg-[#faf9fc] hover:text-[#df1b8b]"
                   >
                     <span className="h-1.5 w-1.5 rounded-full bg-[#e2b020]"></span>
@@ -493,7 +551,7 @@ export function EventManagerPage() {
                   </button>
                   <button
                     type="button"
-                    onClick={() => setIsStatusOpen(false)}
+                    onClick={() => handleUpdateEventStatus('Execution')}
                     className="flex w-full items-center gap-2 px-4 py-2.5 text-left text-xs font-bold text-[#5c546a] hover:bg-[#faf9fc] hover:text-[#df1b8b]"
                   >
                     <span className="h-1.5 w-1.5 rounded-full bg-[#df1b8b]"></span>
@@ -501,7 +559,7 @@ export function EventManagerPage() {
                   </button>
                   <button
                     type="button"
-                    onClick={() => setIsStatusOpen(false)}
+                    onClick={() => handleUpdateEventStatus('Completed')}
                     className="flex w-full items-center gap-2 px-4 py-2.5 text-left text-xs font-bold text-[#5c546a] hover:bg-[#faf9fc] hover:text-[#df1b8b]"
                   >
                     <span className="h-1.5 w-1.5 rounded-full bg-[#8637c3]"></span>
@@ -513,7 +571,6 @@ export function EventManagerPage() {
           </div>
         </div>
 
-        {/* Table */}
         <div className="flex-1 overflow-auto rounded-lg">
           <Table className="w-full text-xs relative">
             <TableHeader>
@@ -554,7 +611,11 @@ export function EventManagerPage() {
                     <TableRow
                       key={event.id}
                       onClick={() => setSelectedEventId(event.id)}
-                      className={`group transition-colors border-b border-[#f6f4f9] ${selectedEventId === event.id ? 'bg-[#faf9fc] ring-1 ring-inset ring-[#e1d5eb]' : 'hover:bg-[#faf9fc]'}`}
+                      className={`group transition-all cursor-pointer border-b border-[#f6f4f9] ${
+                        selectedEventId === event.id
+                          ? 'bg-[#fdf2f8] border-l-4 border-l-[#df1b8b] shadow-sm'
+                          : 'hover:bg-[#faf9fc] border-l-4 border-l-transparent'
+                      }`}
                     >
                       <TableCell className="py-4 font-bold text-[#5c546a]">{event.title}</TableCell>
                       <TableCell className="py-4 font-semibold text-[#5c546a]">
@@ -592,18 +653,22 @@ export function EventManagerPage() {
                           className={`inline-flex items-center gap-1.5 rounded-sm px-3 py-1 text-[10px] font-black tracking-wide ${
                             event.status === 'Completed'
                               ? 'bg-[#f4e6fc] text-[#8637c3]'
-                              : event.status === 'Pending'
-                                ? 'bg-[#fff5d3] text-[#b68c17]'
-                                : 'bg-[#ffe6f1] text-[#c62876]'
+                              : event.status === 'Execution'
+                                ? 'bg-[#ffe6f1] text-[#df1b8b]'
+                                : event.status === 'Pending'
+                                  ? 'bg-[#fff5d3] text-[#b68c17]'
+                                  : 'bg-[#ffe6f1] text-[#c62876]'
                           }`}
                         >
                           <span
                             className={`h-1.5 w-1.5 rounded-full ${
                               event.status === 'Completed'
                                 ? 'bg-[#8637c3]'
-                                : event.status === 'Pending'
-                                  ? 'bg-[#e2b020]'
-                                  : 'bg-[#df1b8b]'
+                                : event.status === 'Execution'
+                                  ? 'bg-[#df1b8b]'
+                                  : event.status === 'Pending'
+                                    ? 'bg-[#e2b020]'
+                                    : 'bg-[#c62876]'
                             }`}
                           ></span>
                           {event.status === 'Pending' ? 'PLANNING' : event.status.toUpperCase()}
@@ -616,7 +681,11 @@ export function EventManagerPage() {
                       <TableRow
                         key={vendor.id}
                         onClick={() => setSelectedVendorId(vendor.id)}
-                        className={`group transition-colors border-b border-[#f6f4f9] ${selectedVendorId === vendor.id ? 'bg-[#faf9fc] ring-1 ring-inset ring-[#e1d5eb]' : 'hover:bg-[#faf9fc]'}`}
+                        className={`group transition-all cursor-pointer border-b border-[#f6f4f9] ${
+                          selectedVendorId === vendor.id
+                            ? 'bg-[#fdf2f8] border-l-4 border-l-[#df1b8b] shadow-sm'
+                            : 'hover:bg-[#faf9fc] border-l-4 border-l-transparent'
+                        }`}
                       >
                         <TableCell className="py-4 font-bold text-[#5c546a]">
                           {vendor.name}
@@ -645,7 +714,11 @@ export function EventManagerPage() {
                         <TableRow
                           key={worker.id}
                           onClick={() => setSelectedWorkerId(worker.id)}
-                          className={`group transition-colors border-b border-[#f6f4f9] ${selectedWorkerId === worker.id ? 'bg-[#faf9fc] ring-1 ring-inset ring-[#e1d5eb]' : 'hover:bg-[#faf9fc]'}`}
+                          className={`group transition-all cursor-pointer border-b border-[#f6f4f9] ${
+                            selectedWorkerId === worker.id
+                              ? 'bg-[#fdf2f8] border-l-4 border-l-[#df1b8b] shadow-sm'
+                              : 'hover:bg-[#faf9fc] border-l-4 border-l-transparent'
+                          }`}
                         >
                           <TableCell className="py-4 font-bold text-[#5c546a]">
                             {worker.firstName} {worker.lastName}
@@ -692,11 +765,9 @@ export function EventManagerPage() {
         </div>
       </div>
 
-      {/* RSVP Modal Overlay */}
       {rsvpModalEvent && (
         <div className="fixed inset-0 z-1000 flex min-h-full items-center justify-center bg-[#1a1423]/60 backdrop-blur-md p-4 overflow-auto">
           <div className="relative w-full max-w-md animate-in zoom-in-95 fade-in rounded-2xl bg-white p-6 shadow-2xl duration-200">
-            {/* Close Button */}
             <button
               type="button"
               onClick={() => setRsvpModalEvent(null)}
@@ -724,7 +795,6 @@ export function EventManagerPage() {
             </div>
 
             <div className="mb-6 flex gap-4">
-              {/* Left Box */}
               <div className="flex-1 rounded-xl border border-[#e1d5eb] bg-[#F6E7FF] p-4 text-center">
                 <p className="mb-2 text-[10px] font-black uppercase tracking-widest text-[#2e2837]">
                   Live Headcount
@@ -747,7 +817,6 @@ export function EventManagerPage() {
                 </p>
               </div>
 
-              {/* Right Info */}
               <div className="flex flex-1 flex-col justify-center gap-1 text-[11px] font-bold text-[#352f44]">
                 <p>DETAILS:</p>
                 <p className="font-semibold text-[#716885]">
@@ -817,7 +886,6 @@ export function EventManagerPage() {
         </div>
       )}
 
-      {/* Assign Vendor Modal */}
       {isAssignVendorModalOpen && (
         <div className="fixed inset-0 z-[1000] flex min-h-full items-center justify-center bg-[#1a1423]/60 backdrop-blur-md p-4">
           <div className="w-full max-w-md animate-in zoom-in-95 fade-in rounded-2xl bg-white p-6 shadow-2xl">
@@ -825,7 +893,6 @@ export function EventManagerPage() {
             <p className="mb-4 text-xs text-[#7c758d]">
               Select the event you want to assign this vendor to.
             </p>
-
             <select
               className="w-full rounded-lg border border-gray-200 bg-gray-50 p-2.5 text-sm outline-none focus:border-[#df1b8b]"
               value={assignToEventId}
@@ -840,7 +907,6 @@ export function EventManagerPage() {
                 </option>
               ))}
             </select>
-
             <div className="mt-6 flex justify-end gap-3">
               <button
                 onClick={() => setIsAssignVendorModalOpen(false)}
@@ -873,7 +939,6 @@ export function EventManagerPage() {
         </div>
       )}
 
-      {/* Unassign Vendor Modal */}
       {isUnassignVendorModalOpen && (
         <div className="fixed inset-0 z-[1000] flex min-h-full items-center justify-center bg-[#1a1423]/60 backdrop-blur-md p-4">
           <div className="w-full max-w-sm animate-in zoom-in-95 fade-in rounded-2xl bg-white p-6 text-center shadow-2xl">
@@ -881,7 +946,6 @@ export function EventManagerPage() {
             <p className="mb-6 text-xs text-[#7c758d]">
               Are you sure you want to unassign this vendor from its current event?
             </p>
-
             <div className="flex justify-center gap-3">
               <button
                 onClick={() => setIsUnassignVendorModalOpen(false)}
@@ -913,7 +977,6 @@ export function EventManagerPage() {
         </div>
       )}
 
-      {/* Assign Worker Modal */}
       {isAssignWorkerModalOpen && (
         <div className="fixed inset-0 z-[1000] flex min-h-full items-center justify-center bg-[#1a1423]/60 backdrop-blur-md p-4">
           <div className="w-full max-w-md animate-in zoom-in-95 fade-in rounded-2xl bg-white p-6 shadow-2xl">
@@ -976,7 +1039,6 @@ export function EventManagerPage() {
         </div>
       )}
 
-      {/* Unassign Worker Modal */}
       {isUnassignWorkerModalOpen && (
         <div className="fixed inset-0 z-[1000] flex min-h-full items-center justify-center bg-[#1a1423]/60 backdrop-blur-md p-4">
           <div className="w-full max-w-sm animate-in zoom-in-95 fade-in rounded-2xl bg-white p-6 text-center shadow-2xl">
@@ -1019,6 +1081,137 @@ export function EventManagerPage() {
               >
                 {isMutating ? 'Unassigning...' : 'Yes, Unassign'}
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Assigned Events Modal */}
+      {isAssignedEventsModalOpen && (
+        <div className="fixed inset-0 z-[1000] flex min-h-full items-center justify-center bg-[#1a1423]/60 backdrop-blur-md p-4 overflow-auto">
+          <div className="relative w-full max-w-lg animate-in zoom-in-95 fade-in rounded-3xl bg-white p-7 shadow-2xl">
+            <button
+              type="button"
+              onClick={() => setIsAssignedEventsModalOpen(false)}
+              className="absolute right-5 top-5 text-[#a69eb5] hover:text-[#df1b8b] transition-colors"
+            >
+              <X className="size-5" />
+            </button>
+
+            <div className="mb-6">
+              <h2 className="text-2xl font-black text-[#2e2837]">Assigned Events</h2>
+              <p className="text-sm font-semibold text-[#df1b8b]">{assignedEventsTargetName}</p>
+            </div>
+
+            <div className="max-h-[50vh] overflow-y-auto pr-2 [scrollbar-width:thin]">
+              {isLoadingAssignedEvents ? (
+                <div className="flex h-32 flex-col items-center justify-center text-sm font-semibold text-[#a69eb5]">
+                  <svg
+                    className="mb-2 h-6 w-6 animate-spin text-[#df1b8b]"
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                  >
+                    <circle
+                      className="opacity-25"
+                      cx="12"
+                      cy="12"
+                      r="10"
+                      stroke="currentColor"
+                      strokeWidth="4"
+                    ></circle>
+                    <path
+                      className="opacity-75"
+                      fill="currentColor"
+                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                    ></path>
+                  </svg>
+                  Fetching events...
+                </div>
+              ) : assignedEventsList.length === 0 ? (
+                <div className="flex h-32 flex-col items-center justify-center rounded-xl border border-dashed border-[#e1d5eb] bg-[#faf9fc] text-center">
+                  <CalendarDays className="mb-2 size-8 text-[#d4c5e3]" />
+                  <p className="text-sm font-semibold text-[#8b839c]">No events assigned yet.</p>
+                </div>
+              ) : (
+                <div className="space-y-6">
+                  {/* Current Assignments */}
+                  {assignedEventsList.filter((e) => String(e.status).toLowerCase() !== 'completed')
+                    .length > 0 && (
+                    <div>
+                      <h3 className="mb-3 flex items-center gap-2 text-xs font-black uppercase tracking-widest text-[#625974]">
+                        <span className="h-2 w-2 rounded-full bg-[#df1b8b]"></span>
+                        Current Assignments
+                      </h3>
+                      <div className="space-y-3">
+                        {assignedEventsList
+                          .filter((e) => String(e.status).toLowerCase() !== 'completed')
+                          .map((evt, i) => (
+                            <div
+                              key={`curr-${i}`}
+                              className="flex items-center justify-between rounded-xl border border-[#f1eef5] bg-white p-4 shadow-sm transition-all hover:border-[#df1b8b]/40 hover:shadow-md"
+                            >
+                              <div>
+                                <p className="font-bold text-[#352f44]">
+                                  {evt.title || 'Unknown Event'}
+                                </p>
+                                <p className="text-xs font-medium text-[#8b839c]">
+                                  {evt.eventDate || evt.startDate
+                                    ? new Date(evt.eventDate || evt.startDate).toLocaleDateString(
+                                        'en-US',
+                                        { month: 'long', day: 'numeric', year: 'numeric' }
+                                      )
+                                    : 'Date TBD'}
+                                </p>
+                              </div>
+                              <Badge className="bg-[#fff5d3] text-[#b68c17] uppercase tracking-wider text-[9px] shadow-none">
+                                {evt.status || 'Pending'}
+                              </Badge>
+                            </div>
+                          ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Past Events */}
+                  {assignedEventsList.filter((e) => String(e.status).toLowerCase() === 'completed')
+                    .length > 0 && (
+                    <div>
+                      <h3 className="mb-3 flex items-center gap-2 text-xs font-black uppercase tracking-widest text-[#625974]">
+                        <span className="h-2 w-2 rounded-full bg-[#8637c3]"></span>
+                        Event History
+                      </h3>
+                      <div className="space-y-3">
+                        {assignedEventsList
+                          .filter((e) => String(e.status).toLowerCase() === 'completed')
+                          .map((evt, i) => (
+                            <div
+                              key={`past-${i}`}
+                              className="flex items-center justify-between rounded-xl border border-[#f1eef5] bg-[#faf9fc] p-4 opacity-80 transition-opacity hover:opacity-100"
+                            >
+                              <div>
+                                <p className="font-bold text-[#5c546a]">
+                                  {evt.title || 'Unknown Event'}
+                                </p>
+                                <p className="text-xs font-medium text-[#a49db4]">
+                                  {evt.eventDate || evt.startDate
+                                    ? new Date(evt.eventDate || evt.startDate).toLocaleDateString(
+                                        'en-US',
+                                        { month: 'long', day: 'numeric', year: 'numeric' }
+                                      )
+                                    : 'Date TBD'}
+                                </p>
+                              </div>
+                              <Badge className="bg-[#f4e6fc] text-[#8637c3] uppercase tracking-wider text-[9px] shadow-none">
+                                Completed
+                              </Badge>
+                            </div>
+                          ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           </div>
         </div>

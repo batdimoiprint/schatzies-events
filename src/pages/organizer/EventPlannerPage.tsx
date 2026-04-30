@@ -6,7 +6,6 @@ import {
   Download,
   ImagePlus,
   ListChecks,
-  MoreVertical,
   Pencil,
   Plus,
   Trash2,
@@ -183,31 +182,31 @@ const taskLaneConfig: Array<{
   cardOuterClassName: string;
   cardTitleClassName: string;
 }> = [
-  {
-    id: 'todo',
-    label: 'To Do',
-    dotClassName: 'bg-[#e6d81d]',
-    panelClassName: 'border-[#e4e4d0] bg-[#fafaf4]',
-    cardOuterClassName: 'border-[#cae4cb] bg-[#dff0e0]',
-    cardTitleClassName: 'text-[#4f8759]',
-  },
-  {
-    id: 'in-progress',
-    label: 'In Progress',
-    dotClassName: 'bg-[#2ea4ff]',
-    panelClassName: 'border-[#d3e7f7] bg-[#f4f9ff]',
-    cardOuterClassName: 'border-[#ead4e9] bg-[#f0ddf0]',
-    cardTitleClassName: 'text-[#712466]',
-  },
-  {
-    id: 'completed',
-    label: 'Completed',
-    dotClassName: 'bg-[#2ec24f]',
-    panelClassName: 'border-[#d8eddc] bg-[#f5fcf7]',
-    cardOuterClassName: 'border-[#d4dfec] bg-[#deebf8]',
-    cardTitleClassName: 'text-[#1f4c82]',
-  },
-];
+    {
+      id: 'todo',
+      label: 'To Do',
+      dotClassName: 'bg-[#e6d81d]',
+      panelClassName: 'border-[#e4e4d0] bg-[#fafaf4]',
+      cardOuterClassName: 'border-[#cae4cb] bg-[#dff0e0]',
+      cardTitleClassName: 'text-[#4f8759]',
+    },
+    {
+      id: 'in-progress',
+      label: 'In Progress',
+      dotClassName: 'bg-[#2ea4ff]',
+      panelClassName: 'border-[#d3e7f7] bg-[#f4f9ff]',
+      cardOuterClassName: 'border-[#ead4e9] bg-[#f0ddf0]',
+      cardTitleClassName: 'text-[#712466]',
+    },
+    {
+      id: 'completed',
+      label: 'Completed',
+      dotClassName: 'bg-[#2ec24f]',
+      panelClassName: 'border-[#d8eddc] bg-[#f5fcf7]',
+      cardOuterClassName: 'border-[#d4dfec] bg-[#deebf8]',
+      cardTitleClassName: 'text-[#1f4c82]',
+    },
+  ];
 
 const overviewCards = [
   {
@@ -629,9 +628,11 @@ function FlowNotesBoard() {
 
       const left = 2 + slotIndex * (slotWidth + slotGap) + (startParts.minute / 60) * minuteShift;
       const width = Math.max(20, slotWidth - Math.min(slotIndex, 2) * 2);
+      // Add a 4px gap to the top and reduce height by 8px total to create top/bottom padding
+      const verticalGap = 4;
       const height = Math.max(
-        hourRowHeight - 4,
-        Math.ceil((durationMinutes / 60) * hourRowHeight) - 4
+        hourRowHeight - verticalGap * 2,
+        Math.ceil((durationMinutes / 60) * hourRowHeight) - verticalGap * 2
       );
 
       return {
@@ -639,6 +640,7 @@ function FlowNotesBoard() {
         left: `${left}%`,
         width: `${width}%`,
         height,
+        topOffset: verticalGap, // We'll use this in the render method
       };
     });
   }, [timelineBlocks, hourRowHeight]);
@@ -778,8 +780,9 @@ function FlowNotesBoard() {
                         }}
                         className={`absolute overflow-hidden rounded-xl border px-3 py-2 text-[#5f596b] shadow-[0_6px_12px_rgba(31,18,54,0.08)] ${block.tone}`}
                         style={{
-                          top: `${startIndex * hourRowHeight + 2}px`,
-                          height: `${block.height ?? duration * hourRowHeight - 4}px`,
+                          // Apply the top offset here to push it down from the line
+                          top: `${startIndex * hourRowHeight + block.topOffset}px`,
+                          height: `${block.height ?? duration * hourRowHeight - 8}px`,
                           left: block.left,
                           width: block.width,
                           zIndex: block.id === selectedActivityId ? 30 : 10,
@@ -803,36 +806,41 @@ function FlowNotesBoard() {
             </div>
           </article>
 
-          {!hideScheduleSummary ? (
-            <aside className="rounded-2xl border border-[#e2dee9] bg-white px-4 py-4 shadow-[0_8px_18px_rgba(31,18,54,0.05)]">
-              <p className="text-[12px] font-black uppercase tracking-[0.12em] text-[#6b6476]">
-                Schedule Summary
-              </p>
+          <aside
+            className={[
+              'rounded-2xl border border-[#e2dee9] bg-white px-4 py-4 shadow-[0_8px_18px_rgba(31,18,54,0.05)] transition-all duration-300 ease-in-out origin-right',
+              hideScheduleSummary
+                ? 'opacity-0 translate-x-8 invisible hidden'
+                : 'opacity-100 translate-x-0 visible block',
+            ].join(' ')}
+          >
+            <p className="text-[12px] font-black uppercase tracking-[0.12em] text-[#6b6476]">
+              Schedule Summary
+            </p>
 
-              <div className="mt-4 space-y-5 border-l border-[#ebe6f0] pl-4">
-                {scheduleSummaries.map((summary) => (
-                  <div key={summary.id} className="grid grid-cols-[92px_1fr] gap-4">
-                    <p className="text-[10px] font-semibold text-[#6b6476]">{summary.timeRange}</p>
-                    <div>
-                      <p className="text-[13px] font-black text-[#2f2b39]">{summary.title}</p>
-                      <p className="mt-1 text-[11px] leading-relaxed text-[#8a8495]">
-                        {summary.body}
-                      </p>
-                    </div>
+            <div className="mt-4 space-y-5 border-l border-[#ebe6f0] pl-4">
+              {scheduleSummaries.map((summary) => (
+                <div key={summary.id} className="grid grid-cols-[92px_1fr] gap-4">
+                  <p className="text-[10px] font-semibold text-[#6b6476]">{summary.timeRange}</p>
+                  <div>
+                    <p className="text-[13px] font-black text-[#2f2b39]">{summary.title}</p>
+                    <p className="mt-1 text-[11px] leading-relaxed text-[#8a8495]">
+                      {summary.body}
+                    </p>
                   </div>
-                ))}
-              </div>
+                </div>
+              ))}
+            </div>
 
-              <button
-                type="button"
-                onClick={handleAddSummary}
-                className="mt-6 inline-flex h-10 w-full items-center justify-center gap-2 rounded-lg border border-[#d7d0e2] bg-white text-[11px] font-black text-[#5a5670] transition hover:bg-[#f6f2fb]"
-              >
-                <Plus className="size-3.5" />
-                Add summary
-              </button>
-            </aside>
-          ) : null}
+            <button
+              type="button"
+              onClick={handleAddSummary}
+              className="mt-6 inline-flex h-10 w-full items-center justify-center gap-2 rounded-lg border border-[#d7d0e2] bg-white text-[11px] font-black text-[#5a5670] transition hover:bg-[#f6f2fb]"
+            >
+              <Plus className="size-3.5" />
+              Add summary
+            </button>
+          </aside>
         </div>
       </section>
 
@@ -1102,8 +1110,6 @@ const noteTileThemes = [
   },
 ];
 
-type PlannerNoteTheme = (typeof noteTileThemes)[number];
-
 const overviewScheduleSummary = [
   {
     id: 'overview-summary-1',
@@ -1160,9 +1166,38 @@ export function EventPlannerPage() {
   const [noteDraftError, setNoteDraftError] = useState('');
   const [editingPlannerNoteId, setEditingPlannerNoteId] = useState<string | null>(null);
   const [isNoteModalOpen, setIsNoteModalOpen] = useState(false);
-  const [activeNoteMenuFor, setActiveNoteMenuFor] = useState<string | null>(null);
-  const [isNotePreviewOpen, setIsNotePreviewOpen] = useState(false);
-  const [selectedPlannerNote, setSelectedPlannerNote] = useState<PlannerQuickNote | null>(null);
+  const [isInlineNoteOpen, setIsInlineNoteOpen] = useState(false);
+  const [draggedNoteId, setDraggedNoteId] = useState<string | null>(null);
+
+  const handleNoteDragStart = (e: DragEvent<HTMLElement>, id: string) => {
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/plain', id);
+
+    // CRITICAL: Delay the state update so the browser captures the fully rendered card as the drag ghost FIRST.
+    setTimeout(() => {
+      setDraggedNoteId(id);
+    }, 0);
+  };
+
+  const handleNoteDragEnd = () => {
+    setDraggedNoteId(null);
+  };
+
+  const handleNoteDrop = (e: DragEvent<HTMLElement>, targetId: string) => {
+    e.preventDefault();
+    const droppedId = e.dataTransfer.getData('text/plain');
+    if (!droppedId || droppedId === targetId) return;
+
+    const draggedIdx = plannerNotes.findIndex((n) => n.id === droppedId);
+    const targetIdx = plannerNotes.findIndex((n) => n.id === targetId);
+
+    const newNotes = [...plannerNotes];
+    const [draggedNote] = newNotes.splice(draggedIdx, 1);
+    newNotes.splice(targetIdx, 0, draggedNote);
+
+    setPlannerNotes(newNotes);
+    setDraggedNoteId(null);
+  };
 
   const selectedProject = useMemo(() => {
     return projectSlots.find((project) => project.id === selectedProjectId) ?? projectSlots[0];
@@ -1184,24 +1219,9 @@ export function EventPlannerPage() {
     setEditingPlannerNoteId(null);
   };
 
-  const openPlannerNoteModal = () => {
-    resetNoteDraft();
-    setIsNoteModalOpen(true);
-  };
-
   const closePlannerNoteModal = () => {
     setIsNoteModalOpen(false);
     resetNoteDraft();
-  };
-
-  const openPlannerNotePreview = (note: PlannerQuickNote) => {
-    setSelectedPlannerNote(note);
-    setIsNotePreviewOpen(true);
-  };
-
-  const closePlannerNotePreview = () => {
-    setIsNotePreviewOpen(false);
-    setSelectedPlannerNote(null);
   };
 
   const handlePlannerNoteImageChange = (event: ChangeEvent<HTMLInputElement>) => {
@@ -1240,7 +1260,8 @@ export function EventPlannerPage() {
     const normalizedBody = noteDraftBody.trim();
 
     if (!normalizedTitle && !normalizedBody && !noteDraftImageDataUrl) {
-      setNoteDraftError('Enter a title, note detail, or add an image before saving.');
+      if (isNoteModalOpen)
+        setNoteDraftError('Enter a title, note detail, or add an image before saving.');
       return;
     }
 
@@ -1262,19 +1283,26 @@ export function EventPlannerPage() {
     closePlannerNoteModal();
   };
 
+  const handleCloseInlineNote = () => {
+    if (noteDraftTitle.trim() || noteDraftBody.trim() || noteDraftImageDataUrl) {
+      handleSavePlannerNote();
+    } else {
+      resetNoteDraft();
+    }
+    setIsInlineNoteOpen(false);
+  };
+
   const handleEditPlannerNote = (note: PlannerQuickNote) => {
     setEditingPlannerNoteId(note.id);
     setNoteDraftTitle(note.title);
     setNoteDraftBody(note.body);
     setNoteDraftImageDataUrl(note.imageDataUrl ?? undefined);
     setNoteDraftError('');
-    setActiveNoteMenuFor(null);
     setIsNoteModalOpen(true);
   };
 
   const handleDeletePlannerNote = (noteId: string) => {
     setPlannerNotes((previousNotes) => previousNotes.filter((note) => note.id !== noteId));
-    setActiveNoteMenuFor(null);
 
     if (editingPlannerNoteId === noteId) {
       resetNoteDraft();
@@ -1394,26 +1422,26 @@ export function EventPlannerPage() {
             Array.isArray(task.checklist) && task.checklist.length > 0
               ? task.checklist
               : task.details
-                  .split('\n')
-                  .map((s) => s.trim())
-                  .filter(Boolean)
-                  .map((line, idx) => ({ id: `${task.id}-chk-${idx}`, label: line, done: false }));
+                .split('\n')
+                .map((s) => s.trim())
+                .filter(Boolean)
+                .map((line, idx) => ({ id: `${task.id}-chk-${idx}`, label: line, done: false }));
 
           const checklist =
             checklistSource.length > 0
               ? checklistSource.map((item) => ({
-                  ...item,
-                  done: true,
-                  doneAt: item.doneAt ?? timestamp,
-                }))
+                ...item,
+                done: true,
+                doneAt: item.doneAt ?? timestamp,
+              }))
               : [
-                  {
-                    id: `${task.id}-chk-0`,
-                    label: 'Task completed',
-                    done: true,
-                    doneAt: timestamp,
-                  },
-                ];
+                {
+                  id: `${task.id}-chk-0`,
+                  label: 'Task completed',
+                  done: true,
+                  doneAt: timestamp,
+                },
+              ];
 
           return { ...task, lane, checklist };
         }
@@ -1435,18 +1463,18 @@ export function EventPlannerPage() {
         ? selectedTask?.checklist?.length
           ? selectedTask.checklist
           : (selectedTask?.details ?? '')
-              .split('\n')
-              .map((line) => line.trim())
-              .filter(Boolean)
-              .map((line, index) => ({
-                id: `${selectedTask?.id ?? taskId}-chk-${index}`,
-                label: line,
-                done: false,
-              }))
+            .split('\n')
+            .map((line) => line.trim())
+            .filter(Boolean)
+            .map((line, index) => ({
+              id: `${selectedTask?.id ?? taskId}-chk-${index}`,
+              label: line,
+              done: false,
+            }))
         : (selectedTask?.checklist ?? []).map((item) => ({
-            ...item,
-            doneAt: item.doneAt,
-          }))
+          ...item,
+          doneAt: item.doneAt,
+        }))
     );
     setTaskActionMessage(`Editing ${selectedTask?.title || 'task'}.`);
     setTaskActionTone('info');
@@ -1476,12 +1504,12 @@ export function EventPlannerPage() {
       previousTasks.map((task) =>
         task.id === selectedBoardTaskId
           ? {
-              ...task,
-              title: taskPreviewTitle,
-              details:
-                normalizedDetails || normalizedChecklist.map((item) => item.label).join('\n'),
-              checklist: normalizedChecklist,
-            }
+            ...task,
+            title: taskPreviewTitle,
+            details:
+              normalizedDetails || normalizedChecklist.map((item) => item.label).join('\n'),
+            checklist: normalizedChecklist,
+          }
           : task
       )
     );
@@ -1515,10 +1543,10 @@ export function EventPlannerPage() {
           checklist: task.checklist.map((item) =>
             item.id === itemId
               ? {
-                  ...item,
-                  done: !item.done,
-                  doneAt: !item.done ? timestamp : undefined,
-                }
+                ...item,
+                done: !item.done,
+                doneAt: !item.done ? timestamp : undefined,
+              }
               : item
           ),
         };
@@ -1785,7 +1813,7 @@ export function EventPlannerPage() {
                         className={[
                           'min-w-0 flex-1 whitespace-pre-line',
                           card.valueClassName ??
-                            'text-[24px] font-black leading-none tracking-tight text-[#2f2b39]',
+                          'text-[24px] font-black leading-none tracking-tight text-[#2f2b39]',
                         ].join(' ')}
                       >
                         {card.value}
@@ -2074,11 +2102,10 @@ export function EventPlannerPage() {
                                           }}
                                         />
                                         <span
-                                          className={`min-w-0 flex-1 truncate text-[11px] font-medium ${
-                                            item.done
-                                              ? 'text-[#a29faf] line-through'
-                                              : 'text-[#5a546a]'
-                                          }`}
+                                          className={`min-w-0 flex-1 truncate text-[11px] font-medium ${item.done
+                                            ? 'text-[#a29faf] line-through'
+                                            : 'text-[#5a546a]'
+                                            }`}
                                         >
                                           {item.label}
                                         </span>
@@ -2115,128 +2142,124 @@ export function EventPlannerPage() {
             </section>
           ) : activeTab === 'notes' ? (
             <section className="rounded-2xl border border-[#ddd8e8] bg-[#f6f4f7] p-4 shadow-[0_6px_14px_rgba(31,18,54,0.05)]">
-              <div className="mb-4 flex items-center justify-between gap-3 rounded-2xl border border-[#e3ddea] bg-white px-4 py-3 shadow-[0_4px_10px_rgba(27,16,45,0.06)]">
-                <div>
-                  <p className="text-xs font-black uppercase tracking-[0.12em] text-[#8a8399]">
-                    Planner Notes
-                  </p>
-                  <p className="text-sm font-semibold text-[#5d566d]">
-                    Capture reminders, requests, and references in quick note tiles.
-                  </p>
-                </div>
+              {/* Inline Note Creator - Fixed Width */}
+              <div className="mb-8 mx-auto w-full max-w-2xl">
+                {!isInlineNoteOpen ? (
+                  <div
+                    onClick={() => {
+                      resetNoteDraft();
+                      setEditingPlannerNoteId(null);
+                      setIsInlineNoteOpen(true);
+                    }}
+                    className="flex cursor-text items-center justify-between rounded-xl border border-[#e3ddea] bg-white px-5 py-3.5 shadow-[0_2px_8px_rgba(27,16,45,0.04)] transition hover:shadow-md"
+                  >
+                    <span className="text-[14px] font-semibold text-[#8a8399]">Take a note...</span>
+                    <div className="flex gap-4 text-[#aba3b9]">
+                      <ListChecks className="size-5" />
+                      <Pencil className="size-5" />
+                      <ImagePlus className="size-5" />
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex flex-col gap-2 rounded-xl border border-[#e3ddea] bg-white p-4 shadow-lg">
+                    {noteDraftError && (
+                      <p className="px-1 mb-2 text-xs font-bold text-[#d22067]">{noteDraftError}</p>
+                    )}
+                    <Input
+                      value={noteDraftTitle}
+                      onChange={(e) => setNoteDraftTitle(e.target.value)}
+                      placeholder="Title"
+                      className="h-auto border-none bg-transparent px-1 text-[16px] font-bold text-[#1f1f21] shadow-none focus-visible:ring-0 placeholder:text-[#8a8399]"
+                    />
+                    <textarea
+                      autoFocus
+                      value={noteDraftBody}
+                      onChange={(e) => {
+                        setNoteDraftBody(e.target.value);
+                        e.target.style.height = 'auto';
+                        e.target.style.height = `${e.target.scrollHeight}px`;
+                      }}
+                      placeholder="Take a note..."
+                      className="min-h-[60px] max-h-[50vh] w-full resize-none overflow-y-auto break-words whitespace-pre-wrap px-1 bg-transparent text-[14px] leading-relaxed text-[#4d4858] outline-none placeholder:text-[#aba3b9]"
+                    />
 
-                <button
-                  type="button"
-                  onClick={openPlannerNoteModal}
-                  className="inline-flex h-10 items-center gap-2 rounded-lg bg-linear-to-r from-[#f1589e] via-[#d735b3] to-[#8a1fd0] px-4 text-sm font-black text-white shadow-[0_10px_20px_rgba(125,31,186,0.24)] transition hover:brightness-105"
-                >
-                  <Plus className="size-4" />
-                  Add Note
-                </button>
+                    {noteDraftImageDataUrl && (
+                      <div className="relative mt-2 overflow-hidden rounded-lg border border-[#e0dbe6]">
+                        <img
+                          src={noteDraftImageDataUrl}
+                          alt="Attached"
+                          className="max-h-48 w-full object-cover"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setNoteDraftImageDataUrl(undefined)}
+                          className="absolute right-2 top-2 rounded-full bg-black/50 p-1.5 text-white hover:bg-black/70"
+                        >
+                          <X className="size-4" />
+                        </button>
+                      </div>
+                    )}
+
+                    <div className="mt-2 flex items-center justify-between pt-1">
+                      <div className="flex gap-1">
+                        <label className="cursor-pointer rounded-full p-2 text-[#8a8399] transition hover:bg-[#f3eff8] hover:text-[#5d5670]">
+                          <ImagePlus className="size-5" />
+                          <input
+                            type="file"
+                            accept="image/*"
+                            className="hidden"
+                            onChange={handlePlannerNoteImageChange}
+                          />
+                        </label>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={handleCloseInlineNote}
+                        className="rounded-md px-4 py-2 text-[13px] font-bold text-[#302c39] transition hover:bg-[#f3eff8]"
+                      >
+                        Close
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
 
-              <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+              {/* Masonry Grid (Dynamic Height & Unclamped Text) */}
+              <div className="columns-1 sm:columns-2 lg:columns-3 xl:columns-4 gap-4 space-y-4">
                 {plannerNotes.map((note, index) => {
-                  const noteTheme: PlannerNoteTheme = noteTileThemes[index % noteTileThemes.length];
+                  const noteTheme = noteTileThemes[index % noteTileThemes.length];
+                  const isDragging = draggedNoteId === note.id;
 
                   return (
                     <article
                       key={note.id}
-                      onClick={() => openPlannerNotePreview(note)}
-                      className={`relative flex h-[360px] cursor-pointer flex-col overflow-hidden rounded-2xl border p-4 shadow-[0_10px_22px_rgba(27,16,45,0.08)] transition-transform duration-200 hover:-translate-y-1 hover:shadow-[0_16px_30px_rgba(27,16,45,0.12)] ${noteTheme.shellClassName}`}
+                      draggable
+                      onDragStart={(e) => handleNoteDragStart(e, note.id)}
+                      onDragEnd={handleNoteDragEnd}
+                      onDragOver={(e) => {
+                        e.preventDefault();
+                        e.dataTransfer.dropEffect = 'move';
+                      }}
+                      onDrop={(e) => handleNoteDrop(e, note.id)}
+                      onClick={() => handleEditPlannerNote(note)}
+                      className={`break-inside-avoid relative flex cursor-pointer flex-col overflow-hidden rounded-xl border border-[#e3ddea] bg-white transition-all hover:shadow-md ${noteTheme.shellClassName} ${isDragging ? 'opacity-30 border-dashed scale-95' : 'opacity-100'}`}
                     >
-                      <div
-                        className={`absolute inset-x-0 top-0 h-1.5 bg-linear-to-r ${noteTheme.headerClassName}`}
-                      />
-
-                      <div className="flex items-start justify-between gap-3 pt-1">
-                        <div className="min-w-0">
-                          <p className="truncate text-[14px] font-black text-inherit">
-                            {note.title}
-                          </p>
-                          <div
-                            className={`mt-1 inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.12em] ${noteTheme.badgeClassName}`}
-                          >
-                            <span
-                              className={`size-1.5 rounded-full ${noteTheme.accentClassName}`}
-                            />
-                            Note Tile
-                          </div>
-                        </div>
-
-                        <div
-                          className="relative shrink-0"
-                          onClick={(event) => event.stopPropagation()}
-                        >
-                          <button
-                            type="button"
-                            onClick={() =>
-                              setActiveNoteMenuFor((previous) =>
-                                previous === note.id ? null : note.id
-                              )
-                            }
-                            className="inline-flex size-8 items-center justify-center rounded-full border border-[#e1dbe8] text-[#6f697c] transition hover:border-[#b7b0c4] hover:bg-[#f7f4fb]"
-                            aria-label={`Open actions for ${note.title}`}
-                          >
-                            <MoreVertical className="size-4" />
-                          </button>
-
-                          {activeNoteMenuFor === note.id ? (
-                            <div className="absolute right-0 top-10 z-20 w-32 overflow-hidden rounded-xl border border-[#ddd7e8] bg-white shadow-[0_12px_24px_rgba(35,20,57,0.14)]">
-                              <button
-                                type="button"
-                                onClick={() => handleEditPlannerNote(note)}
-                                className="flex w-full items-center gap-2 px-3 py-2 text-left text-[12px] font-semibold text-[#4d465a] transition hover:bg-[#f7f3fb]"
-                              >
-                                <Pencil className="size-3.5" />
-                                Edit
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() => handleDeletePlannerNote(note.id)}
-                                className="flex w-full items-center gap-2 px-3 py-2 text-left text-[12px] font-semibold text-[#4d465a] transition hover:bg-[#f7f3fb]"
-                              >
-                                <Trash2 className="size-3.5" />
-                                Delete
-                              </button>
-                            </div>
-                          ) : null}
-                        </div>
-                      </div>
-
-                      <div
-                        className={`mt-3 flex-1 overflow-hidden rounded-xl border ${noteTheme.footerClassName}`}
-                      >
-                        {note.imageDataUrl ? (
-                          <img
-                            src={note.imageDataUrl}
-                            alt={`${note.title} evidence`}
-                            className="h-[150px] w-full object-cover"
-                          />
-                        ) : (
-                          <div
-                            className={`flex h-[150px] w-full items-center justify-center bg-linear-to-br ${noteTheme.headerClassName}`}
-                          >
-                            <div className="flex flex-col items-center gap-2 text-center">
-                              <span
-                                className={`inline-flex size-10 items-center justify-center rounded-2xl ${noteTheme.badgeClassName}`}
-                              >
-                                <ImagePlus className="size-5" />
-                              </span>
-                              <p className="text-[11px] font-semibold text-inherit">
-                                No attachment
-                              </p>
-                            </div>
-                          </div>
+                      {note.imageDataUrl && (
+                        <img
+                          src={note.imageDataUrl}
+                          alt={`${note.title} attachment`}
+                          className="w-full h-auto object-contain border-b border-[#e3ddea]"
+                        />
+                      )}
+                      <div className="p-4 flex flex-col gap-2">
+                        {note.title && (
+                          <p className="text-[15px] font-bold text-inherit">{note.title}</p>
                         )}
-
-                        <div className="flex h-[130px] flex-col gap-2 px-3 py-3">
-                          <p
-                            className={`line-clamp-4 whitespace-pre-line text-[12px] leading-snug ${noteTheme.bodyClassName}`}
-                          >
-                            {note.body}
-                          </p>
-                        </div>
+                        <p
+                          className={`break-words whitespace-pre-wrap text-[13px] leading-relaxed text-inherit/90`}
+                        >
+                          {note.body}
+                        </p>
                       </div>
                     </article>
                   );
@@ -2245,25 +2268,24 @@ export function EventPlannerPage() {
             </section>
           ) : activeTab === 'checklist' ? (
             <section className="rounded-2xl border border-[#ddd8e8] bg-[#fbfafd] p-3 shadow-[0_6px_14px_rgba(31,18,54,0.05)]">
-              <h3 className="mb-3 text-[18px] font-bold tracking-tight text-[#18151f]">
-                Checklist ({checklistItems.length} Items)
-              </h3>
-
-              <div className="mb-4">
-                <div className="mb-2 flex items-center justify-between">
-                  <p className="text-sm font-semibold text-[#6f687f]">Overall Progress</p>
-                  <p className="text-sm font-bold text-[#2f2b39]">{checklistProgress}%</p>
+              <div className="mb-4 flex items-center justify-between">
+                <h3 className="text-[18px] font-bold tracking-tight text-[#18151f]">
+                  Checklist ({checklistItems.length} Items)
+                </h3>
+                <div className="flex items-center gap-3">
+                  <span className="text-[12px] font-semibold text-[#6f687f]">Overall Progress</span>
+                  <span className="text-[14px] font-bold text-[#2f2b39]">{checklistProgress}%</span>
                 </div>
+              </div>
 
-                <div className="h-2 w-full rounded-full bg-[#f3eefb]">
-                  <div
-                    className="h-2 rounded-full"
-                    style={{
-                      width: `${checklistProgress}%`,
-                      background: 'linear-gradient(90deg, #f347a5, #8f1fd1)',
-                    }}
-                  />
-                </div>
+              <div className="mb-6 h-2.5 w-full overflow-hidden rounded-full bg-[#f0eaf6]">
+                <div
+                  className="h-full rounded-full transition-all duration-500 ease-out"
+                  style={{
+                    width: `${checklistProgress}%`,
+                    background: 'linear-gradient(90deg, #f1589e, #8a1fd0)',
+                  }}
+                />
               </div>
 
               <div className="overflow-hidden rounded-2xl border border-[#ece8f0] bg-white">
@@ -2366,228 +2388,88 @@ export function EventPlannerPage() {
       </div>
 
       <Dialog
-        open={isNotePreviewOpen}
-        onOpenChange={(open) => {
-          setIsNotePreviewOpen(open);
-          if (!open) {
-            setSelectedPlannerNote(null);
-          }
-        }}
-      >
-        <DialogContent
-          showCloseButton={false}
-          className="max-w-[calc(100%-1rem)] rounded-2xl border border-[#e3dfea] bg-white p-0 sm:max-w-[860px]"
-        >
-          {selectedPlannerNote ? (
-            <article className="overflow-hidden rounded-2xl bg-white">
-              <header className="flex items-center justify-between border-b border-[#eee9f2] px-5 py-4">
-                <div>
-                  <p className="text-xs font-black uppercase tracking-[0.12em] text-[#8a8399]">
-                    Note Preview
-                  </p>
-                  <h3 className="mt-1 text-[24px] font-black tracking-tight text-[#1f1f21]">
-                    {selectedPlannerNote.title}
-                  </h3>
-                </div>
-
-                <div className="flex items-center gap-2">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      closePlannerNotePreview();
-                      handleEditPlannerNote(selectedPlannerNote);
-                    }}
-                    className="inline-flex h-9 items-center gap-2 rounded-lg border border-[#d7d0e2] px-3 text-xs font-bold text-[#5d5670] transition hover:bg-[#f4f1f8]"
-                  >
-                    <Pencil className="size-3.5" />
-                    Edit
-                  </button>
-                  <button
-                    type="button"
-                    onClick={closePlannerNotePreview}
-                    className="inline-flex size-9 items-center justify-center rounded-full text-[#9f97ad] transition hover:bg-[#f3eff8]"
-                    aria-label="Close note preview"
-                  >
-                    <X className="size-4" />
-                  </button>
-                </div>
-              </header>
-
-              <div className="grid gap-0 md:grid-cols-[1.08fr_0.92fr]">
-                <div className="border-b border-[#eee9f2] md:border-b-0 md:border-r">
-                  {selectedPlannerNote.imageDataUrl ? (
-                    <img
-                      src={selectedPlannerNote.imageDataUrl}
-                      alt={`${selectedPlannerNote.title} attachment`}
-                      className="h-full min-h-[280px] w-full object-cover"
-                    />
-                  ) : (
-                    <div className="flex min-h-[280px] items-center justify-center bg-linear-to-br from-[#fbf6ff] via-[#f8f5fb] to-[#fff7fb] px-6 text-center">
-                      <div>
-                        <div className="mx-auto inline-flex size-16 items-center justify-center rounded-2xl bg-[#f1589e]/10 text-[#f1589e]">
-                          <ImagePlus className="size-8" />
-                        </div>
-                        <p className="mt-3 text-sm font-semibold text-[#746e85]">
-                          No attachment on this note
-                        </p>
-                      </div>
-                    </div>
-                  )}
-                </div>
-
-                <div className="p-5">
-                  <div className="inline-flex rounded-full bg-[#ffe7ef] px-3 py-1 text-[10px] font-bold text-[#cf3a79]">
-                    Expanded view
-                  </div>
-
-                  <div className="mt-4 rounded-2xl border border-[#ece8f0] bg-[#faf8fd] p-4">
-                    <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[#8b84a0]">
-                      Details
-                    </p>
-                    <p className="mt-2 whitespace-pre-line text-[14px] leading-relaxed text-[#4d4858]">
-                      {selectedPlannerNote.body}
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </article>
-          ) : null}
-        </DialogContent>
-      </Dialog>
-
-      <Dialog
         open={isNoteModalOpen}
         onOpenChange={(open) => {
           setIsNoteModalOpen(open);
-          if (!open) {
-            resetNoteDraft();
-          }
+          if (!open) handleCloseInlineNote();
         }}
       >
         <DialogContent
           showCloseButton={false}
-          className="max-w-[calc(100%-1rem)] rounded-2xl border border-[#e3dfea] bg-white p-0 sm:max-w-[620px]"
+          className="max-w-[calc(100%-1rem)] rounded-xl border border-[#e3dfea] bg-white p-0 sm:max-w-[600px] overflow-hidden shadow-2xl"
         >
-          <form
-            className="px-6 py-5"
-            onSubmit={(event) => {
-              event.preventDefault();
-              handleSavePlannerNote();
-            }}
-          >
-            <div className="flex items-start justify-between gap-3">
-              <div>
-                <p className="text-xs font-black uppercase tracking-[0.12em] text-[#8a8399]">
-                  {editingPlannerNoteId ? 'Edit Note' : 'Add Note'}
-                </p>
-                <h3 className="mt-1 text-[24px] font-black tracking-tight text-[#1f1f21]">
-                  {editingPlannerNoteId ? 'Update your note' : 'Create a new note'}
-                </h3>
-              </div>
-
-              <button
-                type="button"
-                onClick={closePlannerNoteModal}
-                className="inline-flex size-8 items-center justify-center rounded-full text-[#9f97ad] transition hover:bg-[#f3eff8]"
-                aria-label="Close note modal"
-              >
-                <X className="size-4" />
-              </button>
-            </div>
-
-            <div className="mt-4 space-y-4">
-              <div>
-                <Label htmlFor="note-title" className="text-xs font-semibold text-[#746e85]">
-                  Title
-                </Label>
-                <Input
-                  id="note-title"
-                  value={noteDraftTitle}
-                  onChange={(event) => setNoteDraftTitle(event.target.value)}
-                  placeholder="Enter note title"
-                  className="mt-1 h-11 border-[#ddd7e8] text-[13px] font-semibold text-[#302c39]"
-                />
-              </div>
-
-              <div>
-                <Label htmlFor="note-body" className="text-xs font-semibold text-[#746e85]">
-                  Details
-                </Label>
-                <textarea
-                  id="note-body"
-                  value={noteDraftBody}
-                  onChange={(event) => setNoteDraftBody(event.target.value)}
-                  placeholder="Write the note details"
-                  className="mt-1 h-32 w-full rounded-lg border border-[#ddd7e8] bg-white px-3 py-2 text-[13px] text-[#302c39] outline-none placeholder:text-[#8a8495] focus:border-[#b29ace]"
-                />
-              </div>
-
-              <div className="rounded-xl border border-[#ece8f0] bg-[#faf8fd] p-3">
-                <div className="flex items-center justify-between gap-3">
-                  <div>
-                    <p className="text-xs font-semibold uppercase tracking-[0.08em] text-[#8b84a0]">
-                      Attachment
-                    </p>
-                    <p className="text-[12px] text-[#6f687f]">
-                      Add an image if the note needs one.
-                    </p>
-                  </div>
-
-                  <label className="inline-flex cursor-pointer items-center justify-center gap-2 rounded-md border border-[#d9d3e2] bg-white px-3 py-2 text-[12px] font-semibold text-[#4a4654] transition hover:border-[#b7b0c4]">
-                    <ImagePlus className="size-4" />
-                    Upload image
-                    <input
-                      type="file"
-                      accept="image/*"
-                      className="hidden"
-                      onChange={handlePlannerNoteImageChange}
-                    />
-                  </label>
+          <div className="flex max-h-[85vh] flex-col bg-white">
+            <div className="overflow-y-auto [scrollbar-width:none]">
+              {/* Image Header */}
+              {noteDraftImageDataUrl ? (
+                <div className="relative group bg-[#1f1f21]">
+                  <img
+                    src={noteDraftImageDataUrl}
+                    alt="Attachment"
+                    className="w-full h-auto max-h-[50vh] object-contain"
+                  />
                 </div>
-
-                {noteDraftImageDataUrl ? (
-                  <div className="mt-3 overflow-hidden rounded-lg border border-[#e0dbe6] bg-white">
-                    <img
-                      src={noteDraftImageDataUrl}
-                      alt="Uploaded note attachment"
-                      className="h-40 w-full object-cover"
-                    />
-                    <div className="flex items-center justify-between gap-2 border-t border-[#e0dbe6] px-3 py-2">
-                      <p className="text-[11px] font-semibold text-[#6f697c]">Image attached</p>
-                      <button
-                        type="button"
-                        onClick={() => setNoteDraftImageDataUrl(undefined)}
-                        className="inline-flex items-center gap-1 rounded-md border border-[#d9d3e2] px-2 py-1 text-[11px] font-semibold text-[#6f697c] transition hover:border-[#b7b0c4]"
-                      >
-                        <X className="size-3.5" />
-                        Remove
-                      </button>
-                    </div>
-                  </div>
-                ) : null}
-              </div>
-
-              {noteDraftError ? (
-                <p className="text-sm font-semibold text-[#c13a74]">{noteDraftError}</p>
               ) : null}
+
+              {/* Note Content */}
+              <div className="flex flex-col gap-4 p-6">
+                {noteDraftError && (
+                  <p className="text-xs font-bold text-[#d22067]">{noteDraftError}</p>
+                )}
+                <Input
+                  value={noteDraftTitle}
+                  onChange={(e) => setNoteDraftTitle(e.target.value)}
+                  placeholder="Title"
+                  className="h-auto border-none bg-transparent px-0 text-[22px] font-semibold text-[#202124] shadow-none focus-visible:ring-0 placeholder:text-[#8a8399]"
+                />
+                <textarea
+                  value={noteDraftBody}
+                  onChange={(e) => {
+                    setNoteDraftBody(e.target.value);
+                    e.target.style.height = 'auto';
+                    e.target.style.height = `${e.target.scrollHeight}px`;
+                  }}
+                  placeholder="Take a note..."
+                  className="min-h-[150px] w-full resize-none break-words whitespace-pre-wrap bg-transparent text-[15px] leading-relaxed text-[#3c4043] outline-none placeholder:text-[#5f6368]"
+                />
+              </div>
             </div>
 
-            <div className="mt-6 flex items-center justify-end gap-2">
+            {/* Bottom Toolbar */}
+            <div className="flex items-center justify-between border-t border-[#f1f3f4] px-4 py-3 bg-white">
+              <div className="flex items-center gap-2 text-[#5f6368]">
+                <label className="cursor-pointer rounded-full p-2 hover:bg-[#f1f3f4] transition">
+                  <ImagePlus className="size-5" />
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={handlePlannerNoteImageChange}
+                  />
+                </label>
+                {editingPlannerNoteId && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      handleDeletePlannerNote(editingPlannerNoteId);
+                      setIsNoteModalOpen(false);
+                    }}
+                    className="cursor-pointer rounded-full p-2 hover:bg-[#ffeef5] hover:text-[#d22067] transition"
+                    aria-label="Delete note"
+                  >
+                    <Trash2 className="size-5" />
+                  </button>
+                )}
+              </div>
               <button
                 type="button"
-                onClick={closePlannerNoteModal}
-                className="inline-flex h-10 items-center justify-center rounded-lg border border-[#d7d0e2] px-4 text-sm font-bold text-[#5d5670] transition hover:bg-[#f4f1f8]"
+                onClick={handleCloseInlineNote}
+                className="rounded-md px-6 py-2 text-[14px] font-semibold text-[#3c4043] hover:bg-[#f1f3f4] transition"
               >
-                Cancel
-              </button>
-              <button
-                type="submit"
-                className="inline-flex h-10 items-center justify-center rounded-lg bg-linear-to-r from-[#f1589e] via-[#d735b3] to-[#8a1fd0] px-4 text-sm font-black text-white shadow-[0_10px_22px_rgba(125,31,186,0.34)]"
-              >
-                Save note
+                Close
               </button>
             </div>
-          </form>
+          </div>
         </DialogContent>
       </Dialog>
 

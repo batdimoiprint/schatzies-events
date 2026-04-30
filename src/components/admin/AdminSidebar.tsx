@@ -19,7 +19,7 @@ import { useAuth } from '@/hooks/useAuth';
 
 const adminNavItems = [
   { label: 'Dashboard', to: '/admin', icon: LayoutDashboard },
-  { label: 'Inquiries', to: '/admin/inquiries', icon: MailQuestion, },
+  { label: 'Inquiries', to: '/admin/inquiries', icon: MailQuestion },
   { label: 'Message', to: '/admin/message', icon: MessageSquareDotIcon },
   { label: 'Event Manager', to: '/admin/event-manager', icon: CalendarCheck },
   { label: 'Event Planner', to: '/admin/event-planner', icon: NotebookPen },
