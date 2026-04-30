@@ -9,17 +9,39 @@ import {
 } from '@phosphor-icons/react';
 import { generateRSVPQRCode, downloadQRCode } from '@/lib/qrCodeGenerator';
 import LoadingScreen from '@/components/ui/LoadingScreen';
-import { getRSVPList, scanGuest } from '@/api/rsvp';
+import { getRSVPList } from '@/api/rsvp';
 import { getEventManagerEvents } from '@/api/events';
 import type { RSVPResponse } from '@/types/rsvp';
-import { Html5QrcodeScanner } from 'html5-qrcode';
 import { useAuth } from '@/hooks/useAuth';
 
 type State = 'idle' | 'generated' | 'active';
 
+// Backend response item that can have various formats
+interface BackendRSVPItem {
+  status?: string;
+  isScanned?: boolean | string | { BOOL: boolean };
+  guestId?: string;
+  SK?: string;
+  id?: string;
+  guestfirstName?: string;
+  firstName?: string;
+  first_name?: string;
+  guestlastName?: string;
+  lastName?: string;
+  last_name?: string;
+  guestmiddleName?: string;
+  middleName?: string;
+  middle_name?: string;
+  contactNumber?: string;
+  contact_number?: string;
+  message?: string;
+  qrCode?: string | { S: string };
+  [key: string]: unknown;
+}
+
 export function QrCodePage() {
   const [state, setState] = useState<State>('idle');
-  const [activeTab, setActiveTab] = useState<'overview' | 'guest-list' | 'scanner'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'guest-list'>('overview');
   const [qrCode, setQrCode] = useState<string>('');
   const [currentQRId, setCurrentQRId] = useState<string>('');
   const [isLoading, setIsLoading] = useState(false);
@@ -30,12 +52,6 @@ export function QrCodePage() {
   const [rsvps, setRsvps] = useState<RSVPResponse[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('All');
-  const [scanResult, setScanResult] = useState<{
-    success: boolean;
-    message: string;
-    type: 'success' | 'warning' | 'error';
-    guest?: { firstName: string; lastName: string; isScanned: boolean };
-  } | null>(null);
   const [isEventsLoading, setIsEventsLoading] = useState(true);
 
   const { user } = useAuth();
@@ -64,7 +80,7 @@ export function QrCodePage() {
     if (user) {
       fetchEvents();
     }
-  }, [user?.user_id]); // Only re-run if the logged-in user changes
+  }, [user]); // Re-run if user changes
 
   useEffect(() => {
     // Load persisted QR code and fetch guests for the specific selected event
@@ -98,13 +114,13 @@ export function QrCodePage() {
         try {
           const altData = await getRSVPList(`EVENT#${eventId}`);
           if (altData && altData.length > 0) data = altData;
-        } catch (e) {
+        } catch {
           /* ignore fallback error */
         }
       }
 
       // Map database fields to the format the UI expects
-      const mappedData = (Array.isArray(data) ? data : []).map((item: any) => {
+      const mappedData = (Array.isArray(data) ? data : []).map((item: BackendRSVPItem) => {
         const rawStatus = (item.status || '').toString().toUpperCase();
         const isAttending =
           rawStatus === 'ATTENDING' || rawStatus === 'CONFIRMED' || rawStatus === 'TRUE';
@@ -112,25 +128,32 @@ export function QrCodePage() {
         // Handle DynamoDB BOOL format or standard boolean
         const scanned =
           item.isScanned === true ||
-          (item.isScanned && typeof item.isScanned === 'object' && item.isScanned.BOOL === true) ||
+          (item.isScanned &&
+            typeof item.isScanned === 'object' &&
+            'BOOL' in item.isScanned &&
+            (item.isScanned as { BOOL: boolean }).BOOL === true) ||
           item.isScanned === 'true';
 
         return {
-          id: item.guestId || item.SK?.split('#')[1] || item.id,
-          guestId: item.guestId || item.SK?.split('#')[1] || item.id,
-          firstName: item.guestfirstName || item.firstName || item.first_name || 'Guest',
-          lastName: item.guestlastName || item.lastName || item.last_name || '',
-          middleName: item.guestmiddleName || item.middleName || item.middle_name || '',
-          contactNumber: item.contactNumber || item.contact_number || '',
-          status: isAttending ? 'Attending' : 'Not Attending',
+          id: String(item.guestId || item.SK?.split('#')[1] || item.id || ''),
+          guestId: String(item.guestId || item.SK?.split('#')[1] || item.id || ''),
+          firstName: String(item.guestfirstName || item.firstName || item.first_name || 'Guest'),
+          lastName: String(item.guestlastName || item.lastName || item.last_name || ''),
+          middleName: String(item.guestmiddleName || item.middleName || item.middle_name || ''),
+          contactNumber: String(item.contactNumber || item.contact_number || ''),
+          status: (isAttending ? 'Attending' : 'Not Attending') as 'Attending' | 'Not Attending',
           isScanned: scanned,
-          qrCode: item.qrCode?.S || item.qrCode || '', // CRITICAL: Include the Base64 data!
-          message: item.message || '',
+          qrCode: String(
+            typeof item.qrCode === 'object' && item.qrCode && 'S' in item.qrCode
+              ? (item.qrCode as { S: string }).S
+              : item.qrCode || ''
+          ),
+          message: String(item.message || ''),
         };
       });
 
       setRsvps(mappedData);
-    } catch (err: any) {
+    } catch (err) {
       console.error('Error fetching RSVPs:', err);
       // Fallback or local notification could go here if needed
     } finally {
@@ -143,193 +166,6 @@ export function QrCodePage() {
       fetchRSVPs(selectedEventId);
     }
   }, [selectedEventId, activeTab]);
-
-  useEffect(() => {
-    if (activeTab === 'scanner' && selectedEventId) {
-      const scanner = new Html5QrcodeScanner(
-        'reader',
-        {
-          fps: 20,
-          qrbox: { width: 250, height: 250 },
-          aspectRatio: 1.0,
-          disableFlip: false,
-        },
-        /* verbose= */ false
-      );
-
-      const onScanSuccess = async (decodedText: string) => {
-        let eventId = '';
-        let guestId = '';
-
-        if (decodedText.startsWith('{')) {
-          const data = JSON.parse(decodedText);
-          eventId = data.event_id || data.eventId;
-          guestId = data.guest_id || data.guestId || data.rsvpId;
-        } else if (decodedText.includes('/invitation/')) {
-          // Handle new format: /invitation/eventId/guestId
-          const parts = decodedText.split('/invitation/')[1].split('/');
-          eventId = parts[0];
-          guestId = parts[1];
-        } else {
-          // Handle query param format: ?eventId=...&rsvpId=...
-          const params = new URLSearchParams(decodedText.split('?')[1] || decodedText);
-          eventId = params.get('event_id') || params.get('eventId') || '';
-          guestId = params.get('guest_id') || params.get('guestId') || params.get('rsvpId') || '';
-
-          // If guestId is a full URL (legacy format), extract only the ID from the path
-          if (guestId.includes('/invitation/')) {
-            guestId = guestId.split('/').filter(Boolean).pop() || guestId;
-          }
-        }
-
-        if (!eventId || !guestId || eventId !== selectedEventId) {
-          setScanResult({ success: false, message: 'Invalid or incorrect QR Code', type: 'error' });
-          return;
-        }
-
-        // Only try to pause if the scanner is actually in a scanning state (camera)
-        try {
-          if (scanner.getState() === 1) scanner.pause(true);
-        } catch (e) {
-          /* ignore pause error */
-        }
-
-        // NEW: Search the local RSVP list to find the REAL backend ID for this guest
-        console.log('DEBUG - SCANNED ID FROM QR:', guestId);
-        const matchedGuest = rsvps.find((g) => {
-          const cleanGuestId = guestId.replace('RSVP#', '').replace('guest-', '');
-          const isMatch =
-            g.id === cleanGuestId ||
-            g.guestId === cleanGuestId ||
-            g.SK?.includes(cleanGuestId) ||
-            guestId.includes(g.id || '');
-          if (isMatch) console.log('DEBUG - MATCHED GUEST IN LIST:', g.firstName, g.lastName);
-          return isMatch;
-        });
-
-        if (!matchedGuest) {
-          console.warn('DEBUG - NO MATCH FOUND IN GUEST LIST FOR ID:', guestId);
-          console.log(
-            'DEBUG - CURRENT GUEST LIST IDS:',
-            rsvps.map((g) => g.id)
-          );
-        }
-
-        // Send the scan to the backend
-        let response: any = { success: false };
-        try {
-          // Try every possible variation of the data
-
-          const rawBase64 = matchedGuest?.qrCode?.includes('base64,')
-            ? matchedGuest.qrCode.split('base64,')[1]
-            : matchedGuest?.qrCode;
-
-          // NEW: Repair corrupted Base64 headers (tVBOR -> iVBOR)
-          const repairedBase64 = matchedGuest?.qrCode?.replace('tVBOR', 'iVBOR');
-
-          const scanAttempts = [
-            { name: 'Repaired Base64', eid: eventId, qrc: repairedBase64 },
-            { name: 'Exact DB qrCode', eid: eventId, qrc: matchedGuest?.qrCode },
-            { name: 'Base64 (No Prefix)', eid: eventId, qrc: rawBase64 },
-            { name: 'Guest UUID', eid: eventId, qrc: guestId },
-            { name: 'Full URL', eid: eventId, qrc: decodedText },
-          ];
-
-          for (const attempt of scanAttempts) {
-            if (!attempt.qrc) {
-              console.log(`DEBUG - SKIPPING ATTEMPT ${attempt.name} (Value is empty)`);
-              continue;
-            }
-            console.log(`DEBUG - TRYING SCAN ATTEMPT: ${attempt.name}`, {
-              eid: attempt.eid,
-              qrc: attempt.qrc.substring(0, 50) + '...',
-            });
-            try {
-              const result = await scanGuest(attempt.eid, attempt.qrc);
-              const isResultSuccess =
-                result.success ||
-                result.id ||
-                result.guest ||
-                result.SK ||
-                result.guestName ||
-                (result.message || '').toLowerCase().includes('checked in') ||
-                (result.message || '').toLowerCase().includes('already');
-
-              if (isResultSuccess) {
-                response = result;
-                break;
-              }
-              response = result;
-            } catch (e: any) {
-              if (e.response?.status !== 400) throw e;
-              response = e.response?.data || { success: false, message: e.message };
-            }
-          }
-
-          const isFinalSuccess =
-            response.success ||
-            response.id ||
-            response.guest ||
-            response.SK ||
-            response.guestName ||
-            (response.message || '').toLowerCase().includes('checked in') ||
-            (response.message || '').toLowerCase().includes('already');
-
-          if (isFinalSuccess) {
-            const guest = response.guest || response;
-            const firstName =
-              guest.guestName ||
-              guest.guestfirstName ||
-              guest.firstName ||
-              guest.first_name ||
-              'Guest';
-            const lastName = guest.guestlastName || guest.lastName || guest.last_name || '';
-
-            setScanResult({
-              success: true,
-              message: response.message || 'Guest checked in successfully',
-              type: (response.message || '').toLowerCase().includes('already')
-                ? 'warning'
-                : 'success',
-              guest: { firstName, lastName, isScanned: true },
-            });
-            fetchRSVPs(selectedEventId);
-          } else {
-            setScanResult({
-              success: false,
-              message: response.message || response.error || 'Scan failed (Invalid QR)',
-              type: 'error',
-            });
-          }
-        } catch (err: any) {
-          console.error('Scan error:', err);
-          const serverMessage =
-            err?.response?.data?.message || err?.response?.data?.error || err.message;
-          setScanResult({ success: false, message: `Scan Error: ${serverMessage}`, type: 'error' });
-        } finally {
-          // Re-enable scanner after a delay
-          setTimeout(() => {
-            if (scanner.getState() === 2) scanner.resume();
-          }, 4000);
-        }
-      };
-
-      scanner.render(onScanSuccess, (_err) => {});
-      return () => {
-        scanner.clear().catch((error) => console.error('Failed to clear scanner', error));
-      };
-    }
-  }, [activeTab, selectedEventId, rsvps]);
-
-  useEffect(() => {
-    let timeout: NodeJS.Timeout;
-    if (scanResult) {
-      timeout = setTimeout(() => setScanResult(null), 3000);
-    }
-    return () => {
-      if (timeout) clearTimeout(timeout);
-    };
-  }, [scanResult]);
 
   const generateQRCode = async () => {
     if (!selectedEventId) return;
@@ -419,10 +255,10 @@ export function QrCodePage() {
       {state === 'active' && (
         <div className="mb-6 flex items-end justify-between border-b border-gray-200">
           <div className="flex gap-6">
-            {['overview', 'guest-list', 'scanner'].map((tab) => (
+            {['overview', 'guest-list'].map((tab) => (
               <button
                 key={tab}
-                onClick={() => setActiveTab(tab as any)}
+                onClick={() => setActiveTab(tab as 'overview' | 'guest-list')}
                 className={`pb-2 text-sm font-semibold capitalize transition ${activeTab === tab ? 'border-b-2 border-[#df2b80] text-[#df2b80]' : 'text-[#696373] hover:text-[#2d2834]'}`}
               >
                 {tab.replace('-', ' ')}
@@ -649,37 +485,7 @@ export function QrCodePage() {
         </div>
       )}
 
-      {state === 'active' && activeTab === 'scanner' && (
-        <div className="animate-[fadeIn_0.3s_ease-out] rounded-xl bg-white p-8 shadow-md border border-gray-100">
-          <div className="mx-auto max-w-md">
-            <h3 className="mb-4 text-center text-lg font-bold text-[#2d2834]">
-              Scan Guest QR Code
-            </h3>
-            <div
-              id="reader"
-              className="overflow-hidden rounded-xl border-2 border-dashed border-gray-200 bg-gray-50 shadow-inner"
-            ></div>
-            {scanResult && (
-              <div
-                className={`mt-6 rounded-lg p-4 text-center animate-in fade-in zoom-in duration-300 border ${scanResult.type === 'success' ? 'bg-green-100 text-green-800 border-green-200' : scanResult.type === 'warning' ? 'bg-yellow-100 text-yellow-800 border-yellow-200' : 'bg-red-100 text-red-800 border-red-200'}`}
-              >
-                <p className="text-sm font-bold">{scanResult.message}</p>
-                {scanResult.guest && (
-                  <p className="mt-1 text-xs font-medium text-gray-700">
-                    Guest: {scanResult.guest.firstName} {scanResult.guest.lastName}
-                  </p>
-                )}
-                <p className="mt-2 text-[10px] opacity-60">Resetting in 3 seconds...</p>
-              </div>
-            )}
-            {!scanResult && (
-              <p className="mt-6 text-center text-xs text-[#696373]">
-                Position the QR code within the frame to scan.
-              </p>
-            )}
-          </div>
-        </div>
-      )}
+
 
       <style>{`
         @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
