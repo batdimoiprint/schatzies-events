@@ -26,8 +26,21 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Set deploy target
+        id: target
+        run: |
+          if [ "${{ github.ref_name }}" = "master" ]; then
+            echo "s3_prefix=s3://schatzies-events-deployments" >> $GITHUB_OUTPUT
+            echo "cf_path=/*" >> $GITHUB_OUTPUT
+            echo "base_path=/" >> $GITHUB_OUTPUT
+          else
+            echo "s3_prefix=s3://schatzies-events-deployments/dev" >> $GITHUB_OUTPUT
+            echo "cf_path=/dev/*" >> $GITHUB_OUTPUT
+            echo "base_path=/dev/" >> $GITHUB_OUTPUT
+          fi
+
       - name: Build frontend
-        run: pnpm build
+        run: VITE_BASE_PATH=${{ steps.target.outputs.base_path }} pnpm build
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v2

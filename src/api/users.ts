@@ -15,6 +15,8 @@ export interface UserPayload {
   gender?: string;
   contactNumber?: string;
   role?: string;
+  inquiryId?: string;
+  profilePic?: string | File;
 }
 
 export interface UserResponse {
@@ -32,6 +34,7 @@ export interface UserResponse {
   gender: string;
   contactNumber: string;
   role: string;
+  profilePic?: string;
   created_at: string;
 }
 
@@ -66,9 +69,14 @@ export const createUser = async (payload: UserPayload): Promise<UserResponse> =>
 
 export const updateUser = async (
   userId: string,
-  payload: Partial<UserPayload>
+  payload: Partial<UserPayload> | FormData
 ): Promise<UserResponse> => {
-  const response = await axiosInstance.put(`/users/${userId}`, payload);
+  const isFormData = payload instanceof FormData;
+  const response = await axiosInstance.patch(`/users/${userId}`, payload, {
+    headers: {
+      'Content-Type': isFormData ? 'multipart/form-data' : 'application/json',
+    },
+  });
   return response.data.user;
 };
 

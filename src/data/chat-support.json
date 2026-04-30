@@ -6,12 +6,33 @@
   "knowledge_base": [
     {
       "category": "SPECIALIZE / EVENTS",
-      "keywords": ["specialize", "specialization", "events", "type", "offer", "weddings", "wedding", "debut", "debuts", "what do you do"],
+      "keywords": [
+        "specialize",
+        "specialization",
+        "events",
+        "type",
+        "offer",
+        "weddings",
+        "wedding",
+        "debut",
+        "debuts",
+        "what do you do"
+      ],
       "answer": "Schatzies Events PH specializes in **Luxury Weddings** and **Grand Debuts**. We offer comprehensive all-in packages that include catering, styling, photo/video, and coordination to ensure a seamless celebration."
     },
     {
       "category": "LOCATION / OFFICE",
-      "keywords": ["location", "office", "branch", "address", "where", "find you", "visit", "place", "area"],
+      "keywords": [
+        "location",
+        "office",
+        "branch",
+        "address",
+        "where",
+        "find you",
+        "visit",
+        "place",
+        "area"
+      ],
       "answer": "We have two physical branches you can visit:\n- 📍 **Quezon City**\n- 📍 **Tagaytay**",
       "extra": {
         "locations": {
@@ -22,12 +43,34 @@
     },
     {
       "category": "BOOKING / INQUIRY",
-      "keywords": ["book", "booking", "inquire", "inquiry", "start", "reserve", "reservation", "how to", "process", "consult", "steps"],
+      "keywords": [
+        "book",
+        "booking",
+        "inquire",
+        "inquiry",
+        "start",
+        "reserve",
+        "reservation",
+        "how to",
+        "process",
+        "consult",
+        "steps"
+      ],
       "answer": "To begin your journey with us:\n1. Reach out via our contact numbers or Facebook page to check for date availability.\n2. Visit our Quezon City or Tagaytay branch for a formal consultation.\n3. Discuss your vision and choose the package that best fits your needs and budget."
     },
     {
       "category": "CONTACT",
-      "keywords": ["contact", "reach", "number", "phone", "email", "facebook", "fb", "message", "call"],
+      "keywords": [
+        "contact",
+        "reach",
+        "number",
+        "phone",
+        "email",
+        "facebook",
+        "fb",
+        "message",
+        "call"
+      ],
       "answer": "You can reach us through any of the following contact details:",
       "extra": {
         "contact": {
@@ -39,7 +82,16 @@
     },
     {
       "category": "DOWN PAYMENT / RESERVATION",
-      "keywords": ["down payment", "dp", "secure", "slot", "lock", "date", "reserve", "reservation fee"],
+      "keywords": [
+        "down payment",
+        "dp",
+        "secure",
+        "slot",
+        "lock",
+        "date",
+        "reserve",
+        "reservation fee"
+      ],
       "answer": "We offer a **low down payment** option to secure your event date and lock in current package pricing while you continue with your planning."
     },
     {
@@ -49,7 +101,15 @@
     },
     {
       "category": "OVERSEAS",
-      "keywords": ["overseas", "abroad", "ofw", "international", "remote", "not in philippines", "outside"],
+      "keywords": [
+        "overseas",
+        "abroad",
+        "ofw",
+        "international",
+        "remote",
+        "not in philippines",
+        "outside"
+      ],
       "answer": "Absolutely! Schatzies Events is a **top choice for OFWs and overseas couples**. We handle all coordination and details remotely so everything is perfectly ready when you arrive."
     },
     {
@@ -59,7 +119,22 @@
     },
     {
       "category": "WEDDING PACKAGES",
-      "keywords": ["wedding package", "wedding packages", "bloom", "fascinating", "windy", "de luxe", "grandezza", "wedding price", "wedding cost", "wedding rates", "packages", "package", "price", "cost"],
+      "keywords": [
+        "wedding package",
+        "wedding packages",
+        "bloom",
+        "fascinating",
+        "windy",
+        "de luxe",
+        "grandezza",
+        "wedding price",
+        "wedding cost",
+        "wedding rates",
+        "packages",
+        "package",
+        "price",
+        "cost"
+      ],
       "answer": "We offer 5 wedding tiers to suit different visions:",
       "extra": {
         "packages": [
@@ -73,7 +148,24 @@
     },
     {
       "category": "DEBUT PACKAGES",
-      "keywords": ["debut package", "debut packages", "charming", "irresistible", "flawless", "elegancia", "grandiosa", "debut price", "debut cost", "debut rates", "18th", "birthday", "packages", "package", "price", "cost"],
+      "keywords": [
+        "debut package",
+        "debut packages",
+        "charming",
+        "irresistible",
+        "flawless",
+        "elegancia",
+        "grandiosa",
+        "debut price",
+        "debut cost",
+        "debut rates",
+        "18th",
+        "birthday",
+        "packages",
+        "package",
+        "price",
+        "cost"
+      ],
       "answer": "We offer 5 grand debut tiers for a memorable 18th birthday:",
       "extra": {
         "packages": [
@@ -92,12 +184,28 @@
     },
     {
       "category": "18 ROSES / TREASURES",
-      "keywords": ["18 roses", "18 treasures", "ceremony", "traditions", "cotillion", "debut traditions"],
+      "keywords": [
+        "18 roses",
+        "18 treasures",
+        "ceremony",
+        "traditions",
+        "cotillion",
+        "debut traditions"
+      ],
       "answer": "Yes! All debut packages include the full coordination and physical setup for both the **18 Roses** and **18 Treasures** ceremonies."
     },
     {
       "category": "INCLUSIONS / ALL-IN",
-      "keywords": ["included", "inclusions", "all-in", "complete", "what's in", "package details", "services", "coverage"],
+      "keywords": [
+        "included",
+        "inclusions",
+        "all-in",
+        "complete",
+        "what's in",
+        "package details",
+        "services",
+        "coverage"
+      ],
       "answer": "Our packages are comprehensive and all-inclusive, featuring:",
       "extra": {
         "inclusions": [
@@ -113,7 +221,15 @@
     },
     {
       "category": "COORDINATION",
-      "keywords": ["coordination", "coordinator", "planner", "day-of", "actual day", "program flow", "planning"],
+      "keywords": [
+        "coordination",
+        "coordinator",
+        "planner",
+        "day-of",
+        "actual day",
+        "program flow",
+        "planning"
+      ],
       "answer": "Yes! Our team provides **full day-of coordination** to manage the entire program flow and ensure everything runs smoothly."
     },
     {
@@ -123,17 +239,53 @@
     },
     {
       "category": "CATERING / FOOD",
-      "keywords": ["catering", "food", "buffet", "menu", "meals", "eat", "dishes", "pasta", "grazing", "cuisine"],
+      "keywords": [
+        "catering",
+        "food",
+        "buffet",
+        "menu",
+        "meals",
+        "eat",
+        "dishes",
+        "pasta",
+        "grazing",
+        "cuisine"
+      ],
       "answer": "All packages include a full buffet service:\n- Soup, Pork, Beef, Chicken, Fish, Vegetable, and Dessert\n- Refillable drinks\n- Upgraded packages include a **Pasta Bar** or **Grazing Table**"
     },
     {
       "category": "PHOTO / VIDEO",
-      "keywords": ["photo", "video", "photographer", "videographer", "coverage", "drone", "SDE", "same day edit", "prenup", "save the date", "photography", "cinematic"],
+      "keywords": [
+        "photo",
+        "video",
+        "photographer",
+        "videographer",
+        "coverage",
+        "drone",
+        "SDE",
+        "same day edit",
+        "prenup",
+        "save the date",
+        "photography",
+        "cinematic"
+      ],
       "answer": "Every package includes high-quality coverage:\n- 📷 Main photographer & videographer\n- 🎬 Prenup / pre-debut pictorial\n- 🎥 Save-the-Date video\n- 🚁 Drone shots\n- Higher tiers: Cinematic equipment and magnetic leatherette albums"
     },
     {
       "category": "HAIR / MAKEUP",
-      "keywords": ["hair", "makeup", "hmua", "airbrush", "grooming", "beauty", "bride", "groom", "debutante", "entourage", "styling"],
+      "keywords": [
+        "hair",
+        "makeup",
+        "hmua",
+        "airbrush",
+        "grooming",
+        "beauty",
+        "bride",
+        "groom",
+        "debutante",
+        "entourage",
+        "styling"
+      ],
       "answer": "Yes! **Professional airbrush makeup** is included for the main celebrant. Higher tiers also include additional traditional makeup services for family members or the entourage."
     }
   ]

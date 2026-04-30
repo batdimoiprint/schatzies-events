@@ -1,6 +1,18 @@
 MIT License
 
-Copyright (c) [2026] [John Kenny Reyes]
+Copyright (c) 2026 Schatzies Events Development Team
+
+Contributors:
+- Canada, Aaron M.
+- Cataluna, Jhone Paul Jr. B.
+- Dela Cruz, Juan Carlo C.
+- Jumuad, Samantha Queen C.
+- Manipon, John Renus L.
+- Moreno, Louise C.
+- Opinion, Rain Heart B.
+- Perandos, Christian Jake
+- Reyes, John Kenny
+- Santiago, Rain Jaztine N.
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal

@@ -20,13 +20,23 @@ import {
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { getUsers, createUser, deleteUser, type UserResponse, type UserPayload } from '@/api/users';
+import {
+  getUsers,
+  createUser,
+  deleteUser,
+  updateUser,
+  type UserResponse,
+  type UserPayload,
+} from '@/api/users';
 import { Plus, Trash2, Users, UserCircle, Briefcase, Shield } from 'lucide-react';
+import { UserDetailsPopover } from '@/components/admin/UserDetailsPopover';
 
 const initialFormState: UserPayload = {
   firstName: '',
@@ -52,6 +62,19 @@ export function UsersManagement() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [formData, setFormData] = useState<UserPayload>(initialFormState);
   const [submitting, setSubmitting] = useState(false);
+
+  // State for role confirmation dialog
+  const [isConfirmOpen, setIsConfirmOpen] = useState(false);
+  const [pendingChange, setPendingChange] = useState<{
+    userId: string;
+    userName: string;
+    oldRole: string;
+    newRole: string;
+  } | null>(null);
+
+  // State for delete confirmation dialog
+  const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
+  const [userToDelete, setUserToDelete] = useState<{ id: string; name: string } | null>(null);
 
   const fetchUsers = async () => {
     try {
@@ -96,14 +119,53 @@ export function UsersManagement() {
     }
   };
 
-  const handleDelete = async (userId: string) => {
-    if (!confirm('Are you sure you want to delete this user?')) return;
+  const handleRoleChange = async (
+    userId: string,
+    userName: string,
+    currentRole: string,
+    newRole: string
+  ) => {
+    if (currentRole === newRole) return;
+
+    setPendingChange({ userId, userName, oldRole: currentRole, newRole });
+    setIsConfirmOpen(true);
+  };
+
+  const confirmRoleChange = async () => {
+    if (!pendingChange) return;
+
     try {
-      await deleteUser(userId);
+      setLoading(true);
+      await updateUser(pendingChange.userId, { role: pendingChange.newRole });
       await fetchUsers();
+      setIsConfirmOpen(false);
+      setPendingChange(null);
+    } catch (err) {
+      console.error('Failed to update user role:', err);
+      setError('Failed to update user role');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDelete = async (userId: string, userName: string) => {
+    setUserToDelete({ id: userId, name: userName });
+    setIsDeleteConfirmOpen(true);
+  };
+
+  const confirmDelete = async () => {
+    if (!userToDelete) return;
+    try {
+      setLoading(true);
+      await deleteUser(userToDelete.id);
+      await fetchUsers();
+      setIsDeleteConfirmOpen(false);
+      setUserToDelete(null);
     } catch (err) {
       console.error('Failed to delete user:', err);
       setError('Failed to delete user');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -356,44 +418,101 @@ export function UsersManagement() {
               </TableRow>
             ) : (
               users.map((user) => (
-                <TableRow key={user.user_id}>
-                  <TableCell>
-                    {user.firstName} {user.middleName} {user.lastName}
-                  </TableCell>
-                  <TableCell>{user.email}</TableCell>
-                  <TableCell>
-                    <span
-                      className={`px-2 py-1 rounded text-xs font-medium ${
-                        user.role === 'ADMIN'
-                          ? 'bg-purple-100 text-purple-800'
-                          : user.role === 'ORGANIZER'
-                            ? 'bg-blue-100 text-blue-800'
-                            : 'bg-gray-100 text-gray-800'
-                      }`}
-                    >
-                      {user.role}
-                    </span>
-                  </TableCell>
-                  <TableCell>{user.contactNumber || '-'}</TableCell>
-                  <TableCell>
-                    {user.created_at ? new Date(user.created_at).toLocaleDateString() : '-'}
-                  </TableCell>
-                  <TableCell>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleDelete(user.user_id)}
-                      className="text-red-600 hover:text-red-800"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </Button>
-                  </TableCell>
-                </TableRow>
+                <UserDetailsPopover key={user.user_id} user={user} onUpdate={fetchUsers}>
+                  <TableRow className="cursor-pointer hover:bg-muted/50">
+                    <TableCell>
+                      {user.firstName} {user.middleName} {user.lastName}
+                    </TableCell>
+                    <TableCell>{user.email}</TableCell>
+                    <TableCell>
+                      <div onClick={(e) => e.stopPropagation()}>
+                        <Select
+                          value={user.role}
+                          onValueChange={(value) =>
+                            handleRoleChange(
+                              user.user_id,
+                              `${user.firstName} ${user.lastName}`,
+                              user.role,
+                              value
+                            )
+                          }
+                        >
+                          <SelectTrigger className="h-7 w-[110px] text-xs">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="CLIENT">CLIENT</SelectItem>
+                            <SelectItem value="ORGANIZER">ORGANIZER</SelectItem>
+                            <SelectItem value="ADMIN">ADMIN</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </TableCell>
+                    <TableCell>{user.contactNumber || '-'}</TableCell>
+                    <TableCell>
+                      {user.created_at ? new Date(user.created_at).toLocaleDateString() : '-'}
+                    </TableCell>
+                    <TableCell>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDelete(user.user_id, `${user.firstName} ${user.lastName}`);
+                        }}
+                        className="text-red-600 hover:text-red-800"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                </UserDetailsPopover>
               ))
             )}
           </TableBody>
         </Table>
       </div>
+
+      {/* Role Change Confirmation Dialog */}
+      <Dialog open={isConfirmOpen} onOpenChange={setIsConfirmOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Confirm Role Change</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to change the role of <strong>{pendingChange?.userName}</strong>{' '}
+              from <span className="font-semibold">{pendingChange?.oldRole}</span> to{' '}
+              <span className="font-semibold">{pendingChange?.newRole}</span>?
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsConfirmOpen(false)}>
+              Cancel
+            </Button>
+            <Button onClick={confirmRoleChange}>Confirm Change</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog open={isDeleteConfirmOpen} onOpenChange={setIsDeleteConfirmOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Confirm Delete User</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to delete <strong>{userToDelete?.name}</strong>? This action
+              cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsDeleteConfirmOpen(false)}>
+              Cancel
+            </Button>
+            <Button variant="destructive" onClick={confirmDelete}>
+              Delete User
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

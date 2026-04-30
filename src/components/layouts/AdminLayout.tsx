@@ -1,6 +1,7 @@
 import { Outlet, Navigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import AdminSidebar from '@/components/admin/AdminSidebar';
+import { AdminTopBar } from '@/components/admin/AdminTopBar';
 
 export function AdminLayout() {
   const { user, isAuthenticated, isLoading } = useAuth();
@@ -27,6 +28,7 @@ export function AdminLayout() {
         </aside>
 
         <div className="flex min-h-0 flex-1 flex-col">
+          <AdminTopBar />
           <main className="min-h-0 flex-1 overflow-y-auto px-4 py-6 md:px-8">
             <Outlet />
           </main>

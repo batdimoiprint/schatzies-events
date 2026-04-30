@@ -1,6 +1,6 @@
 import axiosInstance from './axios-instance';
 
-export type EventStatus = 'Completed' | 'Pending' | 'Cancelled';
+export type EventStatus = 'Completed' | 'Pending' | 'Execution' | 'Cancelled';
 
 export interface EventManagerEvent {
   id: string;
@@ -46,6 +46,14 @@ interface BackendEventDetails extends BackendEvent {
 export interface CreateEventPayload {
   title: string;
   startDate: string;
+  client_id?: string;
+  clientId?: string;
+  organizer_id?: string;
+  organizerId?: string;
+  eventPackageKey?: string;
+  eventLocation?: string;
+  eventDate?: string;
+  eventTime?: string;
   endDate?: string;
   eventType?: string;
   eventPackage?: string;
@@ -98,16 +106,10 @@ function mapEventStatus(status?: string): EventStatus {
   const normalized = String(status || '')
     .trim()
     .toLowerCase();
-
-  if (normalized === 'completed' || normalized === 'confirmed') {
-    return 'Completed';
-  }
-
-  if (normalized === 'cancelled' || normalized === 'canceled') {
-    return 'Cancelled';
-  }
-
-  return 'Pending';
+  if (normalized === 'completed' || normalized === 'confirmed') return 'Completed';
+  if (normalized === 'execution') return 'Execution';
+  if (normalized === 'cancelled' || normalized === 'canceled') return 'Cancelled';
+  return 'Pending'; // Acts as Planning
 }
 
 function mapToManagerRow(
@@ -178,4 +180,9 @@ export async function updateEvent(
 
 export async function deleteEvent(eventId: string): Promise<void> {
   await axiosInstance.delete(`/events/${eventId}`);
+}
+
+export async function getEventVendors(eventId: string) {
+  const response = await axiosInstance.get(`/events/${eventId}/vendors`);
+  return response.data;
 }

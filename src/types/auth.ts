@@ -15,7 +15,14 @@ export interface User {
   contactNumber?: string;
   email: string;
   role: string;
+  profilePic?: string;
   created_at?: string;
+}
+
+export interface LoginResult {
+  user: User | null;
+  requiresPasswordReset?: boolean;
+  resetToken?: string | null;
 }
 
 export interface AuthContextType {
@@ -23,7 +30,7 @@ export interface AuthContextType {
   isAuthenticated: boolean;
   isLoading: boolean;
   error: string | null;
-  login: (email: string, password: string) => Promise<User | null>;
+  login: (email: string, password: string) => Promise<LoginResult>;
   verifyToken: () => Promise<User | null>;
   setAuthenticatedUser: (user: User | null) => void;
 }
