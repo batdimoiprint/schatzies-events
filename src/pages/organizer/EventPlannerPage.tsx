@@ -1,4 +1,11 @@
-import { useMemo, useState, type ChangeEvent, type DragEvent, type FormEvent } from 'react';
+import {
+  useEffect,
+  useMemo,
+  useState,
+  type ChangeEvent,
+  type DragEvent,
+  type FormEvent,
+} from 'react';
 import {
   CalendarDays,
   ChevronLeft,
@@ -15,6 +22,7 @@ import {
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { getBoardTasks } from '@/api/planner-tasks';
 
 type PlannerTab = 'overview' | 'task' | 'notes' | 'flow' | 'checklist';
 
@@ -147,33 +155,6 @@ const taskCards: TaskCard[] = [
   },
 ];
 
-const initialBoardTasks: PlannerBoardTask[] = [
-  {
-    id: 'board-task-food',
-    title: 'Food Setup Checklist',
-    details: 'Finalize buffet lineup and serving order for event day.',
-    editorType: 'Text',
-    lane: 'todo',
-    checklist: [],
-  },
-  {
-    id: 'board-task-decor',
-    title: 'Decorations Final Pass',
-    details: 'Confirm stage decor, photo wall, and table centerpiece placement.',
-    editorType: 'Bulleted List',
-    lane: 'in-progress',
-    checklist: [],
-  },
-  {
-    id: 'board-task-photo',
-    title: 'Photobooth Layout',
-    details: 'Validate backdrop area, queue flow, and props table position.',
-    editorType: 'Numbered List',
-    lane: 'completed',
-    checklist: [],
-  },
-];
-
 const taskLaneConfig: Array<{
   id: TaskLane;
   label: string;
@@ -182,31 +163,31 @@ const taskLaneConfig: Array<{
   cardOuterClassName: string;
   cardTitleClassName: string;
 }> = [
-    {
-      id: 'todo',
-      label: 'To Do',
-      dotClassName: 'bg-[#e6d81d]',
-      panelClassName: 'border-[#e4e4d0] bg-[#fafaf4]',
-      cardOuterClassName: 'border-[#cae4cb] bg-[#dff0e0]',
-      cardTitleClassName: 'text-[#4f8759]',
-    },
-    {
-      id: 'in-progress',
-      label: 'In Progress',
-      dotClassName: 'bg-[#2ea4ff]',
-      panelClassName: 'border-[#d3e7f7] bg-[#f4f9ff]',
-      cardOuterClassName: 'border-[#ead4e9] bg-[#f0ddf0]',
-      cardTitleClassName: 'text-[#712466]',
-    },
-    {
-      id: 'completed',
-      label: 'Completed',
-      dotClassName: 'bg-[#2ec24f]',
-      panelClassName: 'border-[#d8eddc] bg-[#f5fcf7]',
-      cardOuterClassName: 'border-[#d4dfec] bg-[#deebf8]',
-      cardTitleClassName: 'text-[#1f4c82]',
-    },
-  ];
+  {
+    id: 'todo',
+    label: 'To Do',
+    dotClassName: 'bg-[#e6d81d]',
+    panelClassName: 'border-[#e4e4d0] bg-[#fafaf4]',
+    cardOuterClassName: 'border-[#cae4cb] bg-[#dff0e0]',
+    cardTitleClassName: 'text-[#4f8759]',
+  },
+  {
+    id: 'in-progress',
+    label: 'In Progress',
+    dotClassName: 'bg-[#2ea4ff]',
+    panelClassName: 'border-[#d3e7f7] bg-[#f4f9ff]',
+    cardOuterClassName: 'border-[#ead4e9] bg-[#f0ddf0]',
+    cardTitleClassName: 'text-[#712466]',
+  },
+  {
+    id: 'completed',
+    label: 'Completed',
+    dotClassName: 'bg-[#2ec24f]',
+    panelClassName: 'border-[#d8eddc] bg-[#f5fcf7]',
+    cardOuterClassName: 'border-[#d4dfec] bg-[#deebf8]',
+    cardTitleClassName: 'text-[#1f4c82]',
+  },
+];
 
 const overviewCards = [
   {
@@ -281,6 +262,12 @@ const overviewChecklist = [
   'Dry run DAY1',
   'Dry run DAY2',
 ];
+
+const mapBackendStatusToLane = (status: string): TaskLane => {
+  if (status === 'IN_PROGRESS') return 'in-progress';
+  if (status === 'COMPLETED') return 'completed';
+  return 'todo';
+};
 
 function FlowNotesBoard() {
   const timelineStartHour = 5;
@@ -360,10 +347,6 @@ function FlowNotesBoard() {
       timelineBlocks.some((block) => hour >= block.startHour && hour < block.endHour)
     );
   }, [hideEmptySlots, timelineHours, timelineBlocks]);
-
-  const hourIndexMap = useMemo(() => {
-    return new Map(visibleHours.map((hour, index) => [hour, index]));
-  }, [visibleHours]);
 
   const selectedActivity = selectedActivityId
     ? (timelineBlocks.find((block) => block.id === selectedActivityId) ?? null)
@@ -601,49 +584,53 @@ function FlowNotesBoard() {
         const firstParts = parseTimeParts(first.from, first.startHour);
         const secondParts = parseTimeParts(second.from, second.startHour);
 
-        if (firstParts.minute !== secondParts.minute) {
-          return firstParts.minute - secondParts.minute;
-        }
-
-        if (firstParts.totalMinutes !== secondParts.totalMinutes) {
+        if (firstParts.minute !== secondParts.minute) return firstParts.minute - secondParts.minute;
+        if (firstParts.totalMinutes !== secondParts.totalMinutes)
           return firstParts.totalMinutes - secondParts.totalMinutes;
-        }
-
         return first.id.localeCompare(second.id);
       });
-
       sortedSameHourBlocks.set(startHour, blocks);
     });
 
     const slotWidth = 25;
     const slotGap = 2.5;
-    const minuteShift = 4;
 
     return timelineBlocks.map((block) => {
       const startParts = parseTimeParts(block.from, block.startHour);
       const endParts = parseTimeParts(block.to, block.endHour);
       const sameHourBlocks = sortedSameHourBlocks.get(block.startHour) ?? [];
       const slotIndex = sameHourBlocks.findIndex((item) => item.id === block.id);
-      const durationMinutes = Math.max(30, endParts.totalMinutes - startParts.totalMinutes);
 
-      const left = 2 + slotIndex * (slotWidth + slotGap) + (startParts.minute / 60) * minuteShift;
-      const width = Math.max(20, slotWidth - Math.min(slotIndex, 2) * 2);
-      // Add a 4px gap to the top and reduce height by 8px total to create top/bottom padding
+      // 1. Calculate absolute minutes elapsed since the very top of the visible board
+      const boardStartHour = visibleHours.length > 0 ? visibleHours[0] : timelineStartHour;
+      const boardStartMinutes = boardStartHour * 60;
+      const absoluteStartMinutes = startParts.totalMinutes - boardStartMinutes;
+      const absoluteEndMinutes = endParts.totalMinutes - boardStartMinutes;
+
+      // 2. Exact duration
+      const durationMinutes = Math.max(30, absoluteEndMinutes - absoluteStartMinutes);
+
+      // 3. Convert minutes directly to pixels (58px per 60 mins)
+      const topPixels = (absoluteStartMinutes / 60) * hourRowHeight;
+      const heightPixels = (durationMinutes / 60) * hourRowHeight;
+
+      // 4. Visual gaps to avoid covering grid lines
       const verticalGap = 4;
-      const height = Math.max(
-        hourRowHeight - verticalGap * 2,
-        Math.ceil((durationMinutes / 60) * hourRowHeight) - verticalGap * 2
-      );
+      const finalTop = topPixels + verticalGap;
+      const finalHeight = heightPixels - verticalGap * 2;
+
+      const left = 2 + slotIndex * (slotWidth + slotGap);
+      const width = Math.max(20, slotWidth - Math.min(slotIndex, 2) * 2);
 
       return {
         ...block,
         left: `${left}%`,
         width: `${width}%`,
-        height,
-        topOffset: verticalGap, // We'll use this in the render method
+        calculatedTop: finalTop,
+        calculatedHeight: finalHeight,
       };
     });
-  }, [timelineBlocks, hourRowHeight]);
+  }, [timelineBlocks, hourRowHeight, timelineStartHour, visibleHours]);
 
   const handleExportSummary = () => {
     const header = ['Time Range', 'Title', 'Description'];
@@ -753,18 +740,7 @@ function FlowNotesBoard() {
                   ))}
 
                   {positionedTimelineBlocks.map((block) => {
-                    const visibleDuration = visibleHours.filter(
-                      (hour) => hour >= block.startHour && hour < block.endHour
-                    ).length;
-                    const startIndex =
-                      hourIndexMap.get(block.startHour) ??
-                      visibleHours.findIndex((hour) => hour >= block.startHour);
-
-                    if (startIndex < 0 || visibleDuration === 0) {
-                      return null;
-                    }
-
-                    const duration = Math.max(1, visibleDuration);
+                    if (!block) return null;
 
                     return (
                       <article
@@ -778,26 +754,27 @@ function FlowNotesBoard() {
                             openActivityInfo(block.id);
                           }
                         }}
-                        className={`absolute overflow-hidden rounded-xl border px-3 py-2 text-[#5f596b] shadow-[0_6px_12px_rgba(31,18,54,0.08)] ${block.tone}`}
+                        className={`absolute overflow-hidden rounded-xl border px-3 py-2 text-[#5f596b] shadow-[0_6px_12px_rgba(31,18,54,0.08)] ${block.tone} flex flex-col`}
                         style={{
-                          // Apply the top offset here to push it down from the line
-                          top: `${startIndex * hourRowHeight + block.topOffset}px`,
-                          height: `${block.height ?? duration * hourRowHeight - 8}px`,
+                          top: `${block.calculatedTop}px`,
+                          height: `${block.calculatedHeight}px`,
                           left: block.left,
                           width: block.width,
                           zIndex: block.id === selectedActivityId ? 30 : 10,
                         }}
                       >
-                        <p className="truncate text-[11px] font-black uppercase leading-tight text-inherit">
+                        <p className="text-[11px] font-black uppercase leading-tight text-inherit break-words whitespace-normal line-clamp-2 shrink-0">
                           {block.title}
                         </p>
-                        <p className="mt-1 truncate text-[10px] font-semibold leading-tight text-inherit/80">
+                        <p className="mt-1 text-[10px] font-semibold leading-tight text-inherit/80 shrink-0">
                           Time: {formatDisplayTime(block.from, block.startHour)} -{' '}
                           {formatDisplayTime(block.to, block.endHour)}
                         </p>
-                        <p className="mt-1 truncate text-[10px] leading-tight text-inherit/80">
-                          {block.description}
-                        </p>
+                        <div className="mt-1 flex-1 min-h-0">
+                          <p className="text-[10px] leading-tight text-inherit/80 break-words whitespace-normal line-clamp-4">
+                            {block.description}
+                          </p>
+                        </div>
                       </article>
                     );
                   })}
@@ -823,8 +800,10 @@ function FlowNotesBoard() {
                 <div key={summary.id} className="grid grid-cols-[92px_1fr] gap-4">
                   <p className="text-[10px] font-semibold text-[#6b6476]">{summary.timeRange}</p>
                   <div>
-                    <p className="text-[13px] font-black text-[#2f2b39]">{summary.title}</p>
-                    <p className="mt-1 text-[11px] leading-relaxed text-[#8a8495]">
+                    <p className="text-[13px] font-black text-[#2f2b39] break-all whitespace-normal">
+                      {summary.title}
+                    </p>
+                    <p className="mt-1 text-[11px] leading-relaxed text-[#8a8495] break-all whitespace-normal">
                       {summary.body}
                     </p>
                   </div>
@@ -1020,7 +999,7 @@ function FlowNotesBoard() {
               </div>
             ) : selectedActivity ? (
               <div className="space-y-4">
-                <div className="rounded-2xl bg-linear-to-r from-[#f1589e] via-[#d735b3] to-[#8a1fd0] px-4 py-3 text-base font-black leading-tight text-white shadow-[0_10px_20px_rgba(125,31,186,0.18)]">
+                <div className="rounded-2xl bg-linear-to-r from-[#f1589e] via-[#d735b3] to-[#8a1fd0] px-4 py-3 text-base font-black leading-tight text-white shadow-[0_10px_20px_rgba(125,31,186,0.18)] break-all whitespace-normal">
                   {selectedActivity.title}
                 </div>
 
@@ -1043,7 +1022,7 @@ function FlowNotesBoard() {
                   <p className="text-xs font-black uppercase tracking-[0.12em] text-[#9d97a8]">
                     Description
                   </p>
-                  <p className="mt-2 text-[14px] italic leading-snug text-[#8e8994]">
+                  <p className="mt-2 text-[14px] italic leading-snug text-[#8e8994] break-all whitespace-normal">
                     {selectedActivity.description}
                   </p>
                 </div>
@@ -1141,7 +1120,51 @@ export function EventPlannerPage() {
   const [selectedProjectId, setSelectedProjectId] = useState(1);
   const [activeTab, setActiveTab] = useState<PlannerTab>('overview');
   const [plannerTaskCards, setPlannerTaskCards] = useState<TaskCard[]>(taskCards);
-  const [boardTasks, setBoardTasks] = useState<PlannerBoardTask[]>(initialBoardTasks);
+  const [boardTasks, setBoardTasks] = useState<PlannerBoardTask[]>([]);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const loadTasks = async () => {
+      if (!selectedProjectId) {
+        setBoardTasks([]);
+        return;
+      }
+
+      try {
+        const response = await getBoardTasks(String(selectedProjectId));
+
+        if (!isMounted) return;
+
+        const backendTasks: Record<string, any[]> = response?.tasks || {};
+        const formattedTasks: PlannerBoardTask[] = [];
+
+        ['TODO', 'IN_PROGRESS', 'COMPLETED'].forEach((status) => {
+          const group = backendTasks[status] || [];
+          group.forEach((task: any) => {
+            formattedTasks.push({
+              id: task.id,
+              title: task.title,
+              details: task.description,
+              editorType: 'Text',
+              lane: mapBackendStatusToLane(task.status || status),
+              checklist: [],
+            });
+          });
+        });
+
+        setBoardTasks(formattedTasks);
+      } catch (error) {
+        console.error('Failed to load board tasks:', error);
+        if (isMounted) setBoardTasks([]);
+      }
+    };
+
+    loadTasks();
+    return () => {
+      isMounted = false;
+    };
+  }, [selectedProjectId]);
   const [isTaskPreviewOpen, setIsTaskPreviewOpen] = useState(false);
   const [selectedBoardTaskId, setSelectedBoardTaskId] = useState<string | null>(null);
   const [taskPreviewTitle, setTaskPreviewTitle] = useState('');
@@ -1422,26 +1445,26 @@ export function EventPlannerPage() {
             Array.isArray(task.checklist) && task.checklist.length > 0
               ? task.checklist
               : task.details
-                .split('\n')
-                .map((s) => s.trim())
-                .filter(Boolean)
-                .map((line, idx) => ({ id: `${task.id}-chk-${idx}`, label: line, done: false }));
+                  .split('\n')
+                  .map((s) => s.trim())
+                  .filter(Boolean)
+                  .map((line, idx) => ({ id: `${task.id}-chk-${idx}`, label: line, done: false }));
 
           const checklist =
             checklistSource.length > 0
               ? checklistSource.map((item) => ({
-                ...item,
-                done: true,
-                doneAt: item.doneAt ?? timestamp,
-              }))
-              : [
-                {
-                  id: `${task.id}-chk-0`,
-                  label: 'Task completed',
+                  ...item,
                   done: true,
-                  doneAt: timestamp,
-                },
-              ];
+                  doneAt: item.doneAt ?? timestamp,
+                }))
+              : [
+                  {
+                    id: `${task.id}-chk-0`,
+                    label: 'Task completed',
+                    done: true,
+                    doneAt: timestamp,
+                  },
+                ];
 
           return { ...task, lane, checklist };
         }
@@ -1463,18 +1486,18 @@ export function EventPlannerPage() {
         ? selectedTask?.checklist?.length
           ? selectedTask.checklist
           : (selectedTask?.details ?? '')
-            .split('\n')
-            .map((line) => line.trim())
-            .filter(Boolean)
-            .map((line, index) => ({
-              id: `${selectedTask?.id ?? taskId}-chk-${index}`,
-              label: line,
-              done: false,
-            }))
+              .split('\n')
+              .map((line) => line.trim())
+              .filter(Boolean)
+              .map((line, index) => ({
+                id: `${selectedTask?.id ?? taskId}-chk-${index}`,
+                label: line,
+                done: false,
+              }))
         : (selectedTask?.checklist ?? []).map((item) => ({
-          ...item,
-          doneAt: item.doneAt,
-        }))
+            ...item,
+            doneAt: item.doneAt,
+          }))
     );
     setTaskActionMessage(`Editing ${selectedTask?.title || 'task'}.`);
     setTaskActionTone('info');
@@ -1504,12 +1527,12 @@ export function EventPlannerPage() {
       previousTasks.map((task) =>
         task.id === selectedBoardTaskId
           ? {
-            ...task,
-            title: taskPreviewTitle,
-            details:
-              normalizedDetails || normalizedChecklist.map((item) => item.label).join('\n'),
-            checklist: normalizedChecklist,
-          }
+              ...task,
+              title: taskPreviewTitle,
+              details:
+                normalizedDetails || normalizedChecklist.map((item) => item.label).join('\n'),
+              checklist: normalizedChecklist,
+            }
           : task
       )
     );
@@ -1543,10 +1566,10 @@ export function EventPlannerPage() {
           checklist: task.checklist.map((item) =>
             item.id === itemId
               ? {
-                ...item,
-                done: !item.done,
-                doneAt: !item.done ? timestamp : undefined,
-              }
+                  ...item,
+                  done: !item.done,
+                  doneAt: !item.done ? timestamp : undefined,
+                }
               : item
           ),
         };
@@ -1813,7 +1836,7 @@ export function EventPlannerPage() {
                         className={[
                           'min-w-0 flex-1 whitespace-pre-line',
                           card.valueClassName ??
-                          'text-[24px] font-black leading-none tracking-tight text-[#2f2b39]',
+                            'text-[24px] font-black leading-none tracking-tight text-[#2f2b39]',
                         ].join(' ')}
                       >
                         {card.value}
@@ -1948,7 +1971,7 @@ export function EventPlannerPage() {
                 </div>
               ) : null}
 
-              <div className="grid gap-3 xl:grid-cols-3">
+              <div className="flex gap-4 overflow-x-auto pb-2 snap-x snap-mandatory">
                 {taskLaneConfig.map((lane) => {
                   const laneTasks = boardTasks.filter((task) => task.lane === lane.id);
 
@@ -1956,7 +1979,7 @@ export function EventPlannerPage() {
                     <article
                       key={lane.id}
                       className={[
-                        'rounded-xl border p-2.5 shadow-[0_2px_8px_rgba(32,20,52,0.04)]',
+                        'flex min-w-[320px] max-w-[400px] flex-1 flex-col rounded-xl border p-2.5 shadow-[0_2px_8px_rgba(32,20,52,0.04)] snap-center',
                         lane.panelClassName,
                       ].join(' ')}
                     >
@@ -1970,7 +1993,7 @@ export function EventPlannerPage() {
                       </div>
 
                       <div
-                        className="min-h-[340px] space-y-2 rounded-lg border border-dashed border-[#d8d2e2] bg-white/60 p-2"
+                        className="flex-1 min-h-[400px] space-y-3 rounded-lg border border-dashed border-[#d8d2e2] bg-white/60 p-2"
                         onDragOver={handleLaneDragOver}
                         onDrop={(event) => handleDropTaskToLane(event, lane.id)}
                       >
@@ -1982,7 +2005,7 @@ export function EventPlannerPage() {
                             onDragEnd={handleDragTaskEnd}
                             onClick={() => openTaskPreview(task.id)}
                             className={[
-                              'group relative flex h-[320px] cursor-grab rounded-xl border p-3 shadow-[0_2px_6px_rgba(31,18,54,0.06)] active:cursor-grabbing',
+                              'group relative flex flex-col w-full min-h-[200px] cursor-grab rounded-xl border p-3 shadow-[0_2px_6px_rgba(31,18,54,0.06)] active:cursor-grabbing',
                               lane.cardOuterClassName,
                             ].join(' ')}
                           >
@@ -2102,10 +2125,11 @@ export function EventPlannerPage() {
                                           }}
                                         />
                                         <span
-                                          className={`min-w-0 flex-1 truncate text-[11px] font-medium ${item.done
-                                            ? 'text-[#a29faf] line-through'
-                                            : 'text-[#5a546a]'
-                                            }`}
+                                          className={`min-w-0 flex-1 truncate text-[11px] font-medium ${
+                                            item.done
+                                              ? 'text-[#a29faf] line-through'
+                                              : 'text-[#5a546a]'
+                                          }`}
                                         >
                                           {item.label}
                                         </span>
