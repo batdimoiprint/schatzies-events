@@ -585,9 +585,9 @@ export function CostBreakdownPage() {
         </div>
       </div>
 
-      <div className="overflow-x-auto pb-2">
-        <div className="min-w-[1140px] space-y-6 pr-1">
-          <div className="flex items-center justify-between gap-4 rounded-3xl border border-[#eadfec] bg-white p-4 shadow-sm print:hidden">
+      <div className="w-full pb-2">
+        <div className="w-full space-y-6 pr-1">
+          <div className="flex flex-wrap items-center justify-between gap-4 rounded-3xl border border-[#eadfec] bg-white p-4 shadow-sm print:hidden">
             <div className="flex items-center gap-3">
               <div className="relative">
                 <Select value={selectedEventId} onValueChange={setSelectedEventId}>
@@ -676,7 +676,7 @@ export function CostBreakdownPage() {
           </div>
 
           <div className="overflow-hidden rounded-2xl border border-[#e7dfef] bg-white shadow-sm">
-            <div className="grid h-[168px] grid-cols-4 divide-x divide-[#ece6f3]">
+            <div className="grid min-h-[168px] grid-cols-2 lg:grid-cols-4 gap-y-4 lg:gap-y-0 lg:divide-x divide-[#ece6f3] py-4 lg:py-0">
               <div className="p-5">
                 <p className="inline-flex items-center gap-2 text-sm font-semibold text-[#7a7186]">
                   <span className="size-2.5 rounded-full bg-[#8f23cf] ring-2 ring-[#efe4fb]" />
@@ -849,7 +849,7 @@ export function CostBreakdownPage() {
               Cost Distribution (Vendors)
             </h2>
 
-            <div className="grid grid-cols-[320px_minmax(0,1fr)] gap-4">
+            <div className="grid grid-cols-1 lg:grid-cols-[320px_minmax(0,1fr)] gap-4">
               <Card className="h-[500px] border-[#e7dfef] bg-white py-0 shadow-sm">
                 <CardContent className="flex h-full flex-col px-5 py-5">
                   <div className="flex flex-1 items-start justify-center pt-1">
@@ -931,9 +931,10 @@ export function CostBreakdownPage() {
                     ))}
                   </div>
 
-                  <div className="mt-3 flex justify-center">
-                    <div className="rounded-sm bg-[#ff5b9f] px-4 py-2 text-sm font-bold text-white shadow-[0_10px_24px_rgba(255,91,159,0.28)]">
-                      Total Cost = {formatPeso(totalVendorCharges)}
+                  <div className="mt-6 flex justify-center w-full">
+                    <div className="flex w-[92%] items-center justify-between rounded-md bg-[#ff5b9f] px-5 py-3 text-[14px] font-bold text-white shadow-[0_8px_20px_rgba(255,91,159,0.3)]">
+                      <span>Total Cost =</span>
+                      <span>{formatPeso(totalVendorCharges)}</span>
                     </div>
                   </div>
                 </CardContent>
@@ -943,7 +944,7 @@ export function CostBreakdownPage() {
                 <CardContent className="h-full px-0 py-0">
                   <div className="overflow-hidden rounded-2xl">
                     <div className="bg-linear-to-r from-[#ff66a7] to-[#ff4b97] px-6 py-4 text-sm font-semibold text-white">
-                      <div className="grid grid-cols-[1.2fr_1fr_180px] gap-4">
+                      <div className="grid grid-cols-3 lg:grid-cols-[1.2fr_1fr_180px] gap-4">
                         <span>Vendor type</span>
                         <span>Vendor Name</span>
                         <span className="text-right">Allocated Cost</span>
