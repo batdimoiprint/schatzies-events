@@ -408,8 +408,8 @@ export function RSVPPage() {
       <LoadingScreen isLoading={isLoading} />
 
       {state === 'active' && (
-        <div className="mb-6 flex items-end justify-between border-b border-gray-200">
-          <div className="flex gap-6">
+        <div className="mb-6 flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 border-b border-gray-200">
+          <div className="flex gap-4 sm:gap-6">
             {['overview', 'guest-list', 'scanner'].map((tab) => (
               <button
                 key={tab}
@@ -422,7 +422,7 @@ export function RSVPPage() {
           </div>
           <button
             onClick={() => setState('idle')}
-            className="mb-2 flex items-center gap-2 rounded-md bg-gray-200 px-5 py-2.5 text-sm font-semibold text-gray-700 shadow-md hover:bg-gray-300 transition active:scale-95"
+            className="mb-2 flex w-full sm:w-auto items-center justify-center gap-2 rounded-md bg-gray-200 px-5 py-3 text-sm font-semibold text-gray-700 shadow-md hover:bg-gray-300 transition active:scale-95"
             disabled={isLoading}
           >
             <PlusCircle weight="bold" size={18} /> Create QR Code
@@ -461,8 +461,8 @@ export function RSVPPage() {
       )}
 
       {state === 'active' && activeTab === 'overview' && (
-        <div className="rounded-xl border border-gray-100 bg-white p-8 shadow-sm">
-          <div className="grid grid-cols-1 gap-10 lg:grid-cols-[auto_1fr]">
+        <div className="rounded-xl border border-gray-100 bg-white p-6 sm:p-8 shadow-sm">
+          <div className="grid grid-cols-1 gap-6 sm:gap-10 lg:grid-cols-[auto_1fr]">
             <div className="flex flex-col items-center rounded-2xl bg-white p-6 shadow-lg border border-gray-100">
               <p className="text-base font-bold text-[#df2b80]">Schatzies Events</p>
               {qrCode && (
@@ -479,16 +479,16 @@ export function RSVPPage() {
               <span className="mt-2 inline-block rounded-full bg-green-100 px-3 py-0.5 text-xs font-bold text-green-800">
                 Active Invitation Link
               </span>
-              <div className="mt-5 flex gap-3">
+              <div className="mt-5 flex flex-col sm:flex-row gap-3 w-full">
                 <button
                   onClick={handleDownloadQR}
-                  className="flex items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-4 py-2 text-xs font-semibold text-[#df2b80] shadow-sm hover:bg-gray-50"
+                  className="flex w-full sm:w-auto items-center justify-center gap-1.5 rounded-lg border border-gray-200 bg-white px-4 py-3 text-xs font-semibold text-[#df2b80] shadow-sm hover:bg-gray-50"
                 >
                   <Download weight="bold" size={14} /> Download QR
                 </button>
                 <button
                   onClick={handleCopyLink}
-                  className="flex items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-4 py-2 text-xs font-semibold text-[#df2b80] shadow-sm hover:bg-gray-50"
+                  className="flex w-full sm:w-auto items-center justify-center gap-1.5 rounded-lg border border-gray-200 bg-white px-4 py-3 text-xs font-semibold text-[#df2b80] shadow-sm hover:bg-gray-50"
                 >
                   <LinkIcon weight="bold" size={14} /> {copied ? 'Copied!' : 'Copy Link'}
                 </button>
@@ -548,28 +548,28 @@ export function RSVPPage() {
 
       {state === 'active' && activeTab === 'guest-list' && (
         <div className="animate-[fadeIn_0.3s_ease-out] rounded-xl bg-white shadow-md border border-gray-100">
-          <div className="flex items-center justify-between border-b border-gray-100 px-5 py-4 sm:px-6">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between border-b border-gray-100 px-5 py-4 sm:px-6 gap-4">
             <div>
               <h3 className="text-base font-bold text-[#2d2834]">Guest List Responses</h3>
               <p className="mt-0.5 text-xs text-[#696373]">Track who's coming to your event</p>
             </div>
-            <div className="flex flex-wrap items-center gap-3">
-              <div className="relative min-w-[200px]">
+            <div className="flex flex-col md:flex-row items-center gap-3 w-full md:w-auto">
+              <div className="relative w-full md:w-[250px]">
                 <MagnifyingGlass className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-[#b2acbf]" />
                 <input
                   type="text"
                   placeholder="Search name or contact..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full rounded-lg border border-gray-200 bg-gray-50 py-2 pl-9 pr-4 text-xs text-[#4f4a56] outline-none focus:border-[#df2b80] focus:bg-white"
+                  className="w-full rounded-lg border border-gray-200 bg-gray-50 py-3 pl-9 pr-4 text-xs text-[#4f4a56] outline-none focus:border-[#df2b80] focus:bg-white"
                 />
               </div>
-              <div className="relative">
+              <div className="relative w-full md:w-auto">
                 <Funnel className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-[#b2acbf]" />
                 <select
                   value={statusFilter}
                   onChange={(e) => setStatusFilter(e.target.value)}
-                  className="appearance-none rounded-lg border border-gray-200 bg-gray-50 py-2 pl-9 pr-8 text-xs font-medium text-[#4f4a56] outline-none focus:border-[#df2b80] focus:bg-white"
+                  className="w-full appearance-none rounded-lg border border-gray-200 bg-gray-50 py-3 pl-9 pr-8 text-xs font-medium text-[#4f4a56] outline-none focus:border-[#df2b80] focus:bg-white"
                 >
                   <option value="All">All Status</option>
                   <option value="Attending">Attending</option>
