@@ -186,3 +186,13 @@ export async function getEventVendors(eventId: string) {
   const response = await axiosInstance.get(`/events/${eventId}/vendors`);
   return response.data;
 }
+
+export async function getEventUser(userId: string) {
+  const response = await axiosInstance.get(`/users/${userId}`);
+  return response.data;
+}
+
+export async function getEventAllocation(eventId: string) {
+  const response = await axiosInstance.get(`/events/${eventId}/allocation`);
+  return response.data.allocation;
+}

@@ -11,9 +11,16 @@ html {
 }
 
 html,
+body,
+#root {
+  height: 100%;
+}
+
+html,
 body {
   overflow-x: hidden;
-  background-color: #1a1225;
+  background-color: #fbf8fd;
+  overscroll-behavior-y: none;
 }
 
 /* FORCE OVERRIDE RADIX UI SCROLL LOCK (High Specificity) */
@@ -38,7 +45,8 @@ body {
   --popover-foreground: oklch(0.145 0.008 326);
 
   /* Brand palette: #FF0066 → #700F81 */
-  --primary: oklch(0.65 0.28 0); /* #FF0066 */
+  --primary: oklch(0.65 0.28 0);
+  /* #FF0066 */
 
   --primary-foreground: oklch(1 0 0);
 
@@ -241,9 +249,11 @@ body {
   * {
     @apply border-border outline-ring/50;
   }
+
   body {
     @apply bg-background text-foreground;
   }
+
   html {
     @apply font-sans;
   }
@@ -254,6 +264,7 @@ body {
   0% {
     transform: translateX(0);
   }
+
   100% {
     transform: translateX(-100%);
   }
@@ -263,6 +274,7 @@ body {
   0% {
     transform: translateX(-100%);
   }
+
   100% {
     transform: translateX(0);
   }
@@ -289,9 +301,12 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  background-color: rgba(0, 0, 0, 0.4); /* Semi-transparent so content is visible */
-  backdrop-filter: blur(2px); /* Very subtle blur */
-  pointer-events: none; /* Allows clicking through to content if needed */
+  background-color: rgba(0, 0, 0, 0.4);
+  /* Semi-transparent so content is visible */
+  backdrop-filter: blur(2px);
+  /* Very subtle blur */
+  pointer-events: none;
+  /* Allows clicking through to content if needed */
 }
 
 .loading-container {
@@ -300,7 +315,8 @@ body {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  pointer-events: auto; /* Makes the loader interactive */
+  pointer-events: auto;
+  /* Makes the loader interactive */
 }
 
 /* AI Button Styles */
@@ -366,6 +382,7 @@ body {
   from {
     transform: rotate(0deg);
   }
+
   to {
     transform: rotate(360deg);
   }
@@ -376,6 +393,7 @@ body {
   100% {
     transform: scale(1);
   }
+
   50% {
     transform: scale(1.05);
   }
@@ -388,6 +406,7 @@ body {
     transform: translateY(0);
     opacity: 0.4;
   }
+
   30% {
     transform: translateY(-0.75rem);
     opacity: 1;
@@ -398,6 +417,7 @@ body {
   from {
     opacity: 0;
   }
+
   to {
     opacity: 1;
   }
@@ -408,6 +428,7 @@ body {
     opacity: 0;
     transform: translateY(30px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -419,6 +440,7 @@ body {
     opacity: 0;
     transform: translateX(-30px);
   }
+
   to {
     opacity: 1;
     transform: translateX(0);
@@ -430,6 +452,7 @@ body {
     opacity: 0;
     transform: translateX(30px);
   }
+
   to {
     opacity: 1;
     transform: translateX(0);
@@ -441,6 +464,7 @@ body {
     opacity: 0;
     transform: translateX(-50px);
   }
+
   to {
     opacity: 1;
     transform: translateX(0);
@@ -451,6 +475,7 @@ body {
   from {
     transform: scaleX(0);
   }
+
   to {
     transform: scaleX(1);
   }
@@ -461,6 +486,7 @@ body {
     transform: scaleX(0);
     transform-origin: left;
   }
+
   to {
     transform: scaleX(1);
     transform-origin: left;
@@ -471,9 +497,11 @@ body {
   0% {
     opacity: 0.4;
   }
+
   50% {
     opacity: 0.6;
   }
+
   100% {
     opacity: 0.4;
   }
@@ -483,6 +511,7 @@ body {
   0% {
     stroke-dashoffset: 150;
   }
+
   100% {
     stroke-dashoffset: -480;
   }

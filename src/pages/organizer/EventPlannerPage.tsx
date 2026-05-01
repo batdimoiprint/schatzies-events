@@ -29,7 +29,7 @@ import {
   moveBoardTask,
   deleteBoardTask,
 } from '@/api/planner-tasks';
-import { getEvents } from '@/api/events';
+import { getEvents, getEventUser, getEventAllocation } from '@/api/events';
 
 type PlannerTab = 'overview' | 'task' | 'notes' | 'flow' | 'checklist';
 
@@ -42,6 +42,8 @@ type ProjectSlot = {
   eventPackage?: string;
   eventPax?: number;
   clientName?: string;
+  clientId?: string;
+  clientRealName?: string;
   eventCost?: string | number;
 };
 
@@ -1098,6 +1100,8 @@ export function EventPlannerPage() {
   const [activeTab, setActiveTab] = useState<PlannerTab>('overview');
   const [plannerTaskCards, setPlannerTaskCards] = useState<TaskCard[]>(taskCards);
   const [boardTasks, setBoardTasks] = useState<PlannerBoardTask[]>([]);
+  const [currentClientName, setCurrentClientName] = useState('');
+  const [eventAllocation, setEventAllocation] = useState<any>(null);
 
   useEffect(() => {
     let isMounted = true;
@@ -1120,7 +1124,8 @@ export function EventPlannerPage() {
           /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(str);
 
         const mapped = events.map((e: any) => {
-          const clientVal = e.clientRealName || e.clientName || e.clientId;
+          const rawClientId = e.clientId || e.client_id;
+          const clientVal = e.clientRealName || e.clientName || rawClientId;
           const displayClient = clientVal && isUUID(clientVal) ? 'Valued Client' : clientVal;
 
           return {
@@ -1132,6 +1137,8 @@ export function EventPlannerPage() {
             eventPackage: e.eventPackage,
             eventPax: e.eventPax || 0,
             clientName: displayClient,
+            clientId: rawClientId,
+            clientRealName: e.clientRealName,
             eventCost: e.eventCost || e.cost,
           };
         });
@@ -1155,8 +1162,44 @@ export function EventPlannerPage() {
     const loadTasks = async () => {
       if (!selectedEventId) {
         setBoardTasks([]);
+        setCurrentClientName('');
+        setEventAllocation(null);
         return;
       }
+
+      setCurrentClientName('');
+      setEventAllocation(null);
+
+      const selectedProject = projectSlots.find((p) => p.id === selectedEventId);
+      if (selectedProject?.clientId) {
+        getEventUser(selectedProject.clientId)
+          .then((userData) => {
+            if (isMounted) {
+              setCurrentClientName(
+                userData?.name ||
+                  userData?.firstName ||
+                  userData?.realName ||
+                  userData?.clientName ||
+                  ''
+              );
+            }
+          })
+          .catch((e) => {
+            console.error('Failed to fetch event user', e);
+            if (isMounted) setCurrentClientName('');
+          });
+      }
+
+      getEventAllocation(selectedEventId)
+        .then((allocationData) => {
+          if (isMounted) {
+            setEventAllocation(allocationData);
+          }
+        })
+        .catch((e) => {
+          console.error('Failed to fetch event allocation', e);
+          if (isMounted) setEventAllocation(null);
+        });
 
       try {
         const response = await getBoardTasks(selectedEventId);
@@ -1191,7 +1234,7 @@ export function EventPlannerPage() {
     return () => {
       isMounted = false;
     };
-  }, [selectedEventId]);
+  }, [selectedEventId, projectSlots]);
   const [isTaskPreviewOpen, setIsTaskPreviewOpen] = useState(false);
   const [selectedBoardTaskId, setSelectedBoardTaskId] = useState<string | null>(null);
   const [taskPreviewTitle, setTaskPreviewTitle] = useState('');
@@ -1820,9 +1863,9 @@ export function EventPlannerPage() {
   };
 
   return (
-    <div className="flex w-full flex-col gap-4 pb-2 text-[#302c39]">
-      <div className="grid gap-4 xl:grid-cols-[250px_minmax(0,1fr)]">
-        <aside className="space-y-4">
+    <div className="flex min-h-screen w-full max-w-full flex-col gap-4 overflow-x-hidden p-2 sm:p-4 lg:p-6 pb-10 text-[#302c39]">
+      <div className="flex flex-col gap-4 xl:grid xl:grid-cols-[250px_minmax(0,1fr)]">
+        <aside className="w-full space-y-4 xl:w-[250px]">
           <section className="rounded-2xl border border-[#ddd8e8] bg-white p-3 shadow-[0_6px_14px_rgba(31,18,54,0.06)]">
             <header className="mb-2 flex items-center justify-between">
               <h2 className="flex items-center gap-1.5 text-sm font-bold text-[#383341]">
@@ -1918,8 +1961,8 @@ export function EventPlannerPage() {
         </aside>
 
         <section className="min-w-0 space-y-3">
-          <article className="rounded-xl bg-linear-to-r from-[#f23fa3] to-[#7d1fd0] p-4 text-white shadow-[0_12px_24px_rgba(146,31,186,0.34)]">
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <article className="w-full overflow-hidden rounded-xl bg-linear-to-r from-[#f23fa3] to-[#7d1fd0] p-4 text-white shadow-[0_12px_24px_rgba(146,31,186,0.34)]">
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
               <div>
                 <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-white/70">
                   Event Planner
@@ -1932,17 +1975,24 @@ export function EventPlannerPage() {
                     : ''}
                 </p>
               </div>
-              <div className="flex items-center gap-2 text-[10px] font-semibold text-white/90">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 text-[10px] font-semibold text-white/90">
                 <span className="rounded-full bg-white/20 px-3 py-1">
-                  Client: {selectedProject.clientName || 'Unknown'}
+                  Client:{' '}
+                  {currentClientName ||
+                    (selectedProject.clientName && !selectedProject.clientName.includes('-')
+                      ? selectedProject.clientName
+                      : 'Valued Client')}
                 </span>
                 <span className="rounded-full bg-white/20 px-3 py-1">Contact: 0912-345-6789</span>
               </div>
             </div>
           </article>
 
-          <div className="rounded-xl border border-[#ddd8e8] bg-white p-1 shadow-[0_4px_12px_rgba(33,19,57,0.05)]">
-            <nav className="flex flex-wrap gap-1" aria-label="Event planning sections">
+          <div className="overflow-hidden rounded-xl border border-[#ddd8e8] bg-white p-1 shadow-[0_4px_12px_rgba(33,19,57,0.05)]">
+            <nav
+              className="flex items-center gap-1 overflow-x-auto whitespace-nowrap [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
+              aria-label="Event planning sections"
+            >
               {tabs.map((tab) => (
                 <button
                   key={tab.id}
@@ -1963,7 +2013,7 @@ export function EventPlannerPage() {
 
           {activeTab === 'overview' ? (
             <section className="rounded-[16px] border border-[#d8d3df] bg-[#f7f5f9] p-2.5 shadow-[0_6px_14px_rgba(31,18,54,0.05)]">
-              <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
+              <div className="grid grid-cols-1 gap-2 md:grid-cols-2 xl:grid-cols-4">
                 {dynamicOverviewCards.map((card) => (
                   <article
                     key={card.id}
@@ -1993,21 +2043,27 @@ export function EventPlannerPage() {
                 ))}
               </div>
 
-              <div className="mt-2 grid gap-2 xl:grid-cols-[0.95fr_1fr_0.92fr_0.98fr]">
+              <div className="mt-2 grid grid-cols-1 gap-2 xl:grid-cols-[0.95fr_1fr_0.92fr_0.98fr]">
                 <div className="space-y-2">
                   <article className="min-h-[166px] rounded-lg border border-[#ded9e7] bg-white p-3 shadow-[0_2px_6px_rgba(31,18,54,0.05)]">
                     <p className="text-[12px] font-bold text-[#5e586d]">Service Requirements</p>
                     <div className="mt-2 space-y-1 text-[11px] leading-snug text-[#6f687f]">
-                      {overviewServiceRequirements.map((item, index) => (
-                        <p key={`${item}-${index}`}>{item}</p>
-                      ))}
+                      {eventAllocation?.food_package ? (
+                        <p className="font-semibold text-[#5a546a]">
+                          {eventAllocation.food_package}
+                        </p>
+                      ) : (
+                        overviewServiceRequirements.map((item, index) => (
+                          <p key={`${item}-${index}`}>{item}</p>
+                        ))
+                      )}
                     </div>
                   </article>
 
                   <article className="min-h-[112px] rounded-lg border border-[#ded9e7] bg-white p-3 shadow-[0_2px_6px_rgba(31,18,54,0.05)]">
                     <p className="text-[12px] font-bold text-[#5e586d]">Decorations</p>
                     <div className="mt-2 text-[10px] leading-snug text-[#6f687f]">
-                      <p>Theme: Enchanted Forest</p>
+                      <p>Theme: {eventAllocation?.theme || 'Enchanted Forest'}</p>
                       <p>Fairy greens, hanging vines, twinkle lights, wood accents.</p>
                       <p className="mt-1 font-semibold text-[#5a546a]">Materials</p>
                       <p>1. Recycled crate centerpieces</p>
@@ -2021,18 +2077,53 @@ export function EventPlannerPage() {
                 <article className="min-h-[286px] rounded-lg border border-[#ded9e7] bg-white p-3 shadow-[0_2px_6px_rgba(31,18,54,0.05)]">
                   <p className="text-[12px] font-bold text-[#5e586d]">Allocation Resources</p>
                   <div className="mt-2 space-y-2">
-                    {overviewAllocationResources.map((resource) => (
-                      <div
-                        key={resource.title}
-                        className="rounded-md border border-[#ece8f0] bg-[#fbf9fe] p-2.5 text-[10px] leading-snug text-[#6f687f]"
-                      >
-                        <p className="text-[11px] font-black text-[#3a3442]">{resource.title}</p>
-                        <p className="mt-0.5 whitespace-pre-line break-words">{resource.detail}</p>
-                        {resource.time ? (
-                          <p className="mt-1 text-[10px] text-[#8c8498]">{resource.time}</p>
-                        ) : null}
-                      </div>
-                    ))}
+                    {eventAllocation ? (
+                      <>
+                        {eventAllocation.vendors && eventAllocation.vendors.length > 0 && (
+                          <div className="rounded-md border border-[#ece8f0] bg-[#fbf9fe] p-2.5 text-[10px] leading-snug text-[#6f687f]">
+                            <p className="text-[11px] font-black text-[#3a3442]">Vendors</p>
+                            <p className="mt-0.5 whitespace-pre-line break-words">
+                              {eventAllocation.vendors.map((v: any) => v.name || v.type).join('\n')}
+                            </p>
+                          </div>
+                        )}
+                        {eventAllocation.manpower && eventAllocation.manpower.length > 0 && (
+                          <div className="rounded-md border border-[#ece8f0] bg-[#fbf9fe] p-2.5 text-[10px] leading-snug text-[#6f687f]">
+                            <p className="text-[11px] font-black text-[#3a3442]">Manpower</p>
+                            <p className="mt-0.5 whitespace-pre-line break-words">
+                              {eventAllocation.manpower
+                                .map((m: any) => m.name || m.role)
+                                .join('\n')}
+                            </p>
+                          </div>
+                        )}
+                        {eventAllocation.supplies && eventAllocation.supplies.length > 0 && (
+                          <div className="rounded-md border border-[#ece8f0] bg-[#fbf9fe] p-2.5 text-[10px] leading-snug text-[#6f687f]">
+                            <p className="text-[11px] font-black text-[#3a3442]">Supplies</p>
+                            <p className="mt-0.5 whitespace-pre-line break-words">
+                              {eventAllocation.supplies
+                                .map((s: any) => s.name || s.item)
+                                .join('\n')}
+                            </p>
+                          </div>
+                        )}
+                      </>
+                    ) : (
+                      overviewAllocationResources.map((resource) => (
+                        <div
+                          key={resource.title}
+                          className="rounded-md border border-[#ece8f0] bg-[#fbf9fe] p-2.5 text-[10px] leading-snug text-[#6f687f]"
+                        >
+                          <p className="text-[11px] font-black text-[#3a3442]">{resource.title}</p>
+                          <p className="mt-0.5 whitespace-pre-line break-words">
+                            {resource.detail}
+                          </p>
+                          {resource.time ? (
+                            <p className="mt-1 text-[10px] text-[#8c8498]">{resource.time}</p>
+                          ) : null}
+                        </div>
+                      ))
+                    )}
                   </div>
                 </article>
 

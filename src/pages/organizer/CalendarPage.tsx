@@ -593,12 +593,12 @@ export function CalendarPage() {
   return (
     <section className="w-full min-h-[calc(100vh-150px)] pb-2">
       <div className="flex w-full min-w-0 flex-col gap-4 text-[#302c39]">
-        <div className="grid items-start grid-cols-[minmax(0,1fr)_320px] gap-4">
-          <div className="self-start rounded-2xl border border-[#ddd8e8] bg-white p-5 shadow-[0_8px_20px_rgba(46,22,76,0.07)]">
-            <div className="flex items-center justify-between gap-3 border-b border-[#ece7f2] pb-4">
+        <div className="flex flex-col lg:grid lg:grid-cols-[minmax(0,1fr)_320px] gap-4 items-start">
+          <div className="w-full self-start rounded-2xl border border-[#ddd8e8] bg-white p-3 sm:p-5 shadow-[0_8px_20px_rgba(46,22,76,0.07)]">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-[#ece7f2] pb-4">
               <div>
-                <div className="mt-1 flex flex-wrap items-center gap-2">
-                  <h2 className="text-2xl font-black text-[#2f2b39]">{periodLabel}</h2>
+                <div className="mt-1 flex flex-col sm:flex-row sm:items-center gap-2">
+                  <h2 className="text-xl sm:text-2xl font-black text-[#2f2b39]">{periodLabel}</h2>
                   <div className="flex items-center gap-2">
                     <div className="flex items-center gap-1">
                       <Button
@@ -638,7 +638,7 @@ export function CalendarPage() {
                 </p>
               </div>
 
-              <div className="flex flex-wrap items-center justify-end gap-2">
+              <div className="flex flex-wrap items-center sm:justify-end gap-2">
                 <div className="inline-flex items-center rounded-xl border border-[#ddd8e8] bg-[#faf9fd] p-1">
                   <button
                     type="button"
@@ -763,20 +763,20 @@ export function CalendarPage() {
               </div>
             </div>
 
-            <div className="mt-4">
-              <div className="min-w-0">
-                <div className="grid grid-cols-7 gap-2">
+            <div className="mt-4 overflow-x-auto">
+              <div className="min-w-[600px] lg:min-w-0">
+                <div className="grid grid-cols-7 gap-1 sm:gap-2">
                   {weekdayLabels.map((weekday) => (
                     <div
                       key={weekday}
-                      className="rounded-lg border border-[#ece7f2] bg-[#f9f7fc] py-2 text-center text-xs font-bold uppercase tracking-wide text-[#8f879f]"
+                      className="rounded-lg border border-[#ece7f2] bg-[#f9f7fc] py-2 text-center text-[10px] sm:text-xs font-bold uppercase tracking-wide text-[#8f879f]"
                     >
                       <span>{weekday}</span>
                     </div>
                   ))}
                 </div>
 
-                <div className="mt-2 grid grid-cols-7 gap-2">
+                <div className="mt-2 grid grid-cols-7 gap-1 sm:gap-2">
                   {visibleDaysToRender.map((date) => {
                     const dateKey = toDateKey(date);
                     const dayEntries = entriesByDate[dateKey] ?? [];
@@ -792,8 +792,8 @@ export function CalendarPage() {
                         type="button"
                         onClick={() => handleSelectDate(date)}
                         className={[
-                          'flex flex-col rounded-xl border p-2 text-left transition-all overflow-hidden relative',
-                          viewMode === 'monthly' ? 'h-28' : 'h-36',
+                          'flex flex-col rounded-xl border p-1.5 sm:p-2 text-left transition-all overflow-hidden relative',
+                          viewMode === 'monthly' ? 'h-20 sm:h-28' : 'h-24 sm:h-36',
                           isSelected
                             ? 'border-[#be8de4] bg-[#fbf5ff] shadow-[0_8px_18px_rgba(165,62,191,0.18)]'
                             : 'border-[#ece7f2] bg-white hover:border-[#d7cbe7] hover:bg-[#fcf9ff]',
@@ -803,7 +803,7 @@ export function CalendarPage() {
                         <div className="flex items-center justify-between shrink-0 mb-1">
                           <span
                             className={[
-                              'inline-flex h-6 min-w-6 items-center justify-center rounded-full px-1.5 text-xs font-black',
+                              'inline-flex h-5 min-w-5 sm:h-6 sm:min-w-6 items-center justify-center rounded-full px-1 sm:px-1.5 text-[10px] sm:text-xs font-black',
                               isToday
                                 ? 'bg-linear-to-r from-[#f347a5] to-[#8f1fd1] text-white'
                                 : 'text-[#4a445a]',
@@ -813,28 +813,41 @@ export function CalendarPage() {
                           </span>
 
                           {dayEntries.length > 0 ? (
-                            <span className="text-[10px] font-bold text-[#8f879f]">
+                            <span className="text-[9px] sm:text-[10px] font-bold text-[#8f879f]">
                               {dayEntries.length}
                             </span>
                           ) : null}
                         </div>
 
-                        <div className="mt-1 w-full flex-1 space-y-1 overflow-hidden">
-                          {dayEntries.slice(0, 3).map((entry) => (
-                            <span
-                              key={entry.id}
-                              className={`block truncate rounded-md border px-1.5 py-1 text-[10px] font-semibold ${getLabelStyle(entry.label).chip}`}
-                              title={`${formatTime12Hour(entry.startTime)} - ${formatTime12Hour(entry.endTime)} ${entry.title}`}
-                            >
-                              {formatTime12Hour(entry.startTime)} -{' '}
-                              {formatTime12Hour(entry.endTime)} {entry.title}
-                            </span>
-                          ))}
-                          {dayEntries.length > 3 ? (
-                            <span className="block text-[10px] font-semibold text-[#8f879f]">
-                              +{dayEntries.length - 3} more
-                            </span>
-                          ) : null}
+                        <div className="mt-1 w-full flex-1 overflow-hidden">
+                          {/* Mobile Dots */}
+                          <div className="flex flex-wrap gap-0.5 sm:hidden">
+                            {dayEntries.map((entry) => (
+                              <span
+                                key={entry.id}
+                                className={`size-1.5 rounded-full ${getLabelStyle(entry.label).dot}`}
+                              />
+                            ))}
+                          </div>
+
+                          {/* Desktop Chips */}
+                          <div className="hidden sm:block space-y-1">
+                            {dayEntries.slice(0, 3).map((entry) => (
+                              <span
+                                key={entry.id}
+                                className={`block truncate rounded-md border px-1.5 py-1 text-[10px] font-semibold ${getLabelStyle(entry.label).chip}`}
+                                title={`${formatTime12Hour(entry.startTime)} - ${formatTime12Hour(entry.endTime)} ${entry.title}`}
+                              >
+                                {formatTime12Hour(entry.startTime)} -{' '}
+                                {formatTime12Hour(entry.endTime)} {entry.title}
+                              </span>
+                            ))}
+                            {dayEntries.length > 3 ? (
+                              <span className="block text-[10px] font-semibold text-[#8f879f]">
+                                +{dayEntries.length - 3} more
+                              </span>
+                            ) : null}
+                          </div>
                         </div>
                       </button>
                     );
@@ -847,7 +860,7 @@ export function CalendarPage() {
               {selectableLabels.map((label) => (
                 <span
                   key={label}
-                  className={`inline-flex items-center gap-1 rounded-full px-2 py-1 text-[11px] font-bold ${getLabelStyle(label).badge}`}
+                  className={`inline-flex items-center gap-1 rounded-full px-2 py-1 text-[10px] sm:text-[11px] font-bold ${getLabelStyle(label).badge}`}
                 >
                   <span className={`size-2 rounded-full ${getLabelStyle(label).dot}`} />
                   {label}
@@ -856,9 +869,9 @@ export function CalendarPage() {
             </div>
           </div>
 
-          <aside className="w-[320px] self-start">
+          <aside className="w-full lg:w-[320px] self-start">
             {shouldShowAddForm ? (
-              <section className="rounded-2xl border border-[#ddd8e8] bg-white p-4 shadow-[0_8px_20px_rgba(46,22,76,0.07)] animate-in fade-in slide-in-from-right-4 duration-300">
+              <section className="rounded-2xl border border-[#ddd8e8] bg-white p-3 sm:p-5 shadow-[0_8px_20px_rgba(46,22,76,0.07)] animate-in fade-in slide-in-from-right-4 duration-300">
                 <div className="flex items-center justify-between">
                   <h3 className={sidebarSectionTitleClass}>
                     {editingId ? 'Edit Marker' : 'Add Marker'}
@@ -1152,7 +1165,7 @@ export function CalendarPage() {
             ) : null}
 
             {shouldShowMarkersSection ? (
-              <section className="rounded-2xl border border-[#ddd8e8] bg-white p-4 shadow-[0_8px_20px_rgba(46,22,76,0.07)] animate-in fade-in slide-in-from-right-4 duration-300">
+              <section className="rounded-2xl border border-[#ddd8e8] bg-white p-3 sm:p-5 shadow-[0_8px_20px_rgba(46,22,76,0.07)] animate-in fade-in slide-in-from-right-4 duration-300">
                 <div className="flex items-start justify-between gap-2">
                   <div>
                     <h3 className={sidebarSectionTitleClass}>Markers for this Date</h3>

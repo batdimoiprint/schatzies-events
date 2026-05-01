@@ -48,7 +48,7 @@ export function OrganizerLayout() {
 
   if (isLoading) {
     return (
-      <div className="flex h-screen items-center justify-center bg-[#f6f5f8]">
+      <div className="flex h-screen items-center justify-center bg-[#fbf8fd]">
         <div className="flex flex-col items-center">
           <div className="relative">
             <div className="absolute -inset-2 animate-spin rounded-full border-r-4 border-t-4 border-transparent border-r-[#8f1fd1] border-t-[#f347a5]" />
@@ -71,7 +71,7 @@ export function OrganizerLayout() {
   }
 
   return (
-    <div className="h-screen bg-[#f6f5f8]">
+    <div className="min-h-screen bg-[#fbf8fd]">
       <div className="flex h-full flex-col md:flex-row">
         <aside
           className={[
