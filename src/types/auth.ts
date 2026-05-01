@@ -16,6 +16,7 @@ export interface User {
   email: string;
   role: string;
   profilePic?: string;
+  isPasswordChanged?: boolean;
   created_at?: string;
 }
 

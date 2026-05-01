@@ -19,6 +19,7 @@ export interface EventManagerEvent {
   clientId: string;
   organizerId: string;
   organizerName: string;
+  createdAt: string;
 }
 
 interface BackendEvent {
@@ -35,6 +36,7 @@ interface BackendEvent {
   eventPax?: number | null;
   venue?: string;
   status?: string;
+  createdAt?: string;
 }
 
 interface BackendEventDetails extends BackendEvent {
@@ -127,12 +129,13 @@ function mapToManagerRow(
     client: clientName,
     type: baseEvent.eventType || '-',
     package: packagePax > 0 ? `${packageName} (${packagePax})` : packageName,
-    venue: baseEvent.venue || '-',
+    venue: (baseEvent.venue && !['', '-', '–', '—', 'n/a', 'tba'].includes(baseEvent.venue.trim().toLowerCase())) ? baseEvent.venue : '',
     rsvp: 0,
     status: mapEventStatus(baseEvent.status),
     clientId: baseEvent.clientId || '',
     organizerId: baseEvent.headOrganizerId || '',
     organizerName,
+    createdAt: baseEvent.createdAt || '',
   };
 }
 

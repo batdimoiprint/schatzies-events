@@ -110,9 +110,6 @@ export function ScheduleMeetingDialog({
 
     if (!selectedInquiry) return;
 
-    const inquiryDateKey = selectedInquiry?.date
-      ? new Date(selectedInquiry.date).toISOString().split('T')[0]
-      : todayKey;
     const existingMeeting = selectedInquiry?.meetingDetails || {};
     const inquiryUserId =
       selectedInquiry?.userId || selectedInquiry?.user_id || existingMeeting?.inquiryUserId || '';
@@ -121,9 +118,9 @@ export function ScheduleMeetingDialog({
       title:
         existingMeeting?.title ||
         `Meeting with ${selectedInquiry?.firstName} ${selectedInquiry?.lastName}`,
-      startDateKey: existingMeeting?.startDateKey || existingMeeting?.date || inquiryDateKey,
+      startDateKey: existingMeeting?.startDateKey || existingMeeting?.date || todayKey,
       startTime: existingMeeting?.startTime || existingMeeting?.time || DEFAULT_START_TIME,
-      endDateKey: existingMeeting?.endDateKey || existingMeeting?.date || inquiryDateKey,
+      endDateKey: existingMeeting?.endDateKey || existingMeeting?.date || todayKey,
       endTime: existingMeeting?.endTime || DEFAULT_END_TIME,
       label: existingMeeting?.label || 'Meeting',
       organizerId: existingMeeting?.organizerId || organizers[0]?.user_id || '',

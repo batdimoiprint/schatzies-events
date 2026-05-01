@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { format } from 'date-fns';
 import { useForm, Controller } from 'react-hook-form';
 import { cn } from '@/lib/utils';
@@ -148,14 +148,7 @@ export function InquiryForm({ onClose, selectedPackageId, selectedEventType }: I
       pollingRef.current = setInterval(async () => {
         // Ask backend
         try {
-          const { verified, alreadyUsed } = await checkEmailVerified(watchedEmail);
-          if (alreadyUsed) {
-            setVerificationError('This email is already used. Please use another email.');
-            setEmailVerified(false);
-            setVerificationSent(false);
-            if (pollingRef.current) clearInterval(pollingRef.current);
-            return;
-          }
+          const { verified } = await checkEmailVerified(watchedEmail);
           if (verified) {
             setEmailVerified(true);
             setVerificationSent(false);

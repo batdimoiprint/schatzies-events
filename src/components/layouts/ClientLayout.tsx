@@ -2,9 +2,10 @@ import { Outlet, Navigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { ClientSidebar } from '@/components/ClientSidebar';
 import { ClientTopBar } from '@/components/client/ClientTopBar';
+import { ChangePasswordModal } from '@/components/client/ChangePasswordModal';
 
 export function ClientLayout() {
-  const { user, isAuthenticated, isLoading } = useAuth();
+  const { user, isAuthenticated, isLoading, verifyToken } = useAuth();
 
   if (isLoading) {
     return (
@@ -18,6 +19,8 @@ export function ClientLayout() {
     return <Navigate to="/login" replace />;
   }
 
+  const needsPasswordChange = user.isPasswordChanged === false;
+
   return (
     <div className="min-h-screen bg-[#fbf8fd]">
       <div className="flex h-full flex-col md:flex-row">
@@ -30,6 +33,15 @@ export function ClientLayout() {
           </main>
         </div>
       </div>
+
+      {needsPasswordChange && (
+        <ChangePasswordModal
+          onPasswordChanged={() => {
+            // Re-verify token to refresh user data with isPasswordChanged = true
+            verifyToken();
+          }}
+        />
+      )}
     </div>
   );
 }

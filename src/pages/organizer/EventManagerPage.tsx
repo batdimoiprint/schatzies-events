@@ -1,6 +1,8 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useOutletContext } from 'react-router-dom';
 import { Card, CardContent } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import {
   Table,
   TableBody,
@@ -11,14 +13,13 @@ import {
 } from '@/components/ui/table';
 import type { OrganizerLayoutOutletContext } from '@/components/layouts/OrganizerLayout';
 import { getEventManagerEvents, updateEvent, deleteEvent, type EventManagerEvent } from '@/api/events';
-import { getRSVPList } from '@/api/rsvp';
-import { ArrowUpDown, ArrowUp, ArrowDown, X } from 'lucide-react';
+import { ArrowUpDown, ArrowUp, ArrowDown, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Search } from 'lucide-react';
 import { EventDetailsModal, type EventFormData } from '@/components/organizer/EventDetailsModal';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/hooks/useAuth';
 
 type SortDirection = 'asc' | 'desc' | null;
-type EventSortKey = 'title' | 'date' | 'client' | 'type' | 'package' | 'venue' | 'rsvp' | 'status';
+type EventSortKey = 'title' | 'date' | 'client' | 'type' | 'package' | 'venue' | 'status' | 'createdAt';
 
 const STATUS_OPTIONS = [
   { value: 'Pending', label: 'Planning', dot: 'bg-[#e2b020]', bg: 'bg-[#fff5d3]', text: 'text-[#b68c17]' },
@@ -41,14 +42,14 @@ export function EventManagerPage() {
   const isAdmin = user?.role?.toUpperCase() === 'ADMIN';
 
   const [selectedEventId, setSelectedEventId] = useState<string>('');
-  const [sortKey, setSortKey] = useState<EventSortKey | null>(null);
-  const [sortDirection, setSortDirection] = useState<SortDirection>(null);
+  const [sortKey, setSortKey] = useState<EventSortKey | null>('createdAt');
+  const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
+  const [localSearchTerm, setLocalSearchTerm] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
 
   const [isEventDetailsModalOpen, setIsEventDetailsModalOpen] = useState(false);
   const [selectedEventForDetails, setSelectedEventForDetails] = useState<EventManagerEvent | null>(null);
-  const [rsvpModalEvent, setRsvpModalEvent] = useState<EventManagerEvent | null>(null);
-  const [modalRsvps, setModalRsvps] = useState<any[]>([]);
-  const [isLoadingModalRsvps, setIsLoadingModalRsvps] = useState(false);
   const [statusDropdownEventId, setStatusDropdownEventId] = useState<string>('');
 
   // TanStack Query with 10s polling
@@ -124,21 +125,20 @@ export function EventManagerPage() {
   };
 
   const filteredEvents = useMemo(() => {
-    const normalizedSearchTerm = searchTerm.trim().toLowerCase();
+    const combinedSearchTerm = (localSearchTerm || searchTerm).trim().toLowerCase();
 
     let data = events.filter((event) => {
-      if (!normalizedSearchTerm) return true;
+      if (!combinedSearchTerm) return true;
       const searchableFields = [
         event.title,
         event.date,
         event.client,
         event.type,
         event.package,
-        event.venue,
+        (event.venue && !["", "-", "–", "—", "n/a", "tba"].includes(event.venue.trim().toLowerCase())) ? event.venue : "Venue Required",
         event.status,
-        String(event.rsvp),
       ];
-      return searchableFields.some((field) => field.toLowerCase().includes(normalizedSearchTerm));
+      return searchableFields.some((field) => field && field.toLowerCase().includes(combinedSearchTerm));
     });
 
     if (sortKey && sortDirection) {
@@ -171,13 +171,13 @@ export function EventManagerPage() {
             aVal = a.venue.toLowerCase();
             bVal = b.venue.toLowerCase();
             break;
-          case 'rsvp':
-            aVal = a.rsvp;
-            bVal = b.rsvp;
-            break;
           case 'status':
             aVal = a.status.toLowerCase();
             bVal = b.status.toLowerCase();
+            break;
+          case 'createdAt':
+            aVal = a.createdAt || '';
+            bVal = b.createdAt || '';
             break;
         }
 
@@ -188,64 +188,19 @@ export function EventManagerPage() {
     }
 
     return data;
-  }, [events, searchTerm, sortKey, sortDirection]);
+  }, [events, searchTerm, localSearchTerm, sortKey, sortDirection]);
 
-  // Fetch RSVPs when modal opens
-  const handleOpenRsvpModal = async (event: EventManagerEvent) => {
-    setRsvpModalEvent(event);
-    setIsLoadingModalRsvps(true);
-    setModalRsvps([]);
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, localSearchTerm, sortKey, sortDirection]);
 
-    try {
-      let rawData = await getRSVPList(event.id);
+  const totalPages = Math.max(1, Math.ceil(filteredEvents.length / rowsPerPage));
+  const paginatedEvents = useMemo(() => {
+    const start = (currentPage - 1) * rowsPerPage;
+    return filteredEvents.slice(start, start + rowsPerPage);
+  }, [filteredEvents, currentPage, rowsPerPage]);
 
-      if ((!rawData || rawData.length === 0) && !event.id.startsWith('EVENT#')) {
-        try {
-          const altData = await getRSVPList(`EVENT#${event.id}`);
-          if (altData && altData.length > 0) rawData = altData;
-        } catch {}
-      }
 
-      const flatArray: any[] = [];
-      const processData = (item: any) => {
-        if (Array.isArray(item)) item.forEach(processData);
-        else if (item && typeof item === 'object') flatArray.push(item);
-      };
-      processData(rawData);
-
-      const mappedData = flatArray.map((item: any) => {
-        const fName = String(item.firstName || item.first_name || item.guestfirstName || '')
-          .replace(/undefined/gi, '')
-          .trim();
-        const lName = String(item.lastName || item.last_name || item.guestlastName || '')
-          .replace(/undefined/gi, '')
-          .trim();
-
-        const statusStr = String(item.status || '').trim().toUpperCase();
-        const isAttending =
-          item.isScanned === true ||
-          item.isScanned === 'true' ||
-          statusStr === 'ATTENDING' ||
-          statusStr === 'CONFIRMED';
-
-        const time = item.updatedAt || item.scannedAt || item.createdAt || new Date().toISOString();
-
-        return {
-          id: item.id || item.guestId || item.SK || Math.random().toString(),
-          firstName: fName || 'Guest',
-          lastName: lName,
-          isScanned: isAttending,
-          scannedAt: time,
-        };
-      });
-
-      setModalRsvps(mappedData);
-    } catch (error) {
-      console.error('Failed to fetch RSVPs for modal', error);
-    } finally {
-      setIsLoadingModalRsvps(false);
-    }
-  };
 
   const errorMessage = queryError instanceof Error ? queryError.message : queryError ? 'Unable to load events right now.' : '';
 
@@ -268,22 +223,33 @@ export function EventManagerPage() {
       )}
 
       <div className="flex-1 flex flex-col rounded-xl border border-[#eef0f4] bg-white p-3 sm:p-6 shadow-sm overflow-hidden min-h-[calc(100vh-150px)]">
-        <div className="mb-4 flex items-center justify-between border-b border-[#f1eef5] pb-3">
-          <h2 className="text-lg sm:text-xl font-black text-[#302a3a]">Events</h2>
-          {isLoading && (
-            <div className="flex items-center gap-2 text-xs font-semibold text-[#a49db4]">
-              <svg
-                className="animate-spin h-3 w-3 text-[#df1b8b]"
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                viewBox="0 0 24 24"
-              >
-                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-              </svg>
-              Loading...
-            </div>
-          )}
+        <div className="mb-4 flex flex-col sm:flex-row sm:items-center justify-between border-b border-[#f1eef5] pb-3 gap-3">
+          <div className="flex items-center gap-3">
+            <h2 className="text-lg sm:text-xl font-black text-[#302a3a]">Events</h2>
+            {isLoading && (
+              <div className="flex items-center gap-2 text-xs font-semibold text-[#a49db4]">
+                <svg
+                  className="animate-spin h-3 w-3 text-[#df1b8b]"
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                >
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                Loading...
+              </div>
+            )}
+          </div>
+          <div className="relative w-full sm:w-64">
+            <Search className="absolute left-2 top-2.5 h-4 w-4 text-[#a49db4]" />
+            <Input
+              placeholder="Search events..."
+              value={localSearchTerm}
+              onChange={(e) => setLocalSearchTerm(e.target.value)}
+              className="border border-[#eef0f4] bg-white pl-8 shadow-sm h-9 text-xs sm:text-sm font-semibold text-[#302a3a] outline-none focus:border-[#df1b8b]"
+            />
+          </div>
         </div>
 
         <div className="flex-1 overflow-x-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden rounded-lg">
@@ -297,8 +263,8 @@ export function EventManagerPage() {
                   { key: 'type', label: 'Type', alwaysVisible: false },
                   { key: 'package', label: 'Package', alwaysVisible: false },
                   { key: 'venue', label: 'Venue', alwaysVisible: false },
-                  { key: 'rsvp', label: 'RSVP', alwaysVisible: false },
                   { key: 'status', label: 'Status', alwaysVisible: false },
+                  { key: 'createdAt', label: 'Approved Date', alwaysVisible: false },
                 ] as { key: EventSortKey; label: string; alwaysVisible: boolean }[]).map(
                   (col) => (
                     <TableHead
@@ -326,7 +292,7 @@ export function EventManagerPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredEvents.map((event) => (
+              {paginatedEvents.map((event) => (
                 <TableRow
                   key={event.id}
                   onClick={() => {
@@ -354,22 +320,13 @@ export function EventManagerPage() {
                     {event.package}
                   </TableCell>
                   <TableCell className="py-4 font-semibold text-[#5c546a] hidden md:table-cell">
-                    {event.venue}
-                  </TableCell>
-                  <TableCell className="py-4 font-bold text-[#5c546a] hidden md:table-cell">
-                    <div className="flex items-center gap-1.5">
-                      {event.rsvp}
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleOpenRsvpModal(event);
-                        }}
-                        className="text-[9px] font-bold uppercase tracking-wider text-[#760CB4] hover:brightness-125 hover:underline"
-                      >
-                        View RSVP
-                      </button>
-                    </div>
+                    {event.venue && !["", "-", "–", "—", "n/a", "tba"].includes(event.venue.trim().toLowerCase()) ? (
+                      event.venue
+                    ) : (
+                      <span className="font-extrabold text-red-600 uppercase tracking-tight">
+                        Venue Required
+                      </span>
+                    )}
                   </TableCell>
                   <TableCell className="py-4 hidden md:table-cell">
                     <div className="relative">
@@ -419,9 +376,16 @@ export function EventManagerPage() {
                       )}
                     </div>
                   </TableCell>
+                  <TableCell className="py-4 font-semibold text-[#8f879f] hidden md:table-cell">
+                    {event.createdAt ? new Date(event.createdAt).toLocaleDateString('en-US', {
+                      month: 'short',
+                      day: 'numeric',
+                      year: 'numeric'
+                    }) : '-'}
+                  </TableCell>
                 </TableRow>
               ))}
-              {filteredEvents.length === 0 && (
+              {paginatedEvents.length === 0 && (
                 <TableRow>
                   <TableCell
                     colSpan={8}
@@ -434,116 +398,77 @@ export function EventManagerPage() {
             </TableBody>
           </Table>
         </div>
-      </div>
 
-      {/* RSVP Modal */}
-      {rsvpModalEvent && (
-        <div className="fixed inset-0 z-1000 flex min-h-full items-center justify-center bg-[#1a1423]/60 backdrop-blur-md p-4 overflow-auto">
-          <div className="relative w-full max-w-md animate-in zoom-in-95 fade-in rounded-2xl bg-white p-6 shadow-2xl duration-200">
-            <button
-              type="button"
-              onClick={() => setRsvpModalEvent(null)}
-              className="absolute right-4 top-4 text-[#a69eb5] hover:text-[#2d2834]"
+        {/* Pagination Bar */}
+        <div className="mt-4 flex flex-col gap-3 border-t border-[#f1eef5] pt-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-center gap-2 text-xs font-semibold text-[#7c7390]">
+            <span>Rows per page:</span>
+            <select
+              value={rowsPerPage}
+              onChange={(e) => {
+                setRowsPerPage(Number(e.target.value));
+                setCurrentPage(1);
+              }}
+              className="rounded-md border border-[#e5ddee] bg-white px-2 py-1 text-xs font-bold text-[#2e2837] outline-none focus:border-[#df1b8b]"
             >
-              <X className="size-5" />
-            </button>
+              {[5, 10, 25, 50].map((n) => (
+                <option key={n} value={n}>
+                  {n}
+                </option>
+              ))}
+            </select>
+            <span className="ml-2 text-[#a49db4]">
+              {paginatedEvents.length > 0 ? (currentPage - 1) * rowsPerPage + 1 : 0}–
+              {Math.min(currentPage * rowsPerPage, filteredEvents.length)} of{' '}
+              {filteredEvents.length}
+            </span>
+          </div>
 
-            <div className="mb-6 text-center">
-              <h2 className="text-2xl font-black text-[#2e2837]">RSVP</h2>
-              <p className="text-xs font-semibold text-[#7c758d]">Live counts of attendees</p>
-            </div>
-
-            <div className="mb-6 flex gap-4">
-              <div className="flex-1 rounded-xl border border-[#e1d5eb] bg-[#F6E7FF] p-4 text-center">
-                <p className="mb-2 text-[10px] font-black uppercase tracking-widest text-[#2e2837]">
-                  Live Headcount
-                </p>
-                <div className="mb-3 flex justify-center gap-1.5">
-                  {String(rsvpModalEvent.rsvp)
-                    .padStart(3, '0')
-                    .split('')
-                    .map((digit, i) => (
-                      <div
-                        key={i}
-                        className="flex h-14 w-10 items-center justify-center rounded border border-[#d4c5e3] bg-white text-4xl font-black text-[#1a1423] shadow-sm"
-                      >
-                        {digit}
-                      </div>
-                    ))}
-                </div>
-                <p className="text-[11px] font-bold text-[#625974]">
-                  Expected Attendees: <span className="font-semibold text-[#8b839c]">80 pax</span>
-                </p>
-              </div>
-
-              <div className="flex flex-1 flex-col justify-center gap-1 text-[11px] font-bold text-[#352f44]">
-                <p>DETAILS:</p>
-                <p className="font-semibold text-[#716885]">
-                  FINAL HEADCOUNT:{' '}
-                  {isLoadingModalRsvps ? '...' : modalRsvps.filter((r) => r.isScanned).length}
-                </p>
-                <p className="font-semibold text-[#716885]">
-                  ABSENTEES:{' '}
-                  {isLoadingModalRsvps ? '...' : modalRsvps.filter((r) => !r.isScanned).length}
-                </p>
-              </div>
-            </div>
-
-            <div className="overflow-hidden rounded-xl border border-[#eae4f1]">
-              <h3 className="border-b border-[#eae4f1] bg-white py-2 text-center text-[10px] font-black uppercase tracking-widest text-[#2e2837]">
-                Names of Present Attendees
-              </h3>
-              <div className="max-h-48 overflow-y-auto bg-white p-4">
-                <table className="w-full text-[11px]">
-                  <thead>
-                    <tr className="border-b border-[#f3eff7] text-left font-semibold text-[#8e879c]">
-                      <th className="pb-2 font-semibold">Name</th>
-                      <th className="pb-2 text-right font-semibold">Time</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {isLoadingModalRsvps ? (
-                      <tr>
-                        <td colSpan={2} className="py-4 text-center text-xs text-[#8e879c]">
-                          Loading guests...
-                        </td>
-                      </tr>
-                    ) : modalRsvps.filter((r) => r.isScanned).length === 0 ? (
-                      <tr>
-                        <td colSpan={2} className="py-4 text-center text-xs text-[#8e879c]">
-                          No attendees arrived yet.
-                        </td>
-                      </tr>
-                    ) : (
-                      modalRsvps
-                        .filter((r) => r.isScanned)
-                        .map((guest, i) => {
-                          const scanTime = new Date(guest.scannedAt).toLocaleTimeString('en-US', {
-                            hour: '2-digit',
-                            minute: '2-digit',
-                          });
-                          return (
-                            <tr
-                              key={guest.id || i}
-                              className="border-b border-[#f9f7fb] last:border-0"
-                            >
-                              <td className="py-2.5 font-bold text-[#453e54]">
-                                {i + 1}. {guest.firstName} {guest.lastName}
-                              </td>
-                              <td className="py-2.5 text-right font-semibold text-[#8e879c]">
-                                {scanTime}
-                              </td>
-                            </tr>
-                          );
-                        })
-                    )}
-                  </tbody>
-                </table>
-              </div>
-            </div>
+          <div className="flex items-center gap-1">
+            <Button
+              variant="outline"
+              size="icon"
+              className="h-7 w-7 border-[#e5ddee] disabled:opacity-40"
+              onClick={() => setCurrentPage(1)}
+              disabled={currentPage === 1}
+            >
+              <ChevronsLeft className="h-3.5 w-3.5" />
+            </Button>
+            <Button
+              variant="outline"
+              size="icon"
+              className="h-7 w-7 border-[#e5ddee] disabled:opacity-40"
+              onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+              disabled={currentPage === 1}
+            >
+              <ChevronLeft className="h-3.5 w-3.5" />
+            </Button>
+            <span className="mx-2 text-[11px] font-black text-[#2e2837]">
+              Page {currentPage} of {totalPages}
+            </span>
+            <Button
+              variant="outline"
+              size="icon"
+              className="h-7 w-7 border-[#e5ddee] disabled:opacity-40"
+              onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+              disabled={currentPage === totalPages || totalPages === 0}
+            >
+              <ChevronRight className="h-3.5 w-3.5" />
+            </Button>
+            <Button
+              variant="outline"
+              size="icon"
+              className="h-7 w-7 border-[#e5ddee] disabled:opacity-40"
+              onClick={() => setCurrentPage(totalPages)}
+              disabled={currentPage === totalPages || totalPages === 0}
+            >
+              <ChevronsRight className="h-3.5 w-3.5" />
+            </Button>
           </div>
         </div>
-      )}
+      </div>
+
+
 
       {/* Event Details Modal */}
       {selectedEventForDetails && (

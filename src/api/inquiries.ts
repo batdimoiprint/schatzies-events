@@ -211,3 +211,13 @@ export const checkUserRegistered = async (id: string): Promise<boolean> => {
     return false;
   }
 };
+
+export const deleteInquiry = async (id: string): Promise<void> => {
+  try {
+    await axiosInstance.delete(`/inquiries/${id}`);
+  } catch (error) {
+    console.error('Failed to delete inquiry:', error);
+    throw error;
+  }
+};
+
