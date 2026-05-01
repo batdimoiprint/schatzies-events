@@ -1,6 +1,7 @@
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { useEffect, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { InquiryForm } from '@/components/InquiryForm';
 import LoadingScreen from '@/components/ui/LoadingScreen';
 import ScrollReveal from '@/components/ui/ScrollReveal';
@@ -43,6 +44,13 @@ const serviceImages = {
 export function LandingPage() {
   const [inquiryOpen, setInquiryOpen] = useState(false);
   const [heroIndex, setHeroIndex] = useState(0);
+  const [searchParams] = useSearchParams();
+
+  useEffect(() => {
+    if (searchParams.get('inquiry') === 'true') {
+      setInquiryOpen(true);
+    }
+  }, [searchParams]);
 
   useEffect(() => {
     heroImages.forEach((src) => {
