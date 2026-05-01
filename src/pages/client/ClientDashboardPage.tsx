@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { User, Calendar, MapPin } from 'lucide-react';
 import ScrollReveal from '@/components/ui/ScrollReveal';
@@ -7,6 +7,9 @@ import { AllocationResourcesModal } from '@/components/client/AllocationResource
 import { ChecklistMeetingModal } from '@/components/client/ChecklistMeetingModal';
 import { ProgramFlowModal } from '@/components/client/ProgramFlowModal';
 import { GuestListModal } from '@/components/client/GuestListModal';
+import { getRSVPList } from '@/api/rsvp';
+import { getEventManagerEvents } from '@/api/events';
+import { useAuth } from '@/hooks/useAuth';
 
 // ── Static mock data ──────────────────────────────────────────────────────────
 const EVENT = {
@@ -23,28 +26,9 @@ const EVENT = {
   eventStatus: 'Contract Signing',
 };
 
-const GUESTS = [
-  { name: 'Juliana Rox Laurencio', status: 'Confirmed' },
-  { name: 'Juliana Rox Laurencio', status: 'Confirmed' },
-  { name: 'Juliana Rox Laurencio', status: 'Confirmed' },
-  { name: 'Juliana Rox Laurencio', status: 'Confirmed' },
-  { name: 'Juliana Rox Laurencio', status: 'Confirmed' },
-  { name: 'Juliana Rox Laurencio', status: 'Confirmed' },
-  { name: 'Juliana Rox Laurencio', status: 'Confirmed' },
-  { name: 'Juliana Rox Laurencio', status: 'Confirmed' },
-  { name: 'Juliana Rox Laurencio', status: 'Confirmed' },
-  { name: 'Sofia B. Villanueva', status: 'Confirmed' },
-  { name: 'Mateo Sebastian', status: 'Confirmed' },
-  { name: 'Beatriz "Bea" Lopez', status: 'Declined' },
-  { name: 'Dr. Ricardo Gomez', status: 'Confirmed' },
-  { name: 'Elena De Guzman', status: 'Confirmed' },
-  { name: 'Javier San Pedro', status: 'Declined' },
-  { name: 'Clara Isabel Torres', status: 'Confirmed' },
-  { name: 'Marcus Aurelio Tan', status: 'Confirmed' },
-];
-
 export function ClientDashboardPage() {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [showWelcome, setShowWelcome] = useState(() => {
     const hasSeenWelcome = localStorage.getItem('clientWelcomeSeen');
     return !hasSeenWelcome; // Show welcome if not seen before
@@ -54,11 +38,78 @@ export function ClientDashboardPage() {
   const [showChecklist, setShowChecklist] = useState(false);
   const [showProgramFlow, setShowProgramFlow] = useState(false);
   const [showGuestListModal, setShowGuestListModal] = useState(false);
+  const [guests, setGuests] = useState<Array<{ name: string; status: string }>>([]);
+  const [isLoadingGuests, setIsLoadingGuests] = useState(true);
 
   const handleCloseWelcome = () => {
     setShowWelcome(false);
     localStorage.setItem('clientWelcomeSeen', 'true');
   };
+
+  // Fetch guest list from API
+  useEffect(() => {
+    const fetchGuestList = async () => {
+      setIsLoadingGuests(true);
+      try {
+        const events = await getEventManagerEvents();
+
+        // Filter events: Clients only see their own, Admins/Organizers see everything
+        const userEvents =
+          user?.role === 'CLIENT' ? events.filter((e) => e.clientId === user.user_id) : events;
+
+        // Get the first event for the current user
+        const userEvent = userEvents.length > 0 ? userEvents[0] : null;
+
+        if (userEvent) {
+          // Fetch RSVP list for this event
+          let rsvpList = await getRSVPList(userEvent.id);
+
+          // If no data, try with the EVENT# prefix just in case the backend requires it
+          if ((!rsvpList || rsvpList.length === 0) && !userEvent.id.startsWith('EVENT#')) {
+            try {
+              const altData = await getRSVPList(`EVENT#${userEvent.id}`);
+              if (altData && altData.length > 0) rsvpList = altData;
+            } catch (e) {
+              /* ignore fallback error */
+            }
+          }
+
+          // Map the RSVP data to guest list format
+          const mappedGuests = (Array.isArray(rsvpList) ? rsvpList : []).map((rsvp: any) => {
+            const rawStatus = (rsvp.status || '').toString().toUpperCase();
+            const isAttending =
+              rawStatus === 'ATTENDING' || rawStatus === 'CONFIRMED' || rawStatus === 'TRUE';
+            const isDeclined =
+              rawStatus === 'NOT_ATTENDING' ||
+              rawStatus === 'NOT ATTENDING' ||
+              rawStatus === 'FALSE';
+
+            const firstName = rsvp.guestfirstName || rsvp.firstName || rsvp.first_name || '';
+            const lastName = rsvp.guestlastName || rsvp.lastName || rsvp.last_name || '';
+
+            return {
+              name: `${firstName} ${lastName}`.trim() || 'Guest',
+              status: isAttending ? 'Confirmed' : isDeclined ? 'Declined' : 'Pending',
+            };
+          });
+
+          setGuests(mappedGuests);
+        } else {
+          setGuests([]);
+        }
+      } catch (error) {
+        console.error('Error fetching guest list:', error);
+        // Fallback to empty list on error
+        setGuests([]);
+      } finally {
+        setIsLoadingGuests(false);
+      }
+    };
+
+    if (user) {
+      fetchGuestList();
+    }
+  }, [user]);
 
   return (
     <div className="relative">
@@ -343,23 +394,35 @@ export function ClientDashboardPage() {
               {/* Guest rows - scrollable with fade effect */}
               <div className="relative" style={{ minHeight: '200px', flex: 1 }}>
                 <ul className="absolute inset-0 space-y-3 overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent">
-                  {GUESTS.map((guest) => (
-                    <li
-                      key={guest.name}
-                      className="flex items-center justify-between gap-2 text-base"
-                    >
-                      <span className="min-w-0 truncate text-[#2d2834]">{guest.name}</span>
-                      <span
-                        className={`shrink-0 rounded-full px-2.5 py-0.5 text-sm font-semibold ${
-                          guest.status === 'Confirmed'
-                            ? 'bg-green-100 text-green-800'
-                            : 'bg-red-200 text-red-700'
-                        }`}
-                      >
-                        {guest.status}
-                      </span>
+                  {isLoadingGuests ? (
+                    <li className="flex items-center justify-center text-sm text-[#696373]">
+                      Loading guests...
                     </li>
-                  ))}
+                  ) : guests.length === 0 ? (
+                    <li className="flex items-center justify-center text-sm text-[#696373]">
+                      No guests found
+                    </li>
+                  ) : (
+                    guests.map((guest, index) => (
+                      <li
+                        key={`${guest.name}-${index}`}
+                        className="flex items-center justify-between gap-2 text-base"
+                      >
+                        <span className="min-w-0 truncate text-[#2d2834]">{guest.name}</span>
+                        <span
+                          className={`shrink-0 rounded-full px-2.5 py-0.5 text-sm font-semibold ${
+                            guest.status === 'Confirmed'
+                              ? 'bg-green-100 text-green-800'
+                              : guest.status === 'Declined'
+                                ? 'bg-red-200 text-red-700'
+                                : 'bg-yellow-100 text-yellow-800'
+                          }`}
+                        >
+                          {guest.status}
+                        </span>
+                      </li>
+                    ))
+                  )}
                 </ul>
                 {/* Fade-out overlay at bottom */}
                 <div

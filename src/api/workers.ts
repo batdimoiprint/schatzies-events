@@ -3,6 +3,8 @@ import axiosInstance from './axios-instance';
 // Current Interface for Organizer Table Display
 export interface EventWorker {
   id: string;
+  vendorId: string; // Required for assign/unassign endpoints
+  eventId?: string;
   firstName: string;
   lastName: string;
   email: string;
@@ -26,8 +28,19 @@ export interface WorkerPayload {
 
 // Fetch all workers for the table display
 export const getWorkers = async (): Promise<EventWorker[]> => {
-  const response = await axiosInstance.get('/workers');
-  return response.data.workers || [];
+  const response = await axiosInstance.get('/vendors/workers');
+  // Map safely in case backend returns slightly different keys
+  const workers = response.data.workers || response.data || [];
+  return workers.map((w: any) => ({
+    id: w.id || w.workerId,
+    vendorId: w.vendorId || '',
+    eventId: w.eventId || '',
+    firstName: w.firstName || w.workerName?.split(' ')[0] || 'Worker',
+    lastName: w.lastName || w.workerName?.split(' ').slice(1).join(' ') || '',
+    email: w.email || '-',
+    role: w.role || '-',
+    status: String(w.status || w.availabilityStatus || 'Inactive'),
+  }));
 };
 
 // FOR ADMIN USE
@@ -70,3 +83,16 @@ export const assignWorkerToEvent = async (vendorId: string, workerId: string, ev
   );
   return response.data;
 };
+
+// Unassign a worker from its current event
+export const unassignWorkerFromEvent = async (vendorId: string, workerId: string) => {
+  const response = await axiosInstance.delete(
+    `/vendors/${vendorId}/workers/${workerId}/unassign-event`
+  );
+  return response.data;
+};
+
+export async function getWorkerAssignedEvents(workerId: string) {
+  const response = await axiosInstance.get(`/vendors/workers/${workerId}/events`);
+  return Array.isArray(response.data) ? response.data : response.data.events || [];
+}

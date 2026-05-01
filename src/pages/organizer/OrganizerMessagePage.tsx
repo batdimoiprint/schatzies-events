@@ -1,5 +1,14 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Search, MoreVertical, Send, X, Loader2, MessageSquare, RefreshCw } from 'lucide-react';
+import {
+  Search,
+  MoreVertical,
+  Send,
+  X,
+  Loader2,
+  MessageSquare,
+  RefreshCw,
+  ChevronLeft,
+} from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import {
   getConversationMessages,
@@ -263,9 +272,11 @@ export function OrganizerMessagePage() {
 
   /* ─── render ─────────────────────────────────────────────────────────── */
   return (
-    <div className="flex h-[calc(100vh-150px)] w-full gap-6 bg-transparent pb-4">
+    <div className="relative flex h-[calc(100vh-150px)] w-full gap-4 lg:gap-6 bg-transparent pb-4 overflow-hidden">
       {/* ─────────── LEFT SIDEBAR (INBOX LIST) ─────────── */}
-      <div className="flex w-[340px] shrink-0 flex-col overflow-hidden rounded-2xl border border-[#e2deea] bg-white shadow-sm">
+      <div
+        className={`w-full lg:w-[340px] shrink-0 flex-col overflow-hidden rounded-2xl border border-[#e2deea] bg-white shadow-sm ${activeConvId ? 'hidden lg:flex' : 'flex'}`}
+      >
         <div className="border-b border-[#f0edf4] p-4">
           <div className="mb-4 flex items-center justify-between">
             <h2 className="text-lg font-bold text-[#2d2834]">Message Inbox</h2>
@@ -353,12 +364,21 @@ export function OrganizerMessagePage() {
       </div>
 
       {/* ─────────── MIDDLE (CHAT AREA) ─────────── */}
-      <div className="flex flex-1 flex-col overflow-hidden rounded-2xl border border-[#e2deea] bg-white shadow-sm transition-all duration-300">
+      <div
+        className={`flex-1 flex-col overflow-hidden rounded-2xl border border-[#e2deea] bg-white shadow-sm transition-all duration-300 ${activeConvId ? 'flex' : 'hidden lg:flex'}`}
+      >
         {activeConv ? (
           <>
             {/* Chat Header */}
-            <div className="flex items-center justify-between border-b border-[#f0edf4] px-6 py-4">
-              <div className="flex items-center gap-3">
+            <div className="flex items-center justify-between border-b border-[#f0edf4] px-4 lg:px-6 py-4">
+              <div className="flex items-center gap-2 lg:gap-3">
+                <button
+                  type="button"
+                  onClick={() => setActiveConvId(null)}
+                  className="lg:hidden rounded-full p-1 text-[#8f879f] transition hover:bg-[#f6f5f8] hover:text-[#df2b80]"
+                >
+                  <ChevronLeft className="size-6" />
+                </button>
                 <div
                   className={`relative flex size-10 shrink-0 items-center justify-center rounded-full font-bold text-white ${getAvatarColor(activeConv.id)}`}
                 >
@@ -504,7 +524,7 @@ export function OrganizerMessagePage() {
 
       {/* ─────────── RIGHT SIDE (CONTACT DETAILS) ─────────── */}
       {showDetails && activeConv && (
-        <div className="animate-in slide-in-from-right-4 fade-in flex w-[320px] shrink-0 flex-col overflow-y-auto overflow-x-hidden rounded-2xl border border-[#e2deea] bg-white shadow-sm duration-300">
+        <div className="animate-in slide-in-from-right-4 fade-in absolute inset-0 z-50 flex w-full flex-col overflow-y-auto overflow-x-hidden bg-white duration-300 lg:static lg:z-auto lg:flex lg:w-[320px] lg:rounded-2xl lg:border lg:border-[#e2deea] lg:shadow-sm">
           {/* Header */}
           <div className="sticky top-0 z-10 flex items-center justify-between border-b border-[#f0edf4] bg-white px-6 py-4">
             <h3 className="text-base font-bold text-[#2d2834]">Contact Details</h3>

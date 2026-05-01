@@ -473,7 +473,7 @@ export function CostBreakdownPage() {
   };
 
   return (
-    <section className="space-y-6 pb-6">
+    <section className="max-w-full space-y-6 pb-6 overflow-x-hidden">
       <div className="hidden print:block">
         <div
           ref={printRef}
@@ -585,28 +585,24 @@ export function CostBreakdownPage() {
         </div>
       </div>
 
-      <div className="overflow-x-auto pb-2">
-        <div className="w-full max-w-[1600px] mx-auto space-y-6 pr-1">
-          <div className="flex flex-wrap lg:flex-nowrap items-center justify-between gap-4 rounded-3xl border border-[#eadfec] bg-white p-4 shadow-sm print:hidden">
-            <div className="flex items-center gap-3">
-              <div className="relative">
-                <Select value={selectedEventId} onValueChange={setSelectedEventId}>
-                  <SelectTrigger className="h-11 w-[255px] rounded-2xl border-0 bg-linear-to-r from-[#f34da7] to-[#8f1fd1] px-4 text-sm font-semibold text-white shadow-[0_10px_24px_rgba(165,44,180,0.3)] data-[placeholder]:text-white/80 [&_svg]:hidden">
-                    <SelectValue placeholder="Select an event" />
-                  </SelectTrigger>
-                  <SelectContent className="rounded-xl">
-                    {apiEvents.map((event) => (
-                      <SelectItem key={String(event?.id)} value={String(event?.id)}>
-                        {event?.title || event?.eventName || 'Untitled event'}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+      <div className="w-full pb-2">
+        <div className="w-full space-y-6 pr-1">
+          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-y-6 lg:gap-x-12 rounded-3xl border border-[#eadfec] bg-white p-4 shadow-sm print:hidden">
+            <div className="flex flex-col lg:flex-row items-start lg:items-center gap-y-6 lg:gap-x-10 w-full lg:w-auto">
+              <Select value={selectedEventId} onValueChange={setSelectedEventId}>
+                <SelectTrigger className="h-11 w-full md:w-[280px] rounded-2xl border-0 bg-linear-to-r from-[#f34da7] to-[#8f1fd1] px-4 text-sm font-semibold text-white shadow-[0_10px_24px_rgba(165,44,180,0.3)] data-[placeholder]:text-white/80">
+                  <SelectValue placeholder="Select an event" />
+                </SelectTrigger>
+                <SelectContent className="rounded-xl">
+                  {apiEvents.map((event) => (
+                    <SelectItem key={String(event?.id)} value={String(event?.id)}>
+                      {event?.title || event?.eventName || 'Untitled event'}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
 
-                <ChevronDown className="pointer-events-none absolute right-3 top-1/2 size-4 -translate-y-1/2 text-white" />
-              </div>
-
-              <div className="flex items-center gap-3">
+              <div className="flex flex-col md:flex-row md:flex-wrap items-start md:items-center gap-6">
                 <div>
                   <p className="text-sm font-semibold text-[#4d4454]">{selectedEventPackage}</p>
                   <p className="inline-flex items-center gap-2 text-sm font-semibold text-[#60586c]">
@@ -619,24 +615,24 @@ export function CostBreakdownPage() {
                   {selectedEventType}
                 </span>
 
-                <div className="flex items-center gap-6 text-sm font-semibold text-[#6f6780]">
-                  <div className="flex items-center gap-2">
-                    <span className="text-[11px] uppercase tracking-wide text-[#8b8199]">
+                <div className="flex flex-row items-center gap-8 sm:gap-12 text-sm font-semibold text-[#6f6780]">
+                  <div className="flex shrink-0 flex-col gap-0.5">
+                    <span className="text-[10px] font-medium uppercase tracking-wide text-[#8b8199]">
                       Start Date
                     </span>
-                    <span>{formattedEventDate}</span>
+                    <span className="whitespace-nowrap">{formattedEventDate}</span>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-[11px] uppercase tracking-wide text-[#8b8199]">
+                  <div className="flex shrink-0 flex-col gap-0.5">
+                    <span className="text-[10px] font-medium uppercase tracking-wide text-[#8b8199]">
                       End Date
                     </span>
-                    <span>{formattedEventDate}</span>
+                    <span className="whitespace-nowrap">{formattedEventDate}</span>
                   </div>
                 </div>
               </div>
             </div>
 
-            <div className="relative flex items-center gap-2">
+            <div className="relative flex flex-wrap items-center gap-3">
               <Button
                 onClick={handleSaveCostBreakdown}
                 disabled={isSaving}
@@ -676,35 +672,35 @@ export function CostBreakdownPage() {
           </div>
 
           <div className="overflow-hidden rounded-2xl border border-[#e7dfef] bg-white shadow-sm">
-            <div className="grid h-auto min-h-[168px] grid-cols-1 md:grid-cols-2 lg:grid-cols-4 divide-y md:divide-y-0 md:divide-x divide-[#ece6f3]">
+            <div className="grid min-h-[168px] grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-y-4 lg:gap-y-0 lg:divide-x divide-[#ece6f3] py-4 lg:py-0">
               <div className="p-5">
-                <p className="inline-flex items-center gap-2 text-sm font-semibold text-[#7a7186]">
-                  <span className="size-2.5 rounded-full bg-[#8f23cf] ring-2 ring-[#efe4fb]" />
+                <p className="inline-flex items-center gap-2 text-sm font-semibold text-[#7a7186] truncate w-full">
+                  <span className="size-2.5 shrink-0 rounded-full bg-[#8f23cf] ring-2 ring-[#efe4fb]" />
                   Revenue
                 </p>
-                <p className="mt-5 font-sans text-5xl font-black tracking-tight text-[#2d2834]">
+                <p className="mt-5 font-sans text-2xl sm:text-3xl lg:text-5xl font-black tracking-tight text-[#2d2834]">
                   {formatPeso(totalRevenue)}
                 </p>
               </div>
 
               <div className="p-5">
-                <p className="inline-flex items-center gap-2 text-sm font-semibold text-[#7a7186]">
-                  <span className="size-2.5 rounded-full bg-[#5dbac0] ring-2 ring-[#e3f6f7]" />
+                <p className="inline-flex items-center gap-2 text-sm font-semibold text-[#7a7186] truncate w-full">
+                  <span className="size-2.5 shrink-0 rounded-full bg-[#5dbac0] ring-2 ring-[#e3f6f7]" />
                   Profit
                 </p>
                 <p
-                  className={`mt-5 font-sans text-5xl font-black tracking-tight ${profitOrRemainingBudget >= 0 ? 'text-[#2d2834]' : 'text-[#c03560]'}`}
+                  className={`mt-5 font-sans text-2xl sm:text-3xl lg:text-5xl font-black tracking-tight ${profitOrRemainingBudget >= 0 ? 'text-[#2d2834]' : 'text-[#c03560]'}`}
                 >
                   {formatPeso(profitOrRemainingBudget)}
                 </p>
               </div>
 
               <div className="p-5">
-                <p className="inline-flex items-center gap-2 text-sm font-semibold text-[#7a7186]">
-                  <span className="size-2.5 rounded-full bg-[#d7d6db]" />
+                <p className="inline-flex items-center gap-2 text-sm font-semibold text-[#7a7186] truncate w-full">
+                  <span className="size-2.5 shrink-0 rounded-full bg-[#d7d6db]" />
                   Package (Per Pax)
                 </p>
-                <p className="mt-5 font-sans text-5xl font-black tracking-tight text-[#2d2834]">
+                <p className="mt-5 font-sans text-2xl sm:text-3xl lg:text-5xl font-black tracking-tight text-[#2d2834]">
                   {formatPeso(resolvedPackagePrice)}
                 </p>
                 <p className="mt-2 text-right text-xs font-semibold text-[#898299]">
@@ -713,11 +709,11 @@ export function CostBreakdownPage() {
               </div>
 
               <div className="p-5">
-                <p className="inline-flex items-center gap-2 text-sm font-semibold text-[#7a7186]">
-                  <span className="size-2.5 rounded-full bg-[#d7d6db]" />
+                <p className="inline-flex items-center gap-2 text-sm font-semibold text-[#7a7186] truncate w-full">
+                  <span className="size-2.5 shrink-0 rounded-full bg-[#d7d6db]" />
                   Additional Charges
                 </p>
-                <p className="mt-5 font-sans text-5xl font-black tracking-tight text-[#2d2834]">
+                <p className="mt-5 font-sans text-2xl sm:text-3xl lg:text-5xl font-black tracking-tight text-[#2d2834]">
                   {formatPeso(displayedAdditionalCharges)}
                 </p>
                 <Dialog>
@@ -844,12 +840,12 @@ export function CostBreakdownPage() {
             </div>
           </div>
 
-          <div className="space-y-2">
-            <h2 className="text-[32px] font-black tracking-tight text-[#4a4157]">
+          <div className="mt-6 space-y-3">
+            <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-[#4a4157]">
               Cost Distribution (Vendors)
             </h2>
 
-            <div className="grid grid-cols-[320px_minmax(0,1fr)] gap-4">
+            <div className="grid grid-cols-1 xl:grid-cols-[320px_minmax(0,1fr)] gap-4">
               <Card className="h-[500px] border-[#e7dfef] bg-white py-0 shadow-sm">
                 <CardContent className="flex h-full flex-col px-5 py-5">
                   <div className="flex flex-1 items-start justify-center pt-1">
@@ -931,9 +927,10 @@ export function CostBreakdownPage() {
                     ))}
                   </div>
 
-                  <div className="mt-3 flex justify-center">
-                    <div className="rounded-sm bg-[#ff5b9f] px-4 py-2 text-sm font-bold text-white shadow-[0_10px_24px_rgba(255,91,159,0.28)]">
-                      Total Cost = {formatPeso(totalVendorCharges)}
+                  <div className="mt-6 flex justify-center w-full">
+                    <div className="flex w-[92%] items-center justify-between rounded-md bg-[#ff5b9f] px-5 py-3 text-[14px] font-bold text-white shadow-[0_8px_20px_rgba(255,91,159,0.3)]">
+                      <span>Total Cost =</span>
+                      <span>{formatPeso(totalVendorCharges)}</span>
                     </div>
                   </div>
                 </CardContent>
@@ -943,15 +940,15 @@ export function CostBreakdownPage() {
                 <CardContent className="h-full px-0 py-0">
                   <div className="overflow-hidden rounded-2xl">
                     <div className="bg-linear-to-r from-[#ff66a7] to-[#ff4b97] px-6 py-4 text-sm font-semibold text-white">
-                      <div className="grid grid-cols-[1.2fr_1fr_180px] gap-4">
-                        <span>Vendor type</span>
+                      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-[1.2fr_1fr_180px] gap-4">
+                        <span className="hidden sm:inline">Vendor type</span>
                         <span>Vendor Name</span>
                         <span className="text-right">Allocated Cost</span>
                       </div>
                     </div>
 
-                    <div className="h-[420px] overflow-y-auto">
-                      <Table>
+                    <div className="h-[420px] overflow-y-auto overflow-x-auto">
+                      <Table className="min-w-[400px] sm:min-w-0">
                         <TableHeader className="sr-only">
                           <TableRow>
                             <TableHead>Vendor type</TableHead>
@@ -965,7 +962,7 @@ export function CostBreakdownPage() {
                               key={charge.id}
                               className="border-[#f1ecf6] odd:bg-[#fff4f8] even:bg-white hover:bg-[#fcfbfd]"
                             >
-                              <TableCell className="px-6 py-4 text-sm font-medium text-[#2f2939]">
+                              <TableCell className="hidden sm:table-cell px-6 py-4 text-sm font-medium text-[#2f2939]">
                                 {charge.category}
                               </TableCell>
                               <TableCell className="px-6 py-4 text-sm text-[#2f2939]">

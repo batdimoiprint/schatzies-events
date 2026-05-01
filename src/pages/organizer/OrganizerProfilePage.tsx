@@ -57,11 +57,11 @@ export function OrganizerProfilePage() {
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const coverInputRef = useRef<HTMLInputElement>(null);
-  
+
   const [coverUrl, setCoverUrl] = useState(() => {
     return localStorage.getItem('organizer_cover_url') || '';
   });
-  
+
   const [avatarPos] = useState(() => {
     return Number(localStorage.getItem('organizer_avatar_pos')) || 50;
   });
@@ -144,7 +144,7 @@ export function OrganizerProfilePage() {
       setOriginalProfile(updated);
       setAvatarSrc(updated.profilePic || FALLBACK_AVATAR);
       setSelectedFile(null);
-      
+
       localStorage.setItem('organizer_avatar_pos', avatarPos.toString());
       localStorage.setItem('organizer_cover_pos', coverPos.toString());
       setIsEditing(false);
@@ -252,11 +252,10 @@ export function OrganizerProfilePage() {
                 </div>
               )}
             </div>
-...
+            ...
             <div className="mb-6 border-b border-[#ece7f2] pb-4">
               <p className="text-[13px] font-bold text-[#696373]">Organizer Account</p>
             </div>
-
             <div className="grid grid-cols-1 gap-x-8 gap-y-6 md:grid-cols-2">
               <div className="space-y-2">
                 <Label className="text-[10px] font-bold uppercase tracking-widest text-[#8f879f]">
@@ -269,9 +268,7 @@ export function OrganizerProfilePage() {
                     className="h-10 rounded-lg border-[#ece7f2] text-sm font-semibold text-[#2d2834] focus-visible:ring-[#df2b80]"
                   />
                 ) : (
-                  <p className="text-sm font-semibold text-[#4f4a56]">
-                    {profile.firstName || '-'}
-                  </p>
+                  <p className="text-sm font-semibold text-[#4f4a56]">{profile.firstName || '-'}</p>
                 )}
               </div>
 
@@ -286,9 +283,7 @@ export function OrganizerProfilePage() {
                     className="h-10 rounded-lg border-[#ece7f2] text-sm font-semibold text-[#2d2834] focus-visible:ring-[#df2b80]"
                   />
                 ) : (
-                  <p className="text-sm font-semibold text-[#4f4a56]">
-                    {profile.lastName || '-'}
-                  </p>
+                  <p className="text-sm font-semibold text-[#4f4a56]">{profile.lastName || '-'}</p>
                 )}
               </div>
 
@@ -356,9 +351,7 @@ export function OrganizerProfilePage() {
                     className="h-10 rounded-lg border-[#ece7f2] text-sm font-semibold text-[#4f4a56] focus-visible:ring-[#df2b80]"
                   />
                 ) : (
-                  <p className="text-sm font-semibold text-[#4f4a56]">
-                    {profile.birthday || '-'}
-                  </p>
+                  <p className="text-sm font-semibold text-[#4f4a56]">{profile.birthday || '-'}</p>
                 )}
               </div>
             </div>

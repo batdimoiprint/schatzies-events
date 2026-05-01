@@ -8,7 +8,7 @@ export function ClientLayout() {
 
   if (isLoading) {
     return (
-      <div className="flex h-screen items-center justify-center bg-[#f6f5f8]">
+      <div className="flex h-screen items-center justify-center bg-[#fbf8fd]">
         <p className="text-base font-semibold text-[#4f4b57]">Loading client portal...</p>
       </div>
     );
@@ -19,7 +19,7 @@ export function ClientLayout() {
   }
 
   return (
-    <div className="h-screen bg-[#f6f5f8]">
+    <div className="min-h-screen bg-[#fbf8fd]">
       <div className="flex h-full flex-col md:flex-row">
         <ClientSidebar />
 

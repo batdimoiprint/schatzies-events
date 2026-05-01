@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import type { AxiosError } from 'axios';
 import { useSearchParams } from 'react-router-dom';
 
 import type { EventData, RSVPResponse } from '@/types/rsvp';
@@ -148,10 +149,12 @@ export function RSVPPage() {
 
       setQrCode(qrCodeUrl);
       setCurrentStep('success');
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error submitting RSVP:', error);
       // Capture backend error messages like "Event capacity has been reached"
-      const message = error.response?.data?.message || 'Failed to submit RSVP. Please try again.';
+      const axiosError = error as AxiosError<{ message: string }>;
+      const message =
+        axiosError.response?.data?.message || 'Failed to submit RSVP. Please try again.';
       setFormErrors({ submit: message });
     } finally {
       setLoading(false);

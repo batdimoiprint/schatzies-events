@@ -1,4 +1,11 @@
-import { useMemo, useState, type ChangeEvent, type DragEvent, type FormEvent } from 'react';
+import {
+  useEffect,
+  useMemo,
+  useState,
+  type ChangeEvent,
+  type DragEvent,
+  type FormEvent,
+} from 'react';
 import {
   CalendarDays,
   ChevronLeft,
@@ -6,7 +13,6 @@ import {
   Download,
   ImagePlus,
   ListChecks,
-  MoreVertical,
   Pencil,
   Plus,
   Trash2,
@@ -16,12 +22,29 @@ import {
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import {
+  getBoardTasks,
+  createBoardTask,
+  updateBoardTask,
+  moveBoardTask,
+  deleteBoardTask,
+} from '@/api/planner-tasks';
+import { getEvents, getEventUser, getEventAllocation } from '@/api/events';
 
 type PlannerTab = 'overview' | 'task' | 'notes' | 'flow' | 'checklist';
 
 type ProjectSlot = {
-  id: number;
+  id: string;
   title: string;
+  startDate?: string;
+  endDate?: string;
+  eventType?: string;
+  eventPackage?: string;
+  eventPax?: number;
+  clientName?: string;
+  clientId?: string;
+  clientRealName?: string;
+  eventCost?: string | number;
 };
 
 type TaskCard = {
@@ -63,16 +86,6 @@ type PlannerQuickNote = {
   body: string;
   imageDataUrl?: string;
 };
-
-const projectSlots: ProjectSlot[] = [
-  { id: 1, title: "Angela's 18 Birthday" },
-  { id: 2, title: '' },
-  { id: 3, title: '' },
-  { id: 4, title: '' },
-  { id: 5, title: '' },
-  { id: 6, title: '' },
-  { id: 7, title: '' },
-];
 
 const tabs: Array<{ id: PlannerTab; label: string }> = [
   { id: 'overview', label: 'Overview' },
@@ -148,33 +161,6 @@ const taskCards: TaskCard[] = [
   },
 ];
 
-const initialBoardTasks: PlannerBoardTask[] = [
-  {
-    id: 'board-task-food',
-    title: 'Food Setup Checklist',
-    details: 'Finalize buffet lineup and serving order for event day.',
-    editorType: 'Text',
-    lane: 'todo',
-    checklist: [],
-  },
-  {
-    id: 'board-task-decor',
-    title: 'Decorations Final Pass',
-    details: 'Confirm stage decor, photo wall, and table centerpiece placement.',
-    editorType: 'Bulleted List',
-    lane: 'in-progress',
-    checklist: [],
-  },
-  {
-    id: 'board-task-photo',
-    title: 'Photobooth Layout',
-    details: 'Validate backdrop area, queue flow, and props table position.',
-    editorType: 'Numbered List',
-    lane: 'completed',
-    checklist: [],
-  },
-];
-
 const taskLaneConfig: Array<{
   id: TaskLane;
   label: string;
@@ -206,41 +192,6 @@ const taskLaneConfig: Array<{
     panelClassName: 'border-[#d8eddc] bg-[#f5fcf7]',
     cardOuterClassName: 'border-[#d4dfec] bg-[#deebf8]',
     cardTitleClassName: 'text-[#1f4c82]',
-  },
-];
-
-const overviewCards = [
-  {
-    id: 'overview-package',
-    label: 'Event Package',
-    value: 'Blooms\nPackage',
-    imageSrc: '/Pictures/organizerpics/event-package-illustration.png',
-    accent: 'text-[#6b2aa5] bg-[#fbf6ff] border-[#eee3fb]',
-    valueClassName: 'text-[14px] font-semibold leading-[1.15] text-[#6d677b]',
-  },
-  {
-    id: 'overview-pax',
-    label: 'Event Pax',
-    value: '40',
-    imageSrc: '/Pictures/organizerpics/event-pax-illustration.png',
-    accent: 'text-[#88511a] bg-[#fff8ef] border-[#f3e2cc]',
-    valueClassName: 'text-[32px] font-semibold leading-none tracking-tight text-[#4f4a58]',
-  },
-  {
-    id: 'overview-type',
-    label: 'Event Type',
-    value: 'Debut\nEvent Type',
-    imageSrc: '/Pictures/organizerpics/event-type-illustration.png',
-    accent: 'text-[#1f6ea6] bg-[#f3f8ff] border-[#d7e7f7]',
-    valueClassName: 'text-[12px] font-semibold leading-[1.15] text-[#6d677b]',
-  },
-  {
-    id: 'overview-cost',
-    label: 'Event Cost',
-    value: '50,000',
-    imageSrc: '/Pictures/organizerpics/event-cost-illustration.png',
-    accent: 'text-[#a6541d] bg-[#fff4ec] border-[#f3dccb]',
-    valueClassName: 'text-[32px] font-semibold leading-none tracking-tight text-[#4f4a58]',
   },
 ];
 
@@ -282,6 +233,96 @@ const overviewChecklist = [
   'Dry run DAY1',
   'Dry run DAY2',
 ];
+
+// Utility functions moved outside component to avoid recreating on every render
+const formatTimeInput = (hour: number, minute = 0) => {
+  const normalizedHour = String(Math.min(Math.max(hour, 0), 23)).padStart(2, '0');
+  const normalizedMinute = String(Math.min(Math.max(minute, 0), 59)).padStart(2, '0');
+  return `${normalizedHour}:${normalizedMinute}`;
+};
+
+const toTimeInputValue = (value: string, fallbackHour: number) => {
+  const directMatch = value.trim().match(/^([01]\d|2[0-3]):([0-5]\d)$/);
+  if (directMatch) {
+    return value.trim();
+  }
+
+  const ampmMatch = value.trim().match(/^(\d{1,2})(?::([0-5]\d))?\s*(AM)$/i);
+  if (ampmMatch) {
+    const rawHour = Number(ampmMatch[1]);
+    const minute = Number(ampmMatch[2] ?? '0');
+    const convertedHour = rawHour % 12 === 0 ? 12 : rawHour % 12;
+    return formatTimeInput(convertedHour, minute);
+  }
+
+  return formatTimeInput(fallbackHour, 0);
+};
+
+const parseHourFromTimeInput = (value: string, fallback: number) => {
+  const normalized = toTimeInputValue(value, fallback);
+  const match = normalized.match(/^([01]\d|2[0-3]):([0-5]\d)$/);
+  if (!match) {
+    return fallback;
+  }
+
+  return Number(match[1]);
+};
+
+const clampTimeInputRange = (value: string, minValue: string, maxValue: string) => {
+  if (value < minValue) {
+    return minValue;
+  }
+  if (value > maxValue) {
+    return maxValue;
+  }
+  return value;
+};
+
+const formatDisplayTime = (value: string, fallbackHour: number) => {
+  const normalized = toTimeInputValue(value, fallbackHour);
+  const match = normalized.match(/^([01]\d|2[0-3]):([0-5]\d)$/);
+  if (!match) {
+    return normalized;
+  }
+
+  const hour24 = Number(match[1]);
+  const minute = match[2];
+  const hour12 = hour24 % 12 === 0 ? 12 : hour24 % 12;
+  return `${hour12}:${minute} AM`;
+};
+
+const parseTimeParts = (value: string, fallbackHour: number) => {
+  const normalized = toTimeInputValue(value, fallbackHour);
+  const match = normalized.match(/^([01]\d|2[0-3]):([0-5]\d)$/);
+  if (!match) {
+    return {
+      hour: fallbackHour,
+      minute: 0,
+      totalMinutes: fallbackHour * 60,
+    };
+  }
+
+  const hour = Number(match[1]);
+  const minute = Number(match[2]);
+
+  return {
+    hour,
+    minute,
+    totalMinutes: hour * 60 + minute,
+  };
+};
+
+const mapBackendStatusToLane = (status: string): TaskLane => {
+  if (status === 'IN_PROGRESS') return 'in-progress';
+  if (status === 'COMPLETED') return 'completed';
+  return 'todo';
+};
+
+const mapLaneToBackendStatus = (lane: TaskLane): string => {
+  if (lane === 'in-progress') return 'IN_PROGRESS';
+  if (lane === 'completed') return 'COMPLETED';
+  return 'TODO';
+};
 
 function FlowNotesBoard() {
   const timelineStartHour = 5;
@@ -362,90 +403,9 @@ function FlowNotesBoard() {
     );
   }, [hideEmptySlots, timelineHours, timelineBlocks]);
 
-  const hourIndexMap = useMemo(() => {
-    return new Map(visibleHours.map((hour, index) => [hour, index]));
-  }, [visibleHours]);
-
   const selectedActivity = selectedActivityId
     ? (timelineBlocks.find((block) => block.id === selectedActivityId) ?? null)
     : null;
-
-  const formatTimeInput = (hour: number, minute = 0) => {
-    const normalizedHour = String(Math.min(Math.max(hour, 0), 23)).padStart(2, '0');
-    const normalizedMinute = String(Math.min(Math.max(minute, 0), 59)).padStart(2, '0');
-    return `${normalizedHour}:${normalizedMinute}`;
-  };
-
-  const toTimeInputValue = (value: string, fallbackHour: number) => {
-    const directMatch = value.trim().match(/^([01]\d|2[0-3]):([0-5]\d)$/);
-    if (directMatch) {
-      return value.trim();
-    }
-
-    const ampmMatch = value.trim().match(/^(\d{1,2})(?::([0-5]\d))?\s*(AM)$/i);
-    if (ampmMatch) {
-      const rawHour = Number(ampmMatch[1]);
-      const minute = Number(ampmMatch[2] ?? '0');
-      const convertedHour = rawHour % 12 === 0 ? 12 : rawHour % 12;
-      return formatTimeInput(convertedHour, minute);
-    }
-
-    return formatTimeInput(fallbackHour, 0);
-  };
-
-  const parseHourFromTimeInput = (value: string, fallback: number) => {
-    const normalized = toTimeInputValue(value, fallback);
-    const match = normalized.match(/^([01]\d|2[0-3]):([0-5]\d)$/);
-    if (!match) {
-      return fallback;
-    }
-
-    return Number(match[1]);
-  };
-
-  const clampTimeInputRange = (value: string, minValue: string, maxValue: string) => {
-    if (value < minValue) {
-      return minValue;
-    }
-    if (value > maxValue) {
-      return maxValue;
-    }
-    return value;
-  };
-
-  const formatDisplayTime = (value: string, fallbackHour: number) => {
-    const normalized = toTimeInputValue(value, fallbackHour);
-    const match = normalized.match(/^([01]\d|2[0-3]):([0-5]\d)$/);
-    if (!match) {
-      return normalized;
-    }
-
-    const hour24 = Number(match[1]);
-    const minute = match[2];
-    const hour12 = hour24 % 12 === 0 ? 12 : hour24 % 12;
-    return `${hour12}:${minute} AM`;
-  };
-
-  const parseTimeParts = (value: string, fallbackHour: number) => {
-    const normalized = toTimeInputValue(value, fallbackHour);
-    const match = normalized.match(/^([01]\d|2[0-3]):([0-5]\d)$/);
-    if (!match) {
-      return {
-        hour: fallbackHour,
-        minute: 0,
-        totalMinutes: fallbackHour * 60,
-      };
-    }
-
-    const hour = Number(match[1]);
-    const minute = Number(match[2]);
-
-    return {
-      hour,
-      minute,
-      totalMinutes: hour * 60 + minute,
-    };
-  };
 
   const openActivityInfo = (activityId: string) => {
     const activity = timelineBlocks.find((block) => block.id === activityId);
@@ -602,46 +562,53 @@ function FlowNotesBoard() {
         const firstParts = parseTimeParts(first.from, first.startHour);
         const secondParts = parseTimeParts(second.from, second.startHour);
 
-        if (firstParts.minute !== secondParts.minute) {
-          return firstParts.minute - secondParts.minute;
-        }
-
-        if (firstParts.totalMinutes !== secondParts.totalMinutes) {
+        if (firstParts.minute !== secondParts.minute) return firstParts.minute - secondParts.minute;
+        if (firstParts.totalMinutes !== secondParts.totalMinutes)
           return firstParts.totalMinutes - secondParts.totalMinutes;
-        }
-
         return first.id.localeCompare(second.id);
       });
-
       sortedSameHourBlocks.set(startHour, blocks);
     });
 
     const slotWidth = 25;
     const slotGap = 2.5;
-    const minuteShift = 4;
 
     return timelineBlocks.map((block) => {
       const startParts = parseTimeParts(block.from, block.startHour);
       const endParts = parseTimeParts(block.to, block.endHour);
       const sameHourBlocks = sortedSameHourBlocks.get(block.startHour) ?? [];
       const slotIndex = sameHourBlocks.findIndex((item) => item.id === block.id);
-      const durationMinutes = Math.max(30, endParts.totalMinutes - startParts.totalMinutes);
 
-      const left = 2 + slotIndex * (slotWidth + slotGap) + (startParts.minute / 60) * minuteShift;
+      // 1. Calculate absolute minutes elapsed since the very top of the visible board
+      const boardStartHour = visibleHours.length > 0 ? visibleHours[0] : timelineStartHour;
+      const boardStartMinutes = boardStartHour * 60;
+      const absoluteStartMinutes = startParts.totalMinutes - boardStartMinutes;
+      const absoluteEndMinutes = endParts.totalMinutes - boardStartMinutes;
+
+      // 2. Exact duration
+      const durationMinutes = Math.max(30, absoluteEndMinutes - absoluteStartMinutes);
+
+      // 3. Convert minutes directly to pixels (58px per 60 mins)
+      const topPixels = (absoluteStartMinutes / 60) * hourRowHeight;
+      const heightPixels = (durationMinutes / 60) * hourRowHeight;
+
+      // 4. Visual gaps to avoid covering grid lines
+      const verticalGap = 4;
+      const finalTop = topPixels + verticalGap;
+      const finalHeight = heightPixels - verticalGap * 2;
+
+      const left = 2 + slotIndex * (slotWidth + slotGap);
       const width = Math.max(20, slotWidth - Math.min(slotIndex, 2) * 2);
-      const height = Math.max(
-        hourRowHeight - 4,
-        Math.ceil((durationMinutes / 60) * hourRowHeight) - 4
-      );
 
       return {
         ...block,
         left: `${left}%`,
         width: `${width}%`,
-        height,
+        calculatedTop: finalTop,
+        calculatedHeight: finalHeight,
       };
     });
-  }, [timelineBlocks, hourRowHeight]);
+  }, [timelineBlocks, hourRowHeight, timelineStartHour, visibleHours]);
 
   const handleExportSummary = () => {
     const header = ['Time Range', 'Title', 'Description'];
@@ -751,18 +718,7 @@ function FlowNotesBoard() {
                   ))}
 
                   {positionedTimelineBlocks.map((block) => {
-                    const visibleDuration = visibleHours.filter(
-                      (hour) => hour >= block.startHour && hour < block.endHour
-                    ).length;
-                    const startIndex =
-                      hourIndexMap.get(block.startHour) ??
-                      visibleHours.findIndex((hour) => hour >= block.startHour);
-
-                    if (startIndex < 0 || visibleDuration === 0) {
-                      return null;
-                    }
-
-                    const duration = Math.max(1, visibleDuration);
+                    if (!block) return null;
 
                     return (
                       <article
@@ -776,25 +732,27 @@ function FlowNotesBoard() {
                             openActivityInfo(block.id);
                           }
                         }}
-                        className={`absolute overflow-hidden rounded-xl border px-3 py-2 text-[#5f596b] shadow-[0_6px_12px_rgba(31,18,54,0.08)] ${block.tone}`}
+                        className={`absolute overflow-hidden rounded-xl border px-3 py-2 text-[#5f596b] shadow-[0_6px_12px_rgba(31,18,54,0.08)] ${block.tone} flex flex-col`}
                         style={{
-                          top: `${startIndex * hourRowHeight + 2}px`,
-                          height: `${block.height ?? duration * hourRowHeight - 4}px`,
+                          top: `${block.calculatedTop}px`,
+                          height: `${block.calculatedHeight}px`,
                           left: block.left,
                           width: block.width,
                           zIndex: block.id === selectedActivityId ? 30 : 10,
                         }}
                       >
-                        <p className="truncate text-[11px] font-black uppercase leading-tight text-inherit">
+                        <p className="text-[11px] font-black uppercase leading-tight text-inherit break-words whitespace-normal line-clamp-2 shrink-0">
                           {block.title}
                         </p>
-                        <p className="mt-1 truncate text-[10px] font-semibold leading-tight text-inherit/80">
+                        <p className="mt-1 text-[10px] font-semibold leading-tight text-inherit/80 shrink-0">
                           Time: {formatDisplayTime(block.from, block.startHour)} -{' '}
                           {formatDisplayTime(block.to, block.endHour)}
                         </p>
-                        <p className="mt-1 truncate text-[10px] leading-tight text-inherit/80">
-                          {block.description}
-                        </p>
+                        <div className="mt-1 flex-1 min-h-0">
+                          <p className="text-[10px] leading-tight text-inherit/80 break-words whitespace-normal line-clamp-4">
+                            {block.description}
+                          </p>
+                        </div>
                       </article>
                     );
                   })}
@@ -803,36 +761,43 @@ function FlowNotesBoard() {
             </div>
           </article>
 
-          {!hideScheduleSummary ? (
-            <aside className="rounded-2xl border border-[#e2dee9] bg-white px-4 py-4 shadow-[0_8px_18px_rgba(31,18,54,0.05)]">
-              <p className="text-[12px] font-black uppercase tracking-[0.12em] text-[#6b6476]">
-                Schedule Summary
-              </p>
+          <aside
+            className={[
+              'rounded-2xl border border-[#e2dee9] bg-white px-4 py-4 shadow-[0_8px_18px_rgba(31,18,54,0.05)] transition-all duration-300 ease-in-out origin-right',
+              hideScheduleSummary
+                ? 'opacity-0 translate-x-8 invisible hidden'
+                : 'opacity-100 translate-x-0 visible block',
+            ].join(' ')}
+          >
+            <p className="text-[12px] font-black uppercase tracking-[0.12em] text-[#6b6476]">
+              Schedule Summary
+            </p>
 
-              <div className="mt-4 space-y-5 border-l border-[#ebe6f0] pl-4">
-                {scheduleSummaries.map((summary) => (
-                  <div key={summary.id} className="grid grid-cols-[92px_1fr] gap-4">
-                    <p className="text-[10px] font-semibold text-[#6b6476]">{summary.timeRange}</p>
-                    <div>
-                      <p className="text-[13px] font-black text-[#2f2b39]">{summary.title}</p>
-                      <p className="mt-1 text-[11px] leading-relaxed text-[#8a8495]">
-                        {summary.body}
-                      </p>
-                    </div>
+            <div className="mt-4 space-y-5 border-l border-[#ebe6f0] pl-4">
+              {scheduleSummaries.map((summary) => (
+                <div key={summary.id} className="grid grid-cols-[92px_1fr] gap-4">
+                  <p className="text-[10px] font-semibold text-[#6b6476]">{summary.timeRange}</p>
+                  <div>
+                    <p className="text-[13px] font-black text-[#2f2b39] break-all whitespace-normal">
+                      {summary.title}
+                    </p>
+                    <p className="mt-1 text-[11px] leading-relaxed text-[#8a8495] break-all whitespace-normal">
+                      {summary.body}
+                    </p>
                   </div>
-                ))}
-              </div>
+                </div>
+              ))}
+            </div>
 
-              <button
-                type="button"
-                onClick={handleAddSummary}
-                className="mt-6 inline-flex h-10 w-full items-center justify-center gap-2 rounded-lg border border-[#d7d0e2] bg-white text-[11px] font-black text-[#5a5670] transition hover:bg-[#f6f2fb]"
-              >
-                <Plus className="size-3.5" />
-                Add summary
-              </button>
-            </aside>
-          ) : null}
+            <button
+              type="button"
+              onClick={handleAddSummary}
+              className="mt-6 inline-flex h-10 w-full items-center justify-center gap-2 rounded-lg border border-[#d7d0e2] bg-white text-[11px] font-black text-[#5a5670] transition hover:bg-[#f6f2fb]"
+            >
+              <Plus className="size-3.5" />
+              Add summary
+            </button>
+          </aside>
         </div>
       </section>
 
@@ -1012,7 +977,7 @@ function FlowNotesBoard() {
               </div>
             ) : selectedActivity ? (
               <div className="space-y-4">
-                <div className="rounded-2xl bg-linear-to-r from-[#f1589e] via-[#d735b3] to-[#8a1fd0] px-4 py-3 text-base font-black leading-tight text-white shadow-[0_10px_20px_rgba(125,31,186,0.18)]">
+                <div className="rounded-2xl bg-linear-to-r from-[#f1589e] via-[#d735b3] to-[#8a1fd0] px-4 py-3 text-base font-black leading-tight text-white shadow-[0_10px_20px_rgba(125,31,186,0.18)] break-all whitespace-normal">
                   {selectedActivity.title}
                 </div>
 
@@ -1035,7 +1000,7 @@ function FlowNotesBoard() {
                   <p className="text-xs font-black uppercase tracking-[0.12em] text-[#9d97a8]">
                     Description
                   </p>
-                  <p className="mt-2 text-[14px] italic leading-snug text-[#8e8994]">
+                  <p className="mt-2 text-[14px] italic leading-snug text-[#8e8994] break-all whitespace-normal">
                     {selectedActivity.description}
                   </p>
                 </div>
@@ -1102,8 +1067,6 @@ const noteTileThemes = [
   },
 ];
 
-type PlannerNoteTheme = (typeof noteTileThemes)[number];
-
 const overviewScheduleSummary = [
   {
     id: 'overview-summary-1',
@@ -1132,10 +1095,146 @@ const overviewScheduleSummary = [
 ];
 
 export function EventPlannerPage() {
-  const [selectedProjectId, setSelectedProjectId] = useState(1);
+  const [selectedEventId, setSelectedEventId] = useState('');
+  const [projectSlots, setProjectSlots] = useState<ProjectSlot[]>([]);
   const [activeTab, setActiveTab] = useState<PlannerTab>('overview');
   const [plannerTaskCards, setPlannerTaskCards] = useState<TaskCard[]>(taskCards);
-  const [boardTasks, setBoardTasks] = useState<PlannerBoardTask[]>(initialBoardTasks);
+  const [boardTasks, setBoardTasks] = useState<PlannerBoardTask[]>([]);
+  const [currentClientName, setCurrentClientName] = useState('');
+  const [eventAllocation, setEventAllocation] = useState<any>(null);
+
+  useEffect(() => {
+    let isMounted = true;
+    const fetchEvents = async () => {
+      try {
+        const events = await getEvents();
+        if (!isMounted) return;
+        const formatDateReadable = (dateString?: string) => {
+          if (!dateString) return null;
+          const date = new Date(dateString);
+          if (isNaN(date.getTime())) return null;
+          return date.toLocaleDateString('en-US', {
+            month: 'short',
+            day: 'numeric',
+            year: 'numeric',
+          });
+        };
+
+        const isUUID = (str: string) =>
+          /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(str);
+
+        const mapped = events.map((e: any) => {
+          const rawClientId = e.clientId || e.client_id;
+          const clientVal = e.clientRealName || e.clientName || rawClientId;
+          const displayClient = clientVal && isUUID(clientVal) ? 'Valued Client' : clientVal;
+
+          return {
+            id: e.id,
+            title: e.title || 'Untitled Event',
+            startDate: formatDateReadable(e.startDate || e.eventDate) || 'No Date Set',
+            endDate: formatDateReadable(e.endDate) || 'TBD',
+            eventType: e.eventType,
+            eventPackage: e.eventPackage,
+            eventPax: e.eventPax || 0,
+            clientName: displayClient,
+            clientId: rawClientId,
+            clientRealName: e.clientRealName,
+            eventCost: e.eventCost || e.cost,
+          };
+        });
+        setProjectSlots(mapped);
+        if (mapped.length > 0) {
+          setSelectedEventId(mapped[0].id);
+        }
+      } catch (error) {
+        console.error('Failed to fetch events for planner:', error);
+      }
+    };
+    fetchEvents();
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const loadTasks = async () => {
+      if (!selectedEventId) {
+        setBoardTasks([]);
+        setCurrentClientName('');
+        setEventAllocation(null);
+        return;
+      }
+
+      setCurrentClientName('');
+      setEventAllocation(null);
+
+      const selectedProject = projectSlots.find((p) => p.id === selectedEventId);
+      if (selectedProject?.clientId) {
+        getEventUser(selectedProject.clientId)
+          .then((userData) => {
+            if (isMounted) {
+              setCurrentClientName(
+                userData?.name ||
+                  userData?.firstName ||
+                  userData?.realName ||
+                  userData?.clientName ||
+                  ''
+              );
+            }
+          })
+          .catch((e) => {
+            console.error('Failed to fetch event user', e);
+            if (isMounted) setCurrentClientName('');
+          });
+      }
+
+      getEventAllocation(selectedEventId)
+        .then((allocationData) => {
+          if (isMounted) {
+            setEventAllocation(allocationData);
+          }
+        })
+        .catch((e) => {
+          console.error('Failed to fetch event allocation', e);
+          if (isMounted) setEventAllocation(null);
+        });
+
+      try {
+        const response = await getBoardTasks(selectedEventId);
+
+        if (!isMounted) return;
+
+        const backendTasks: Record<string, any[]> = response?.tasks || {};
+        const formattedTasks: PlannerBoardTask[] = [];
+
+        ['TODO', 'IN_PROGRESS', 'COMPLETED'].forEach((status) => {
+          const group = backendTasks[status] || [];
+          group.forEach((task: any) => {
+            formattedTasks.push({
+              id: task.id,
+              title: task.title,
+              details: task.description,
+              editorType: 'Text',
+              lane: mapBackendStatusToLane(task.status || status),
+              checklist: [],
+            });
+          });
+        });
+
+        setBoardTasks(formattedTasks);
+      } catch (error) {
+        console.error('Failed to load board tasks:', error);
+        if (isMounted) setBoardTasks([]);
+      }
+    };
+
+    loadTasks();
+    return () => {
+      isMounted = false;
+    };
+  }, [selectedEventId, projectSlots]);
   const [isTaskPreviewOpen, setIsTaskPreviewOpen] = useState(false);
   const [selectedBoardTaskId, setSelectedBoardTaskId] = useState<string | null>(null);
   const [taskPreviewTitle, setTaskPreviewTitle] = useState('');
@@ -1160,13 +1259,83 @@ export function EventPlannerPage() {
   const [noteDraftError, setNoteDraftError] = useState('');
   const [editingPlannerNoteId, setEditingPlannerNoteId] = useState<string | null>(null);
   const [isNoteModalOpen, setIsNoteModalOpen] = useState(false);
-  const [activeNoteMenuFor, setActiveNoteMenuFor] = useState<string | null>(null);
-  const [isNotePreviewOpen, setIsNotePreviewOpen] = useState(false);
-  const [selectedPlannerNote, setSelectedPlannerNote] = useState<PlannerQuickNote | null>(null);
+  const [isInlineNoteOpen, setIsInlineNoteOpen] = useState(false);
+  const [draggedNoteId, setDraggedNoteId] = useState<string | null>(null);
+
+  const handleNoteDragStart = (e: DragEvent<HTMLElement>, id: string) => {
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/plain', id);
+
+    // CRITICAL: Delay the state update so the browser captures the fully rendered card as the drag ghost FIRST.
+    setTimeout(() => {
+      setDraggedNoteId(id);
+    }, 0);
+  };
+
+  const handleNoteDragEnd = () => {
+    setDraggedNoteId(null);
+  };
+
+  const handleNoteDrop = (e: DragEvent<HTMLElement>, targetId: string) => {
+    e.preventDefault();
+    const droppedId = e.dataTransfer.getData('text/plain');
+    if (!droppedId || droppedId === targetId) return;
+
+    const draggedIdx = plannerNotes.findIndex((n) => n.id === droppedId);
+    const targetIdx = plannerNotes.findIndex((n) => n.id === targetId);
+
+    const newNotes = [...plannerNotes];
+    const [draggedNote] = newNotes.splice(draggedIdx, 1);
+    newNotes.splice(targetIdx, 0, draggedNote);
+
+    setPlannerNotes(newNotes);
+    setDraggedNoteId(null);
+  };
 
   const selectedProject = useMemo(() => {
-    return projectSlots.find((project) => project.id === selectedProjectId) ?? projectSlots[0];
-  }, [selectedProjectId]);
+    return (
+      projectSlots.find((project) => project.id === selectedEventId) ??
+      projectSlots[0] ?? { id: '', title: '' }
+    );
+  }, [selectedEventId, projectSlots]);
+
+  const dynamicOverviewCards = useMemo(
+    () => [
+      {
+        id: 'overview-package',
+        label: 'Event Package',
+        value: selectedProject.eventPackage || 'N/A',
+        imageSrc: '/Pictures/organizerpics/event-package-illustration.png',
+        accent: 'text-[#6b2aa5] bg-[#fbf6ff] border-[#eee3fb]',
+        valueClassName: 'text-[14px] font-semibold leading-[1.15] text-[#6d677b]',
+      },
+      {
+        id: 'overview-pax',
+        label: 'Event Pax',
+        value: String(selectedProject.eventPax || '0'),
+        imageSrc: '/Pictures/organizerpics/event-pax-illustration.png',
+        accent: 'text-[#88511a] bg-[#fff8ef] border-[#f3e2cc]',
+        valueClassName: 'text-[32px] font-semibold leading-none tracking-tight text-[#4f4a58]',
+      },
+      {
+        id: 'overview-type',
+        label: 'Event Type',
+        value: selectedProject.eventType || 'N/A',
+        imageSrc: '/Pictures/organizerpics/event-type-illustration.png',
+        accent: 'text-[#1f6ea6] bg-[#f3f8ff] border-[#d7e7f7]',
+        valueClassName: 'text-[12px] font-semibold leading-[1.15] text-[#6d677b]',
+      },
+      {
+        id: 'overview-cost',
+        label: 'Event Cost',
+        value: selectedProject.eventCost ? String(selectedProject.eventCost) : 'TBD',
+        imageSrc: '/Pictures/organizerpics/event-cost-illustration.png',
+        accent: 'text-[#a6541d] bg-[#fff4ec] border-[#f3dccb]',
+        valueClassName: 'text-[32px] font-semibold leading-none tracking-tight text-[#4f4a58]',
+      },
+    ],
+    [selectedProject]
+  );
 
   const selectedBoardTask = useMemo(() => {
     if (!selectedBoardTaskId) {
@@ -1184,24 +1353,9 @@ export function EventPlannerPage() {
     setEditingPlannerNoteId(null);
   };
 
-  const openPlannerNoteModal = () => {
-    resetNoteDraft();
-    setIsNoteModalOpen(true);
-  };
-
   const closePlannerNoteModal = () => {
     setIsNoteModalOpen(false);
     resetNoteDraft();
-  };
-
-  const openPlannerNotePreview = (note: PlannerQuickNote) => {
-    setSelectedPlannerNote(note);
-    setIsNotePreviewOpen(true);
-  };
-
-  const closePlannerNotePreview = () => {
-    setIsNotePreviewOpen(false);
-    setSelectedPlannerNote(null);
   };
 
   const handlePlannerNoteImageChange = (event: ChangeEvent<HTMLInputElement>) => {
@@ -1240,7 +1394,8 @@ export function EventPlannerPage() {
     const normalizedBody = noteDraftBody.trim();
 
     if (!normalizedTitle && !normalizedBody && !noteDraftImageDataUrl) {
-      setNoteDraftError('Enter a title, note detail, or add an image before saving.');
+      if (isNoteModalOpen)
+        setNoteDraftError('Enter a title, note detail, or add an image before saving.');
       return;
     }
 
@@ -1262,19 +1417,26 @@ export function EventPlannerPage() {
     closePlannerNoteModal();
   };
 
+  const handleCloseInlineNote = () => {
+    if (noteDraftTitle.trim() || noteDraftBody.trim() || noteDraftImageDataUrl) {
+      handleSavePlannerNote();
+    } else {
+      resetNoteDraft();
+    }
+    setIsInlineNoteOpen(false);
+  };
+
   const handleEditPlannerNote = (note: PlannerQuickNote) => {
     setEditingPlannerNoteId(note.id);
     setNoteDraftTitle(note.title);
     setNoteDraftBody(note.body);
     setNoteDraftImageDataUrl(note.imageDataUrl ?? undefined);
     setNoteDraftError('');
-    setActiveNoteMenuFor(null);
     setIsNoteModalOpen(true);
   };
 
   const handleDeletePlannerNote = (noteId: string) => {
     setPlannerNotes((previousNotes) => previousNotes.filter((note) => note.id !== noteId));
-    setActiveNoteMenuFor(null);
 
     if (editingPlannerNoteId === noteId) {
       resetNoteDraft();
@@ -1331,7 +1493,7 @@ export function EventPlannerPage() {
     event.dataTransfer.dropEffect = 'move';
   };
 
-  const handleDropTaskToLane = (event: DragEvent<HTMLElement>, lane: TaskLane) => {
+  const handleDropTaskToLane = async (event: DragEvent<HTMLElement>, lane: TaskLane) => {
     event.preventDefault();
     const droppedId = event.dataTransfer.getData('text/plain') || draggedTaskId;
 
@@ -1360,6 +1522,8 @@ export function EventPlannerPage() {
         return;
       }
     }
+
+    const previousTasksState = [...boardTasks];
 
     setBoardTasks((previousTasks) =>
       previousTasks.map((task) => {
@@ -1423,6 +1587,20 @@ export function EventPlannerPage() {
     );
 
     setDraggedTaskId(null);
+
+    try {
+      if (droppedId.startsWith('board-task-')) {
+        throw new Error('Please edit and save this new task first before moving it.');
+      }
+      const newStatus = mapLaneToBackendStatus(lane);
+      await moveBoardTask(selectedEventId, droppedId, {
+        newStatus,
+        newOrder: 0,
+      });
+    } catch (error) {
+      setBoardTasks(previousTasksState);
+      alert(error instanceof Error ? error.message : 'Failed to move task. Please try again.');
+    }
   };
 
   const openTaskPreview = (taskId: string) => {
@@ -1453,7 +1631,7 @@ export function EventPlannerPage() {
     setIsTaskPreviewOpen(true);
   };
 
-  const handleSaveTaskPreview = () => {
+  const handleSaveTaskPreview = async () => {
     if (!selectedBoardTaskId || selectedBoardTask?.lane !== 'todo') {
       return;
     }
@@ -1471,59 +1649,109 @@ export function EventPlannerPage() {
       }));
 
     const normalizedDetails = taskPreviewDetails.trim();
+    const finalDetails =
+      normalizedDetails || normalizedChecklist.map((item) => item.label).join('\n');
 
+    const payload = {
+      title: taskPreviewTitle.trim(),
+      description: finalDetails,
+    };
+
+    try {
+      let savedTask;
+      if (selectedBoardTaskId.startsWith('board-task-')) {
+        savedTask = await createBoardTask(selectedEventId, payload);
+      } else {
+        savedTask = await updateBoardTask(selectedEventId, selectedBoardTaskId, payload);
+      }
+
+      setBoardTasks((previousTasks) =>
+        previousTasks.map((task) =>
+          task.id === selectedBoardTaskId
+            ? {
+                ...task,
+                id: savedTask.id,
+                title: savedTask.title,
+                details: savedTask.description || finalDetails,
+                checklist: normalizedChecklist,
+              }
+            : task
+        )
+      );
+
+      setTaskActionMessage(`Saved ${taskPreviewTitle || 'task'} successfully.`);
+      setTaskActionTone('success');
+
+      setIsTaskPreviewOpen(false);
+      setSelectedBoardTaskId(null);
+    } catch (error) {
+      alert(error instanceof Error ? error.message : 'An error occurred while saving the task.');
+    }
+  };
+
+  const handleDeleteBoardTask = async (taskId: string) => {
+    const targetTask = boardTasks.find((task) => task.id === taskId);
+
+    try {
+      if (!taskId.startsWith('board-task-')) {
+        await deleteBoardTask(selectedEventId, taskId);
+      }
+
+      setBoardTasks((previousTasks) => previousTasks.filter((task) => task.id !== taskId));
+      setTaskCardMenuOpenFor(null);
+      setTaskActionMessage(`Deleted ${targetTask?.title || 'task'} successfully.`);
+      setTaskActionTone('error');
+    } catch (error) {
+      alert(error instanceof Error ? error.message : 'Failed to delete task. Please try again.');
+    }
+  };
+
+  const handleToggleBoardTaskChecklistItem = async (taskId: string, itemId: string) => {
+    if (!selectedEventId) return;
+    const timestamp = new Date().toISOString();
+
+    // Find the target task to prepare the updated checklist
+    const targetTask = boardTasks.find((t) => t.id === taskId);
+    if (!targetTask || !Array.isArray(targetTask.checklist)) return;
+
+    // Calculate the new checklist state
+    const updatedChecklist = targetTask.checklist.map((item) =>
+      item.id === itemId
+        ? {
+            ...item,
+            done: !item.done,
+            doneAt: !item.done ? timestamp : undefined,
+          }
+        : item
+    );
+
+    const previousTasksState = [...boardTasks];
+
+    // Optimistic UI update
     setBoardTasks((previousTasks) =>
       previousTasks.map((task) =>
-        task.id === selectedBoardTaskId
-          ? {
-              ...task,
-              title: taskPreviewTitle,
-              details:
-                normalizedDetails || normalizedChecklist.map((item) => item.label).join('\n'),
-              checklist: normalizedChecklist,
-            }
-          : task
+        task.id === taskId ? { ...task, checklist: updatedChecklist } : task
       )
     );
 
-    setTaskActionMessage(`Saved ${taskPreviewTitle || 'task'} successfully.`);
-    setTaskActionTone('success');
+    try {
+      if (taskId.startsWith('board-task-')) {
+        // Can't toggle unpersisted items in the backend yet
+        throw new Error('Please edit and save this new task first before modifying its checklist.');
+      }
 
-    setIsTaskPreviewOpen(false);
-    setSelectedBoardTaskId(null);
-  };
+      const payload = {
+        title: targetTask.title,
+        description: targetTask.details,
+        checklist: updatedChecklist,
+      };
 
-  const handleDeleteBoardTask = (taskId: string) => {
-    const targetTask = boardTasks.find((task) => task.id === taskId);
-    setBoardTasks((previousTasks) => previousTasks.filter((task) => task.id !== taskId));
-    setTaskCardMenuOpenFor(null);
-    setTaskActionMessage(`Deleted ${targetTask?.title || 'task'} successfully.`);
-    setTaskActionTone('error');
-  };
-
-  const handleToggleBoardTaskChecklistItem = (taskId: string, itemId: string) => {
-    const timestamp = new Date().toISOString();
-
-    setBoardTasks((previousTasks) =>
-      previousTasks.map((task) => {
-        if (task.id !== taskId || !Array.isArray(task.checklist)) {
-          return task;
-        }
-
-        return {
-          ...task,
-          checklist: task.checklist.map((item) =>
-            item.id === itemId
-              ? {
-                  ...item,
-                  done: !item.done,
-                  doneAt: !item.done ? timestamp : undefined,
-                }
-              : item
-          ),
-        };
-      })
-    );
+      await updateBoardTask(selectedEventId, taskId, payload);
+    } catch (error) {
+      // Revert on failure
+      setBoardTasks(previousTasksState);
+      alert(error instanceof Error ? error.message : 'Failed to update checklist item.');
+    }
   };
 
   const formatChecklistTimestamp = (value?: string) => {
@@ -1635,9 +1863,9 @@ export function EventPlannerPage() {
   };
 
   return (
-    <div className="flex w-full flex-col gap-4 pb-2 text-[#302c39]">
-      <div className="grid gap-4 xl:grid-cols-[250px_minmax(0,1fr)]">
-        <aside className="space-y-4">
+    <div className="flex min-h-screen w-full max-w-full flex-col gap-4 overflow-x-hidden p-2 sm:p-4 lg:p-6 pb-10 text-[#302c39]">
+      <div className="flex flex-col gap-4 xl:grid xl:grid-cols-[250px_minmax(0,1fr)]">
+        <aside className="w-full space-y-4 xl:w-[250px]">
           <section className="rounded-2xl border border-[#ddd8e8] bg-white p-3 shadow-[0_6px_14px_rgba(31,18,54,0.06)]">
             <header className="mb-2 flex items-center justify-between">
               <h2 className="flex items-center gap-1.5 text-sm font-bold text-[#383341]">
@@ -1654,13 +1882,13 @@ export function EventPlannerPage() {
             </header>
 
             <div className="space-y-1.5">
-              {projectSlots.map((project) => {
-                const isSelected = project.id === selectedProjectId;
+              {projectSlots.map((project, index) => {
+                const isSelected = project.id === selectedEventId;
                 return (
                   <button
                     key={project.id}
                     type="button"
-                    onClick={() => setSelectedProjectId(project.id)}
+                    onClick={() => setSelectedEventId(project.id)}
                     className={[
                       'flex w-full items-center gap-2 rounded-lg border px-2 py-1.5 text-left transition-all',
                       isSelected
@@ -1674,7 +1902,7 @@ export function EventPlannerPage() {
                         isSelected ? 'bg-white/20 text-white' : 'bg-[#ebe6f2] text-[#6e6680]',
                       ].join(' ')}
                     >
-                      {project.id}
+                      {index + 1}
                     </span>
                     <span className="truncate text-xs font-semibold">
                       {project.title || 'Pending project slot'}
@@ -1733,24 +1961,38 @@ export function EventPlannerPage() {
         </aside>
 
         <section className="min-w-0 space-y-3">
-          <article className="rounded-xl bg-linear-to-r from-[#f23fa3] to-[#7d1fd0] p-4 text-white shadow-[0_12px_24px_rgba(146,31,186,0.34)]">
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <article className="w-full overflow-hidden rounded-xl bg-linear-to-r from-[#f23fa3] to-[#7d1fd0] p-4 text-white shadow-[0_12px_24px_rgba(146,31,186,0.34)]">
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
               <div>
                 <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-white/70">
                   Event Planner
                 </p>
                 <h2 className="text-lg font-black">{selectedProject.title || 'Pending Project'}</h2>
-                <p className="text-[11px] text-white/80">January 3, 2026 • Start Date - End Date</p>
+                <p className="text-[11px] text-white/80">
+                  {selectedProject.startDate || 'No Date Set'}{' '}
+                  {selectedProject.endDate && selectedProject.endDate !== 'TBD'
+                    ? `• ${selectedProject.endDate}`
+                    : ''}
+                </p>
               </div>
-              <div className="flex items-center gap-2 text-[10px] font-semibold text-white/90">
-                <span className="rounded-full bg-white/20 px-3 py-1">Client: Example Name</span>
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 text-[10px] font-semibold text-white/90">
+                <span className="rounded-full bg-white/20 px-3 py-1">
+                  Client:{' '}
+                  {currentClientName ||
+                    (selectedProject.clientName && !selectedProject.clientName.includes('-')
+                      ? selectedProject.clientName
+                      : 'Valued Client')}
+                </span>
                 <span className="rounded-full bg-white/20 px-3 py-1">Contact: 0912-345-6789</span>
               </div>
             </div>
           </article>
 
-          <div className="rounded-xl border border-[#ddd8e8] bg-white p-1 shadow-[0_4px_12px_rgba(33,19,57,0.05)]">
-            <nav className="flex flex-wrap gap-1" aria-label="Event planning sections">
+          <div className="overflow-hidden rounded-xl border border-[#ddd8e8] bg-white p-1 shadow-[0_4px_12px_rgba(33,19,57,0.05)]">
+            <nav
+              className="flex items-center gap-1 overflow-x-auto whitespace-nowrap [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
+              aria-label="Event planning sections"
+            >
               {tabs.map((tab) => (
                 <button
                   key={tab.id}
@@ -1771,8 +2013,8 @@ export function EventPlannerPage() {
 
           {activeTab === 'overview' ? (
             <section className="rounded-[16px] border border-[#d8d3df] bg-[#f7f5f9] p-2.5 shadow-[0_6px_14px_rgba(31,18,54,0.05)]">
-              <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
-                {overviewCards.map((card) => (
+              <div className="grid grid-cols-1 gap-2 md:grid-cols-2 xl:grid-cols-4">
+                {dynamicOverviewCards.map((card) => (
                   <article
                     key={card.id}
                     className={`min-h-[74px] rounded-lg border px-3 py-2 shadow-[0_2px_5px_rgba(31,18,54,0.06)] ${card.accent}`}
@@ -1801,21 +2043,27 @@ export function EventPlannerPage() {
                 ))}
               </div>
 
-              <div className="mt-2 grid gap-2 xl:grid-cols-[0.95fr_1fr_0.92fr_0.98fr]">
+              <div className="mt-2 grid grid-cols-1 gap-2 xl:grid-cols-[0.95fr_1fr_0.92fr_0.98fr]">
                 <div className="space-y-2">
                   <article className="min-h-[166px] rounded-lg border border-[#ded9e7] bg-white p-3 shadow-[0_2px_6px_rgba(31,18,54,0.05)]">
                     <p className="text-[12px] font-bold text-[#5e586d]">Service Requirements</p>
                     <div className="mt-2 space-y-1 text-[11px] leading-snug text-[#6f687f]">
-                      {overviewServiceRequirements.map((item, index) => (
-                        <p key={`${item}-${index}`}>{item}</p>
-                      ))}
+                      {eventAllocation?.food_package ? (
+                        <p className="font-semibold text-[#5a546a]">
+                          {eventAllocation.food_package}
+                        </p>
+                      ) : (
+                        overviewServiceRequirements.map((item, index) => (
+                          <p key={`${item}-${index}`}>{item}</p>
+                        ))
+                      )}
                     </div>
                   </article>
 
                   <article className="min-h-[112px] rounded-lg border border-[#ded9e7] bg-white p-3 shadow-[0_2px_6px_rgba(31,18,54,0.05)]">
                     <p className="text-[12px] font-bold text-[#5e586d]">Decorations</p>
                     <div className="mt-2 text-[10px] leading-snug text-[#6f687f]">
-                      <p>Theme: Enchanted Forest</p>
+                      <p>Theme: {eventAllocation?.theme || 'Enchanted Forest'}</p>
                       <p>Fairy greens, hanging vines, twinkle lights, wood accents.</p>
                       <p className="mt-1 font-semibold text-[#5a546a]">Materials</p>
                       <p>1. Recycled crate centerpieces</p>
@@ -1829,18 +2077,53 @@ export function EventPlannerPage() {
                 <article className="min-h-[286px] rounded-lg border border-[#ded9e7] bg-white p-3 shadow-[0_2px_6px_rgba(31,18,54,0.05)]">
                   <p className="text-[12px] font-bold text-[#5e586d]">Allocation Resources</p>
                   <div className="mt-2 space-y-2">
-                    {overviewAllocationResources.map((resource) => (
-                      <div
-                        key={resource.title}
-                        className="rounded-md border border-[#ece8f0] bg-[#fbf9fe] p-2.5 text-[10px] leading-snug text-[#6f687f]"
-                      >
-                        <p className="text-[11px] font-black text-[#3a3442]">{resource.title}</p>
-                        <p className="mt-0.5 whitespace-pre-line break-words">{resource.detail}</p>
-                        {resource.time ? (
-                          <p className="mt-1 text-[10px] text-[#8c8498]">{resource.time}</p>
-                        ) : null}
-                      </div>
-                    ))}
+                    {eventAllocation ? (
+                      <>
+                        {eventAllocation.vendors && eventAllocation.vendors.length > 0 && (
+                          <div className="rounded-md border border-[#ece8f0] bg-[#fbf9fe] p-2.5 text-[10px] leading-snug text-[#6f687f]">
+                            <p className="text-[11px] font-black text-[#3a3442]">Vendors</p>
+                            <p className="mt-0.5 whitespace-pre-line break-words">
+                              {eventAllocation.vendors.map((v: any) => v.name || v.type).join('\n')}
+                            </p>
+                          </div>
+                        )}
+                        {eventAllocation.manpower && eventAllocation.manpower.length > 0 && (
+                          <div className="rounded-md border border-[#ece8f0] bg-[#fbf9fe] p-2.5 text-[10px] leading-snug text-[#6f687f]">
+                            <p className="text-[11px] font-black text-[#3a3442]">Manpower</p>
+                            <p className="mt-0.5 whitespace-pre-line break-words">
+                              {eventAllocation.manpower
+                                .map((m: any) => m.name || m.role)
+                                .join('\n')}
+                            </p>
+                          </div>
+                        )}
+                        {eventAllocation.supplies && eventAllocation.supplies.length > 0 && (
+                          <div className="rounded-md border border-[#ece8f0] bg-[#fbf9fe] p-2.5 text-[10px] leading-snug text-[#6f687f]">
+                            <p className="text-[11px] font-black text-[#3a3442]">Supplies</p>
+                            <p className="mt-0.5 whitespace-pre-line break-words">
+                              {eventAllocation.supplies
+                                .map((s: any) => s.name || s.item)
+                                .join('\n')}
+                            </p>
+                          </div>
+                        )}
+                      </>
+                    ) : (
+                      overviewAllocationResources.map((resource) => (
+                        <div
+                          key={resource.title}
+                          className="rounded-md border border-[#ece8f0] bg-[#fbf9fe] p-2.5 text-[10px] leading-snug text-[#6f687f]"
+                        >
+                          <p className="text-[11px] font-black text-[#3a3442]">{resource.title}</p>
+                          <p className="mt-0.5 whitespace-pre-line break-words">
+                            {resource.detail}
+                          </p>
+                          {resource.time ? (
+                            <p className="mt-1 text-[10px] text-[#8c8498]">{resource.time}</p>
+                          ) : null}
+                        </div>
+                      ))
+                    )}
                   </div>
                 </article>
 
@@ -1920,7 +2203,7 @@ export function EventPlannerPage() {
                 </div>
               ) : null}
 
-              <div className="grid gap-3 xl:grid-cols-3">
+              <div className="flex gap-4 overflow-x-auto pb-2 snap-x snap-mandatory">
                 {taskLaneConfig.map((lane) => {
                   const laneTasks = boardTasks.filter((task) => task.lane === lane.id);
 
@@ -1928,7 +2211,7 @@ export function EventPlannerPage() {
                     <article
                       key={lane.id}
                       className={[
-                        'rounded-xl border p-2.5 shadow-[0_2px_8px_rgba(32,20,52,0.04)]',
+                        'flex min-w-[320px] max-w-[400px] flex-1 flex-col rounded-xl border p-2.5 shadow-[0_2px_8px_rgba(32,20,52,0.04)] snap-center',
                         lane.panelClassName,
                       ].join(' ')}
                     >
@@ -1942,7 +2225,7 @@ export function EventPlannerPage() {
                       </div>
 
                       <div
-                        className="min-h-[340px] space-y-2 rounded-lg border border-dashed border-[#d8d2e2] bg-white/60 p-2"
+                        className="flex-1 min-h-[400px] space-y-3 rounded-lg border border-dashed border-[#d8d2e2] bg-white/60 p-2"
                         onDragOver={handleLaneDragOver}
                         onDrop={(event) => handleDropTaskToLane(event, lane.id)}
                       >
@@ -1954,7 +2237,7 @@ export function EventPlannerPage() {
                             onDragEnd={handleDragTaskEnd}
                             onClick={() => openTaskPreview(task.id)}
                             className={[
-                              'group relative flex h-[320px] cursor-grab rounded-xl border p-3 shadow-[0_2px_6px_rgba(31,18,54,0.06)] active:cursor-grabbing',
+                              'group relative flex flex-col w-full min-h-[200px] cursor-grab rounded-xl border p-3 shadow-[0_2px_6px_rgba(31,18,54,0.06)] active:cursor-grabbing',
                               lane.cardOuterClassName,
                             ].join(' ')}
                           >
@@ -2115,128 +2398,124 @@ export function EventPlannerPage() {
             </section>
           ) : activeTab === 'notes' ? (
             <section className="rounded-2xl border border-[#ddd8e8] bg-[#f6f4f7] p-4 shadow-[0_6px_14px_rgba(31,18,54,0.05)]">
-              <div className="mb-4 flex items-center justify-between gap-3 rounded-2xl border border-[#e3ddea] bg-white px-4 py-3 shadow-[0_4px_10px_rgba(27,16,45,0.06)]">
-                <div>
-                  <p className="text-xs font-black uppercase tracking-[0.12em] text-[#8a8399]">
-                    Planner Notes
-                  </p>
-                  <p className="text-sm font-semibold text-[#5d566d]">
-                    Capture reminders, requests, and references in quick note tiles.
-                  </p>
-                </div>
+              {/* Inline Note Creator - Fixed Width */}
+              <div className="mb-8 mx-auto w-full max-w-2xl">
+                {!isInlineNoteOpen ? (
+                  <div
+                    onClick={() => {
+                      resetNoteDraft();
+                      setEditingPlannerNoteId(null);
+                      setIsInlineNoteOpen(true);
+                    }}
+                    className="flex cursor-text items-center justify-between rounded-xl border border-[#e3ddea] bg-white px-5 py-3.5 shadow-[0_2px_8px_rgba(27,16,45,0.04)] transition hover:shadow-md"
+                  >
+                    <span className="text-[14px] font-semibold text-[#8a8399]">Take a note...</span>
+                    <div className="flex gap-4 text-[#aba3b9]">
+                      <ListChecks className="size-5" />
+                      <Pencil className="size-5" />
+                      <ImagePlus className="size-5" />
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex flex-col gap-2 rounded-xl border border-[#e3ddea] bg-white p-4 shadow-lg">
+                    {noteDraftError && (
+                      <p className="px-1 mb-2 text-xs font-bold text-[#d22067]">{noteDraftError}</p>
+                    )}
+                    <Input
+                      value={noteDraftTitle}
+                      onChange={(e) => setNoteDraftTitle(e.target.value)}
+                      placeholder="Title"
+                      className="h-auto border-none bg-transparent px-1 text-[16px] font-bold text-[#1f1f21] shadow-none focus-visible:ring-0 placeholder:text-[#8a8399]"
+                    />
+                    <textarea
+                      autoFocus
+                      value={noteDraftBody}
+                      onChange={(e) => {
+                        setNoteDraftBody(e.target.value);
+                        e.target.style.height = 'auto';
+                        e.target.style.height = `${e.target.scrollHeight}px`;
+                      }}
+                      placeholder="Take a note..."
+                      className="min-h-[60px] max-h-[50vh] w-full resize-none overflow-y-auto break-words whitespace-pre-wrap px-1 bg-transparent text-[14px] leading-relaxed text-[#4d4858] outline-none placeholder:text-[#aba3b9]"
+                    />
 
-                <button
-                  type="button"
-                  onClick={openPlannerNoteModal}
-                  className="inline-flex h-10 items-center gap-2 rounded-lg bg-linear-to-r from-[#f1589e] via-[#d735b3] to-[#8a1fd0] px-4 text-sm font-black text-white shadow-[0_10px_20px_rgba(125,31,186,0.24)] transition hover:brightness-105"
-                >
-                  <Plus className="size-4" />
-                  Add Note
-                </button>
+                    {noteDraftImageDataUrl && (
+                      <div className="relative mt-2 overflow-hidden rounded-lg border border-[#e0dbe6]">
+                        <img
+                          src={noteDraftImageDataUrl}
+                          alt="Attached"
+                          className="max-h-48 w-full object-cover"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setNoteDraftImageDataUrl(undefined)}
+                          className="absolute right-2 top-2 rounded-full bg-black/50 p-1.5 text-white hover:bg-black/70"
+                        >
+                          <X className="size-4" />
+                        </button>
+                      </div>
+                    )}
+
+                    <div className="mt-2 flex items-center justify-between pt-1">
+                      <div className="flex gap-1">
+                        <label className="cursor-pointer rounded-full p-2 text-[#8a8399] transition hover:bg-[#f3eff8] hover:text-[#5d5670]">
+                          <ImagePlus className="size-5" />
+                          <input
+                            type="file"
+                            accept="image/*"
+                            className="hidden"
+                            onChange={handlePlannerNoteImageChange}
+                          />
+                        </label>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={handleCloseInlineNote}
+                        className="rounded-md px-4 py-2 text-[13px] font-bold text-[#302c39] transition hover:bg-[#f3eff8]"
+                      >
+                        Close
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
 
-              <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+              {/* Masonry Grid (Dynamic Height & Unclamped Text) */}
+              <div className="columns-1 sm:columns-2 lg:columns-3 xl:columns-4 gap-4 space-y-4">
                 {plannerNotes.map((note, index) => {
-                  const noteTheme: PlannerNoteTheme = noteTileThemes[index % noteTileThemes.length];
+                  const noteTheme = noteTileThemes[index % noteTileThemes.length];
+                  const isDragging = draggedNoteId === note.id;
 
                   return (
                     <article
                       key={note.id}
-                      onClick={() => openPlannerNotePreview(note)}
-                      className={`relative flex h-[360px] cursor-pointer flex-col overflow-hidden rounded-2xl border p-4 shadow-[0_10px_22px_rgba(27,16,45,0.08)] transition-transform duration-200 hover:-translate-y-1 hover:shadow-[0_16px_30px_rgba(27,16,45,0.12)] ${noteTheme.shellClassName}`}
+                      draggable
+                      onDragStart={(e) => handleNoteDragStart(e, note.id)}
+                      onDragEnd={handleNoteDragEnd}
+                      onDragOver={(e) => {
+                        e.preventDefault();
+                        e.dataTransfer.dropEffect = 'move';
+                      }}
+                      onDrop={(e) => handleNoteDrop(e, note.id)}
+                      onClick={() => handleEditPlannerNote(note)}
+                      className={`break-inside-avoid relative flex cursor-pointer flex-col overflow-hidden rounded-xl border border-[#e3ddea] bg-white transition-all hover:shadow-md ${noteTheme.shellClassName} ${isDragging ? 'opacity-30 border-dashed scale-95' : 'opacity-100'}`}
                     >
-                      <div
-                        className={`absolute inset-x-0 top-0 h-1.5 bg-linear-to-r ${noteTheme.headerClassName}`}
-                      />
-
-                      <div className="flex items-start justify-between gap-3 pt-1">
-                        <div className="min-w-0">
-                          <p className="truncate text-[14px] font-black text-inherit">
-                            {note.title}
-                          </p>
-                          <div
-                            className={`mt-1 inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.12em] ${noteTheme.badgeClassName}`}
-                          >
-                            <span
-                              className={`size-1.5 rounded-full ${noteTheme.accentClassName}`}
-                            />
-                            Note Tile
-                          </div>
-                        </div>
-
-                        <div
-                          className="relative shrink-0"
-                          onClick={(event) => event.stopPropagation()}
-                        >
-                          <button
-                            type="button"
-                            onClick={() =>
-                              setActiveNoteMenuFor((previous) =>
-                                previous === note.id ? null : note.id
-                              )
-                            }
-                            className="inline-flex size-8 items-center justify-center rounded-full border border-[#e1dbe8] text-[#6f697c] transition hover:border-[#b7b0c4] hover:bg-[#f7f4fb]"
-                            aria-label={`Open actions for ${note.title}`}
-                          >
-                            <MoreVertical className="size-4" />
-                          </button>
-
-                          {activeNoteMenuFor === note.id ? (
-                            <div className="absolute right-0 top-10 z-20 w-32 overflow-hidden rounded-xl border border-[#ddd7e8] bg-white shadow-[0_12px_24px_rgba(35,20,57,0.14)]">
-                              <button
-                                type="button"
-                                onClick={() => handleEditPlannerNote(note)}
-                                className="flex w-full items-center gap-2 px-3 py-2 text-left text-[12px] font-semibold text-[#4d465a] transition hover:bg-[#f7f3fb]"
-                              >
-                                <Pencil className="size-3.5" />
-                                Edit
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() => handleDeletePlannerNote(note.id)}
-                                className="flex w-full items-center gap-2 px-3 py-2 text-left text-[12px] font-semibold text-[#4d465a] transition hover:bg-[#f7f3fb]"
-                              >
-                                <Trash2 className="size-3.5" />
-                                Delete
-                              </button>
-                            </div>
-                          ) : null}
-                        </div>
-                      </div>
-
-                      <div
-                        className={`mt-3 flex-1 overflow-hidden rounded-xl border ${noteTheme.footerClassName}`}
-                      >
-                        {note.imageDataUrl ? (
-                          <img
-                            src={note.imageDataUrl}
-                            alt={`${note.title} evidence`}
-                            className="h-[150px] w-full object-cover"
-                          />
-                        ) : (
-                          <div
-                            className={`flex h-[150px] w-full items-center justify-center bg-linear-to-br ${noteTheme.headerClassName}`}
-                          >
-                            <div className="flex flex-col items-center gap-2 text-center">
-                              <span
-                                className={`inline-flex size-10 items-center justify-center rounded-2xl ${noteTheme.badgeClassName}`}
-                              >
-                                <ImagePlus className="size-5" />
-                              </span>
-                              <p className="text-[11px] font-semibold text-inherit">
-                                No attachment
-                              </p>
-                            </div>
-                          </div>
+                      {note.imageDataUrl && (
+                        <img
+                          src={note.imageDataUrl}
+                          alt={`${note.title} attachment`}
+                          className="w-full h-auto object-contain border-b border-[#e3ddea]"
+                        />
+                      )}
+                      <div className="p-4 flex flex-col gap-2">
+                        {note.title && (
+                          <p className="text-[15px] font-bold text-inherit">{note.title}</p>
                         )}
-
-                        <div className="flex h-[130px] flex-col gap-2 px-3 py-3">
-                          <p
-                            className={`line-clamp-4 whitespace-pre-line text-[12px] leading-snug ${noteTheme.bodyClassName}`}
-                          >
-                            {note.body}
-                          </p>
-                        </div>
+                        <p
+                          className={`break-words whitespace-pre-wrap text-[13px] leading-relaxed text-inherit/90`}
+                        >
+                          {note.body}
+                        </p>
                       </div>
                     </article>
                   );
@@ -2245,25 +2524,24 @@ export function EventPlannerPage() {
             </section>
           ) : activeTab === 'checklist' ? (
             <section className="rounded-2xl border border-[#ddd8e8] bg-[#fbfafd] p-3 shadow-[0_6px_14px_rgba(31,18,54,0.05)]">
-              <h3 className="mb-3 text-[18px] font-bold tracking-tight text-[#18151f]">
-                Checklist ({checklistItems.length} Items)
-              </h3>
-
-              <div className="mb-4">
-                <div className="mb-2 flex items-center justify-between">
-                  <p className="text-sm font-semibold text-[#6f687f]">Overall Progress</p>
-                  <p className="text-sm font-bold text-[#2f2b39]">{checklistProgress}%</p>
+              <div className="mb-4 flex items-center justify-between">
+                <h3 className="text-[18px] font-bold tracking-tight text-[#18151f]">
+                  Checklist ({checklistItems.length} Items)
+                </h3>
+                <div className="flex items-center gap-3">
+                  <span className="text-[12px] font-semibold text-[#6f687f]">Overall Progress</span>
+                  <span className="text-[14px] font-bold text-[#2f2b39]">{checklistProgress}%</span>
                 </div>
+              </div>
 
-                <div className="h-2 w-full rounded-full bg-[#f3eefb]">
-                  <div
-                    className="h-2 rounded-full"
-                    style={{
-                      width: `${checklistProgress}%`,
-                      background: 'linear-gradient(90deg, #f347a5, #8f1fd1)',
-                    }}
-                  />
-                </div>
+              <div className="mb-6 h-2.5 w-full overflow-hidden rounded-full bg-[#f0eaf6]">
+                <div
+                  className="h-full rounded-full transition-all duration-500 ease-out"
+                  style={{
+                    width: `${checklistProgress}%`,
+                    background: 'linear-gradient(90deg, #f1589e, #8a1fd0)',
+                  }}
+                />
               </div>
 
               <div className="overflow-hidden rounded-2xl border border-[#ece8f0] bg-white">
@@ -2366,228 +2644,88 @@ export function EventPlannerPage() {
       </div>
 
       <Dialog
-        open={isNotePreviewOpen}
-        onOpenChange={(open) => {
-          setIsNotePreviewOpen(open);
-          if (!open) {
-            setSelectedPlannerNote(null);
-          }
-        }}
-      >
-        <DialogContent
-          showCloseButton={false}
-          className="max-w-[calc(100%-1rem)] rounded-2xl border border-[#e3dfea] bg-white p-0 sm:max-w-[860px]"
-        >
-          {selectedPlannerNote ? (
-            <article className="overflow-hidden rounded-2xl bg-white">
-              <header className="flex items-center justify-between border-b border-[#eee9f2] px-5 py-4">
-                <div>
-                  <p className="text-xs font-black uppercase tracking-[0.12em] text-[#8a8399]">
-                    Note Preview
-                  </p>
-                  <h3 className="mt-1 text-[24px] font-black tracking-tight text-[#1f1f21]">
-                    {selectedPlannerNote.title}
-                  </h3>
-                </div>
-
-                <div className="flex items-center gap-2">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      closePlannerNotePreview();
-                      handleEditPlannerNote(selectedPlannerNote);
-                    }}
-                    className="inline-flex h-9 items-center gap-2 rounded-lg border border-[#d7d0e2] px-3 text-xs font-bold text-[#5d5670] transition hover:bg-[#f4f1f8]"
-                  >
-                    <Pencil className="size-3.5" />
-                    Edit
-                  </button>
-                  <button
-                    type="button"
-                    onClick={closePlannerNotePreview}
-                    className="inline-flex size-9 items-center justify-center rounded-full text-[#9f97ad] transition hover:bg-[#f3eff8]"
-                    aria-label="Close note preview"
-                  >
-                    <X className="size-4" />
-                  </button>
-                </div>
-              </header>
-
-              <div className="grid gap-0 md:grid-cols-[1.08fr_0.92fr]">
-                <div className="border-b border-[#eee9f2] md:border-b-0 md:border-r">
-                  {selectedPlannerNote.imageDataUrl ? (
-                    <img
-                      src={selectedPlannerNote.imageDataUrl}
-                      alt={`${selectedPlannerNote.title} attachment`}
-                      className="h-full min-h-[280px] w-full object-cover"
-                    />
-                  ) : (
-                    <div className="flex min-h-[280px] items-center justify-center bg-linear-to-br from-[#fbf6ff] via-[#f8f5fb] to-[#fff7fb] px-6 text-center">
-                      <div>
-                        <div className="mx-auto inline-flex size-16 items-center justify-center rounded-2xl bg-[#f1589e]/10 text-[#f1589e]">
-                          <ImagePlus className="size-8" />
-                        </div>
-                        <p className="mt-3 text-sm font-semibold text-[#746e85]">
-                          No attachment on this note
-                        </p>
-                      </div>
-                    </div>
-                  )}
-                </div>
-
-                <div className="p-5">
-                  <div className="inline-flex rounded-full bg-[#ffe7ef] px-3 py-1 text-[10px] font-bold text-[#cf3a79]">
-                    Expanded view
-                  </div>
-
-                  <div className="mt-4 rounded-2xl border border-[#ece8f0] bg-[#faf8fd] p-4">
-                    <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[#8b84a0]">
-                      Details
-                    </p>
-                    <p className="mt-2 whitespace-pre-line text-[14px] leading-relaxed text-[#4d4858]">
-                      {selectedPlannerNote.body}
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </article>
-          ) : null}
-        </DialogContent>
-      </Dialog>
-
-      <Dialog
         open={isNoteModalOpen}
         onOpenChange={(open) => {
           setIsNoteModalOpen(open);
-          if (!open) {
-            resetNoteDraft();
-          }
+          if (!open) handleCloseInlineNote();
         }}
       >
         <DialogContent
           showCloseButton={false}
-          className="max-w-[calc(100%-1rem)] rounded-2xl border border-[#e3dfea] bg-white p-0 sm:max-w-[620px]"
+          className="max-w-[calc(100%-1rem)] rounded-xl border border-[#e3dfea] bg-white p-0 sm:max-w-[600px] overflow-hidden shadow-2xl"
         >
-          <form
-            className="px-6 py-5"
-            onSubmit={(event) => {
-              event.preventDefault();
-              handleSavePlannerNote();
-            }}
-          >
-            <div className="flex items-start justify-between gap-3">
-              <div>
-                <p className="text-xs font-black uppercase tracking-[0.12em] text-[#8a8399]">
-                  {editingPlannerNoteId ? 'Edit Note' : 'Add Note'}
-                </p>
-                <h3 className="mt-1 text-[24px] font-black tracking-tight text-[#1f1f21]">
-                  {editingPlannerNoteId ? 'Update your note' : 'Create a new note'}
-                </h3>
-              </div>
-
-              <button
-                type="button"
-                onClick={closePlannerNoteModal}
-                className="inline-flex size-8 items-center justify-center rounded-full text-[#9f97ad] transition hover:bg-[#f3eff8]"
-                aria-label="Close note modal"
-              >
-                <X className="size-4" />
-              </button>
-            </div>
-
-            <div className="mt-4 space-y-4">
-              <div>
-                <Label htmlFor="note-title" className="text-xs font-semibold text-[#746e85]">
-                  Title
-                </Label>
-                <Input
-                  id="note-title"
-                  value={noteDraftTitle}
-                  onChange={(event) => setNoteDraftTitle(event.target.value)}
-                  placeholder="Enter note title"
-                  className="mt-1 h-11 border-[#ddd7e8] text-[13px] font-semibold text-[#302c39]"
-                />
-              </div>
-
-              <div>
-                <Label htmlFor="note-body" className="text-xs font-semibold text-[#746e85]">
-                  Details
-                </Label>
-                <textarea
-                  id="note-body"
-                  value={noteDraftBody}
-                  onChange={(event) => setNoteDraftBody(event.target.value)}
-                  placeholder="Write the note details"
-                  className="mt-1 h-32 w-full rounded-lg border border-[#ddd7e8] bg-white px-3 py-2 text-[13px] text-[#302c39] outline-none placeholder:text-[#8a8495] focus:border-[#b29ace]"
-                />
-              </div>
-
-              <div className="rounded-xl border border-[#ece8f0] bg-[#faf8fd] p-3">
-                <div className="flex items-center justify-between gap-3">
-                  <div>
-                    <p className="text-xs font-semibold uppercase tracking-[0.08em] text-[#8b84a0]">
-                      Attachment
-                    </p>
-                    <p className="text-[12px] text-[#6f687f]">
-                      Add an image if the note needs one.
-                    </p>
-                  </div>
-
-                  <label className="inline-flex cursor-pointer items-center justify-center gap-2 rounded-md border border-[#d9d3e2] bg-white px-3 py-2 text-[12px] font-semibold text-[#4a4654] transition hover:border-[#b7b0c4]">
-                    <ImagePlus className="size-4" />
-                    Upload image
-                    <input
-                      type="file"
-                      accept="image/*"
-                      className="hidden"
-                      onChange={handlePlannerNoteImageChange}
-                    />
-                  </label>
+          <div className="flex max-h-[85vh] flex-col bg-white">
+            <div className="overflow-y-auto [scrollbar-width:none]">
+              {/* Image Header */}
+              {noteDraftImageDataUrl ? (
+                <div className="relative group bg-[#1f1f21]">
+                  <img
+                    src={noteDraftImageDataUrl}
+                    alt="Attachment"
+                    className="w-full h-auto max-h-[50vh] object-contain"
+                  />
                 </div>
-
-                {noteDraftImageDataUrl ? (
-                  <div className="mt-3 overflow-hidden rounded-lg border border-[#e0dbe6] bg-white">
-                    <img
-                      src={noteDraftImageDataUrl}
-                      alt="Uploaded note attachment"
-                      className="h-40 w-full object-cover"
-                    />
-                    <div className="flex items-center justify-between gap-2 border-t border-[#e0dbe6] px-3 py-2">
-                      <p className="text-[11px] font-semibold text-[#6f697c]">Image attached</p>
-                      <button
-                        type="button"
-                        onClick={() => setNoteDraftImageDataUrl(undefined)}
-                        className="inline-flex items-center gap-1 rounded-md border border-[#d9d3e2] px-2 py-1 text-[11px] font-semibold text-[#6f697c] transition hover:border-[#b7b0c4]"
-                      >
-                        <X className="size-3.5" />
-                        Remove
-                      </button>
-                    </div>
-                  </div>
-                ) : null}
-              </div>
-
-              {noteDraftError ? (
-                <p className="text-sm font-semibold text-[#c13a74]">{noteDraftError}</p>
               ) : null}
+
+              {/* Note Content */}
+              <div className="flex flex-col gap-4 p-6">
+                {noteDraftError && (
+                  <p className="text-xs font-bold text-[#d22067]">{noteDraftError}</p>
+                )}
+                <Input
+                  value={noteDraftTitle}
+                  onChange={(e) => setNoteDraftTitle(e.target.value)}
+                  placeholder="Title"
+                  className="h-auto border-none bg-transparent px-0 text-[22px] font-semibold text-[#202124] shadow-none focus-visible:ring-0 placeholder:text-[#8a8399]"
+                />
+                <textarea
+                  value={noteDraftBody}
+                  onChange={(e) => {
+                    setNoteDraftBody(e.target.value);
+                    e.target.style.height = 'auto';
+                    e.target.style.height = `${e.target.scrollHeight}px`;
+                  }}
+                  placeholder="Take a note..."
+                  className="min-h-[150px] w-full resize-none break-words whitespace-pre-wrap bg-transparent text-[15px] leading-relaxed text-[#3c4043] outline-none placeholder:text-[#5f6368]"
+                />
+              </div>
             </div>
 
-            <div className="mt-6 flex items-center justify-end gap-2">
+            {/* Bottom Toolbar */}
+            <div className="flex items-center justify-between border-t border-[#f1f3f4] px-4 py-3 bg-white">
+              <div className="flex items-center gap-2 text-[#5f6368]">
+                <label className="cursor-pointer rounded-full p-2 hover:bg-[#f1f3f4] transition">
+                  <ImagePlus className="size-5" />
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={handlePlannerNoteImageChange}
+                  />
+                </label>
+                {editingPlannerNoteId && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      handleDeletePlannerNote(editingPlannerNoteId);
+                      setIsNoteModalOpen(false);
+                    }}
+                    className="cursor-pointer rounded-full p-2 hover:bg-[#ffeef5] hover:text-[#d22067] transition"
+                    aria-label="Delete note"
+                  >
+                    <Trash2 className="size-5" />
+                  </button>
+                )}
+              </div>
               <button
                 type="button"
-                onClick={closePlannerNoteModal}
-                className="inline-flex h-10 items-center justify-center rounded-lg border border-[#d7d0e2] px-4 text-sm font-bold text-[#5d5670] transition hover:bg-[#f4f1f8]"
+                onClick={handleCloseInlineNote}
+                className="rounded-md px-6 py-2 text-[14px] font-semibold text-[#3c4043] hover:bg-[#f1f3f4] transition"
               >
-                Cancel
-              </button>
-              <button
-                type="submit"
-                className="inline-flex h-10 items-center justify-center rounded-lg bg-linear-to-r from-[#f1589e] via-[#d735b3] to-[#8a1fd0] px-4 text-sm font-black text-white shadow-[0_10px_22px_rgba(125,31,186,0.34)]"
-              >
-                Save note
+                Close
               </button>
             </div>
-          </form>
+          </div>
         </DialogContent>
       </Dialog>
 

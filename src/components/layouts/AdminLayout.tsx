@@ -21,7 +21,7 @@ export function AdminLayout() {
   }
 
   return (
-    <div className="h-screen bg-[#f6f5f8]">
+    <div className="min-h-screen bg-[#fbf8fd]">
       <div className="flex h-full flex-col md:flex-row">
         <aside className="w-full border-b border-[#ece7f2] bg-white md:h-full md:w-62 md:border-b-0 md:border-r">
           <AdminSidebar />
