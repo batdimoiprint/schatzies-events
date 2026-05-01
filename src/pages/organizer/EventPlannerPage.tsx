@@ -1654,7 +1654,8 @@
                 items.push({ id: `${task.id}-chk-0`, label: 'New checklist item', done: false });
               }
               return { ...task, lane, checklist: items };
-            }          }
+            }
+          }
 
           if (lane === 'completed') {
             const timestamp = new Date().toISOString();
@@ -3215,3 +3216,4 @@
       </div>
     );
   }
+}
