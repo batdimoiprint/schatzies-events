@@ -6,38 +6,50 @@ export interface EventManagerEvent {
   id: string;
   title: string;
   date: string;
-  timeSlot: string;
-  client: string;
-  type: string;
-  package: string;
-  venue: string;
-  rsvp: number;
-  status: EventStatus;
-  clientId: string;
+  timeSlot?: string;
+  client?: string;
+  type?: string;
+  package?: string;
+  pax?: number;
+  rsvp?: number;
+  status?: string;
+  clientId?: string;
+  organizerId?: string;
+  organizer_id?: string;
+  venue?: string;
 }
 
-interface BackendEvent {
+export interface BackendEvent {
   id: string;
-  clientId?: string;
-  title?: string;
+  event_id?: string;
+  title: string;
+  description?: string;
   startDate?: string;
-  endDate?: string;
-  eventDate?: string;
   eventType?: string;
   eventPackage?: string;
+  eventPackageKey?: string;
   eventPax?: number | null;
+  event_pax?: number | null;
   venue?: string;
+  eventLocation?: string;
+  organizerId?: string;
+  organizer_id?: string;
+  clientId?: string;
+  client_id?: string;
+  eventDate?: string;
+  endDate?: string;
+  dateEnd?: string;
   status?: string;
 }
 
-interface BackendEventDetails extends BackendEvent {
+export interface BackendEventDetails extends BackendEvent {
   clientName?: string;
   dateStart?: string;
-  dateEnd?: string;
   package?: {
     name?: string;
     pax?: number;
   };
+  cost?: string | number;
   headcount?: {
     expectedAttendee?: number;
   };
@@ -189,7 +201,7 @@ export async function getEventVendors(eventId: string) {
 
 export async function getEventUser(userId: string) {
   const response = await axiosInstance.get(`/users/${userId}`);
-  return response.data;
+  return response.data.user;
 }
 
 export async function getEventAllocation(eventId: string) {

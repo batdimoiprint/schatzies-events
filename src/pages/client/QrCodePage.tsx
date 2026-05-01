@@ -10,7 +10,7 @@ import {
 import { generateRSVPQRCode, downloadQRCode } from '@/lib/qrCodeGenerator';
 import LoadingScreen from '@/components/ui/LoadingScreen';
 import { getRSVPList } from '@/api/rsvp';
-import { getEventManagerEvents } from '@/api/events';
+import { getEventManagerEvents, getEventById } from '@/api/events';
 import type { RSVPResponse } from '@/types/rsvp';
 import { useAuth } from '@/hooks/useAuth';
 
@@ -56,6 +56,8 @@ export function QrCodePage() {
 
   const { user } = useAuth();
 
+  const [eventPax, setEventPax] = useState(0);
+
   useEffect(() => {
     const fetchEvents = async () => {
       setIsEventsLoading(true);
@@ -67,8 +69,22 @@ export function QrCodePage() {
           user?.role === 'CLIENT' ? data.filter((e) => e.clientId === user.user_id) : data;
 
         if (userEvents.length > 0) {
-          // Only set the initial event if one isn't already selected
-          setSelectedEventId((prev) => prev || userEvents[0].id);
+          const firstEvent = userEvents[0];
+          setSelectedEventId((prev) => prev || firstEvent.id);
+          
+          // Set initial capacity from summary if available
+          if (firstEvent.pax) setEventPax(Number(firstEvent.pax));
+
+          // Fetch full details to get the most accurate capacity (eventPax)
+          try {
+            const fullDetails = await getEventById(firstEvent.id);
+            const pax = fullDetails.eventPax || fullDetails.event_pax || (fullDetails.package as any)?.pax || firstEvent.pax || 200;
+            if (pax > 0) setEventPax(Number(pax));
+          } catch (e) {
+            console.error('Error fetching event capacity:', e);
+            // Fallback to 200 if we couldn't fetch details but know it's a client event
+            if (!firstEvent.pax) setEventPax(200);
+          }
         }
       } catch (error) {
         console.error('Error fetching events for QR Management:', error);
@@ -95,7 +111,6 @@ export function QrCodePage() {
         setState('active');
       } else {
         // Reset state if no QR found for this specific event
-        setQrCode('');
         setCurrentQRId('');
         setState('idle');
       }
@@ -114,23 +129,16 @@ export function QrCodePage() {
         try {
           const altData = await getRSVPList(`EVENT#${eventId}`);
           if (altData && altData.length > 0) data = altData;
-        } catch {
-          /* ignore fallback error */
-        }
+        } catch { /* ignore fallback error */ }
       }
 
       // Map database fields to the format the UI expects
-      const mappedData = (Array.isArray(data) ? data : []).map((item: BackendRSVPItem) => {
+      const mappedData: RSVPResponse[] = (Array.isArray(data) ? data : []).map((item: BackendRSVPItem) => {
         const rawStatus = (item.status || '').toString().toUpperCase();
-        const isAttending =
-          rawStatus === 'ATTENDING' || rawStatus === 'CONFIRMED' || rawStatus === 'TRUE';
-
-        // Handle DynamoDB BOOL format or standard boolean
-        const scanned =
-          item.isScanned === true ||
-          (item.isScanned &&
-            typeof item.isScanned === 'object' &&
-            'BOOL' in item.isScanned &&
+        const isAttending = rawStatus === 'ATTENDING' || rawStatus === 'CONFIRMED' || rawStatus === 'TRUE';
+        
+        const scanned = item.isScanned === true || 
+          (item.isScanned && typeof item.isScanned === 'object' && 'BOOL' in item.isScanned && 
             (item.isScanned as { BOOL: boolean }).BOOL === true) ||
           item.isScanned === 'true';
 
@@ -143,13 +151,16 @@ export function QrCodePage() {
           contactNumber: String(item.contactNumber || item.contact_number || ''),
           status: (isAttending ? 'Attending' : 'Not Attending') as 'Attending' | 'Not Attending',
           isScanned: scanned,
+          isVerified: Boolean(item.isVerified === true || 
+                      (item.isVerified && typeof item.isVerified === 'object' && 'BOOL' in (item.isVerified as any) && (item.isVerified as any).BOOL === true) ||
+                      item.isVerified === 'true'),
           qrCode: String(
-            typeof item.qrCode === 'object' && item.qrCode && 'S' in item.qrCode
-              ? (item.qrCode as { S: string }).S
+            typeof item.qrCode === 'object' && item.qrCode && 'S' in (item.qrCode as any)
+              ? (item.qrCode as any).S
               : item.qrCode || ''
           ),
           message: String(item.message || ''),
-        };
+        } as RSVPResponse;
       });
 
       setRsvps(mappedData);
@@ -186,14 +197,15 @@ export function QrCodePage() {
     }
   };
 
-  const handleDownloadQR = () => qrCode && downloadQRCode(qrCode, 'wedding-invitation.png');
+  const handleDownloadQR = () => {
+    if (qrCode) downloadQRCode(qrCode, 'wedding-invitation.png');
+  };
   const handleCopyLink = () => {
     const invitationLink = `${window.location.origin}/invitation/${selectedEventId}/${currentQRId}`;
     navigator.clipboard.writeText(invitationLink);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
-
   const filteredRsvps = rsvps.filter((rsvp) => {
     const fullName =
       `${rsvp.firstName} ${rsvp.middleName ? rsvp.middleName + ' ' : ''}${rsvp.lastName}`.toLowerCase();
@@ -204,38 +216,38 @@ export function QrCodePage() {
       (statusFilter === 'Attending' && rsvp.status === 'Attending') ||
       (statusFilter === 'Not Attending' && rsvp.status === 'Not Attending') ||
       (statusFilter === 'Arrived' && rsvp.isScanned);
-    return matchesSearch && matchesStatus;
+    return matchesSearch && matchesStatus && (rsvp.isVerified || rsvp.status === 'Not Attending');
   });
 
-  const totalRSVPs = rsvps.length;
-  const attendingCount = rsvps.filter((r) => r.status === 'Attending').length;
-  const notAttendingCount = rsvps.filter((r) => r.status === 'Not Attending').length;
-  const arrivedCount = rsvps.filter((r) => r.isScanned).length;
+  const displayRsvps = rsvps.filter((r) => r.isVerified || r.status === 'Not Attending');
+  const verifiedRsvps = rsvps.filter((r) => r.isVerified);
+  const totalRSVPs = displayRsvps.length;
+  const attendingCount = displayRsvps.filter((r) => r.status === 'Attending' && r.isVerified).length;
+  const notAttendingCount = displayRsvps.filter((r) => r.status === 'Not Attending').length;
+  const arrivedCount = verifiedRsvps.filter((r) => r.isScanned).length;
+  const pendingCount = Math.max(0, eventPax - attendingCount - notAttendingCount);
 
   const stats = [
     {
       label: 'Confirmed',
       count: attendingCount,
-      pct: totalRSVPs > 0 ? `${(attendingCount / totalRSVPs) * 100}%` : '0%',
+      pct: eventPax > 0 ? `${(attendingCount / eventPax) * 100}%` : '0%',
       bar: 'bg-green-400',
       text: 'text-green-600',
     },
     {
       label: 'Declined',
       count: notAttendingCount,
-      pct: totalRSVPs > 0 ? `${(notAttendingCount / totalRSVPs) * 100}%` : '0%',
+      pct: eventPax > 0 ? `${(notAttendingCount / eventPax) * 100}%` : '0%',
       bar: 'bg-red-500',
       text: 'text-red-500',
     },
     {
       label: 'Pending',
-      count: totalRSVPs - attendingCount - notAttendingCount,
-      pct:
-        totalRSVPs > 0
-          ? `${((totalRSVPs - attendingCount - notAttendingCount) / totalRSVPs) * 100}%`
-          : '0%',
-      bar: 'bg-yellow-400',
-      text: 'text-yellow-600',
+      count: pendingCount,
+      pct: eventPax > 0 ? `${(pendingCount / eventPax) * 100}%` : '0%',
+      bar: 'bg-orange-300',
+      text: 'text-orange-600',
     },
   ];
 
@@ -265,13 +277,15 @@ export function QrCodePage() {
               </button>
             ))}
           </div>
-          <button
-            onClick={() => setState('idle')}
-            className="mb-2 flex items-center gap-2 rounded-md bg-gray-200 px-5 py-2.5 text-sm font-semibold text-gray-700 shadow-md hover:bg-gray-300 transition active:scale-95"
-            disabled={isLoading}
-          >
-            <PlusCircle weight="bold" size={18} /> Create QR Code
-          </button>
+          {!qrCode && (
+            <button
+              onClick={() => setState('idle')}
+              className="mb-2 flex items-center gap-2 rounded-md bg-gray-200 px-5 py-2.5 text-sm font-semibold text-gray-700 shadow-md hover:bg-gray-300 transition active:scale-95"
+              disabled={isLoading}
+            >
+              <PlusCircle weight="bold" size={18} /> Create QR Code
+            </button>
+          )}
         </div>
       )}
 
@@ -375,15 +389,13 @@ export function QrCodePage() {
               </div>
               <div className="mt-6 flex justify-between items-center text-xs text-[#696373]">
                 <div className="flex gap-4">
-                  <span>
-                    Capacity: <strong>150</strong>
-                  </span>
+                    Capacity: <strong>{eventPax}</strong>
                   <span>
                     Arrived: <strong className="text-blue-600">{arrivedCount}</strong>
                   </span>
                 </div>
                 <span>
-                  Total Responses: <strong>{totalRSVPs}/150</strong>
+                  Total Responses: <strong>{totalRSVPs}/{eventPax}</strong>
                 </span>
               </div>
             </div>
@@ -461,9 +473,9 @@ export function QrCodePage() {
                       <td className="px-4 py-3.5 text-[#696373]">{rsvp.contactNumber}</td>
                       <td className="px-4 py-3.5">
                         <span
-                          className={`inline-flex items-center gap-1.5 rounded-full px-3 py-0.5 text-[10px] font-bold ${rsvp.isScanned ? 'bg-blue-100 text-blue-700' : 'bg-yellow-100 text-yellow-700'}`}
+                          className={`inline-flex items-center gap-1.5 rounded-full px-3 py-0.5 text-[10px] font-bold ${rsvp.isScanned ? 'bg-blue-100 text-blue-700' : rsvp.status === 'Not Attending' ? 'bg-red-100 text-red-700' : 'bg-yellow-100 text-yellow-700'}`}
                         >
-                          {rsvp.isScanned ? 'Arrived' : 'Pending'}
+                          {rsvp.isScanned ? 'Arrived' : rsvp.status === 'Not Attending' ? 'Absent' : 'Pending'}
                         </span>
                       </td>
                       <td className="px-4 py-3.5 text-center">

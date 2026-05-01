@@ -7,6 +7,7 @@ interface RSVPFormData {
   firstName: string;
   lastName: string;
   middleName: string;
+  email: string;
   contactNumber: string;
   attending: boolean;
   message: string;
@@ -98,6 +99,24 @@ export function RSVPFormPage({
               />
             </div>
 
+            {/* Email */}
+            <div>
+              <Label htmlFor="email" className="text-xs font-medium text-gray-700">
+                Email Address
+              </Label>
+              <Input
+                id="email"
+                type="email"
+                placeholder="your.email@example.com"
+                value={formData.email}
+                onChange={(e) => onFormChange({ ...formData, email: e.target.value })}
+                className={`mt-1 bg-gray-100 border-0 rounded-lg text-sm ${formErrors.email ? 'ring-1 ring-red-500' : ''}`}
+              />
+              {formErrors.email && (
+                <p className="text-xs text-red-500 mt-0.5">{formErrors.email}</p>
+              )}
+            </div>
+
             {/* Contact Number */}
             <div>
               <Label htmlFor="contactNumber" className="text-xs font-medium text-gray-700">
@@ -111,7 +130,7 @@ export function RSVPFormPage({
                 <Input
                   id="contactNumber"
                   type="tel"
-                  placeholder="912 345 6789"
+                  placeholder="09*****"
                   value={formData.contactNumber}
                   onChange={(e) => {
                     // Only allow numbers and limit to 10 digits (PH mobile number length)

@@ -5,10 +5,12 @@ export interface RSVPResponse {
   firstName: string;
   middleName?: string;
   lastName: string;
+  email?: string;
   contactNumber: string;
   message?: string;
   status: 'Attending' | 'Not Attending' | 'CONFIRMED' | 'TRUE' | string;
   isScanned: boolean;
+  isVerified?: boolean;
   qrCode?: string;
   eventId?: string;
   createdAt?: string;

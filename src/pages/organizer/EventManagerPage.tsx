@@ -182,15 +182,15 @@ export function EventManagerPage() {
     if (activeTab === 'Events') {
       const data = events.filter((event) => {
         const searchableFields = [
-          event.title,
-          event.date,
-          event.timeSlot,
-          event.client,
-          event.type,
-          event.package,
-          event.venue,
-          event.status,
-          String(event.rsvp),
+          event.title || '',
+          event.date || '',
+          event.timeSlot || '',
+          event.client || '',
+          event.type || '',
+          event.package || '',
+          event.venue || '',
+          event.status || '',
+          String(event.rsvp || 0),
         ];
 
         return matchesSearch(searchableFields);
@@ -693,7 +693,7 @@ export function EventManagerPage() {
                                     : 'bg-[#c62876]'
                             }`}
                           ></span>
-                          {event.status === 'Pending' ? 'PLANNING' : event.status.toUpperCase()}
+                          {event.status === 'Pending' ? 'PLANNING' : (event.status || '').toUpperCase()}
                         </span>
                       </TableCell>
                     </TableRow>
