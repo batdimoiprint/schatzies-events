@@ -44,6 +44,7 @@ import { RSVPPage as OrganizerRSVPPage } from '@/pages/organizer/RSVPPage';
 import { CostBreakdownPage } from '@/pages/organizer/CostBreakdownPage';
 import { OrganizerProfilePage } from '@/pages/organizer/OrganizerProfilePage';
 import { InvitationPage } from '@/pages/public/InvitationPage';
+import VerifyEmailPage from '@/pages/public/VerifyEmailPage';
 
 function NotFoundPage() {
   return (
@@ -63,6 +64,10 @@ const router = createBrowserRouter(
     {
       path: 'invitation/:eventId/:qrId',
       Component: InvitationPage,
+    },
+    {
+      path: 'verify',
+      Component: VerifyEmailPage,
     },
     {
       path: 'login',

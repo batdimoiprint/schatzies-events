@@ -182,31 +182,31 @@ const taskLaneConfig: Array<{
   cardOuterClassName: string;
   cardTitleClassName: string;
 }> = [
-    {
-      id: 'todo',
-      label: 'To Do',
-      dotClassName: 'bg-[#e6d81d]',
-      panelClassName: 'border-[#e4e4d0] bg-[#fafaf4]',
-      cardOuterClassName: 'border-[#cae4cb] bg-[#dff0e0]',
-      cardTitleClassName: 'text-[#4f8759]',
-    },
-    {
-      id: 'in-progress',
-      label: 'In Progress',
-      dotClassName: 'bg-[#2ea4ff]',
-      panelClassName: 'border-[#d3e7f7] bg-[#f4f9ff]',
-      cardOuterClassName: 'border-[#ead4e9] bg-[#f0ddf0]',
-      cardTitleClassName: 'text-[#712466]',
-    },
-    {
-      id: 'completed',
-      label: 'Completed',
-      dotClassName: 'bg-[#2ec24f]',
-      panelClassName: 'border-[#d8eddc] bg-[#f5fcf7]',
-      cardOuterClassName: 'border-[#d4dfec] bg-[#deebf8]',
-      cardTitleClassName: 'text-[#1f4c82]',
-    },
-  ];
+  {
+    id: 'todo',
+    label: 'To Do',
+    dotClassName: 'bg-[#e6d81d]',
+    panelClassName: 'border-[#e4e4d0] bg-[#fafaf4]',
+    cardOuterClassName: 'border-[#cae4cb] bg-[#dff0e0]',
+    cardTitleClassName: 'text-[#4f8759]',
+  },
+  {
+    id: 'in-progress',
+    label: 'In Progress',
+    dotClassName: 'bg-[#2ea4ff]',
+    panelClassName: 'border-[#d3e7f7] bg-[#f4f9ff]',
+    cardOuterClassName: 'border-[#ead4e9] bg-[#f0ddf0]',
+    cardTitleClassName: 'text-[#712466]',
+  },
+  {
+    id: 'completed',
+    label: 'Completed',
+    dotClassName: 'bg-[#2ec24f]',
+    panelClassName: 'border-[#d8eddc] bg-[#f5fcf7]',
+    cardOuterClassName: 'border-[#d4dfec] bg-[#deebf8]',
+    cardTitleClassName: 'text-[#1f4c82]',
+  },
+];
 
 // Utility functions moved outside component to avoid recreating on every render
 const formatTimeInput = (hour: number, minute = 0) => {
@@ -1642,26 +1642,26 @@ export function EventPlannerPage() {
             Array.isArray(task.checklist) && task.checklist.length > 0
               ? task.checklist
               : task.details
-                .split('\n')
-                .map((s) => s.trim())
-                .filter(Boolean)
-                .map((line, idx) => ({ id: `${task.id}-chk-${idx}`, label: line, done: false }));
+                  .split('\n')
+                  .map((s) => s.trim())
+                  .filter(Boolean)
+                  .map((line, idx) => ({ id: `${task.id}-chk-${idx}`, label: line, done: false }));
 
           const checklist =
             checklistSource.length > 0
               ? checklistSource.map((item) => ({
-                ...item,
-                done: true,
-                doneAt: (item as any).doneAt ?? timestamp,
-              }))
-              : [
-                {
-                  id: `${task.id}-chk-0`,
-                  label: 'Task completed',
+                  ...item,
                   done: true,
-                  doneAt: timestamp,
-                },
-              ];
+                  doneAt: (item as any).doneAt ?? timestamp,
+                }))
+              : [
+                  {
+                    id: `${task.id}-chk-0`,
+                    label: 'Task completed',
+                    done: true,
+                    doneAt: timestamp,
+                  },
+                ];
 
           return { ...task, lane, checklist };
         }
@@ -1700,18 +1700,18 @@ export function EventPlannerPage() {
         ? selectedTask?.checklist?.length
           ? selectedTask.checklist
           : (selectedTask?.details ?? '')
-            .split('\n')
-            .map((line) => line.trim())
-            .filter(Boolean)
-            .map((line, index) => ({
-              id: `${selectedTask?.id ?? taskId}-chk-${index}`,
-              label: line,
-              done: false,
-            }))
+              .split('\n')
+              .map((line) => line.trim())
+              .filter(Boolean)
+              .map((line, index) => ({
+                id: `${selectedTask?.id ?? taskId}-chk-${index}`,
+                label: line,
+                done: false,
+              }))
         : (selectedTask?.checklist ?? []).map((item) => ({
-          ...item,
-          doneAt: item.doneAt,
-        }))
+            ...item,
+            doneAt: item.doneAt,
+          }))
     );
     setTaskActionMessage(`Editing ${selectedTask?.title || 'task'}.`);
     setTaskActionTone('info');
@@ -2092,7 +2092,7 @@ export function EventPlannerPage() {
                         className={[
                           'min-w-0 flex-1 whitespace-pre-line',
                           card.valueClassName ??
-                          'text-[24px] font-black leading-none tracking-tight text-[#2f2b39]',
+                            'text-[24px] font-black leading-none tracking-tight text-[#2f2b39]',
                         ].join(' ')}
                       >
                         {card.value}
@@ -2454,10 +2454,11 @@ export function EventPlannerPage() {
                                           }}
                                         />
                                         <span
-                                          className={`min-w-0 flex-1 truncate text-[11px] font-medium ${item.done
-                                            ? 'text-[#a29faf] line-through'
-                                            : 'text-[#5a546a]'
-                                            }`}
+                                          className={`min-w-0 flex-1 truncate text-[11px] font-medium ${
+                                            item.done
+                                              ? 'text-[#a29faf] line-through'
+                                              : 'text-[#5a546a]'
+                                          }`}
                                         >
                                           {item.label}
                                         </span>
@@ -2839,6 +2840,7 @@ export function EventPlannerPage() {
             setTaskPreviewTitle('');
             setTaskPreviewDetails('');
             setTaskPreviewChecklist([]);
+
           }
         }}
       >

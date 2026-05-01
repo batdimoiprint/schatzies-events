@@ -1,5 +1,6 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Send, Mail, Phone, MessageSquare, RefreshCw, Loader2 } from 'lucide-react';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { Send, Mail, Phone, MessageSquare, Loader2 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import {
   getConversationMessages,
@@ -51,83 +52,86 @@ function formatMessageTime(iso?: string): string {
   return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 }
 
-const POLL_INTERVAL = 8_000; // 8 seconds
+/**
+ * Deduplicate messages by ID and sort by createdAt ascending.
+ * Prevents duplicate rendering when optimistic messages overlap with server data.
+ */
+function dedupeAndSort(msgs: ChatMessage[]): ChatMessage[] {
+  const seen = new Map<string, ChatMessage>();
+  for (const msg of msgs) {
+    if (!seen.has(msg.id)) seen.set(msg.id, msg);
+  }
+  return [...seen.values()].sort(
+    (a, b) => new Date(a.createdAt || 0).getTime() - new Date(b.createdAt || 0).getTime()
+  );
+}
 
 /* ─── component ────────────────────────────────────────────────────────── */
 
 export function MessagePage() {
   const { user } = useAuth();
+  const queryClient = useQueryClient();
   const [input, setInput] = useState('');
-  const [activeConversation, setActiveConversation] = useState<Conversation | null>(null);
-  const [messages, setMessages] = useState<ChatMessage[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
   const [isSending, setIsSending] = useState(false);
-  const [loadError, setLoadError] = useState<string | null>(null);
   const [sendError, setSendError] = useState<string | null>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
-  const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  /* ── TanStack Query: fetch conversation list ──────────────────────── */
+  // Polls every 10s to detect new conversations; pauses when tab is hidden.
+  const {
+    data: conversations = [],
+    isLoading: isLoadingConversations,
+    isError: isConversationsError,
+  } = useQuery<Conversation[]>({
+    queryKey: ['conversations', user?.user_id],
+    queryFn: getMessageConversations,
+    refetchInterval: 10_000,
+    refetchIntervalInBackground: false,
+    refetchOnWindowFocus: true,
+  });
+
+  // Auto-select the first conversation that has an organizer participant
+  const activeConversation = useMemo(
+    () =>
+      conversations.find((c) => getOrganizerParticipant(c) !== null) ?? conversations[0] ?? null,
+    [conversations]
+  );
+
+  const activeConversationId = activeConversation?.id ?? null;
+
+  /* ── TanStack Query: fetch messages for active conversation ───────── */
+  // Polls every 3s while the tab is focused; stops when no conversation is active.
+  // refetchOnWindowFocus ensures an immediate refresh when the user returns to the tab.
+  const {
+    data: rawMessages = [],
+    isLoading: isLoadingMessages,
+    isError: isMessagesError,
+  } = useQuery<ChatMessage[]>({
+    queryKey: ['messages', activeConversationId, user?.user_id],
+    queryFn: () => getConversationMessages(activeConversationId!),
+    enabled: !!activeConversationId,
+    refetchInterval: 3_000,
+    refetchIntervalInBackground: false,
+    refetchOnWindowFocus: true,
+  });
+
+  // Deduplicate and sort messages to prevent duplicates from optimistic updates
+  const messages = useMemo(() => dedupeAndSort(rawMessages), [rawMessages]);
 
   const organizer = useMemo(
     () => getOrganizerParticipant(activeConversation),
     [activeConversation]
   );
 
-  /* ── scroll to bottom on new messages ─────────────────────────────── */
+  const isLoading = isLoadingConversations || (!!activeConversationId && isLoadingMessages);
+  const isError = isConversationsError || isMessagesError;
+
+  /* ── auto-scroll to bottom on new messages ────────────────────────── */
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
-  /* ── load conversation ────────────────────────────────────────────── */
-  const loadConversation = useCallback(async () => {
-    setIsLoading(true);
-    setLoadError(null);
-
-    try {
-      const conversations = await getMessageConversations();
-      const selected =
-        conversations.find((c) => getOrganizerParticipant(c) !== null) ?? conversations[0] ?? null;
-
-      setActiveConversation(selected);
-
-      if (!selected) {
-        setMessages([]);
-        return;
-      }
-
-      const msgs = await getConversationMessages(selected.id);
-      setMessages(msgs);
-    } catch {
-      setLoadError('Unable to load messages right now. Please try again.');
-      setMessages([]);
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
-
-  /* ── poll for new messages ────────────────────────────────────────── */
-  const pollMessages = useCallback(async () => {
-    if (!activeConversation) return;
-    try {
-      const msgs = await getConversationMessages(activeConversation.id);
-      setMessages(msgs);
-    } catch {
-      /* silently ignore poll failures */
-    }
-  }, [activeConversation]);
-
-  useEffect(() => {
-    void loadConversation();
-  }, [loadConversation]);
-
-  useEffect(() => {
-    if (!activeConversation) return;
-    pollRef.current = setInterval(() => void pollMessages(), POLL_INTERVAL);
-    return () => {
-      if (pollRef.current) clearInterval(pollRef.current);
-    };
-  }, [activeConversation, pollMessages]);
-
-  /* ── send message ─────────────────────────────────────────────────── */
+  /* ── send message with optimistic cache update ────────────────────── */
   const handleSendMessage = async () => {
     const body = input.trim();
     if (!body || isSending) return;
@@ -145,23 +149,37 @@ export function MessagePage() {
     setInput('');
     setIsSending(true);
     setSendError(null);
-    setMessages((prev) => [...prev, tempMessage]);
+
+    // Optimistically add the temp message to the query cache
+    const messagesKey = ['messages', activeConversationId, user?.user_id];
+    queryClient.setQueryData<ChatMessage[]>(messagesKey, (old = []) => [...old, tempMessage]);
 
     try {
       if (activeConversation) {
         // Existing conversation → send to it
         const saved = await sendConversationMessage(activeConversation.id, body);
         if (saved) {
-          setMessages((prev) => prev.map((m) => (m.id === tempId ? saved : m)));
+          // Replace temp message with the real server response
+          queryClient.setQueryData<ChatMessage[]>(messagesKey, (old = []) =>
+            old.map((m) => (m.id === tempId ? saved : m))
+          );
         }
       } else {
         // No conversation yet → initiate one (auto-routes to assigned organizer)
         const result = await initiateConversation(body);
-        setActiveConversation(result.conversation);
-        setMessages([result.message]);
+        // Invalidate conversations so the new one is picked up
+        await queryClient.invalidateQueries({ queryKey: ['conversations'] });
+        // Seed the message cache for the new conversation
+        queryClient.setQueryData(
+          ['messages', result.conversation.id, user?.user_id],
+          [result.message]
+        );
       }
     } catch {
-      setMessages((prev) => prev.filter((m) => m.id !== tempId));
+      // Roll back the optimistic update
+      queryClient.setQueryData<ChatMessage[]>(messagesKey, (old = []) =>
+        old.filter((m) => m.id !== tempId)
+      );
       setInput(body);
       setSendError('Failed to send message. Please try again.');
     } finally {
@@ -176,7 +194,7 @@ export function MessagePage() {
       <div className="mt-6 grid min-h-0 flex-1 gap-6 lg:grid-cols-3">
         {/* ── Left: Chat Window (col-span-2) ───────────────────────────── */}
         <div className="flex min-h-0 flex-col rounded-xl bg-white shadow-md lg:col-span-2">
-          {/* Chat Header */}
+          {/* Chat Header — no manual refresh button */}
           <div className="flex shrink-0 items-center justify-between rounded-t-xl bg-pink-400 px-4 py-3 sm:p-4">
             <div>
               <p className="text-xl font-bold text-white">{organizer?.name || 'Your Organizer'}</p>
@@ -185,14 +203,6 @@ export function MessagePage() {
                 <span className="text-sm text-white">Active</span>
               </div>
             </div>
-            <button
-              type="button"
-              onClick={() => void pollMessages()}
-              className="rounded-full p-2 text-white/70 transition hover:bg-white/10 hover:text-white"
-              title="Refresh messages"
-            >
-              <RefreshCw className="size-4" />
-            </button>
           </div>
 
           {/* Chat Body */}
@@ -202,16 +212,12 @@ export function MessagePage() {
                 <Loader2 className="size-6 animate-spin text-pink-400" />
                 <span className="ml-2 text-sm font-medium text-gray-500">Loading messages...</span>
               </div>
-            ) : loadError ? (
+            ) : isError ? (
+              /* Error state — no retry button; TanStack Query will auto-retry */
               <div className="flex flex-col items-center justify-center gap-3 py-12">
-                <p className="text-sm font-medium text-red-500">{loadError}</p>
-                <button
-                  type="button"
-                  onClick={() => void loadConversation()}
-                  className="rounded-lg bg-pink-500 px-4 py-2 text-xs font-semibold text-white transition hover:bg-pink-600"
-                >
-                  Retry
-                </button>
+                <p className="text-sm font-medium text-red-500">
+                  Unable to load messages right now. Retrying automatically…
+                </p>
               </div>
             ) : messages.length === 0 ? (
               <div className="flex flex-1 flex-col items-center justify-center gap-3 text-center">
