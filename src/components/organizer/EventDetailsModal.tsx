@@ -114,9 +114,7 @@ export function EventDetailsModal({
 
         <div className="mb-6">
           <h2 className="text-3xl font-black text-[#2e2837]">Event Details</h2>
-          <p className="text-sm font-semibold text-[#7c758d]">
-            Update event information
-          </p>
+          <p className="text-sm font-semibold text-[#7c758d]">Update event information</p>
         </div>
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
@@ -131,9 +129,7 @@ export function EventDetailsModal({
               className="border-[#e1d5eb] focus:border-[#df1b8b] focus:ring-[#df1b8b]"
               disabled={isUpdating}
             />
-            {errors.title && (
-              <p className="text-xs text-red-500">{errors.title.message}</p>
-            )}
+            {errors.title && <p className="text-xs text-red-500">{errors.title.message}</p>}
           </div>
 
           {/* Date Range */}
