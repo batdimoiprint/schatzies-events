@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { format } from 'date-fns';
 import { useForm, Controller } from 'react-hook-form';
 import { cn } from '@/lib/utils';
-import { Calendar as CalendarIcon, User, Utensils, Scissors, Video, Eye } from 'lucide-react';
+import { Calendar as CalendarIcon, User, Utensils, Scissors, Video, Eye, X } from 'lucide-react';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Button } from '@/components/ui/button';
@@ -308,82 +308,144 @@ export function InquiryForm({ onClose, selectedPackageId, selectedEventType }: I
         </DialogContent>
       </Dialog>
 
-      {/* Package Details Modal */}
-      <Dialog open={showPackageDetails} onOpenChange={setShowPackageDetails}>
-        <DialogContent className="max-w-[700px] max-h-[85vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle className="text-[1.5rem] font-bold text-[#1a1225]">
-              {(currentSelectedPackage || selectedPackage)?.name} Package Details
-            </DialogTitle>
-          </DialogHeader>
+      {/* Package Details Modal — Landscape Layout */}
+      {showPackageDetails &&
+        (currentSelectedPackage || selectedPackage) &&
+        (() => {
+          const pkg = (currentSelectedPackage || selectedPackage)!;
+          const iconMap = { user: User, utensils: Utensils, scissors: Scissors, video: Video };
+          return (
+            <>
+              {/* Backdrop */}
+              <div
+                className="fixed inset-0 z-[99998] bg-black/60 backdrop-blur-sm"
+                onClick={() => setShowPackageDetails(false)}
+              />
 
-          {/* Scrollable Content */}
-          <div>
-            {/* Package Note */}
-            <div className="mb-6 rounded-lg bg-[#fff0f7] p-4 border-l-4 border-[#FF0066]">
-              <p className="text-[0.95rem] text-gray-700 leading-relaxed">
-                {(currentSelectedPackage || selectedPackage)?.modal.note}
-              </p>
-            </div>
-
-            {/* Package Categories */}
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-              {(currentSelectedPackage || selectedPackage)?.modal.categories.map((cat, idx) => {
-                const iconMap = {
-                  user: User,
-                  utensils: Utensils,
-                  scissors: Scissors,
-                  video: Video,
-                };
-                const Icon = iconMap[cat.iconName as keyof typeof iconMap];
-
-                return (
-                  <div key={idx} className="rounded-xl bg-[#ede0f5] p-4">
-                    <div className="mb-3 flex items-center gap-2">
-                      <Icon className="h-5 w-5 text-[#c2649b]" />
-                      <span className="font-bold text-[#3d1a5e] text-[0.95rem]">{cat.title}</span>
+              {/* Modal — landscape card */}
+              <div className="fixed inset-0 z-[99999] flex items-center justify-center p-4">
+                <div
+                  className="relative flex w-full max-w-[900px] overflow-hidden rounded-2xl bg-white shadow-2xl"
+                  style={{ maxHeight: '88vh' }}
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  {/* ── LEFT: Package Image ── */}
+                  <div className="relative hidden w-[38%] shrink-0 sm:block">
+                    <div
+                      className="absolute inset-0 bg-cover bg-center"
+                      style={{ backgroundImage: `url(${pkg.image})` }}
+                    />
+                    {/* Gradient overlay for readability */}
+                    <div className="absolute inset-0 bg-gradient-to-t from-[#1a1225]/80 via-transparent to-transparent" />
+                    {/* Package name badge at bottom */}
+                    <div className="absolute bottom-0 left-0 right-0 p-5">
+                      <p className="text-[0.7rem] font-semibold uppercase tracking-widest text-pink-300">
+                        Package
+                      </p>
+                      <h2 className="text-[1.6rem] font-bold leading-tight text-white">
+                        {pkg.name}
+                      </h2>
+                      <p className="mt-1 text-[0.78rem] leading-relaxed text-white/75 line-clamp-3">
+                        {pkg.description}
+                      </p>
                     </div>
-                    <ul className="space-y-2">
-                      {cat.items.map((item) => {
-                        const isHighlight = typeof item === 'object';
-                        const text = typeof item === 'object' ? item.text : item;
-                        return (
-                          <li
-                            key={text}
-                            className={`flex items-start gap-2 text-[0.85rem] ${
-                              isHighlight ? 'text-[#FF0066] font-semibold' : 'text-gray-700'
-                            }`}
-                          >
-                            <span className="mt-0.5 flex h-3 w-3 shrink-0 items-center justify-center rounded-full bg-[#e61f83]">
-                              <svg
-                                viewBox="0 0 10 10"
-                                className="h-1.5 w-1.5 fill-none stroke-white stroke-[2]"
-                              >
-                                <polyline points="2 5 4 7 8 3" />
-                              </svg>
-                            </span>
-                            <span>{text}</span>
-                          </li>
-                        );
-                      })}
-                    </ul>
                   </div>
-                );
-              })}
-            </div>
-          </div>
 
-          {/* Footer */}
-          <div className="pt-4">
-            <Button
-              onClick={() => setShowPackageDetails(false)}
-              className="w-full h-10 rounded-full bg-gradient-to-r from-[#FF0066] to-[#700F81] text-white font-bold hover:brightness-110"
-            >
-              Close
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
+                  {/* ── RIGHT: Details ── */}
+                  <div className="flex flex-1 flex-col overflow-hidden">
+                    {/* Header */}
+                    <div className="flex items-start justify-between gap-3 border-b border-gray-100 px-5 py-4 sm:px-6">
+                      <div>
+                        {/* Mobile-only title (hidden on sm+) */}
+                        <p className="text-[0.65rem] font-semibold uppercase tracking-widest text-[#c2649b] sm:hidden">
+                          Package
+                        </p>
+                        <h3 className="text-[1.1rem] font-bold text-[#1a1225] sm:text-[1.25rem]">
+                          {pkg.name} Inclusions
+                        </h3>
+                      </div>
+                      <button
+                        onClick={() => setShowPackageDetails(false)}
+                        aria-label="Close"
+                        className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-gray-400 transition hover:bg-gray-100 hover:text-gray-700"
+                      >
+                        <X className="h-4 w-4" />
+                      </button>
+                    </div>
+
+                    {/* Scrollable body */}
+                    <div className="flex-1 overflow-y-auto px-5 py-4 sm:px-6">
+                      {/* Note */}
+                      <div className="mb-4 rounded-lg border-l-4 border-[#FF0066] bg-[#fff0f7] px-4 py-3">
+                        <p className="text-[0.82rem] leading-relaxed text-gray-700">
+                          {pkg.modal.note}
+                        </p>
+                      </div>
+
+                      {/* 2×2 categories grid */}
+                      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                        {pkg.modal.categories.map((cat) => {
+                          const Icon = iconMap[cat.iconName as keyof typeof iconMap];
+                          return (
+                            <div key={cat.title} className="rounded-xl bg-[#ede0f5] p-3 sm:p-4">
+                              <div className="mb-2 flex items-center gap-2">
+                                <Icon className="h-4 w-4 text-[#c2649b]" />
+                                <span className="text-[0.82rem] font-bold text-[#3d1a5e]">
+                                  {cat.title}
+                                </span>
+                              </div>
+                              <ul className="space-y-1.5">
+                                {cat.items.map((item) => {
+                                  const isHighlight = typeof item === 'object';
+                                  const text = typeof item === 'object' ? item.text : item;
+                                  return (
+                                    <li key={text} className="flex items-start gap-2">
+                                      <span className="mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-[#e61f83]">
+                                        <svg
+                                          viewBox="0 0 10 10"
+                                          className="h-2 w-2 fill-none stroke-white stroke-[2]"
+                                        >
+                                          <polyline
+                                            points="1.5,5 4,7.5 8.5,2.5"
+                                            strokeLinecap="round"
+                                            strokeLinejoin="round"
+                                          />
+                                        </svg>
+                                      </span>
+                                      <span
+                                        className={`text-[0.78rem] leading-snug ${
+                                          isHighlight
+                                            ? 'font-semibold text-[#e61f83]'
+                                            : 'text-[#2d1a3d]'
+                                        }`}
+                                      >
+                                        {text}
+                                      </span>
+                                    </li>
+                                  );
+                                })}
+                              </ul>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+
+                    {/* Footer */}
+                    <div className="flex items-center justify-end gap-3 border-t border-gray-100 px-5 py-4 sm:px-6">
+                      <button
+                        onClick={() => setShowPackageDetails(false)}
+                        className="h-9 rounded-full border-2 border-gray-200 px-5 text-[0.82rem] font-semibold text-gray-500 transition hover:border-gray-300 hover:bg-gray-50"
+                      >
+                        Close
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </>
+          );
+        })()}
 
       <div
         className="fixed inset-0 z-[9998] flex items-center justify-center bg-black/60 px-4 backdrop-blur-sm [scrollbar-gutter:stable]"
