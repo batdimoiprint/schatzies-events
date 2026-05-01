@@ -211,3 +211,13 @@ export const checkUserRegistered = async (id: string): Promise<boolean> => {
     return false;
   }
 };
+
+export const getBookedDates = async (): Promise<string[]> => {
+  try {
+    const response = await axiosInstance.get('/inquiries/booked-dates');
+    return response.data;
+  } catch (error) {
+    console.error('Failed to fetch booked dates:', error);
+    return [];
+  }
+};
