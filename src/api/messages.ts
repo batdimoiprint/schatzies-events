@@ -30,6 +30,10 @@ export interface ChatMessage {
   /** @deprecated Use senderRole instead */
   senderType?: string;
   createdAt?: string;
+  /** Alias — same as `id`, included for stable polling contract */
+  messageId?: string;
+  /** Alias — same as `body`, included for stable polling contract */
+  content?: string;
 }
 
 /**
@@ -49,7 +53,7 @@ export async function getMessageConversations(): Promise<Conversation[]> {
  */
 export async function getConversationMessages(conversationId: string): Promise<ChatMessage[]> {
   const { data } = await axiosInstance.get<{ messages: ChatMessage[] } | ChatMessage[]>(
-    `/messages/conversations/${conversationId}/messages`
+    `/messages/conversations/${encodeURIComponent(conversationId)}/messages`
   );
 
   if (Array.isArray(data)) return data;
@@ -64,7 +68,7 @@ export async function sendConversationMessage(
   body: string
 ): Promise<ChatMessage> {
   const { data } = await axiosInstance.post<{ message: ChatMessage } | ChatMessage>(
-    `/messages/conversations/${conversationId}/messages`,
+    `/messages/conversations/${encodeURIComponent(conversationId)}/messages`,
     { body }
   );
 

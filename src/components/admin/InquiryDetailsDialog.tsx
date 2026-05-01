@@ -13,7 +13,12 @@ import { Input } from '@/components/ui/input';
 import { Calendar as CalendarIcon, Check, Copy, Eye, EyeOff, Loader2 } from 'lucide-react';
 import { createEvent } from '@/api/events';
 import { updateCalendarEntry } from '@/api/calendar';
-import { checkUserRegistered, updateInquiryStatus } from '@/api/inquiries';
+import {
+  checkUserRegistered,
+  updateInquiryStatus,
+  getInquiryStatusOptions,
+  INQUIRY_STATUS_OPTIONS,
+} from '@/api/inquiries';
 import { createUser } from '@/api/users';
 
 interface InquiryMeetingDetails {
@@ -78,63 +83,28 @@ interface InquiryDetailsDialogProps {
   onInquiryUpdated: (updatedInquiry: InquiryRecord) => void;
 }
 
-type InquiryStatusOption = {
-  value: string;
-  label: string;
-  disabled?: boolean;
-};
-
 function normalizeInquiryStatus(status?: string) {
   const normalized = String(status || '')
     .trim()
     .toLowerCase();
 
   if (!normalized || normalized === 'new' || normalized === 'pending') {
-    return 'Pending Review';
+    return INQUIRY_STATUS_OPTIONS.PENDING_REVIEW;
+  }
+
+  if (normalized === 'meeting scheduled') {
+    return INQUIRY_STATUS_OPTIONS.MEETING_SCHEDULED;
   }
 
   if (normalized === 'resolved') {
-    return 'Approved';
+    return INQUIRY_STATUS_OPTIONS.APPROVED;
   }
 
   if (normalized === 'in progress') {
-    return 'Requires Clarification';
+    return INQUIRY_STATUS_OPTIONS.REQUIRES_CLARIFICATION;
   }
 
   return String(status || '').trim();
-}
-
-function getInquiryStatusOptions(currentStatus?: string): InquiryStatusOption[] {
-  const normalized = String(currentStatus || '')
-    .trim()
-    .toLowerCase();
-  const displayStatus = normalizeInquiryStatus(currentStatus);
-
-  if (normalized === 'pending review' || normalized === 'new' || normalized === 'pending') {
-    return [
-      { value: displayStatus, label: displayStatus, disabled: true },
-      { value: 'Requires Clarification', label: 'Requires Clarification' },
-      { value: 'Approved', label: 'Approved', disabled: true },
-      { value: 'Declined', label: 'Declined', disabled: true },
-    ];
-  }
-
-  const options: InquiryStatusOption[] = [
-    { value: 'Requires Clarification', label: 'Requires Clarification' },
-    { value: 'Approved', label: 'Approved' },
-    { value: 'Declined', label: 'Declined' },
-  ];
-
-  if (displayStatus && !options.some((option) => option.value === displayStatus)) {
-    options.unshift({ value: displayStatus, label: displayStatus, disabled: true });
-  } else {
-    const currentIndex = options.findIndex((option) => option.value === displayStatus);
-    if (currentIndex >= 0) {
-      options[currentIndex] = { ...options[currentIndex], disabled: true };
-    }
-  }
-
-  return options;
 }
 
 function buildEventDateTime(dateValue?: string, timeValue?: string) {
@@ -241,18 +211,13 @@ export function InquiryDetailsDialog({
     const organizerId = String(
       selectedInquiry?.meetingDetails?.organizerId || selectedMeetingOrganizerId || ''
     ).trim();
-    const eventDateSource = String(
-      selectedInquiry?.meetingDetails?.date || selectedInquiry.date || ''
+    const meetingDateSource = String(
+      selectedInquiry?.meetingDetails?.date || selectedInquiry?.meetingDetails?.startDateKey || ''
     ).trim();
-    const eventTimeSource = String(
+    const meetingTimeSource = String(
       selectedInquiry?.meetingDetails?.time || selectedInquiry?.meetingDetails?.startTime || ''
     ).trim();
-    const eventLocation = String(
-      selectedInquiry?.meetingDetails?.location ||
-        selectedInquiry.location ||
-        selectedInquiry.venue ||
-        ''
-    ).trim();
+    const plannedDateSource = String(selectedInquiry.date || '').trim();
     const eventTitle = String(
       selectedInquiry?.title ||
         selectedInquiry?.subject ||
@@ -260,7 +225,7 @@ export function InquiryDetailsDialog({
         `${selectedInquiry.firstName || 'Client'} ${selectedInquiry.lastName || 'Inquiry'} Event`
     ).trim();
 
-    const canCreateApprovedEvent = pendingStatus === 'Approved';
+    const canCreateApprovedEvent = pendingStatus === INQUIRY_STATUS_OPTIONS.APPROVED;
 
     if (canCreateApprovedEvent) {
       if (!clientId) {
@@ -273,8 +238,13 @@ export function InquiryDetailsDialog({
         return;
       }
 
-      if (!eventDateSource) {
-        setStatusChangeError('Inquiry date is required before creating the event.');
+      if (!meetingDateSource) {
+        setStatusChangeError('A scheduled meeting is required before approving this inquiry.');
+        return;
+      }
+
+      if (!plannedDateSource) {
+        setStatusChangeError('Inquiry planned date is required before creating the event.');
         return;
       }
     }
@@ -285,16 +255,22 @@ export function InquiryDetailsDialog({
       await updateInquiryStatus(id, pendingStatus);
 
       if (canCreateApprovedEvent) {
-        const eventDate = buildEventDateTime(eventDateSource, eventTimeSource);
+        const startDate = buildEventDateTime(meetingDateSource, meetingTimeSource);
+        const endDate = buildEventDateTime(plannedDateSource, '00:00');
 
-        if (!eventDate) {
-          throw new Error('Unable to build a valid event date for approval.');
+        if (!startDate) {
+          throw new Error('Unable to build a valid start date from the meeting.');
+        }
+
+        if (!endDate) {
+          throw new Error('Unable to build a valid end date from the inquiry planned date.');
         }
 
         try {
           await createEvent({
             title: eventTitle,
-            startDate: eventDate,
+            startDate,
+            endDate,
             client_id: clientId,
             organizer_id: organizerId,
             eventType: String(selectedInquiry.eventType || '').trim() || 'General',
@@ -306,10 +282,9 @@ export function InquiryDetailsDialog({
               selectedInquiry.eventPax !== undefined && selectedInquiry.eventPax !== null
                 ? Number(selectedInquiry.eventPax)
                 : undefined,
-            eventDate,
-            eventTime: eventTimeSource || '00:00',
-            eventLocation,
-            venue: eventLocation,
+            eventDate: endDate,
+            eventLocation: '',
+            venue: '',
             status: 'Planning',
           });
         } catch (createError) {
@@ -498,6 +473,16 @@ export function InquiryDetailsDialog({
     }
   };
 
+  // Determine the normalized current status and build options.
+  // Exclude "Requires Clarification" from the selectable list unless
+  // the inquiry currently has that status, so the Select can display it.
+  const currentStatusValue = normalizeInquiryStatus(selectedInquiry?.status);
+  const statusOptions = getInquiryStatusOptions(selectedInquiry?.status).filter(
+    (opt) =>
+      opt.value !== INQUIRY_STATUS_OPTIONS.REQUIRES_CLARIFICATION ||
+      opt.value === currentStatusValue
+  );
+
   return (
     <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
       <DialogContent className="sm:max-w-6xl">
@@ -646,15 +631,15 @@ export function InquiryDetailsDialog({
                   <Label className="text-[10px] font-black uppercase text-[#857a98] mb-2 block">
                     Change State
                   </Label>
-                  <Select
-                    value={normalizeInquiryStatus(selectedInquiry.status)}
-                    onValueChange={handleStatusChange}
-                  >
+                    <Select
+                      value={currentStatusValue}
+                      onValueChange={handleStatusChange}
+                    >
                     <SelectTrigger className="w-full h-11 border-[#e5ddee] bg-white rounded-xl font-bold text-[#4e4560]">
                       <SelectValue placeholder="Update status" />
                     </SelectTrigger>
                     <SelectContent className="rounded-xl border-[#e5ddee]">
-                      {getInquiryStatusOptions(selectedInquiry.status).map((option) => (
+                      {statusOptions.map((option) => (
                         <SelectItem
                           key={option.value}
                           value={option.value}
@@ -701,14 +686,14 @@ export function InquiryDetailsDialog({
                       </div>
                       <div className="space-y-3 text-[11px] font-semibold">
                         <p className="flex justify-between border-b border-[#eee7f4] pb-1.5">
-                          <span className="text-[#a094b8]">Location</span>
+                          <span className="text-[#a094b8]">Meeting Location</span>
                           <span className="text-[#5f4f7a]">
                             {selectedInquiry.meetingDetails.location || 'TBA'}
                           </span>
                         </p>
                         <div className="space-y-2">
                           <p className="flex justify-between">
-                            <span className="text-[#a094b8]">Current Expert</span>
+                            <span className="text-[#a094b8]">Current Organizer</span>
                             <span className="text-[#5f4f7a] text-right">
                               {getOrganizerLabel(selectedInquiry.meetingDetails.organizerId || '')}
                             </span>

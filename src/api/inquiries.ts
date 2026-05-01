@@ -37,6 +37,116 @@ export interface ScheduleInquiryMeetingPayload {
   inquiryUserId?: string;
 }
 
+export interface InquiryStatusOption {
+  value: string;
+  label: string;
+  disabled?: boolean;
+}
+
+/**
+ * Hardcoded inquiry status options
+ */
+export const INQUIRY_STATUS_OPTIONS = {
+  PENDING_REVIEW: 'Pending Review',
+  MEETING_SCHEDULED: 'Meeting Scheduled',
+  REQUIRES_CLARIFICATION: 'Requires Clarification',
+  APPROVED: 'Approved',
+  DECLINED: 'Declined',
+} as const;
+
+/**
+ * Get all inquiry status options with disabled states based on current status
+ */
+export const getInquiryStatusOptions = (currentStatus?: string): InquiryStatusOption[] => {
+  const normalized = String(currentStatus || '')
+    .trim()
+    .toLowerCase();
+
+  // Normalize legacy statuses
+  let normalizedStatus = currentStatus;
+  if (normalized === 'new' || normalized === 'pending') {
+    normalizedStatus = INQUIRY_STATUS_OPTIONS.PENDING_REVIEW;
+  } else if (normalized === 'in progress') {
+    normalizedStatus = INQUIRY_STATUS_OPTIONS.REQUIRES_CLARIFICATION;
+  } else if (normalized === 'resolved') {
+    normalizedStatus = INQUIRY_STATUS_OPTIONS.APPROVED;
+  }
+
+  const currentNormalized = String(normalizedStatus || '')
+    .trim()
+    .toLowerCase();
+
+  // All possible status options
+  const allOptions: InquiryStatusOption[] = [
+    { value: INQUIRY_STATUS_OPTIONS.PENDING_REVIEW, label: INQUIRY_STATUS_OPTIONS.PENDING_REVIEW },
+    { value: INQUIRY_STATUS_OPTIONS.MEETING_SCHEDULED, label: INQUIRY_STATUS_OPTIONS.MEETING_SCHEDULED },
+    {
+      value: INQUIRY_STATUS_OPTIONS.REQUIRES_CLARIFICATION,
+      label: INQUIRY_STATUS_OPTIONS.REQUIRES_CLARIFICATION,
+    },
+    { value: INQUIRY_STATUS_OPTIONS.APPROVED, label: INQUIRY_STATUS_OPTIONS.APPROVED },
+    { value: INQUIRY_STATUS_OPTIONS.DECLINED, label: INQUIRY_STATUS_OPTIONS.DECLINED },
+  ];
+
+  // Disable logic based on current status
+  if (
+    currentNormalized === 'pending review' ||
+    currentNormalized === 'new' ||
+    currentNormalized === 'pending'
+  ) {
+    // From Pending Review: can move to Meeting Scheduled or Requires Clarification
+    return allOptions.map((option) => ({
+      ...option,
+      disabled:
+        option.value === INQUIRY_STATUS_OPTIONS.PENDING_REVIEW ||
+        option.value === INQUIRY_STATUS_OPTIONS.APPROVED ||
+        option.value === INQUIRY_STATUS_OPTIONS.DECLINED,
+    }));
+  }
+
+  if (currentNormalized === 'meeting scheduled') {
+    // From Meeting Scheduled: can move to Requires Clarification, Approved, or Declined
+    return allOptions.map((option) => ({
+      ...option,
+      disabled:
+        option.value === INQUIRY_STATUS_OPTIONS.PENDING_REVIEW ||
+        option.value === INQUIRY_STATUS_OPTIONS.MEETING_SCHEDULED,
+    }));
+  }
+
+  if (currentNormalized === 'requires clarification' || currentNormalized === 'in progress') {
+    // From Requires Clarification: can move to Approved or Declined
+    return allOptions.map((option) => ({
+      ...option,
+      disabled:
+        option.value === INQUIRY_STATUS_OPTIONS.PENDING_REVIEW ||
+        option.value === INQUIRY_STATUS_OPTIONS.REQUIRES_CLARIFICATION,
+    }));
+  }
+
+  if (currentNormalized === 'approved' || currentNormalized === 'resolved') {
+    // From Approved: all options disabled (final state)
+    return allOptions.map((option) => ({
+      ...option,
+      disabled: true,
+    }));
+  }
+
+  if (currentNormalized === 'declined') {
+    // From Declined: all options disabled (final state)
+    return allOptions.map((option) => ({
+      ...option,
+      disabled: true,
+    }));
+  }
+
+  // Default: disable current status
+  return allOptions.map((option) => ({
+    ...option,
+    disabled: option.value === normalizedStatus,
+  }));
+};
+
 export const submitInquiry = async (inquiryData: InquiryFormData): Promise<void> => {
   try {
     // Transform camelCase to snake_case for backend API

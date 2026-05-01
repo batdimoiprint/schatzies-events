@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   Search,
   MoreVertical,
@@ -7,6 +6,7 @@ import {
   X,
   Loader2,
   MessageSquare,
+  RefreshCw,
   ChevronLeft,
 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
@@ -27,22 +27,21 @@ function normalizeRole(role?: string): string {
     .toLowerCase();
 }
 
-/** Get the "other" participant — the client in the conversation. */
-function getClientParticipant(
+/** Get the "other" participant — the client or organizer in the conversation. */
+function getOtherParticipant(
   conversation: Conversation | null,
   myUserId?: string
 ): ConversationParticipant | null {
   if (!conversation) return null;
 
-  // Try the participants array first — find anyone who is NOT the organizer
-  const client = conversation.participants?.find((p) => {
+  // Find anyone who is NOT the admin
+  const other = conversation.participants?.find((p) => {
+    if (myUserId && p.id !== myUserId) return true;
     const r = normalizeRole(p.role);
-    if (r === 'client') return true;
-    if (myUserId && p.id !== myUserId && r !== 'organizer') return true;
-    return false;
+    return r !== 'admin';
   });
 
-  return client ?? conversation.participants?.[0] ?? null;
+  return other ?? conversation.participants?.[0] ?? null;
 }
 
 function getInitialFromName(name?: string): string {
@@ -53,7 +52,7 @@ function getInitialFromName(name?: string): string {
 
 function isOutgoingMessage(msg: ChatMessage, userId?: string): boolean {
   const role = normalizeRole(msg.senderRole || msg.senderType);
-  if (role === 'organizer') return true;
+  if (role === 'admin') return true;
   if (userId && msg.senderId === userId) return true;
   return false;
 }
@@ -101,75 +100,29 @@ function getAvatarColor(id: string): string {
   return AVATAR_COLORS[Math.abs(hash) % AVATAR_COLORS.length];
 }
 
-/**
- * Deduplicate messages by ID and sort by createdAt ascending.
- * Prevents duplicate rendering when optimistic messages overlap with server data.
- */
-function dedupeAndSort(msgs: ChatMessage[]): ChatMessage[] {
-  const seen = new Map<string, ChatMessage>();
-  for (const msg of msgs) {
-    if (!seen.has(msg.id)) seen.set(msg.id, msg);
-  }
-  return [...seen.values()].sort(
-    (a, b) => new Date(a.createdAt || 0).getTime() - new Date(b.createdAt || 0).getTime()
-  );
-}
+const POLL_INTERVAL = 8_000;
 
 /* ─── component ────────────────────────────────────────────────────────── */
 
-export function OrganizerMessagePage() {
+export function AdminMessagePage() {
   const { user } = useAuth();
-  const queryClient = useQueryClient();
 
-  /* ── local state (UI only — no data fetching state) ─────────────────── */
+  /* ── state ──────────────────────────────────────────────────────────── */
+  const [conversations, setConversations] = useState<Conversation[]>([]);
   const [activeConvId, setActiveConvId] = useState<string | null>(null);
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [messageText, setMessageText] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const [showDetails, setShowDetails] = useState(false);
+  const [isLoadingList, setIsLoadingList] = useState(true);
+  const [isLoadingMessages, setIsLoadingMessages] = useState(false);
   const [isSending, setIsSending] = useState(false);
+  const [listError, setListError] = useState<string | null>(null);
+  const [msgError, setMsgError] = useState<string | null>(null);
   const [sendError, setSendError] = useState<string | null>(null);
 
   const bottomRef = useRef<HTMLDivElement>(null);
-
-  /* ── TanStack Query: fetch conversation list ────────────────────────── */
-  // Polls every 10s to detect new conversations; pauses when tab is hidden.
-  const {
-    data: conversations = [],
-    isLoading: isLoadingList,
-    isError: isListError,
-  } = useQuery<Conversation[]>({
-    queryKey: ['conversations', user?.user_id],
-    queryFn: getMessageConversations,
-    refetchInterval: 10_000,
-    refetchIntervalInBackground: false,
-    refetchOnWindowFocus: true,
-  });
-
-  // Auto-select first conversation when list loads and nothing is selected
-  useEffect(() => {
-    if (!activeConvId && conversations.length > 0) {
-      setActiveConvId(conversations[0].id);
-    }
-  }, [conversations, activeConvId]);
-
-  /* ── TanStack Query: fetch messages for active conversation ─────────── */
-  // Polls every 3s while the tab is focused; stops when no conversation is active.
-  // refetchOnWindowFocus ensures an immediate refresh when the user returns to the tab.
-  const {
-    data: rawMessages = [],
-    isLoading: isLoadingMessages,
-    isError: isMsgError,
-  } = useQuery<ChatMessage[]>({
-    queryKey: ['messages', activeConvId, user?.user_id],
-    queryFn: () => getConversationMessages(activeConvId!),
-    enabled: !!activeConvId,
-    refetchInterval: 3_000,
-    refetchIntervalInBackground: false,
-    refetchOnWindowFocus: true,
-  });
-
-  // Deduplicate and sort messages to prevent duplicates from optimistic updates
-  const messages = useMemo(() => dedupeAndSort(rawMessages), [rawMessages]);
+  const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   /* ── derived ────────────────────────────────────────────────────────── */
   const activeConv = useMemo(
@@ -178,7 +131,7 @@ export function OrganizerMessagePage() {
   );
 
   const activePeer = useMemo(
-    () => getClientParticipant(activeConv, user?.user_id),
+    () => getOtherParticipant(activeConv, user?.user_id),
     [activeConv, user?.user_id]
   );
 
@@ -186,7 +139,7 @@ export function OrganizerMessagePage() {
     if (!searchQuery.trim()) return conversations;
     const q = searchQuery.toLowerCase();
     return conversations.filter((c) => {
-      const peer = getClientParticipant(c, user?.user_id);
+      const peer = getOtherParticipant(c, user?.user_id);
       const name = (peer?.name || '').toLowerCase();
       const last = (c.lastMessage || '').toLowerCase();
       return name.includes(q) || last.includes(q);
@@ -198,7 +151,75 @@ export function OrganizerMessagePage() {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
-  /* ── send message with optimistic cache update ──────────────────────── */
+  /* ── load conversation list ─────────────────────────────────────────── */
+  const loadConversations = useCallback(async () => {
+    setIsLoadingList(true);
+    setListError(null);
+
+    try {
+      const data = await getMessageConversations();
+      setConversations(data);
+
+      // Auto-select first if nothing is selected
+      if (!activeConvId && data.length > 0) {
+        setActiveConvId(data[0].id);
+      }
+    } catch {
+      setListError('Unable to load conversations.');
+    } finally {
+      setIsLoadingList(false);
+    }
+  }, [activeConvId]);
+
+  /* ── load messages for active conversation ──────────────────────────── */
+  const loadMessages = useCallback(async (convId: string) => {
+    setIsLoadingMessages(true);
+    setMsgError(null);
+
+    try {
+      const data = await getConversationMessages(convId);
+      setMessages(data);
+    } catch {
+      setMsgError('Unable to load messages.');
+      setMessages([]);
+    } finally {
+      setIsLoadingMessages(false);
+    }
+  }, []);
+
+  /* ── poll for new messages ──────────────────────────────────────────── */
+  const pollMessages = useCallback(async () => {
+    if (!activeConvId) return;
+    try {
+      const data = await getConversationMessages(activeConvId);
+      setMessages(data);
+    } catch {
+      /* silently ignore */
+    }
+  }, [activeConvId]);
+
+  /* ── effects ────────────────────────────────────────────────────────── */
+  useEffect(() => {
+    void loadConversations();
+  }, [loadConversations]);
+
+  useEffect(() => {
+    if (activeConvId) {
+      void loadMessages(activeConvId);
+    } else {
+      setMessages([]);
+    }
+  }, [activeConvId, loadMessages]);
+
+  useEffect(() => {
+    if (!activeConvId) return;
+    pollRef.current = setInterval(() => void pollMessages(), POLL_INTERVAL);
+    return () => {
+      if (pollRef.current) clearInterval(pollRef.current);
+    };
+  }, [activeConvId, pollMessages]);
+
+  /* ── send message ───────────────────────────────────────────────────── */
   const handleSendMessage = async () => {
     const body = messageText.trim();
     if (!body || !activeConvId || isSending) return;
@@ -208,7 +229,7 @@ export function OrganizerMessagePage() {
       id: tempId,
       conversationId: activeConvId,
       body,
-      senderRole: 'ORGANIZER',
+      senderRole: 'ADMIN',
       senderId: user?.user_id,
       createdAt: new Date().toISOString(),
     };
@@ -216,33 +237,24 @@ export function OrganizerMessagePage() {
     setMessageText('');
     setIsSending(true);
     setSendError(null);
-
-    // Optimistically add the temp message to the query cache
-    const messagesKey = ['messages', activeConvId, user?.user_id];
-    queryClient.setQueryData<ChatMessage[]>(messagesKey, (old = []) => [...old, tempMessage]);
+    setMessages((prev) => [...prev, tempMessage]);
 
     try {
       const saved = await sendConversationMessage(activeConvId, body);
       if (saved) {
-        // Replace temp message with the real server response
-        queryClient.setQueryData<ChatMessage[]>(messagesKey, (old = []) =>
-          old.map((m) => (m.id === tempId ? saved : m))
-        );
+        setMessages((prev) => prev.map((m) => (m.id === tempId ? saved : m)));
       }
 
-      // Optimistically update "lastMessage" in the conversation list cache
-      queryClient.setQueryData<Conversation[]>(['conversations', user?.user_id], (old = []) =>
-        old.map((c) =>
+      // Update last message in the sidebar
+      setConversations((prev) =>
+        prev.map((c) =>
           c.id === activeConvId
             ? { ...c, lastMessage: body, lastMessageAt: new Date().toISOString() }
             : c
         )
       );
     } catch {
-      // Roll back the optimistic update
-      queryClient.setQueryData<ChatMessage[]>(messagesKey, (old = []) =>
-        old.filter((m) => m.id !== tempId)
-      );
+      setMessages((prev) => prev.filter((m) => m.id !== tempId));
       setMessageText(body);
       setSendError('Failed to send message. Please try again.');
     } finally {
@@ -265,9 +277,16 @@ export function OrganizerMessagePage() {
         className={`w-full lg:w-[340px] shrink-0 flex-col overflow-hidden rounded-2xl border border-[#e2deea] bg-white shadow-sm ${activeConvId ? 'hidden lg:flex' : 'flex'}`}
       >
         <div className="border-b border-[#f0edf4] p-4">
-          {/* Header — no manual refresh button */}
           <div className="mb-4 flex items-center justify-between">
             <h2 className="text-lg font-bold text-[#2d2834]">Message Inbox</h2>
+            <button
+              type="button"
+              onClick={() => void loadConversations()}
+              className="rounded-full p-1.5 text-[#a49cb3] transition hover:bg-[#f6f5f8] hover:text-[#df2b80]"
+              title="Refresh"
+            >
+              <RefreshCw className="size-3.5" />
+            </button>
           </div>
           <div className="relative">
             <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-[#b2acbf]" />
@@ -287,16 +306,20 @@ export function OrganizerMessagePage() {
               <Loader2 className="size-4 animate-spin text-[#df2b80]" />
               <span className="text-sm text-[#a49cb3]">Loading...</span>
             </div>
-          ) : isListError ? (
-            /* Error state — no retry button; TanStack Query will auto-retry */
+          ) : listError ? (
             <div className="flex flex-col items-center gap-2 p-8 text-center">
-              <p className="text-sm text-red-400">
-                Unable to load conversations. Retrying automatically…
-              </p>
+              <p className="text-sm text-red-400">{listError}</p>
+              <button
+                type="button"
+                onClick={() => void loadConversations()}
+                className="text-xs font-semibold text-[#df2b80] hover:underline"
+              >
+                Retry
+              </button>
             </div>
           ) : filteredConversations.length > 0 ? (
             filteredConversations.map((conv) => {
-              const peer = getClientParticipant(conv, user?.user_id);
+              const peer = getOtherParticipant(conv, user?.user_id);
               const initial = peer?.initial || getInitialFromName(peer?.name);
               const color = getAvatarColor(conv.id);
 
@@ -318,7 +341,7 @@ export function OrganizerMessagePage() {
                   <div className="min-w-0 flex-1">
                     <div className="mb-1 flex items-center justify-between">
                       <h4 className="truncate text-sm font-bold text-[#2d2834]">
-                        {peer?.name || 'Client'}
+                        {peer?.name || 'User'}
                       </h4>
                       <span className="ml-2 whitespace-nowrap text-[10px] font-semibold text-[#a49cb3]">
                         {formatRelativeTime(conv.lastMessageAt || conv.updatedAt)}
@@ -362,14 +385,22 @@ export function OrganizerMessagePage() {
                 </div>
                 <div>
                   <h3 className="text-base font-bold text-[#2d2834]">
-                    {activePeer?.name || 'Client'}
+                    {activePeer?.name || 'User'}
                   </h3>
                   <p className="text-xs font-semibold capitalize text-[#4bc783]">
-                    {normalizeRole(activePeer?.role) || 'client'}
+                    {normalizeRole(activePeer?.role) || 'user'}
                   </p>
                 </div>
               </div>
               <div className="flex items-center gap-3 text-[#8f879f]">
+                <button
+                  type="button"
+                  onClick={() => void pollMessages()}
+                  className="rounded-full p-2 transition hover:bg-[#f6f5f8] hover:text-[#df2b80]"
+                  title="Refresh messages"
+                >
+                  <RefreshCw className="size-4" />
+                </button>
                 <button
                   onClick={() => setShowDetails(!showDetails)}
                   className={`rounded-full p-2 transition ${showDetails ? 'text-[#df2b80]' : 'hover:bg-[#f6f5f8] hover:text-[#df2b80]'}`}
@@ -386,12 +417,16 @@ export function OrganizerMessagePage() {
                   <Loader2 className="size-5 animate-spin text-[#df2b80]" />
                   <span className="text-sm text-[#a49cb3]">Loading messages...</span>
                 </div>
-              ) : isMsgError ? (
-                /* Error state — no retry button; TanStack Query will auto-retry */
+              ) : msgError ? (
                 <div className="flex flex-col items-center gap-2 py-12 text-center">
-                  <p className="text-sm text-red-400">
-                    Unable to load messages. Retrying automatically…
-                  </p>
+                  <p className="text-sm text-red-400">{msgError}</p>
+                  <button
+                    type="button"
+                    onClick={() => void loadMessages(activeConvId!)}
+                    className="text-xs font-semibold text-[#df2b80] hover:underline"
+                  >
+                    Retry
+                  </button>
                 </div>
               ) : messages.length === 0 ? (
                 <div className="flex flex-col items-center justify-center gap-3 py-12 text-center">
@@ -508,10 +543,10 @@ export function OrganizerMessagePage() {
               {activePeer?.initial || getInitialFromName(activePeer?.name)}
             </div>
             <h4 className="text-lg font-bold leading-tight text-[#2d2834]">
-              {activePeer?.name || 'Client'}
+              {activePeer?.name || 'User'}
             </h4>
             <span className="mt-2 rounded-full bg-[#f8f5fe] px-4 py-1 text-xs font-bold uppercase tracking-wide text-[#8f1fd1]">
-              {normalizeRole(activePeer?.role) || 'client'}
+              {normalizeRole(activePeer?.role) || 'user'}
             </span>
           </div>
 
