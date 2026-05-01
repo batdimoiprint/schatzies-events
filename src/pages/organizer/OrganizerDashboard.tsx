@@ -3,6 +3,7 @@ import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { fetchDashboardSummary } from '@/api/organizer-dashboard';
 import { getCalendarEntries } from '@/api/calendar';
+import { useAuth } from '@/hooks/useAuth';
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -18,6 +19,11 @@ type StatusSlice = {
   eventCount: number;
   color: string;
 };
+
+function toNonNegativeNumber(value: unknown) {
+  const numericValue = Number(value);
+  return Number.isFinite(numericValue) && numericValue > 0 ? numericValue : 0;
+}
 
 type ListEntry = {
   rank: number;
@@ -355,6 +361,7 @@ function ScheduleListCard({
 
 export function OrganizerDashboard() {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [semiAnnualData, setSemiAnnualData] = useState<MonthlyValue[]>([]);
   const [monthlyStatusData, setMonthlyStatusData] = useState<StatusSlice[]>([]);
   const [upcomingEventsData, setUpcomingEventsData] = useState<ListEntry[]>([]);
@@ -468,24 +475,27 @@ export function OrganizerDashboard() {
         // 2. Map Monthly Status Donut Chart
         if (data.status && data.status.month) {
           const monthData = data.status.month;
-          const total = monthData.planning + monthData.execution + monthData.completed || 1;
+          const completedCount = toNonNegativeNumber(monthData.completed);
+          const executionCount = toNonNegativeNumber(monthData.execution);
+          const planningCount = toNonNegativeNumber(monthData.planning);
+          const total = completedCount + executionCount + planningCount || 1;
           setMonthlyStatusData([
             {
               label: 'Completed',
-              value: Math.round((monthData.completed / total) * 100) || 0,
-              eventCount: monthData.completed,
+              value: Math.round((completedCount / total) * 100) || 0,
+              eventCount: completedCount,
               color: '#b964ef',
             },
             {
               label: 'Execution',
-              value: Math.round((monthData.execution / total) * 100) || 0,
-              eventCount: monthData.execution,
+              value: Math.round((executionCount / total) * 100) || 0,
+              eventCount: executionCount,
               color: '#ef79b3',
             },
             {
               label: 'Planning',
-              value: Math.round((monthData.planning / total) * 100) || 0,
-              eventCount: monthData.planning,
+              value: Math.round((planningCount / total) * 100) || 0,
+              eventCount: planningCount,
               color: '#f4d03f',
             },
           ]);
@@ -576,6 +586,9 @@ export function OrganizerDashboard() {
     setViewDate((prev) => new Date(prev.getFullYear(), prev.getMonth() + 1, 1));
   };
 
+  const displayName =
+    [user?.firstName, user?.lastName].filter(Boolean).join(' ').trim() || 'Organizer';
+
   return (
     <section className="pb-6">
       <div className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1fr)_360px]">
@@ -588,31 +601,22 @@ export function OrganizerDashboard() {
                     isChartMounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
                   }`}
                 >
-                  Welcome, Kring!
+                  Welcome back, {displayName}!
                 </h3>
                 <p
                   className={`mt-3 text-base font-semibold text-white/90 transition-all duration-700 delay-150 ease-out ${
                     isChartMounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
                   }`}
                 >
-                  You have a lot of work today, so keep it up.
+                  Your organizer dashboard is ready for today's events.
                 </p>
                 <p
                   className={`text-base font-semibold text-white/90 transition-all duration-700 delay-[250ms] ease-out ${
                     isChartMounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
                   }`}
                 >
-                  Shall we start?
+                  Let's keep everything moving smoothly.
                 </p>
-                <Button
-                  variant="secondary"
-                  onClick={() => navigate('/organizer/calendar')}
-                  className={`mt-6 rounded-full bg-white px-6 py-2 text-xs font-black uppercase tracking-wide text-[#6b2a87] hover:bg-white/90 hover:scale-105 hover:shadow-lg transition-all duration-700 delay-[350ms] ease-out ${
-                    isChartMounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
-                  }`}
-                >
-                  View Calendar
-                </Button>
               </div>
 
               <img //yung computer 3D sa dashboard
@@ -789,7 +793,7 @@ export function OrganizerDashboard() {
                   <div className="pointer-events-none absolute inset-[56px] rounded-full bg-white ring-1 ring-[#eee5f6]" />
 
                   {hoveredDonut ? (
-                    <div className="pointer-events-none absolute -bottom-4 left-1/2 min-w-[200px] -translate-x-1/2 translate-y-full rounded-2xl border border-[#efe4f8] bg-white px-4 py-3 text-center shadow-[0_16px_36px_rgba(42,23,60,0.16)] z-10">
+                    <div className="pointer-events-none absolute -top-2 left-1/2 min-w-[180px] -translate-x-1/2 -translate-y-full rounded-2xl border border-[#efe4f8] bg-white/95 backdrop-blur-sm px-4 py-3 text-center shadow-[0_16px_36px_rgba(42,23,60,0.16)] z-50">
                       <p className="mt-1 text-sm font-bold text-[#2d2834]">{hoveredDonut.label}</p>
                       <div className="mt-3 flex items-center justify-between gap-3 text-sm">
                         <span className="font-semibold text-[#6f6780]">Total Events</span>

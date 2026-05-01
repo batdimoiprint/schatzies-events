@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -35,7 +35,22 @@ import {
   type UserResponse,
   type UserPayload,
 } from '@/api/users';
-import { Plus, Trash2, Users, UserCircle, Briefcase, Shield } from 'lucide-react';
+import {
+  Plus,
+  Trash2,
+  Users,
+  UserCircle,
+  Briefcase,
+  Shield,
+  ChevronLeft,
+  ChevronRight,
+  ChevronsLeft,
+  ChevronsRight,
+  ArrowUpDown,
+  ArrowUp,
+  ArrowDown,
+  Search,
+} from 'lucide-react';
 import { UserDetailsPopover } from '@/components/admin/UserDetailsPopover';
 
 const initialFormState: UserPayload = {
@@ -55,6 +70,8 @@ const initialFormState: UserPayload = {
   role: 'CLIENT',
 };
 
+type UserSortField = 'name' | 'email' | 'role' | 'contact' | 'created';
+
 export function UsersManagement() {
   const [users, setUsers] = useState<UserResponse[]>([]);
   const [loading, setLoading] = useState(true);
@@ -62,6 +79,13 @@ export function UsersManagement() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [formData, setFormData] = useState<UserPayload>(initialFormState);
   const [submitting, setSubmitting] = useState(false);
+
+  // Search, sort & pagination state
+  const [searchQuery, setSearchQuery] = useState('');
+  const [sortBy, setSortBy] = useState<UserSortField>('name');
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
 
   // State for role confirmation dialog
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
@@ -169,14 +193,82 @@ export function UsersManagement() {
     }
   };
 
-  if (loading) {
-    return <div className="p-4">Loading users...</div>;
-  }
-
   const totalUsers = users.length;
   const totalClients = users.filter((u) => u.role === 'CLIENT').length;
   const totalOrganizers = users.filter((u) => u.role === 'ORGANIZER').length;
   const totalAdmins = users.filter((u) => u.role === 'ADMIN').length;
+
+  // Filtered + sorted + paginated users
+  const filteredUsers = useMemo(() => {
+    const q = searchQuery.trim().toLowerCase();
+    if (!q) return users;
+    return users.filter((u) => {
+      const fullName = `${u.firstName} ${u.middleName || ''} ${u.lastName}`.toLowerCase();
+      return (
+        fullName.includes(q) ||
+        (u.email || '').toLowerCase().includes(q) ||
+        (u.role || '').toLowerCase().includes(q) ||
+        (u.contactNumber || '').toLowerCase().includes(q)
+      );
+    });
+  }, [users, searchQuery]);
+
+  const sortedUsers = useMemo(() => {
+    return [...filteredUsers].sort((a, b) => {
+      let cmp = 0;
+      switch (sortBy) {
+        case 'name':
+          cmp = `${a.firstName} ${a.lastName}`.localeCompare(`${b.firstName} ${b.lastName}`);
+          break;
+        case 'email':
+          cmp = (a.email || '').localeCompare(b.email || '');
+          break;
+        case 'role':
+          cmp = (a.role || '').localeCompare(b.role || '');
+          break;
+        case 'contact':
+          cmp = (a.contactNumber || '').localeCompare(b.contactNumber || '');
+          break;
+        case 'created':
+          cmp = new Date(a.created_at || 0).getTime() - new Date(b.created_at || 0).getTime();
+          break;
+      }
+      return sortOrder === 'asc' ? cmp : -cmp;
+    });
+  }, [filteredUsers, sortBy, sortOrder]);
+
+  // Reset page when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, sortBy, sortOrder]);
+
+  const totalPages = Math.max(1, Math.ceil(sortedUsers.length / rowsPerPage));
+  const paginatedUsers = useMemo(() => {
+    const start = (currentPage - 1) * rowsPerPage;
+    return sortedUsers.slice(start, start + rowsPerPage);
+  }, [sortedUsers, currentPage, rowsPerPage]);
+
+  const toggleSort = (field: UserSortField) => {
+    if (sortBy === field) {
+      setSortOrder((o) => (o === 'asc' ? 'desc' : 'asc'));
+    } else {
+      setSortBy(field);
+      setSortOrder('asc');
+    }
+  };
+
+  const SortIcon = ({ field }: { field: UserSortField }) => {
+    if (sortBy !== field) return <ArrowUpDown className="ml-1.5 h-3.5 w-3.5 opacity-40" />;
+    return sortOrder === 'asc' ? (
+      <ArrowUp className="ml-1.5 h-3.5 w-3.5 text-[#8f1fd1]" />
+    ) : (
+      <ArrowDown className="ml-1.5 h-3.5 w-3.5 text-[#8f1fd1]" />
+    );
+  };
+
+  if (loading) {
+    return <div className="p-4">Loading users...</div>;
+  }
 
   return (
     <div className="space-y-6">
@@ -397,33 +489,88 @@ export function UsersManagement() {
         </Card>
       </div>
 
-      <div className="border rounded-lg bg-white shadow-sm">
+      <div className="overflow-hidden rounded-2xl border border-[#eee7f4] bg-white shadow-[0_8px_30px_rgba(53,36,71,0.06)]">
+        {/* Search bar */}
+        <div className="flex items-center gap-3 border-b border-[#f1eaf7] bg-[#fcf9ff] px-4 py-3">
+          <div className="relative w-full max-w-md">
+            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-[#8a7ca3]" />
+            <Input
+              placeholder="Search name, email, role…"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="h-9 border-[#e5ddee] bg-white pl-8"
+            />
+          </div>
+        </div>
+
         <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Name</TableHead>
-              <TableHead>Email</TableHead>
-              <TableHead>Role</TableHead>
-              <TableHead>Contact</TableHead>
-              <TableHead>Created</TableHead>
-              <TableHead className="w-[100px]">Actions</TableHead>
+          <TableHeader className="bg-[#faf7fd]">
+            <TableRow className="border-b border-[#efe7f6]">
+              <TableHead
+                className="h-11 cursor-pointer text-xs font-black uppercase tracking-[0.06em] text-[#7c7390] transition-colors hover:text-[#8f1fd1]"
+                onClick={() => toggleSort('name')}
+              >
+                <div className="flex items-center">
+                  Name
+                  <SortIcon field="name" />
+                </div>
+              </TableHead>
+              <TableHead
+                className="h-11 cursor-pointer text-xs font-black uppercase tracking-[0.06em] text-[#7c7390] transition-colors hover:text-[#8f1fd1]"
+                onClick={() => toggleSort('email')}
+              >
+                <div className="flex items-center">
+                  Email
+                  <SortIcon field="email" />
+                </div>
+              </TableHead>
+              <TableHead
+                className="h-11 cursor-pointer text-xs font-black uppercase tracking-[0.06em] text-[#7c7390] transition-colors hover:text-[#8f1fd1]"
+                onClick={() => toggleSort('role')}
+              >
+                <div className="flex items-center">
+                  Role
+                  <SortIcon field="role" />
+                </div>
+              </TableHead>
+              <TableHead
+                className="h-11 cursor-pointer text-xs font-black uppercase tracking-[0.06em] text-[#7c7390] transition-colors hover:text-[#8f1fd1]"
+                onClick={() => toggleSort('contact')}
+              >
+                <div className="flex items-center">
+                  Contact
+                  <SortIcon field="contact" />
+                </div>
+              </TableHead>
+              <TableHead
+                className="h-11 cursor-pointer text-xs font-black uppercase tracking-[0.06em] text-[#7c7390] transition-colors hover:text-[#8f1fd1]"
+                onClick={() => toggleSort('created')}
+              >
+                <div className="flex items-center">
+                  Created
+                  <SortIcon field="created" />
+                </div>
+              </TableHead>
+              <TableHead className="h-11 w-[100px] text-right text-xs font-black uppercase tracking-[0.06em] text-[#7c7390]">
+                Actions
+              </TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {users.length === 0 ? (
+            {paginatedUsers.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={6} className="text-center py-8 text-gray-500">
-                  No users found
+                  {users.length > 0 ? 'No users match your search.' : 'No users found'}
                 </TableCell>
               </TableRow>
             ) : (
-              users.map((user) => (
+              paginatedUsers.map((user) => (
                 <UserDetailsPopover key={user.user_id} user={user} onUpdate={fetchUsers}>
-                  <TableRow className="cursor-pointer hover:bg-muted/50">
-                    <TableCell>
+                  <TableRow className="cursor-pointer border-b border-[#f3edf8] hover:bg-[#fcf9ff]">
+                    <TableCell className="py-3 font-semibold text-[#2e2837]">
                       {user.firstName} {user.middleName} {user.lastName}
                     </TableCell>
-                    <TableCell>{user.email}</TableCell>
+                    <TableCell className="text-sm text-[#635a73]">{user.email}</TableCell>
                     <TableCell>
                       <div onClick={(e) => e.stopPropagation()}>
                         <Select
@@ -448,11 +595,11 @@ export function UsersManagement() {
                         </Select>
                       </div>
                     </TableCell>
-                    <TableCell>{user.contactNumber || '-'}</TableCell>
-                    <TableCell>
+                    <TableCell className="text-sm text-[#635a73]">{user.contactNumber || '-'}</TableCell>
+                    <TableCell className="text-sm text-[#4e4560]">
                       {user.created_at ? new Date(user.created_at).toLocaleDateString() : '-'}
                     </TableCell>
-                    <TableCell>
+                    <TableCell className="text-right">
                       <Button
                         variant="ghost"
                         size="sm"
@@ -471,6 +618,75 @@ export function UsersManagement() {
             )}
           </TableBody>
         </Table>
+
+        {/* Pagination Bar */}
+        {sortedUsers.length > 0 && (
+          <div className="flex flex-col gap-3 border-t border-[#f1eaf7] bg-[#fcf9ff] px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex items-center gap-2 text-sm text-[#7c7390]">
+              <span className="font-semibold">Rows per page:</span>
+              <select
+                value={rowsPerPage}
+                onChange={(e) => {
+                  setRowsPerPage(Number(e.target.value));
+                  setCurrentPage(1);
+                }}
+                className="rounded-md border border-[#e5ddee] bg-white px-2 py-1 text-sm font-semibold text-[#2e2837] outline-none focus:ring-2 focus:ring-[#8f1fd1]/30"
+              >
+                {[5, 10, 25, 50].map((n) => (
+                  <option key={n} value={n}>
+                    {n}
+                  </option>
+                ))}
+              </select>
+              <span className="ml-2 text-[#8a7ca3]">
+                {(currentPage - 1) * rowsPerPage + 1}–
+                {Math.min(currentPage * rowsPerPage, sortedUsers.length)} of {sortedUsers.length}
+              </span>
+            </div>
+
+            <div className="flex items-center gap-1">
+              <Button
+                variant="outline"
+                size="icon"
+                className="h-8 w-8 border-[#e5ddee] disabled:opacity-40"
+                onClick={() => setCurrentPage(1)}
+                disabled={currentPage === 1}
+              >
+                <ChevronsLeft className="h-4 w-4" />
+              </Button>
+              <Button
+                variant="outline"
+                size="icon"
+                className="h-8 w-8 border-[#e5ddee] disabled:opacity-40"
+                onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                disabled={currentPage === 1}
+              >
+                <ChevronLeft className="h-4 w-4" />
+              </Button>
+              <span className="mx-2 text-sm font-bold text-[#2e2837]">
+                Page {currentPage} of {totalPages}
+              </span>
+              <Button
+                variant="outline"
+                size="icon"
+                className="h-8 w-8 border-[#e5ddee] disabled:opacity-40"
+                onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                disabled={currentPage === totalPages}
+              >
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+              <Button
+                variant="outline"
+                size="icon"
+                className="h-8 w-8 border-[#e5ddee] disabled:opacity-40"
+                onClick={() => setCurrentPage(totalPages)}
+                disabled={currentPage === totalPages}
+              >
+                <ChevronsRight className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Role Change Confirmation Dialog */}
