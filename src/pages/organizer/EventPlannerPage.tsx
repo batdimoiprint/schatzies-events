@@ -2840,6 +2840,7 @@ export function EventPlannerPage() {
             setTaskPreviewTitle('');
             setTaskPreviewDetails('');
             setTaskPreviewChecklist([]);
+
           }
         }}
       >

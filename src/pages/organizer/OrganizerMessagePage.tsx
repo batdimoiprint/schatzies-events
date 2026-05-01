@@ -7,7 +7,6 @@ import {
   X,
   Loader2,
   MessageSquare,
-  RefreshCw,
   ChevronLeft,
 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
