@@ -71,108 +71,103 @@ export function OrganizerLayout() {
   }
 
   return (
-    <div className="min-h-screen bg-[#fbf8fd]">
-      <div className="flex h-full flex-col md:flex-row">
-        <aside
-          className={[
-            'relative w-full border-b border-[#ece7f2] bg-white md:h-full md:border-b-0 md:border-r',
-            'transition-all duration-300 ease-in-out',
-            isSidebarOpen ? 'md:w-62' : 'md:w-20',
-          ].join(' ')}
+    <div className="flex h-screen w-full flex-col md:flex-row overflow-hidden bg-[#fbf8fd]">
+      <aside
+        className={[
+          'relative flex flex-col z-40 bg-white transition-all duration-300 ease-in-out shrink-0',
+          'w-full h-auto border-b border-[#ece7f2]',
+          'md:h-full md:border-b-0 md:border-r',
+          isSidebarOpen ? 'md:w-62' : 'md:w-20',
+        ].join(' ')}
+      >
+        <button
+          onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+          className="absolute -right-3.5 top-9 z-50 hidden md:flex size-7 cursor-pointer items-center justify-center rounded-full border-2 border-[#f6f5f8] bg-linear-to-b from-[#f347a5] to-[#8f1fd1] text-white shadow-[0_4px_12px_rgba(187,54,194,0.4)] transition-all duration-200 hover:scale-110"
+          type="button"
+          aria-label={isSidebarOpen ? 'Collapse sidebar' : 'Expand sidebar'}
         >
-          <button
-            onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-            className="absolute -right-3.5 top-9 z-50 flex size-7 cursor-pointer items-center justify-center rounded-full border-2 border-[#f6f5f8] bg-linear-to-b from-[#f347a5] to-[#8f1fd1] text-white shadow-[0_4px_12px_rgba(187,54,194,0.4)] transition-all duration-200 hover:scale-110"
-            type="button"
-            aria-label={isSidebarOpen ? 'Collapse sidebar' : 'Expand sidebar'}
-          >
-            {isSidebarOpen ? (
-              <ChevronLeft className="size-4" />
-            ) : (
-              <ChevronRight className="size-4" />
-            )}
-          </button>
+          {isSidebarOpen ? <ChevronLeft className="size-4" /> : <ChevronRight className="size-4" />}
+        </button>
 
-          <div className="w-full">
-            <div className="flex flex-col items-center px-5 pb-4 pt-6">
+        <div className="w-full">
+          <div className="flex flex-col items-center px-5 pb-4 pt-6">
+            <div
+              className={[
+                'flex w-full items-center justify-center transition-all duration-300',
+                isSidebarOpen ? 'gap-3' : 'gap-0',
+              ].join(' ')}
+            >
+              <img
+                src="/Pictures/organizerpics/Logo.png.png"
+                alt="CSE logo"
+                className="size-12 shrink-0 rounded-full border-2 border-[#df2b80] bg-white object-cover"
+              />
               <div
                 className={[
-                  'flex w-full items-center justify-center transition-all duration-300',
-                  isSidebarOpen ? 'gap-3' : 'gap-0',
+                  'flex flex-col justify-center overflow-hidden leading-tight transition-all duration-300',
+                  isSidebarOpen ? 'max-w-30 opacity-100' : 'max-w-0 opacity-0',
                 ].join(' ')}
               >
-                <img
-                  src="/Pictures/organizerpics/Logo.png.png"
-                  alt="CSE logo"
-                  className="size-12 shrink-0 rounded-full border-2 border-[#df2b80] bg-white object-cover"
-                />
-                <div
-                  className={[
-                    'flex flex-col justify-center overflow-hidden leading-tight transition-all duration-300',
-                    isSidebarOpen ? 'max-w-30 opacity-100' : 'max-w-0 opacity-0',
-                  ].join(' ')}
-                >
-                  <p className="font-heading whitespace-nowrap text-base font-bold text-[#df2b80]">
-                    Schatzies
-                  </p>
-                  <p className="font-heading whitespace-nowrap text-base font-bold text-[#9a1eb9]">
-                    Events
-                  </p>
-                </div>
+                <p className="font-heading whitespace-nowrap text-base font-bold text-[#df2b80]">
+                  Schatzies
+                </p>
+                <p className="font-heading whitespace-nowrap text-base font-bold text-[#9a1eb9]">
+                  Events
+                </p>
               </div>
-              <p
+            </div>
+            <p
+              className={[
+                'mt-3 overflow-hidden text-center text-xs font-semibold tracking-wide text-[#7f7889] transition-all duration-300',
+                isSidebarOpen ? 'max-h-10 opacity-100' : 'max-h-0 opacity-0',
+              ].join(' ')}
+            >
+              Your <span className="text-[#df2b80]">MOST TRUSTED</span> team!
+            </p>
+          </div>
+        </div>
+
+        <nav className="flex flex-row overflow-x-auto py-2 px-4 gap-4 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden md:flex-col md:flex-1 md:overflow-y-auto md:gap-2 md:px-3 md:pb-5">
+          {organizerNavItems.map((item) => (
+            <NavLink
+              key={item.to}
+              to={item.to}
+              className={({ isActive }) => {
+                return [
+                  'group flex items-center rounded-xl py-3 text-[15px] font-semibold transition-all duration-200 ease-in-out',
+                  isSidebarOpen
+                    ? 'min-w-42.5 justify-start gap-3 px-4'
+                    : 'min-w-0 justify-center gap-0 px-3',
+                  isActive
+                    ? 'bg-linear-to-r from-[#f347a5] to-[#8f1fd1] text-white shadow-[0_10px_20px_rgba(187,54,194,0.28)]'
+                    : 'text-[#4f4a56] hover:bg-[#f0e8f5] hover:text-[#8f1fd0] hover:translate-x-1',
+                ].join(' ');
+              }}
+              end={item.to === '/organizer'}
+            >
+              <img
+                src={item.icon}
+                alt={item.label}
+                className="size-4.5 shrink-0 object-contain transition-all duration-200"
+              />
+              <span
                 className={[
-                  'mt-3 overflow-hidden text-center text-xs font-semibold tracking-wide text-[#7f7889] transition-all duration-300',
-                  isSidebarOpen ? 'max-h-10 opacity-100' : 'max-h-0 opacity-0',
+                  'whitespace-nowrap overflow-hidden transition-all duration-200',
+                  isSidebarOpen ? 'max-w-35 opacity-100' : 'max-w-0 opacity-0',
                 ].join(' ')}
               >
-                Your <span className="text-[#df2b80]">MOST TRUSTED</span> team!
-              </p>
-            </div>
-          </div>
+                {item.label}
+              </span>
+            </NavLink>
+          ))}
+        </nav>
+      </aside>
 
-          <nav className="flex gap-2 overflow-x-auto px-3 pb-5 md:flex-col md:overflow-visible">
-            {organizerNavItems.map((item) => (
-              <NavLink
-                key={item.to}
-                to={item.to}
-                className={({ isActive }) => {
-                  return [
-                    'group flex items-center rounded-xl py-3 text-[15px] font-semibold transition-all duration-200 ease-in-out',
-                    isSidebarOpen
-                      ? 'min-w-42.5 justify-start gap-3 px-4'
-                      : 'min-w-0 justify-center gap-0 px-3',
-                    isActive
-                      ? 'bg-linear-to-r from-[#f347a5] to-[#8f1fd1] text-white shadow-[0_10px_20px_rgba(187,54,194,0.28)]'
-                      : 'text-[#4f4a56] hover:bg-[#f0e8f5] hover:text-[#8f1fd0] hover:translate-x-1',
-                  ].join(' ');
-                }}
-                end={item.to === '/organizer'}
-              >
-                <img
-                  src={item.icon}
-                  alt={item.label}
-                  className="size-4.5 shrink-0 object-contain transition-all duration-200"
-                />
-                <span
-                  className={[
-                    'whitespace-nowrap overflow-hidden transition-all duration-200',
-                    isSidebarOpen ? 'max-w-35 opacity-100' : 'max-w-0 opacity-0',
-                  ].join(' ')}
-                >
-                  {item.label}
-                </span>
-              </NavLink>
-            ))}
-          </nav>
-        </aside>
-
-        <div className="flex min-h-0 min-w-0 flex-1 flex-col">
-          <AdminTopBar profilePath="/organizer/profile" />
-          <main className="min-h-0 flex-1 overflow-y-auto px-4 py-6 md:px-8">
-            <Outlet context={{ searchTerm: '' }} />
-          </main>
-        </div>
+      <div className="flex flex-1 flex-col h-full min-w-0 overflow-hidden">
+        <AdminTopBar profilePath="/organizer/profile" />
+        <main className="flex-1 overflow-y-auto px-4 py-6 md:px-8">
+          <Outlet context={{ searchTerm: '' }} />
+        </main>
       </div>
     </div>
   );
