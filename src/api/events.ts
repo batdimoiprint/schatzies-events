@@ -1,4 +1,5 @@
 import axiosInstance from './axios-instance';
+import { getUsers } from './users';
 
 export type EventStatus = 'Completed' | 'Pending' | 'Execution' | 'Cancelled';
 
@@ -6,6 +7,8 @@ export interface EventManagerEvent {
   id: string;
   title: string;
   date: string;
+  startDate: string;
+  endDate: string;
   timeSlot: string;
   client: string;
   type: string;
@@ -14,17 +17,21 @@ export interface EventManagerEvent {
   rsvp: number;
   status: EventStatus;
   clientId: string;
+  organizerId: string;
+  organizerName: string;
 }
 
 interface BackendEvent {
   id: string;
   clientId?: string;
+  headOrganizerId?: string;
   title?: string;
   startDate?: string;
   endDate?: string;
   eventDate?: string;
   eventType?: string;
   eventPackage?: string;
+  eventPackageKey?: string;
   eventPax?: number | null;
   venue?: string;
   status?: string;
@@ -80,27 +87,6 @@ function formatDate(dateValue?: string): string {
   });
 }
 
-function formatTimeRange(startDate?: string, endDate?: string): string {
-  const start = startDate ? new Date(startDate) : null;
-  const end = endDate ? new Date(endDate) : null;
-  if (!start || Number.isNaN(start.getTime())) return '-';
-
-  const startLabel = start.toLocaleTimeString('en-US', {
-    hour: 'numeric',
-    minute: '2-digit',
-  });
-
-  if (!end || Number.isNaN(end.getTime())) {
-    return startLabel;
-  }
-
-  const endLabel = end.toLocaleTimeString('en-US', {
-    hour: 'numeric',
-    minute: '2-digit',
-  });
-
-  return `${startLabel} - ${endLabel}`;
-}
 
 function mapEventStatus(status?: string): EventStatus {
   const normalized = String(status || '')
@@ -114,25 +100,39 @@ function mapEventStatus(status?: string): EventStatus {
 
 function mapToManagerRow(
   baseEvent: BackendEvent,
-  details?: BackendEventDetails
+  userMap: Map<string, string>
 ): EventManagerEvent {
-  const startDate = details?.dateStart || baseEvent.startDate || baseEvent.eventDate;
-  const endDate = details?.dateEnd || baseEvent.endDate;
-  const packageName = details?.package?.name || baseEvent.eventPackage || '-';
-  const packagePax = details?.package?.pax ?? baseEvent.eventPax ?? 0;
+  const rawStartDate = baseEvent.startDate || baseEvent.eventDate || '';
+  const rawEndDate = baseEvent.endDate || '';
+  const packageName = baseEvent.eventPackageKey || baseEvent.eventPackage || '-';
+  const packagePax = baseEvent.eventPax ?? 0;
+
+  const formattedStart = formatDate(rawStartDate);
+  const formattedEnd = formatDate(rawEndDate);
+  const dateDisplay =
+    formattedEnd && formattedEnd !== '-' && formattedEnd !== formattedStart
+      ? `${formattedStart} – ${formattedEnd}`
+      : formattedStart;
+
+  const clientName = baseEvent.clientId ? userMap.get(baseEvent.clientId) || baseEvent.clientId : 'Unknown client';
+  const organizerName = baseEvent.headOrganizerId ? userMap.get(baseEvent.headOrganizerId) || '' : '';
 
   return {
     id: baseEvent.id,
     title: baseEvent.title || 'Untitled event',
-    date: formatDate(startDate),
-    timeSlot: formatTimeRange(startDate, endDate),
-    client: details?.clientName || baseEvent.clientId || 'Unknown client',
+    date: dateDisplay,
+    startDate: rawStartDate,
+    endDate: rawEndDate,
+    timeSlot: '-',
+    client: clientName,
     type: baseEvent.eventType || '-',
     package: packagePax > 0 ? `${packageName} (${packagePax})` : packageName,
     venue: baseEvent.venue || '-',
-    rsvp: Number(details?.headcount?.expectedAttendee || 0),
+    rsvp: 0,
     status: mapEventStatus(baseEvent.status),
     clientId: baseEvent.clientId || '',
+    organizerId: baseEvent.headOrganizerId || '',
+    organizerName,
   };
 }
 
@@ -147,22 +147,16 @@ export async function getEventById(eventId: string): Promise<BackendEventDetails
 }
 
 export async function getEventManagerEvents(): Promise<EventManagerEvent[]> {
-  const events = await getEvents();
-  if (!events.length) {
-    return [];
+  const [events, allUsers] = await Promise.all([getEvents(), getUsers()]);
+
+  // Build a lookup map: userId -> "FirstName LastName"
+  const userMap = new Map<string, string>();
+  for (const user of allUsers) {
+    const name = `${user.firstName || ''} ${user.lastName || ''}`.trim();
+    if (name) userMap.set(user.user_id, name);
   }
 
-  const details = await Promise.all(
-    events.map(async (event) => {
-      try {
-        return await getEventById(event.id);
-      } catch {
-        return undefined;
-      }
-    })
-  );
-
-  return events.map((event, index) => mapToManagerRow(event, details[index]));
+  return events.map((event) => mapToManagerRow(event, userMap));
 }
 
 export async function createEvent(payload: CreateEventPayload): Promise<BackendEvent> {
