@@ -46,10 +46,10 @@ import { InvitationPage } from '@/pages/public/InvitationPage';
 
 function NotFoundPage() {
   return (
-    <main className='flex min-h-screen items-center justify-center px-4 text-center'>
+    <main className="flex min-h-screen items-center justify-center px-4 text-center">
       <div>
-        <h1 className='text-3xl font-semibold'>404 Not Found</h1>
-        <p className='mt-2 text-sm text-muted-foreground'>
+        <h1 className="text-3xl font-semibold">404 Not Found</h1>
+        <p className="mt-2 text-sm text-muted-foreground">
           The page you are looking for does not exist.
         </p>
       </div>

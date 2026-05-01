@@ -196,3 +196,145 @@ export async function getEventAllocation(eventId: string) {
   const response = await axiosInstance.get(`/events/${eventId}/allocation`);
   return response.data.allocation;
 }
+
+export async function getEventNotes(eventId: string): Promise<any[]> {
+  try {
+    const response = await axiosInstance.get(`/events/${eventId}/notes`);
+    const rawNotes = response.data?.notes || response.data;
+
+    // If the backend returns a string, parse it.
+    if (typeof rawNotes === 'string') {
+      try {
+        const parsed = JSON.parse(rawNotes);
+        return Array.isArray(parsed) ? parsed : [];
+      } catch (e) {
+        // If it's a regular string but not JSON, wrap it in our object format
+        return [{ id: `note-${Date.now()}`, title: 'Imported Note', body: rawNotes }];
+      }
+    }
+    // If it's already an array, return it
+    return Array.isArray(rawNotes) ? rawNotes : [];
+  } catch (error) {
+    return [];
+  }
+}
+
+export async function createEventNote(eventId: string, payload: any): Promise<any> {
+  const currentNotes = await getEventNotes(eventId);
+  const newNote = { ...payload, id: payload.id || `note-${Date.now()}` };
+  const updatedNotes = [...currentNotes, newNote];
+
+  // Stringify the array before sending
+  await axiosInstance.put(`/events/${eventId}/notes`, { notes: JSON.stringify(updatedNotes) });
+  return newNote;
+}
+
+export async function updateEventNote(eventId: string, noteId: string, payload: any): Promise<any> {
+  const currentNotes = await getEventNotes(eventId);
+  const updatedNotes = currentNotes.map((n: any) => (n.id === noteId ? { ...n, ...payload } : n));
+
+  // Stringify the array before sending
+  await axiosInstance.put(`/events/${eventId}/notes`, { notes: JSON.stringify(updatedNotes) });
+  return { ...payload, id: noteId };
+}
+
+export async function deleteEventNote(eventId: string, noteId: string): Promise<void> {
+  const currentNotes = await getEventNotes(eventId);
+  const filteredNotes = currentNotes.filter((n: any) => n.id !== noteId);
+
+  // Stringify the array before sending
+  await axiosInstance.put(`/events/${eventId}/notes`, { notes: JSON.stringify(filteredNotes) });
+}
+
+export async function getEventChecklist(eventId: string): Promise<any[]> {
+  try {
+    const response = await axiosInstance.get(`/events/${eventId}/checklist`);
+    const data = response.data?.checklist || response.data;
+    return Array.isArray(data) ? data : [];
+  } catch (error) {
+    return [];
+  }
+}
+
+export async function updateEventChecklistItem(
+  eventId: string,
+  _checklistId: string,
+  itemId: string,
+  done: boolean,
+  label?: string
+): Promise<any> {
+  const payload: any = { id: itemId, done };
+  if (label !== undefined) payload.label = label;
+
+  const response = await axiosInstance.patch(`/events/${eventId}/checklist`, {
+    checklist: [payload],
+  });
+  return response.data;
+}
+
+export async function addEventChecklistItem(eventId: string, label: string): Promise<any> {
+  const response = await axiosInstance.post(`/events/${eventId}/checklist`, { label });
+  return response.data;
+}
+
+export async function deleteEventChecklistItem(eventId: string, itemId: string): Promise<void> {
+  await axiosInstance.delete(`/events/${eventId}/checklist/${itemId}`);
+}
+
+export async function saveEventAllocation(eventId: string, payload: any): Promise<any> {
+  const response = await axiosInstance.post(`/events/${eventId}/allocation`, payload);
+  return response.data;
+}
+
+export async function getEventFlow(eventId: string) {
+  try {
+    const response = await axiosInstance.get(`/events/${eventId}/program-flow`);
+    let data = response.data;
+
+    // Fallback if backend returns a string instead of parsed JSON
+    if (typeof data === 'string') {
+      try {
+        data = JSON.parse(data);
+      } catch (e) {}
+    }
+
+    // Direct array
+    if (Array.isArray(data)) return data;
+
+    // Wrapped array scenarios
+    if (data && typeof data === 'object') {
+      if (Array.isArray(data.data)) return data.data;
+      if (Array.isArray(data.flow)) return data.flow;
+      if (Array.isArray(data.flows)) return data.flows; // Added this line to catch the backend's key
+      if (Array.isArray(data.program_flows)) return data.program_flows;
+    }
+
+    return [];
+  } catch (error) {
+    return [];
+  }
+}
+
+export async function saveEventFlow(eventId: string, payload: any) {
+  const isNew = !payload.id || String(payload.id).startsWith('timeline-');
+  let response;
+
+  if (isNew) {
+    response = await axiosInstance.post(`/events/${eventId}/program-flow`, payload);
+  } else {
+    response = await axiosInstance.put(`/events/program-flow/${payload.id}`, payload);
+  }
+
+  let data = response.data;
+  if (typeof data === 'string') {
+    try {
+      data = JSON.parse(data);
+    } catch (e) {}
+  }
+
+  return data?.flow || data?.data || data;
+}
+
+export async function deleteEventActivity(_eventId: string, activityId: string) {
+  await axiosInstance.delete(`/events/program-flow/${activityId}`);
+}

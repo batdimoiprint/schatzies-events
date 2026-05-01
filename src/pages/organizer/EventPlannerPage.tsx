@@ -19,7 +19,7 @@ import {
   X,
 } from 'lucide-react';
 
-import { Dialog, DialogContent } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {
@@ -29,7 +29,24 @@ import {
   moveBoardTask,
   deleteBoardTask,
 } from '@/api/planner-tasks';
-import { getEvents, getEventUser, getEventAllocation } from '@/api/events';
+import {
+  getEvents,
+  getEventUser,
+  getEventAllocation,
+  getEventNotes,
+  createEventNote,
+  updateEventNote,
+  deleteEventNote,
+  getEventChecklist,
+  updateEventChecklistItem,
+  addEventChecklistItem,
+  deleteEventChecklistItem,
+  getEventFlow,
+  saveEventFlow,
+  deleteEventActivity,
+  getEventById,
+} from '@/api/events';
+import { getCalendarEntries } from '@/api/calendar';
 
 type PlannerTab = 'overview' | 'task' | 'notes' | 'flow' | 'checklist';
 
@@ -38,6 +55,7 @@ type ProjectSlot = {
   title: string;
   startDate?: string;
   endDate?: string;
+  rawStartDate?: string;
   eventType?: string;
   eventPackage?: string;
   eventPax?: number;
@@ -169,70 +187,31 @@ const taskLaneConfig: Array<{
   cardOuterClassName: string;
   cardTitleClassName: string;
 }> = [
-  {
-    id: 'todo',
-    label: 'To Do',
-    dotClassName: 'bg-[#e6d81d]',
-    panelClassName: 'border-[#e4e4d0] bg-[#fafaf4]',
-    cardOuterClassName: 'border-[#cae4cb] bg-[#dff0e0]',
-    cardTitleClassName: 'text-[#4f8759]',
-  },
-  {
-    id: 'in-progress',
-    label: 'In Progress',
-    dotClassName: 'bg-[#2ea4ff]',
-    panelClassName: 'border-[#d3e7f7] bg-[#f4f9ff]',
-    cardOuterClassName: 'border-[#ead4e9] bg-[#f0ddf0]',
-    cardTitleClassName: 'text-[#712466]',
-  },
-  {
-    id: 'completed',
-    label: 'Completed',
-    dotClassName: 'bg-[#2ec24f]',
-    panelClassName: 'border-[#d8eddc] bg-[#f5fcf7]',
-    cardOuterClassName: 'border-[#d4dfec] bg-[#deebf8]',
-    cardTitleClassName: 'text-[#1f4c82]',
-  },
-];
-
-const overviewServiceRequirements = [
-  'Classic Buffet',
-  '1. Appetizer',
-  'Light finger foods and canapes',
-  '2. Main Course',
-  'Chicken inasal, cordon bleu, and seafood',
-  '3. Dessert',
-  'Seasonal fruits, mousse cups, and custom cake',
-];
-
-const overviewAllocationResources = [
-  {
-    title: 'Event Coordinator',
-    detail: 'Ken Chan',
-    time: '08:00 - 08:00',
-  },
-  {
-    title: 'Host',
-    detail: 'Angel U. Nicorn',
-    time: '08:00 - 08:00',
-  },
-  {
-    title: 'Technicals',
-    detail:
-      '1. Audio Cue\n2. Lighting Cue\n3. Visual/Screen Cue\n4. System Tech/Troubleshooter\n5. Dry Run Team',
-    time: '',
-  },
-];
-
-const overviewMeetings = ['Meeting 1 | 2hrs Coffee', 'Meeting 2 | 2hrs Coffee', 'Meeting 3 | 2hrs'];
-
-const overviewChecklist = [
-  'Technical manpower',
-  'Lights and trussing',
-  'Fresh flowers delivered',
-  'Dry run DAY1',
-  'Dry run DAY2',
-];
+    {
+      id: 'todo',
+      label: 'To Do',
+      dotClassName: 'bg-[#e6d81d]',
+      panelClassName: 'border-[#e4e4d0] bg-[#fafaf4]',
+      cardOuterClassName: 'border-[#cae4cb] bg-[#dff0e0]',
+      cardTitleClassName: 'text-[#4f8759]',
+    },
+    {
+      id: 'in-progress',
+      label: 'In Progress',
+      dotClassName: 'bg-[#2ea4ff]',
+      panelClassName: 'border-[#d3e7f7] bg-[#f4f9ff]',
+      cardOuterClassName: 'border-[#ead4e9] bg-[#f0ddf0]',
+      cardTitleClassName: 'text-[#712466]',
+    },
+    {
+      id: 'completed',
+      label: 'Completed',
+      dotClassName: 'bg-[#2ec24f]',
+      panelClassName: 'border-[#d8eddc] bg-[#f5fcf7]',
+      cardOuterClassName: 'border-[#d4dfec] bg-[#deebf8]',
+      cardTitleClassName: 'text-[#1f4c82]',
+    },
+  ];
 
 // Utility functions moved outside component to avoid recreating on every render
 const formatTimeInput = (hour: number, minute = 0) => {
@@ -324,52 +303,80 @@ const mapLaneToBackendStatus = (lane: TaskLane): string => {
   return 'TODO';
 };
 
-function FlowNotesBoard() {
+const flowBlockTones = [
+  'border-[#f0bfd8] bg-[#fdeaf3] text-[#7b295f]',
+  'border-[#cfe0f3] bg-[#eef6ff] text-[#2a5f91]',
+  'border-[#dbe8dc] bg-[#f1fbf3] text-[#2d6640]',
+  'border-[#e8dcc8] bg-[#fdf6ec] text-[#7a5c2e]',
+  'border-[#d8cef3] bg-[#f3eeff] text-[#5a3d91]',
+  'border-[#f0d8c8] bg-[#fdf1ec] text-[#7a4a2e]',
+];
+
+function mapBackendFlowToUI(item: any, index: number) {
+  const startDate = item.start_time ? new Date(item.start_time) : null;
+  const endDate = item.end_time ? new Date(item.end_time) : null;
+
+  const startHour = startDate && !isNaN(startDate.getTime()) ? startDate.getHours() : 5;
+  const startMinute = startDate && !isNaN(startDate.getTime()) ? startDate.getMinutes() : 0;
+  const endHour = endDate && !isNaN(endDate.getTime()) ? endDate.getHours() : startHour + 1;
+  const endMinute = endDate && !isNaN(endDate.getTime()) ? endDate.getMinutes() : 0;
+
+  const fromTime = `${String(startHour).padStart(2, '0')}:${String(startMinute).padStart(2, '0')}`;
+  const toTime = `${String(endHour).padStart(2, '0')}:${String(endMinute).padStart(2, '0')}`;
+
+  return {
+    id: item.id || `flow-${Date.now()}-${index}`,
+    title: item.title || 'Untitled Activity',
+    from: fromTime,
+    to: toTime,
+    description: item.description || '',
+    startHour,
+    endHour: endHour === startHour ? endHour + 1 : endHour,
+    left: '2%',
+    width: '27%',
+    tone: flowBlockTones[index % flowBlockTones.length],
+  };
+}
+
+function FlowNotesBoard({
+  selectedEventId,
+  eventDate,
+}: {
+  selectedEventId: string;
+  eventDate: string;
+}) {
   const timelineStartHour = 5;
   const timelineEndHour = 11;
   const hourRowHeight = 58;
   const minAllowedTime = '05:00';
   const maxAllowedTime = '11:00';
 
-  const [timelineBlocks, setTimelineBlocks] = useState([
-    {
-      id: 'timeline-primary',
-      title: 'Guests Welcoming & Opening Ceremony',
-      from: '05:00',
-      to: '06:00',
-      description:
-        'Lorem ipsum sit amet, consectetur adipiscing elit. In tincidunt justo quis viverra bibendum.',
-      startHour: 5,
-      endHour: 6,
-      left: '2%',
-      width: '27%',
-      tone: 'border-[#f0bfd8] bg-[#fdeaf3] text-[#7b295f]',
-    },
-    {
-      id: 'timeline-secondary',
-      title: 'Example',
-      from: '08:00',
-      to: '09:00',
-      description: 'Description',
-      startHour: 8,
-      endHour: 9,
-      left: '31%',
-      width: '26%',
-      tone: 'border-[#cfe0f3] bg-[#eef6ff] text-[#2a5f91]',
-    },
-    {
-      id: 'timeline-third',
-      title: 'Example',
-      from: '10:00',
-      to: '11:00',
-      description: 'Description',
-      startHour: 10,
-      endHour: 11,
-      left: '2%',
-      width: '27%',
-      tone: 'border-[#dbe8dc] bg-[#f1fbf3] text-[#2d6640]',
-    },
-  ]);
+  const [timelineBlocks, setTimelineBlocks] = useState<any[]>([]);
+
+  useEffect(() => {
+    let isMounted = true;
+    const fetchFlow = async () => {
+      if (!selectedEventId) {
+        setTimelineBlocks([]);
+        return;
+      }
+      try {
+        const flowData = await getEventFlow(selectedEventId);
+        if (isMounted) {
+          const mapped = Array.isArray(flowData)
+            ? flowData.map((item: any, index: number) => mapBackendFlowToUI(item, index))
+            : [];
+          setTimelineBlocks(mapped);
+        }
+      } catch (error) {
+        console.error('Failed to load event flow:', error);
+      }
+    };
+    fetchFlow();
+    return () => {
+      isMounted = false;
+    };
+  }, [selectedEventId]);
 
   const [isActivityInfoOpen, setIsActivityInfoOpen] = useState(false);
   const [isEditingActivity, setIsEditingActivity] = useState(false);
@@ -454,16 +461,21 @@ function FlowNotesBoard() {
     setIsActivityInfoOpen(true);
   };
 
-  const handleDeleteActivity = (activityId: string) => {
-    setTimelineBlocks((previous) => previous.filter((block) => block.id !== activityId));
-    if (selectedActivityId === activityId) {
-      setSelectedActivityId(null);
-      setIsActivityInfoOpen(false);
-      setIsEditingActivity(false);
+  const handleDeleteActivity = async (activityId: string) => {
+    try {
+      await deleteEventActivity(selectedEventId, activityId);
+      setTimelineBlocks((previous) => previous.filter((block) => block.id !== activityId));
+      if (selectedActivityId === activityId) {
+        setSelectedActivityId(null);
+        setIsActivityInfoOpen(false);
+        setIsEditingActivity(false);
+      }
+    } catch (error) {
+      console.error('Failed to delete activity:', error);
     }
   };
 
-  const handleSaveActivity = (event: FormEvent<HTMLFormElement>) => {
+  const handleSaveActivity = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
     const normalizedFromInput = clampTimeInputRange(
@@ -488,31 +500,48 @@ function FlowNotesBoard() {
       timelineEndHour
     );
 
+    // Build ISO 8601 start_time / end_time using the event's date
+    const baseDateStr = eventDate || new Date().toISOString();
+    const baseDate = new Date(baseDateStr);
+    const datePrefix = isNaN(baseDate.getTime())
+      ? new Date().toISOString().split('T')[0]
+      : baseDate.toISOString().split('T')[0];
+
+    const fromTimeStr = normalizedFromInput || formatTimeInput(normalizedStartHour);
+    const toTimeStr = normalizedToInput || formatTimeInput(normalizedEndHour);
+    const startTimeISO = new Date(`${datePrefix}T${fromTimeStr}:00`).toISOString();
+    const endTimeISO = new Date(`${datePrefix}T${toTimeStr}:00`).toISOString();
+
     const nextId = selectedActivityId ?? `timeline-${Date.now()}`;
-    const nextActivity = {
+
+    // Payload for backend: ONLY { title, description, start_time, end_time }
+    const apiPayload = {
       id: nextId,
       title: activityDraft.title.trim() || 'Example',
-      from: normalizedFromInput || formatTimeInput(normalizedStartHour),
-      to: normalizedToInput || formatTimeInput(normalizedEndHour),
       description: activityDraft.description.trim() || 'Description',
-      startHour: normalizedStartHour,
-      endHour: normalizedEndHour,
-      left: activityDraft.left,
-      width: activityDraft.width,
-      tone: activityDraft.tone,
+      start_time: startTimeISO,
+      end_time: endTimeISO,
     };
 
-    setTimelineBlocks((previous) => {
-      if (selectedActivityId) {
-        return previous.map((block) => (block.id === selectedActivityId ? nextActivity : block));
-      }
+    try {
+      const savedData = await saveEventFlow(selectedEventId, apiPayload);
 
-      return [...previous, nextActivity];
-    });
+      // Map the returned backend data back to UI format
+      const uiBlock = mapBackendFlowToUI(savedData ?? apiPayload, timelineBlocks.length);
 
-    setSelectedActivityId(nextId);
-    setIsEditingActivity(false);
-    setIsActivityInfoOpen(false);
+      setTimelineBlocks((previous) => {
+        if (selectedActivityId) {
+          return previous.map((block) => (block.id === selectedActivityId ? uiBlock : block));
+        }
+        return [...previous, uiBlock];
+      });
+
+      setSelectedActivityId(uiBlock.id);
+      setIsEditingActivity(false);
+      setIsActivityInfoOpen(false);
+    } catch (error) {
+      console.error('Failed to save activity:', error);
+    }
   };
 
   const handleAddSummary = () => {
@@ -748,11 +777,13 @@ function FlowNotesBoard() {
                           Time: {formatDisplayTime(block.from, block.startHour)} -{' '}
                           {formatDisplayTime(block.to, block.endHour)}
                         </p>
-                        <div className="mt-1 flex-1 min-h-0">
-                          <p className="text-[10px] leading-tight text-inherit/80 break-words whitespace-normal line-clamp-4">
-                            {block.description}
-                          </p>
-                        </div>
+                        {block.calculatedHeight > 60 && (
+                          <div className="mt-1 flex-1 min-h-0">
+                            <p className="text-[10px] leading-tight text-inherit/80 break-words whitespace-normal line-clamp-4">
+                              {block.description}
+                            </p>
+                          </div>
+                        )}
                       </article>
                     );
                   })}
@@ -812,8 +843,10 @@ function FlowNotesBoard() {
       >
         <DialogContent
           showCloseButton={false}
-          className="max-w-[calc(100%-1rem)] rounded-2xl border border-[#e3dfea] bg-white p-0 sm:max-w-[640px]"
+          aria-describedby={undefined}
+          className="fixed left-[50%] top-[50%] z-[9999] grid w-full max-w-[calc(100%-1rem)] sm:max-w-[640px] translate-x-[-50%] translate-y-[-50%] gap-4 border border-[#e3dfea] bg-white p-0 shadow-lg duration-200 rounded-2xl"
         >
+          <DialogTitle className="sr-only">Activity Details</DialogTitle>
           <form className="px-6 py-5" onSubmit={handleSaveActivity}>
             <div className="mb-4 flex items-start justify-between gap-3 border-b border-[#eee9f2] pb-4">
               <div className="flex items-center gap-2">
@@ -1019,19 +1052,6 @@ function FlowNotesBoard() {
   );
 }
 
-const initialPlannerNotes: PlannerQuickNote[] = [
-  {
-    id: 'note-requests',
-    title: 'Requests',
-    body: 'Strict timeline\nrequested by parents',
-  },
-  {
-    id: 'note-catering',
-    title: 'Catering',
-    body: 'Avoid serving nuts\n(guest allergy concern)',
-  },
-];
-
 const noteTileThemes = [
   {
     shellClassName: 'border-[#edd9e6] bg-[#fff7fb] text-[#6f295a]',
@@ -1067,33 +1087,6 @@ const noteTileThemes = [
   },
 ];
 
-const overviewScheduleSummary = [
-  {
-    id: 'overview-summary-1',
-    timeRange: '7:00AM - 9:00AM',
-    title: 'Description Here',
-    body: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. In tincidunt justo quis viverra bibendum.',
-  },
-  {
-    id: 'overview-summary-2',
-    timeRange: '00:00 - 00:00',
-    title: 'Description Here',
-    body: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. In tincidunt justo quis viverra bibendum.',
-  },
-  {
-    id: 'overview-summary-3',
-    timeRange: '00:00 - 00:00',
-    title: 'Description Here',
-    body: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. In tincidunt justo quis viverra bibendum.',
-  },
-  {
-    id: 'overview-summary-4',
-    timeRange: '00:00 - 00:00',
-    title: 'Description Here',
-    body: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. In tincidunt justo quis viverra bibendum.',
-  },
-];
-
 export function EventPlannerPage() {
   const [selectedEventId, setSelectedEventId] = useState('');
   const [projectSlots, setProjectSlots] = useState<ProjectSlot[]>([]);
@@ -1102,6 +1095,9 @@ export function EventPlannerPage() {
   const [boardTasks, setBoardTasks] = useState<PlannerBoardTask[]>([]);
   const [currentClientName, setCurrentClientName] = useState('');
   const [eventAllocation, setEventAllocation] = useState<any>(null);
+  const [eventMeetings, setEventMeetings] = useState<any[]>([]);
+  const [overviewFlows, setOverviewFlows] = useState<any[]>([]);
+  const [selectedEventDetails, setSelectedEventDetails] = useState<any>(null);
 
   useEffect(() => {
     let isMounted = true;
@@ -1133,6 +1129,7 @@ export function EventPlannerPage() {
             title: e.title || 'Untitled Event',
             startDate: formatDateReadable(e.startDate || e.eventDate) || 'No Date Set',
             endDate: formatDateReadable(e.endDate) || 'TBD',
+            rawStartDate: e.startDate || e.eventDate || '',
             eventType: e.eventType,
             eventPackage: e.eventPackage,
             eventPax: e.eventPax || 0,
@@ -1160,12 +1157,23 @@ export function EventPlannerPage() {
     let isMounted = true;
 
     const loadTasks = async () => {
+      setSelectedEventDetails(null);
+
       if (!selectedEventId) {
         setBoardTasks([]);
         setCurrentClientName('');
         setEventAllocation(null);
         return;
       }
+
+      getEventById(selectedEventId)
+        .then((details) => {
+          if (isMounted) setSelectedEventDetails(details);
+        })
+        .catch((e) => {
+          console.error('Failed to fetch event details', e);
+          if (isMounted) setSelectedEventDetails(null);
+        });
 
       setCurrentClientName('');
       setEventAllocation(null);
@@ -1177,15 +1185,17 @@ export function EventPlannerPage() {
             if (isMounted) {
               setCurrentClientName(
                 userData?.name ||
-                  userData?.firstName ||
-                  userData?.realName ||
-                  userData?.clientName ||
-                  ''
+                userData?.firstName ||
+                userData?.realName ||
+                userData?.clientName ||
+                ''
               );
             }
           })
-          .catch((e) => {
-            console.error('Failed to fetch event user', e);
+          .catch((e: any) => {
+            if (e?.response?.status !== 404) {
+              console.error('Failed to fetch event user', e);
+            }
             if (isMounted) setCurrentClientName('');
           });
       }
@@ -1196,10 +1206,59 @@ export function EventPlannerPage() {
             setEventAllocation(allocationData);
           }
         })
-        .catch((e) => {
-          console.error('Failed to fetch event allocation', e);
+        .catch((e: any) => {
+          if (e?.response?.status !== 404) {
+            console.error('Failed to fetch event allocation', e);
+          }
           if (isMounted) setEventAllocation(null);
         });
+
+      try {
+        const entries = await getCalendarEntries();
+        if (isMounted) {
+          setEventMeetings(
+            entries.filter(
+              (item: any) =>
+                item.eventId === selectedEventId && item.label?.toUpperCase() === 'MEETING'
+            )
+          );
+        }
+      } catch (error) {
+        console.error('Failed to fetch meetings', error);
+        if (isMounted) setEventMeetings([]);
+      }
+
+      try {
+        const flowData = await getEventFlow(selectedEventId);
+        if (isMounted) {
+          const mappedFlows = Array.isArray(flowData)
+            ? flowData
+              .map((item: any, index: number) => mapBackendFlowToUI(item, index))
+              .sort((a: any, b: any) => a.startHour - b.startHour)
+            : [];
+          setOverviewFlows(mappedFlows);
+        }
+      } catch (error) {
+        console.error('Failed to fetch event flow for overview', error);
+        if (isMounted) setOverviewFlows([]);
+      }
+
+      try {
+        const [notesResponse, checklistResponse] = await Promise.all([
+          getEventNotes(selectedEventId),
+          getEventChecklist(selectedEventId),
+        ]);
+        if (isMounted) {
+          setPlannerNotes(notesResponse);
+          if (checklistResponse && checklistResponse.length > 0) {
+            setPlannerTaskCards(checklistResponse);
+          } else {
+            setPlannerTaskCards(taskCards);
+          }
+        }
+      } catch (error) {
+        console.error('Failed to load notes or checklist:', error);
+      }
 
       try {
         const response = await getBoardTasks(selectedEventId);
@@ -1252,7 +1311,7 @@ export function EventPlannerPage() {
   } | null>(null);
   const [checklistDeleteValidation, setChecklistDeleteValidation] = useState('');
   const [checklistDeleteError, setChecklistDeleteError] = useState('');
-  const [plannerNotes, setPlannerNotes] = useState<PlannerQuickNote[]>(initialPlannerNotes);
+  const [plannerNotes, setPlannerNotes] = useState<PlannerQuickNote[]>([]);
   const [noteDraftTitle, setNoteDraftTitle] = useState('');
   const [noteDraftBody, setNoteDraftBody] = useState('');
   const [noteDraftImageDataUrl, setNoteDraftImageDataUrl] = useState<string | undefined>(undefined);
@@ -1304,7 +1363,10 @@ export function EventPlannerPage() {
       {
         id: 'overview-package',
         label: 'Event Package',
-        value: selectedProject.eventPackage || 'N/A',
+        value: selectedEventDetails?.package?.name ||
+          selectedEventDetails?.eventPackage ||
+          selectedEventDetails?.eventPackageKey ||
+          selectedProject.eventPackage || 'N/A',
         imageSrc: '/Pictures/organizerpics/event-package-illustration.png',
         accent: 'text-[#6b2aa5] bg-[#fbf6ff] border-[#eee3fb]',
         valueClassName: 'text-[14px] font-semibold leading-[1.15] text-[#6d677b]',
@@ -1312,7 +1374,7 @@ export function EventPlannerPage() {
       {
         id: 'overview-pax',
         label: 'Event Pax',
-        value: String(selectedProject.eventPax || '0'),
+        value: String(selectedEventDetails?.package?.pax || selectedEventDetails?.eventPax || selectedProject.eventPax || '0'),
         imageSrc: '/Pictures/organizerpics/event-pax-illustration.png',
         accent: 'text-[#88511a] bg-[#fff8ef] border-[#f3e2cc]',
         valueClassName: 'text-[32px] font-semibold leading-none tracking-tight text-[#4f4a58]',
@@ -1334,15 +1396,12 @@ export function EventPlannerPage() {
         valueClassName: 'text-[32px] font-semibold leading-none tracking-tight text-[#4f4a58]',
       },
     ],
-    [selectedProject]
+    [selectedProject, selectedEventDetails]
   );
 
   const selectedBoardTask = useMemo(() => {
-    if (!selectedBoardTaskId) {
-      return null;
-    }
-
-    return boardTasks.find((task) => task.id === selectedBoardTaskId) ?? null;
+    if (!selectedBoardTaskId) return null;
+    return boardTasks.find((task) => String(task.id) === String(selectedBoardTaskId)) ?? null;
   }, [boardTasks, selectedBoardTaskId]);
 
   const resetNoteDraft = () => {
@@ -1370,8 +1429,8 @@ export function EventPlannerPage() {
       return;
     }
 
-    if (file.size > 5 * 1024 * 1024) {
-      setNoteDraftError('Image is too large. Please use a file under 5MB.');
+    if (file.size > 100 * 1024 * 1024) {
+      setNoteDraftError('Image is too large. Please use a file under 100MB.');
       event.target.value = '';
       return;
     }
@@ -1389,7 +1448,7 @@ export function EventPlannerPage() {
     event.target.value = '';
   };
 
-  const handleSavePlannerNote = () => {
+  const handleSavePlannerNote = async () => {
     const normalizedTitle = noteDraftTitle.trim();
     const normalizedBody = noteDraftBody.trim();
 
@@ -1399,22 +1458,49 @@ export function EventPlannerPage() {
       return;
     }
 
-    const nextNote: PlannerQuickNote = {
-      id: editingPlannerNoteId ?? `note-${Date.now()}`,
-      title: normalizedTitle || 'Untitled',
-      body: normalizedBody || 'No details provided.',
-      imageDataUrl: noteDraftImageDataUrl ?? undefined,
-    };
-
-    setPlannerNotes((previousNotes) => {
+    try {
       if (editingPlannerNoteId) {
-        return previousNotes.map((note) => (note.id === editingPlannerNoteId ? nextNote : note));
+        const updatedNote = await updateEventNote(selectedEventId, editingPlannerNoteId, {
+          title: normalizedTitle || 'Untitled',
+          body: normalizedBody || 'No details provided.',
+          imageDataUrl: noteDraftImageDataUrl ?? undefined,
+        });
+        setPlannerNotes((prev) =>
+          prev.map((n) => (n.id === editingPlannerNoteId ? updatedNote : n))
+        );
+      } else {
+        const newNote = await createEventNote(selectedEventId, {
+          title: normalizedTitle || 'Untitled',
+          body: normalizedBody || 'No details provided.',
+          imageDataUrl: noteDraftImageDataUrl ?? undefined,
+        });
+        setPlannerNotes((prev) => [newNote, ...prev]);
+      }
+      closePlannerNoteModal();
+    } catch (error: any) {
+      console.error('Failed to save planner note:', error);
+
+      let userMessage = 'Failed to save note. Please try again.';
+      if (error?.response) {
+        const status = error.response.status;
+        const serverMsg = error.response.data?.message || error.response.data?.error;
+        if (status === 500) {
+          userMessage = 'Server error: Unable to save note at this time.';
+        } else if (status === 400) {
+          userMessage = serverMsg
+            ? `Bad request: ${serverMsg}`
+            : 'Invalid note data. Please check your input.';
+        } else if (status === 404) {
+          userMessage = 'Event not found. Please refresh and try again.';
+        } else if (serverMsg) {
+          userMessage = `Error (${status}): ${serverMsg}`;
+        }
+      } else if (error?.message) {
+        userMessage = `Network error: ${error.message}`;
       }
 
-      return [nextNote, ...previousNotes];
-    });
-
-    closePlannerNoteModal();
+      setNoteDraftError(userMessage);
+    }
   };
 
   const handleCloseInlineNote = () => {
@@ -1435,29 +1521,55 @@ export function EventPlannerPage() {
     setIsNoteModalOpen(true);
   };
 
-  const handleDeletePlannerNote = (noteId: string) => {
-    setPlannerNotes((previousNotes) => previousNotes.filter((note) => note.id !== noteId));
+  const handleDeletePlannerNote = async (noteId: string) => {
+    try {
+      await deleteEventNote(selectedEventId, noteId);
+      setPlannerNotes((previousNotes) => previousNotes.filter((note) => note.id !== noteId));
 
-    if (editingPlannerNoteId === noteId) {
-      resetNoteDraft();
+      if (editingPlannerNoteId === noteId) {
+        resetNoteDraft();
+      }
+    } catch (error) {
+      console.error('Failed to delete planner note:', error);
     }
   };
 
-  const handleToggleTaskItem = (cardId: string, itemId: string) => {
+  const handleToggleTaskItem = async (cardId: string, itemId: string) => {
+    const card = plannerTaskCards.find((c) => c.id === cardId);
+    if (!card) return;
+    const item = card.items.find((i) => i.id === itemId);
+    if (!item) return;
+
+    const newStatus = !item.done;
+
     setPlannerTaskCards((previousCards) =>
-      previousCards.map((card) => {
-        if (card.id !== cardId) {
-          return card;
+      previousCards.map((c) => {
+        if (c.id !== cardId) {
+          return c;
         }
 
         return {
-          ...card,
-          items: card.items.map((item) =>
-            item.id === itemId ? { ...item, done: !item.done } : item
-          ),
+          ...c,
+          items: c.items.map((i) => (i.id === itemId ? { ...i, done: newStatus } : i)),
         };
       })
     );
+
+    try {
+      await updateEventChecklistItem(selectedEventId, cardId, itemId, newStatus);
+    } catch (error) {
+      console.error('Failed to update task item:', error);
+      // Revert on failure
+      setPlannerTaskCards((previousCards) =>
+        previousCards.map((c) => {
+          if (c.id !== cardId) return c;
+          return {
+            ...c,
+            items: c.items.map((i) => (i.id === itemId ? { ...i, done: !newStatus } : i)),
+          };
+        })
+      );
+    }
   };
 
   const handleAddEmptyTask = () => {
@@ -1501,8 +1613,10 @@ export function EventPlannerPage() {
       return;
     }
 
+    const taskStrId = String(droppedId);
+
     // find current task to inspect its lane
-    const current = boardTasks.find((t) => t.id === droppedId);
+    const current = boardTasks.find((t) => String(t.id) === taskStrId);
     if (!current) return;
 
     // disallow dragging back to To Do once it has been moved to In Progress
@@ -1527,7 +1641,7 @@ export function EventPlannerPage() {
 
     setBoardTasks((previousTasks) =>
       previousTasks.map((task) => {
-        if (task.id !== droppedId) return task;
+        if (String(task.id) !== taskStrId) return task;
 
         // when moving from To Do -> In Progress, auto-convert to a checklist if none exists
         if (task.lane === 'todo' && lane === 'in-progress') {
@@ -1558,26 +1672,26 @@ export function EventPlannerPage() {
             Array.isArray(task.checklist) && task.checklist.length > 0
               ? task.checklist
               : task.details
-                  .split('\n')
-                  .map((s) => s.trim())
-                  .filter(Boolean)
-                  .map((line, idx) => ({ id: `${task.id}-chk-${idx}`, label: line, done: false }));
+                .split('\n')
+                .map((s) => s.trim())
+                .filter(Boolean)
+                .map((line, idx) => ({ id: `${task.id}-chk-${idx}`, label: line, done: false }));
 
           const checklist =
             checklistSource.length > 0
               ? checklistSource.map((item) => ({
-                  ...item,
-                  done: true,
-                  doneAt: item.doneAt ?? timestamp,
-                }))
+                ...item,
+                done: true,
+                doneAt: item.doneAt ?? timestamp,
+              }))
               : [
-                  {
-                    id: `${task.id}-chk-0`,
-                    label: 'Task completed',
-                    done: true,
-                    doneAt: timestamp,
-                  },
-                ];
+                {
+                  id: `${task.id}-chk-0`,
+                  label: 'Task completed',
+                  done: true,
+                  doneAt: timestamp,
+                },
+              ];
 
           return { ...task, lane, checklist };
         }
@@ -1589,11 +1703,11 @@ export function EventPlannerPage() {
     setDraggedTaskId(null);
 
     try {
-      if (droppedId.startsWith('board-task-')) {
+      if (taskStrId.startsWith('board-task-')) {
         throw new Error('Please edit and save this new task first before moving it.');
       }
       const newStatus = mapLaneToBackendStatus(lane);
-      await moveBoardTask(selectedEventId, droppedId, {
+      await moveBoardTask(selectedEventId, taskStrId, {
         newStatus,
         newOrder: 0,
       });
@@ -1604,7 +1718,7 @@ export function EventPlannerPage() {
   };
 
   const openTaskPreview = (taskId: string) => {
-    const selectedTask = boardTasks.find((task) => task.id === taskId);
+    const selectedTask = boardTasks.find((task) => String(task.id) === String(taskId));
     setSelectedBoardTaskId(taskId);
     setTaskPreviewTitle(selectedTask?.title ?? '');
     setTaskPreviewDetails(selectedTask?.details ?? '');
@@ -1613,18 +1727,18 @@ export function EventPlannerPage() {
         ? selectedTask?.checklist?.length
           ? selectedTask.checklist
           : (selectedTask?.details ?? '')
-              .split('\n')
-              .map((line) => line.trim())
-              .filter(Boolean)
-              .map((line, index) => ({
-                id: `${selectedTask?.id ?? taskId}-chk-${index}`,
-                label: line,
-                done: false,
-              }))
+            .split('\n')
+            .map((line) => line.trim())
+            .filter(Boolean)
+            .map((line, index) => ({
+              id: `${selectedTask?.id ?? taskId}-chk-${index}`,
+              label: line,
+              done: false,
+            }))
         : (selectedTask?.checklist ?? []).map((item) => ({
-            ...item,
-            doneAt: item.doneAt,
-          }))
+          ...item,
+          doneAt: item.doneAt,
+        }))
     );
     setTaskActionMessage(`Editing ${selectedTask?.title || 'task'}.`);
     setTaskActionTone('info');
@@ -1669,12 +1783,12 @@ export function EventPlannerPage() {
         previousTasks.map((task) =>
           task.id === selectedBoardTaskId
             ? {
-                ...task,
-                id: savedTask.id,
-                title: savedTask.title,
-                details: savedTask.description || finalDetails,
-                checklist: normalizedChecklist,
-              }
+              ...task,
+              id: savedTask.id,
+              title: savedTask.title,
+              details: savedTask.description || finalDetails,
+              checklist: normalizedChecklist,
+            }
             : task
         )
       );
@@ -1689,15 +1803,17 @@ export function EventPlannerPage() {
     }
   };
 
-  const handleDeleteBoardTask = async (taskId: string) => {
-    const targetTask = boardTasks.find((task) => task.id === taskId);
+  const handleDeleteBoardTask = async (taskId: string | number) => {
+    const taskStrId = String(taskId);
+    const targetTask = boardTasks.find((task) => String(task.id) === taskStrId);
+    if (!targetTask) return;
 
     try {
-      if (!taskId.startsWith('board-task-')) {
-        await deleteBoardTask(selectedEventId, taskId);
+      if (!taskStrId.startsWith('board-task-')) {
+        await deleteBoardTask(selectedEventId, taskStrId);
       }
 
-      setBoardTasks((previousTasks) => previousTasks.filter((task) => task.id !== taskId));
+      setBoardTasks((previousTasks) => previousTasks.filter((task) => String(task.id) !== taskStrId));
       setTaskCardMenuOpenFor(null);
       setTaskActionMessage(`Deleted ${targetTask?.title || 'task'} successfully.`);
       setTaskActionTone('error');
@@ -1711,17 +1827,17 @@ export function EventPlannerPage() {
     const timestamp = new Date().toISOString();
 
     // Find the target task to prepare the updated checklist
-    const targetTask = boardTasks.find((t) => t.id === taskId);
+    const targetTask = boardTasks.find((t) => String(t.id) === String(taskId));
     if (!targetTask || !Array.isArray(targetTask.checklist)) return;
 
     // Calculate the new checklist state
     const updatedChecklist = targetTask.checklist.map((item) =>
       item.id === itemId
         ? {
-            ...item,
-            done: !item.done,
-            doneAt: !item.done ? timestamp : undefined,
-          }
+          ...item,
+          done: !item.done,
+          doneAt: !item.done ? timestamp : undefined,
+        }
         : item
     );
 
@@ -1793,44 +1909,71 @@ export function EventPlannerPage() {
     ? Math.round((checklistDoneCount / checklistItems.length) * 100)
     : 0;
 
-  const handleAddChecklistItem = () => {
-    if (!checklistTaskCard) {
-      return;
-    }
+  const handleAddChecklistItem = async () => {
+    if (!checklistTaskCard) return;
+
+    const nextLabel = `New checklist item ${checklistTaskCard.items.length + 1}`;
+    const tempId = `temp-${Date.now()}`;
 
     setPlannerTaskCards((previousCards) =>
       previousCards.map((card) => {
-        if (card.id !== checklistTaskCard.id) {
-          return card;
-        }
-
-        const nextItemId = `cost-${Date.now()}`;
-        const nextLabel = `New checklist item ${card.items.length + 1}`;
+        if (card.id !== checklistTaskCard.id) return card;
         return {
           ...card,
-          items: [...card.items, { id: nextItemId, label: nextLabel, done: false }],
+          items: [...card.items, { id: tempId, label: nextLabel, done: false }],
         };
       })
     );
+
+    try {
+      const addedItem = await addEventChecklistItem(selectedEventId, nextLabel);
+      setPlannerTaskCards((previousCards) =>
+        previousCards.map((card) => {
+          if (card.id !== checklistTaskCard.id) return card;
+          return {
+            ...card,
+            items: card.items.map((i) =>
+              i.id === tempId ? { ...i, id: addedItem.id || addedItem._id || tempId } : i
+            ),
+          };
+        })
+      );
+    } catch (e) {
+      console.error(e);
+      setPlannerTaskCards((previousCards) =>
+        previousCards.map((card) => {
+          if (card.id !== checklistTaskCard.id) return card;
+          return {
+            ...card,
+            items: card.items.filter((i) => i.id !== tempId),
+          };
+        })
+      );
+    }
   };
 
-  const handleRemoveChecklistItem = (itemId: string) => {
-    if (!checklistTaskCard) {
-      return;
-    }
+  const handleRemoveChecklistItem = async (itemId: string) => {
+    if (!checklistTaskCard) return;
 
+    const previousState = [...plannerTaskCards];
     setPlannerTaskCards((previousCards) =>
       previousCards.map((card) => {
-        if (card.id !== checklistTaskCard.id) {
-          return card;
-        }
-
+        if (card.id !== checklistTaskCard.id) return card;
         return {
           ...card,
           items: card.items.filter((item) => item.id !== itemId),
         };
       })
     );
+
+    try {
+      if (!itemId.startsWith('temp-')) {
+        await deleteEventChecklistItem(selectedEventId, itemId);
+      }
+    } catch (error) {
+      console.error('Failed to delete checklist item:', error);
+      setPlannerTaskCards(previousState);
+    }
   };
 
   const openChecklistDeleteValidation = (item: { id: string; label: string }) => {
@@ -2027,7 +2170,7 @@ export function EventPlannerPage() {
                         className={[
                           'min-w-0 flex-1 whitespace-pre-line',
                           card.valueClassName ??
-                            'text-[24px] font-black leading-none tracking-tight text-[#2f2b39]',
+                          'text-[24px] font-black leading-none tracking-tight text-[#2f2b39]',
                         ].join(' ')}
                       >
                         {card.value}
@@ -2048,14 +2191,21 @@ export function EventPlannerPage() {
                   <article className="min-h-[166px] rounded-lg border border-[#ded9e7] bg-white p-3 shadow-[0_2px_6px_rgba(31,18,54,0.05)]">
                     <p className="text-[12px] font-bold text-[#5e586d]">Service Requirements</p>
                     <div className="mt-2 space-y-1 text-[11px] leading-snug text-[#6f687f]">
-                      {eventAllocation?.food_package ? (
-                        <p className="font-semibold text-[#5a546a]">
-                          {eventAllocation.food_package}
-                        </p>
+                      {eventAllocation?.food_package || eventAllocation?.flow_type ? (
+                        <>
+                          {eventAllocation?.food_package && (
+                            <p className="font-semibold text-[#5a546a]">
+                              Food Package: {eventAllocation.food_package}
+                            </p>
+                          )}
+                          {eventAllocation?.flow_type && (
+                            <p className="font-semibold text-[#5a546a]">
+                              Flow Type: {eventAllocation.flow_type}
+                            </p>
+                          )}
+                        </>
                       ) : (
-                        overviewServiceRequirements.map((item, index) => (
-                          <p key={`${item}-${index}`}>{item}</p>
-                        ))
+                        <p className="italic text-[#8b84a0]">No service requirements specified.</p>
                       )}
                     </div>
                   </article>
@@ -2063,13 +2213,28 @@ export function EventPlannerPage() {
                   <article className="min-h-[112px] rounded-lg border border-[#ded9e7] bg-white p-3 shadow-[0_2px_6px_rgba(31,18,54,0.05)]">
                     <p className="text-[12px] font-bold text-[#5e586d]">Decorations</p>
                     <div className="mt-2 text-[10px] leading-snug text-[#6f687f]">
-                      <p>Theme: {eventAllocation?.theme || 'Enchanted Forest'}</p>
-                      <p>Fairy greens, hanging vines, twinkle lights, wood accents.</p>
-                      <p className="mt-1 font-semibold text-[#5a546a]">Materials</p>
-                      <p>1. Recycled crate centerpieces</p>
-                      <p>2. Rustic lantern lighting</p>
-                      <p>3. Willow arch and floral drapes</p>
-                      <p>4. Moss runner tablescape</p>
+                      {eventAllocation?.decorations ? (
+                        <>
+                          <p>Theme: {eventAllocation.decorations.theme || 'None specified'}</p>
+                          <p className="mt-1 font-semibold text-[#5a546a]">Materials</p>
+                          {eventAllocation.decorations.materials &&
+                            eventAllocation.decorations.materials.length > 0 ? (
+                            eventAllocation.decorations.materials.map(
+                              (mat: string, idx: number) => (
+                                <p key={idx}>
+                                  {idx + 1}. {mat}
+                                </p>
+                              )
+                            )
+                          ) : (
+                            <p className="italic text-[#8b84a0]">No materials specified.</p>
+                          )}
+                        </>
+                      ) : (
+                        <p className="italic text-[#8b84a0]">
+                          No decorations specified for this event.
+                        </p>
+                      )}
                     </div>
                   </article>
                 </div>
@@ -2077,53 +2242,38 @@ export function EventPlannerPage() {
                 <article className="min-h-[286px] rounded-lg border border-[#ded9e7] bg-white p-3 shadow-[0_2px_6px_rgba(31,18,54,0.05)]">
                   <p className="text-[12px] font-bold text-[#5e586d]">Allocation Resources</p>
                   <div className="mt-2 space-y-2">
-                    {eventAllocation ? (
-                      <>
-                        {eventAllocation.vendors && eventAllocation.vendors.length > 0 && (
-                          <div className="rounded-md border border-[#ece8f0] bg-[#fbf9fe] p-2.5 text-[10px] leading-snug text-[#6f687f]">
-                            <p className="text-[11px] font-black text-[#3a3442]">Vendors</p>
-                            <p className="mt-0.5 whitespace-pre-line break-words">
-                              {eventAllocation.vendors.map((v: any) => v.name || v.type).join('\n')}
-                            </p>
-                          </div>
+                    <div className="rounded-md border border-[#ece8f0] bg-[#fbf9fe] p-2.5 text-[10px] leading-snug text-[#6f687f]">
+                      <p className="text-[11px] font-black text-[#3a3442]">Vendors</p>
+                      <p className="mt-0.5 whitespace-pre-line break-words">
+                        {eventAllocation?.vendors && eventAllocation.vendors.length > 0 ? (
+                          eventAllocation.vendors.map((v: any) => v.name).join('\n')
+                        ) : (
+                          <span className="italic text-[#8b84a0]">None assigned</span>
                         )}
-                        {eventAllocation.manpower && eventAllocation.manpower.length > 0 && (
-                          <div className="rounded-md border border-[#ece8f0] bg-[#fbf9fe] p-2.5 text-[10px] leading-snug text-[#6f687f]">
-                            <p className="text-[11px] font-black text-[#3a3442]">Manpower</p>
-                            <p className="mt-0.5 whitespace-pre-line break-words">
-                              {eventAllocation.manpower
-                                .map((m: any) => m.name || m.role)
-                                .join('\n')}
-                            </p>
-                          </div>
+                      </p>
+                    </div>
+                    <div className="rounded-md border border-[#ece8f0] bg-[#fbf9fe] p-2.5 text-[10px] leading-snug text-[#6f687f]">
+                      <p className="text-[11px] font-black text-[#3a3442]">Manpower</p>
+                      <p className="mt-0.5 whitespace-pre-line break-words">
+                        {eventAllocation?.manpower && eventAllocation.manpower.length > 0 ? (
+                          eventAllocation.manpower.map((m: any) => m.role).join('\n')
+                        ) : (
+                          <span className="italic text-[#8b84a0]">None assigned</span>
                         )}
-                        {eventAllocation.supplies && eventAllocation.supplies.length > 0 && (
-                          <div className="rounded-md border border-[#ece8f0] bg-[#fbf9fe] p-2.5 text-[10px] leading-snug text-[#6f687f]">
-                            <p className="text-[11px] font-black text-[#3a3442]">Supplies</p>
-                            <p className="mt-0.5 whitespace-pre-line break-words">
-                              {eventAllocation.supplies
-                                .map((s: any) => s.name || s.item)
-                                .join('\n')}
-                            </p>
-                          </div>
+                      </p>
+                    </div>
+                    <div className="rounded-md border border-[#ece8f0] bg-[#fbf9fe] p-2.5 text-[10px] leading-snug text-[#6f687f]">
+                      <p className="text-[11px] font-black text-[#3a3442]">Supplies</p>
+                      <p className="mt-0.5 whitespace-pre-line break-words">
+                        {eventAllocation?.supplies && eventAllocation.supplies.length > 0 ? (
+                          eventAllocation.supplies
+                            .map((s: any) => `${s.item} (${s.quantity})`)
+                            .join('\n')
+                        ) : (
+                          <span className="italic text-[#8b84a0]">None assigned</span>
                         )}
-                      </>
-                    ) : (
-                      overviewAllocationResources.map((resource) => (
-                        <div
-                          key={resource.title}
-                          className="rounded-md border border-[#ece8f0] bg-[#fbf9fe] p-2.5 text-[10px] leading-snug text-[#6f687f]"
-                        >
-                          <p className="text-[11px] font-black text-[#3a3442]">{resource.title}</p>
-                          <p className="mt-0.5 whitespace-pre-line break-words">
-                            {resource.detail}
-                          </p>
-                          {resource.time ? (
-                            <p className="mt-1 text-[10px] text-[#8c8498]">{resource.time}</p>
-                          ) : null}
-                        </div>
-                      ))
-                    )}
+                      </p>
+                    </div>
                   </div>
                 </article>
 
@@ -2132,15 +2282,31 @@ export function EventPlannerPage() {
                   <div className="mt-2 space-y-2 text-[11px] leading-snug text-[#6f687f]">
                     <div className="min-h-[82px] rounded-md border border-[#ece8f0] bg-[#fbf9fe] p-2">
                       <p className="text-[11px] font-black text-[#3a3442]">Meetings</p>
-                      {overviewMeetings.map((meeting) => (
-                        <p key={meeting}>{meeting}</p>
-                      ))}
+                      {eventMeetings.length > 0 ? (
+                        <div className="mt-1 space-y-1">
+                          {eventMeetings.map((meeting) => (
+                            <div key={meeting.id || meeting._id}>
+                              <p className="font-semibold text-[#5a546a]">{meeting.title}</p>
+                              <p className="text-[10px] text-[#8c8498]">
+                                {meeting.startTime || meeting.time || ''}{' '}
+                                {meeting.endTime ? `- ${meeting.endTime}` : ''}
+                              </p>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <p className="italic text-[#8b84a0]">No scheduled meetings yet.</p>
+                      )}
                     </div>
                     <div className="min-h-[162px] rounded-md border border-[#ece8f0] bg-[#fbf9fe] p-2">
                       <p className="text-[11px] font-black text-[#3a3442]">Checked</p>
-                      {overviewChecklist.map((item) => (
-                        <p key={item}>• {item}</p>
-                      ))}
+                      {checklistItems.filter((item) => item.done).length > 0 ? (
+                        checklistItems
+                          .filter((item) => item.done)
+                          .map((item) => <p key={item.id}>• {item.label}</p>)
+                      ) : (
+                        <p className="italic text-[#8b84a0]">No completed checklist items.</p>
+                      )}
                     </div>
                   </div>
                 </article>
@@ -2148,20 +2314,29 @@ export function EventPlannerPage() {
                 <article className="min-h-[286px] rounded-lg border border-[#ded9e7] bg-white p-3 shadow-[0_2px_6px_rgba(31,18,54,0.05)]">
                   <p className="text-[12px] font-bold text-[#5e586d]">Program Flow</p>
                   <div className="mt-2 space-y-2">
-                    {overviewScheduleSummary.map((summary) => (
-                      <div
-                        key={summary.id}
-                        className="grid grid-cols-[76px_1fr] gap-2 text-[10px] leading-snug text-[#6f687f]"
-                      >
-                        <p>{summary.timeRange}</p>
-                        <div className="border-l border-[#ebe6f0] pl-2">
-                          <p className="text-[11px] font-black text-[#3a3442]">{summary.title}</p>
-                          <p className="mt-0.5 line-clamp-3 text-[10px] italic text-[#8a8495]">
-                            {summary.body}
+                    {overviewFlows.length > 0 ? (
+                      overviewFlows.map((flow) => (
+                        <div
+                          key={flow.id}
+                          className="grid grid-cols-[76px_1fr] gap-2 text-[10px] leading-snug text-[#6f687f]"
+                        >
+                          <p>
+                            {formatDisplayTime(flow.from, flow.startHour)} -{' '}
+                            {formatDisplayTime(flow.to, flow.endHour)}
                           </p>
+                          <div className="border-l border-[#ebe6f0] pl-2">
+                            <p className="text-[11px] font-black text-[#3a3442]">{flow.title}</p>
+                            <p className="mt-0.5 line-clamp-3 text-[10px] italic text-[#8a8495]">
+                              {flow.description || 'No description provided.'}
+                            </p>
+                          </div>
                         </div>
-                      </div>
-                    ))}
+                      ))
+                    ) : (
+                      <p className="text-[11px] italic text-[#8b84a0]">
+                        No program flow scheduled yet.
+                      </p>
+                    )}
                   </div>
                 </article>
               </div>
@@ -2357,11 +2532,10 @@ export function EventPlannerPage() {
                                           }}
                                         />
                                         <span
-                                          className={`min-w-0 flex-1 truncate text-[11px] font-medium ${
-                                            item.done
-                                              ? 'text-[#a29faf] line-through'
-                                              : 'text-[#5a546a]'
-                                          }`}
+                                          className={`min-w-0 flex-1 truncate text-[11px] font-medium ${item.done
+                                            ? 'text-[#a29faf] line-through'
+                                            : 'text-[#5a546a]'
+                                            }`}
                                         >
                                           {item.label}
                                         </span>
@@ -2631,7 +2805,10 @@ export function EventPlannerPage() {
               </button>
             </section>
           ) : activeTab === 'flow' ? (
-            <FlowNotesBoard />
+            <FlowNotesBoard
+              selectedEventId={selectedEventId}
+              eventDate={selectedProject.rawStartDate || ''}
+            />
           ) : (
             <section className="rounded-2xl border border-[#ddd8e8] bg-white px-4 py-10 text-center">
               <p className="text-sm font-semibold text-[#7c748f]">
@@ -2652,8 +2829,10 @@ export function EventPlannerPage() {
       >
         <DialogContent
           showCloseButton={false}
-          className="max-w-[calc(100%-1rem)] rounded-xl border border-[#e3dfea] bg-white p-0 sm:max-w-[600px] overflow-hidden shadow-2xl"
+          aria-describedby={undefined}
+          className="fixed left-[50%] top-[50%] z-[9999] grid w-full max-w-[calc(100%-1rem)] sm:max-w-[600px] translate-x-[-50%] translate-y-[-50%] gap-4 border border-[#e3dfea] bg-white p-0 shadow-2xl duration-200 rounded-xl overflow-hidden"
         >
+          <DialogTitle className="sr-only">Note Details</DialogTitle>
           <div className="flex max-h-[85vh] flex-col bg-white">
             <div className="overflow-y-auto [scrollbar-width:none]">
               {/* Image Header */}
@@ -2743,8 +2922,10 @@ export function EventPlannerPage() {
       >
         <DialogContent
           showCloseButton={false}
-          className="max-w-[calc(100%-1rem)] rounded-xl border border-[#e3dfea] bg-white p-0 sm:max-w-[760px]"
+          aria-describedby={undefined}
+          className="fixed left-[50%] top-[50%] z-[9999] grid w-full max-w-[calc(100%-1rem)] sm:max-w-[760px] translate-x-[-50%] translate-y-[-50%] gap-4 border border-[#e3dfea] bg-white p-0 shadow-lg duration-200 rounded-xl"
         >
+          <DialogTitle className="sr-only">Task Preview</DialogTitle>
           {selectedBoardTask ? (
             <article>
               <header className="flex items-center justify-between border-b border-[#eee9f2] px-4 py-2">
@@ -3001,7 +3182,11 @@ export function EventPlannerPage() {
                 </div>
               )}
             </article>
-          ) : null}
+          ) : (
+            <div className="flex items-center justify-center p-20 text-sm font-semibold text-gray-400">
+              {selectedBoardTaskId ? 'Loading task details...' : 'No task selected.'}
+            </div>
+          )}
         </DialogContent>
       </Dialog>
 
@@ -3015,8 +3200,10 @@ export function EventPlannerPage() {
       >
         <DialogContent
           showCloseButton={false}
-          className="max-w-[calc(100%-1rem)] rounded-2xl border border-[#e3dfea] bg-white p-0 sm:max-w-[520px]"
+          aria-describedby={undefined}
+          className="fixed left-[50%] top-[50%] z-[9999] grid w-full max-w-[calc(100%-1rem)] sm:max-w-[520px] translate-x-[-50%] translate-y-[-50%] gap-4 border border-[#e3dfea] bg-white p-0 shadow-lg duration-200 rounded-2xl"
         >
+          <DialogTitle className="sr-only">Delete Confirmation</DialogTitle>
           <form
             className="px-6 py-5"
             onSubmit={(event) => {

@@ -17,6 +17,7 @@ import {
   deleteCalendarEntry,
   markDoneCalendarEntry,
 } from '@/api/calendar';
+import { getEvents } from '@/api/events';
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 
 import { Button } from '@/components/ui/button';
@@ -40,6 +41,7 @@ type CalendarEntry = {
   location: string;
   description: string;
   eventType: string;
+  eventId?: string;
   isDone?: boolean;
 };
 
@@ -53,6 +55,7 @@ type DraftEntry = {
   location: string;
   description: string;
   eventType: string;
+  eventId?: string;
 };
 
 const weekdayLabels = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
@@ -256,6 +259,7 @@ export function CalendarPage() {
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [entryToDelete, setEntryToDelete] = useState<string | null>(null);
+  const [availableEvents, setAvailableEvents] = useState<any[]>([]);
   const [draftEntry, setDraftEntry] = useState<DraftEntry>(() => ({
     title: '',
     startDateKey: todayKey,
@@ -266,7 +270,20 @@ export function CalendarPage() {
     location: '',
     description: '',
     eventType: 'General',
+    eventId: '',
   }));
+
+  useEffect(() => {
+    const fetchAvailableEvents = async () => {
+      try {
+        const eventsData = await getEvents();
+        setAvailableEvents(eventsData);
+      } catch (error) {
+        console.error('Failed to load events:', error);
+      }
+    };
+    fetchAvailableEvents();
+  }, []);
 
   useEffect(() => {
     if (!isFilterMenuOpen) return;
@@ -344,6 +361,7 @@ export function CalendarPage() {
               location: item.location || '',
               description: item.description || '',
               eventType: item.eventType || 'General',
+              eventId: item.eventId || '',
               isDone: Boolean(item.isDone || item.status === 'Completed' || item.status === true),
             };
           });
@@ -532,7 +550,8 @@ export function CalendarPage() {
       type: draftEntry.label.toUpperCase(),
       location: draftEntry.location.trim(),
       description: draftEntry.description.trim(),
-      eventType: draftEntry.eventType,
+      eventType: draftEntry.eventType || 'General',
+      eventId: draftEntry.eventId || undefined,
       // JUST USE EXACT DATES AS SHOWN IN YOUR SWAGGER
       date: normalizedStartDateKey,
       endDate: normalizedEndDateKey,
@@ -1085,23 +1104,28 @@ export function CalendarPage() {
 
                   <div className="space-y-1.5">
                     <Label htmlFor="calendar-type" className="text-[11px] font-bold text-[#6a627c]">
-                      Event
+                      Link to Event (Optional)
                     </Label>
                     <select
                       id="calendar-type"
-                      value={draftEntry.eventType}
+                      value={draftEntry.eventId || ''}
                       onChange={(event) => {
+                        const selectedId = event.target.value;
+                        const selectedEvt = availableEvents.find((e) => e.id === selectedId);
                         setDraftEntry((previous) => ({
                           ...previous,
-                          eventType: event.target.value,
+                          eventId: selectedId,
+                          eventType: selectedEvt ? selectedEvt.title : 'General',
                         }));
                       }}
                       className="h-9 w-full rounded-lg border border-[#ddd8e8] bg-white px-2 text-xs font-semibold text-[#4c455e] outline-none focus:border-[#be8de4]"
                     >
-                      <option value="General">General</option>
-                      <option value="Booking">Booking</option>
-                      <option value="Client">Client</option>
-                      <option value="Supplier">Supplier</option>
+                      <option value="">-- No Linked Event --</option>
+                      {availableEvents.map((evt) => (
+                        <option key={evt.id} value={evt.id}>
+                          {evt.title || 'Untitled Event'}
+                        </option>
+                      ))}
                     </select>
                   </div>
 
@@ -1251,6 +1275,7 @@ export function CalendarPage() {
                                       location: entry.location,
                                       description: entry.description,
                                       eventType: entry.eventType,
+                                      eventId: entry.eventId || '',
                                     });
                                   }}
                                 >
@@ -1290,6 +1315,11 @@ export function CalendarPage() {
                             <div className="flex items-center gap-2.5">
                               <MapPin className="size-3.5 shrink-0 text-[#c5bdd1]" />
                               <span className="truncate">{entry.location}</span>
+                            </div>
+                          ) : null}
+                          {entry.eventType && entry.eventType !== 'General' ? (
+                            <div className="flex items-center gap-2.5 mt-1.5 text-[11px] font-semibold text-[#8f2bd2]">
+                              <span className="truncate">🔗 Linked to: {entry.eventType}</span>
                             </div>
                           ) : null}
                         </div>
