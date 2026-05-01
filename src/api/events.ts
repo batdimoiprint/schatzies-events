@@ -178,6 +178,14 @@ export async function updateEvent(
   return response.data.event;
 }
 
+export async function patchEvent(
+  eventId: string,
+  payload: Partial<UpdateEventPayload>
+): Promise<BackendEvent> {
+  const response = await axiosInstance.patch(`/events/${eventId}`, payload);
+  return response.data.event;
+}
+
 export async function deleteEvent(eventId: string): Promise<void> {
   await axiosInstance.delete(`/events/${eventId}`);
 }

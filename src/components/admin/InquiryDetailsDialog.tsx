@@ -13,7 +13,12 @@ import { Input } from '@/components/ui/input';
 import { Calendar as CalendarIcon, Check, Copy, Eye, EyeOff, Loader2 } from 'lucide-react';
 import { createEvent } from '@/api/events';
 import { updateCalendarEntry } from '@/api/calendar';
-import { checkUserRegistered, updateInquiryStatus } from '@/api/inquiries';
+import {
+  checkUserRegistered,
+  updateInquiryStatus,
+  getInquiryStatusOptions,
+  INQUIRY_STATUS_OPTIONS,
+} from '@/api/inquiries';
 import { createUser } from '@/api/users';
 
 interface InquiryMeetingDetails {
@@ -78,63 +83,24 @@ interface InquiryDetailsDialogProps {
   onInquiryUpdated: (updatedInquiry: InquiryRecord) => void;
 }
 
-type InquiryStatusOption = {
-  value: string;
-  label: string;
-  disabled?: boolean;
-};
-
 function normalizeInquiryStatus(status?: string) {
   const normalized = String(status || '')
     .trim()
     .toLowerCase();
 
   if (!normalized || normalized === 'new' || normalized === 'pending') {
-    return 'Pending Review';
+    return INQUIRY_STATUS_OPTIONS.PENDING_REVIEW;
   }
 
   if (normalized === 'resolved') {
-    return 'Approved';
+    return INQUIRY_STATUS_OPTIONS.APPROVED;
   }
 
   if (normalized === 'in progress') {
-    return 'Requires Clarification';
+    return INQUIRY_STATUS_OPTIONS.REQUIRES_CLARIFICATION;
   }
 
   return String(status || '').trim();
-}
-
-function getInquiryStatusOptions(currentStatus?: string): InquiryStatusOption[] {
-  const normalized = String(currentStatus || '')
-    .trim()
-    .toLowerCase();
-  const displayStatus = normalizeInquiryStatus(currentStatus);
-
-  if (normalized === 'pending review' || normalized === 'new' || normalized === 'pending') {
-    return [
-      { value: displayStatus, label: displayStatus, disabled: true },
-      { value: 'Requires Clarification', label: 'Requires Clarification' },
-      { value: 'Approved', label: 'Approved', disabled: true },
-      { value: 'Declined', label: 'Declined', disabled: true },
-    ];
-  }
-
-  const options: InquiryStatusOption[] = [
-    { value: 'Requires Clarification', label: 'Requires Clarification' },
-    { value: 'Approved', label: 'Approved' },
-    { value: 'Declined', label: 'Declined' },
-  ];
-
-  if (displayStatus && !options.some((option) => option.value === displayStatus)) {
-    options.unshift({ value: displayStatus, label: displayStatus, disabled: true });
-  } else {
-    const currentIndex = options.findIndex((option) => option.value === displayStatus);
-    if (currentIndex >= 0) {
-      options[currentIndex] = { ...options[currentIndex], disabled: true };
-    }
-  }
-
-  return options;
 }
 
 function buildEventDateTime(dateValue?: string, timeValue?: string) {
@@ -247,12 +213,6 @@ export function InquiryDetailsDialog({
     const eventTimeSource = String(
       selectedInquiry?.meetingDetails?.time || selectedInquiry?.meetingDetails?.startTime || ''
     ).trim();
-    const eventLocation = String(
-      selectedInquiry?.meetingDetails?.location ||
-        selectedInquiry.location ||
-        selectedInquiry.venue ||
-        ''
-    ).trim();
     const eventTitle = String(
       selectedInquiry?.title ||
         selectedInquiry?.subject ||
@@ -260,7 +220,7 @@ export function InquiryDetailsDialog({
         `${selectedInquiry.firstName || 'Client'} ${selectedInquiry.lastName || 'Inquiry'} Event`
     ).trim();
 
-    const canCreateApprovedEvent = pendingStatus === 'Approved';
+    const canCreateApprovedEvent = pendingStatus === INQUIRY_STATUS_OPTIONS.APPROVED;
 
     if (canCreateApprovedEvent) {
       if (!clientId) {
@@ -308,8 +268,8 @@ export function InquiryDetailsDialog({
                 : undefined,
             eventDate,
             eventTime: eventTimeSource || '00:00',
-            eventLocation,
-            venue: eventLocation,
+            eventLocation: '',
+            venue: '',
             status: 'Planning',
           });
         } catch (createError) {

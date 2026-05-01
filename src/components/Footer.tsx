@@ -13,7 +13,7 @@ const Footer = ({ showScrollTop = true }: FooterProps) => {
     <footer className="relative bg-gradient-to-b from-[#f8d0e3] to-[#f5c3d9] pt-12 pb-6 lg:pt-16 lg:pb-8">
       <div className="mx-auto max-w-[90rem] px-6 lg:px-12">
         {/* Main Footer Content */}
-        <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-4">
+        <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3">
           {/* Brand Column */}
           <div className="space-y-4">
             <img
@@ -25,49 +25,6 @@ const Footer = ({ showScrollTop = true }: FooterProps) => {
               Creating unforgettable moments and turning your dream events into reality with
               precision, passion, and perfection.
             </p>
-          </div>
-
-          {/* Quick Links */}
-          <div>
-            <h4 className="font-heading text-lg font-bold text-[#1a1225] mb-4">Quick Links</h4>
-            <ul className="space-y-2 text-sm text-[#3d2052]">
-              <li>
-                <a
-                  href="#"
-                  onClick={(event) => event.preventDefault()}
-                  className="hover:text-[#e61f83] transition-colors"
-                >
-                  Home
-                </a>
-              </li>
-              <li>
-                <a
-                  href="#"
-                  onClick={(event) => event.preventDefault()}
-                  className="hover:text-[#e61f83] transition-colors"
-                >
-                  Gallery
-                </a>
-              </li>
-              <li>
-                <a
-                  href="#"
-                  onClick={(event) => event.preventDefault()}
-                  className="hover:text-[#e61f83] transition-colors"
-                >
-                  Services
-                </a>
-              </li>
-              <li>
-                <a
-                  href="#"
-                  onClick={(event) => event.preventDefault()}
-                  className="hover:text-[#e61f83] transition-colors"
-                >
-                  Testimonials
-                </a>
-              </li>
-            </ul>
           </div>
 
           {/* Contact Info */}

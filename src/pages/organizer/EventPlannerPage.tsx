@@ -26,7 +26,6 @@ import {
   getBoardTasks,
   createBoardTask,
   updateBoardTask,
-  moveBoardTask,
   deleteBoardTask,
 } from '@/api/planner-tasks';
 import {
@@ -37,10 +36,6 @@ import {
   createEventNote,
   updateEventNote,
   deleteEventNote,
-  getEventChecklist,
-  updateEventChecklistItem,
-  addEventChecklistItem,
-  deleteEventChecklistItem,
   getEventFlow,
   saveEventFlow,
   deleteEventActivity,
@@ -187,31 +182,31 @@ const taskLaneConfig: Array<{
   cardOuterClassName: string;
   cardTitleClassName: string;
 }> = [
-    {
-      id: 'todo',
-      label: 'To Do',
-      dotClassName: 'bg-[#e6d81d]',
-      panelClassName: 'border-[#e4e4d0] bg-[#fafaf4]',
-      cardOuterClassName: 'border-[#cae4cb] bg-[#dff0e0]',
-      cardTitleClassName: 'text-[#4f8759]',
-    },
-    {
-      id: 'in-progress',
-      label: 'In Progress',
-      dotClassName: 'bg-[#2ea4ff]',
-      panelClassName: 'border-[#d3e7f7] bg-[#f4f9ff]',
-      cardOuterClassName: 'border-[#ead4e9] bg-[#f0ddf0]',
-      cardTitleClassName: 'text-[#712466]',
-    },
-    {
-      id: 'completed',
-      label: 'Completed',
-      dotClassName: 'bg-[#2ec24f]',
-      panelClassName: 'border-[#d8eddc] bg-[#f5fcf7]',
-      cardOuterClassName: 'border-[#d4dfec] bg-[#deebf8]',
-      cardTitleClassName: 'text-[#1f4c82]',
-    },
-  ];
+  {
+    id: 'todo',
+    label: 'To Do',
+    dotClassName: 'bg-[#e6d81d]',
+    panelClassName: 'border-[#e4e4d0] bg-[#fafaf4]',
+    cardOuterClassName: 'border-[#cae4cb] bg-[#dff0e0]',
+    cardTitleClassName: 'text-[#4f8759]',
+  },
+  {
+    id: 'in-progress',
+    label: 'In Progress',
+    dotClassName: 'bg-[#2ea4ff]',
+    panelClassName: 'border-[#d3e7f7] bg-[#f4f9ff]',
+    cardOuterClassName: 'border-[#ead4e9] bg-[#f0ddf0]',
+    cardTitleClassName: 'text-[#712466]',
+  },
+  {
+    id: 'completed',
+    label: 'Completed',
+    dotClassName: 'bg-[#2ec24f]',
+    panelClassName: 'border-[#d8eddc] bg-[#f5fcf7]',
+    cardOuterClassName: 'border-[#d4dfec] bg-[#deebf8]',
+    cardTitleClassName: 'text-[#1f4c82]',
+  },
+];
 
 // Utility functions moved outside component to avoid recreating on every render
 const formatTimeInput = (hour: number, minute = 0) => {
@@ -578,56 +573,77 @@ function FlowNotesBoard({
   }, [timelineBlocks]);
 
   const positionedTimelineBlocks = useMemo(() => {
-    const sortedSameHourBlocks = new Map<number, typeof timelineBlocks>();
+    // 1. Sort all blocks by start time, then duration (longest first)
+    const sortedBlocks = [...timelineBlocks].sort((a, b) => {
+      const aStart = parseTimeParts(a.from, a.startHour).totalMinutes;
+      const bStart = parseTimeParts(b.from, b.startHour).totalMinutes;
+      if (aStart !== bStart) return aStart - bStart;
 
-    timelineBlocks.forEach((block) => {
-      const sameHourBlocks = sortedSameHourBlocks.get(block.startHour) ?? [];
-      sameHourBlocks.push(block);
-      sortedSameHourBlocks.set(block.startHour, sameHourBlocks);
+      const aEnd = parseTimeParts(a.to, a.endHour).totalMinutes;
+      const bEnd = parseTimeParts(b.to, b.endHour).totalMinutes;
+      return bEnd - bStart - (aEnd - aStart); // Longest first
     });
 
-    sortedSameHourBlocks.forEach((blocks, startHour) => {
-      blocks.sort((first, second) => {
-        const firstParts = parseTimeParts(first.from, first.startHour);
-        const secondParts = parseTimeParts(second.from, second.startHour);
-
-        if (firstParts.minute !== secondParts.minute) return firstParts.minute - secondParts.minute;
-        if (firstParts.totalMinutes !== secondParts.totalMinutes)
-          return firstParts.totalMinutes - secondParts.totalMinutes;
-        return first.id.localeCompare(second.id);
-      });
-      sortedSameHourBlocks.set(startHour, blocks);
-    });
-
-    const slotWidth = 25;
+    const slotWidth = 25; // Base width percentage
     const slotGap = 2.5;
 
-    return timelineBlocks.map((block) => {
+    // Array to keep track of columns (each column is an array of placed blocks)
+    const columns: (typeof sortedBlocks)[] = [];
+
+    return sortedBlocks.map((block) => {
       const startParts = parseTimeParts(block.from, block.startHour);
       const endParts = parseTimeParts(block.to, block.endHour);
-      const sameHourBlocks = sortedSameHourBlocks.get(block.startHour) ?? [];
-      const slotIndex = sameHourBlocks.findIndex((item) => item.id === block.id);
 
-      // 1. Calculate absolute minutes elapsed since the very top of the visible board
+      const startMinutes = startParts.totalMinutes;
+      const endMinutes = endParts.totalMinutes;
+
+      // Find the first column where this block fits (i.e., doesn't overlap with the last block in that column)
+      let columnIndex = 0;
+      let placed = false;
+
+      for (let i = 0; i < columns.length; i++) {
+        const column = columns[i];
+        const lastBlockInColumn = column[column.length - 1];
+        const lastBlockEndMinutes = parseTimeParts(
+          lastBlockInColumn.to,
+          lastBlockInColumn.endHour
+        ).totalMinutes;
+
+        // If the current block starts after or exactly when the last block in this column ends
+        if (startMinutes >= lastBlockEndMinutes) {
+          column.push(block);
+          columnIndex = i;
+          placed = true;
+          break;
+        }
+      }
+
+      // If it didn't fit in any existing column, create a new one
+      if (!placed) {
+        columns.push([block]);
+        columnIndex = columns.length - 1;
+      }
+
       const boardStartHour = visibleHours.length > 0 ? visibleHours[0] : timelineStartHour;
       const boardStartMinutes = boardStartHour * 60;
-      const absoluteStartMinutes = startParts.totalMinutes - boardStartMinutes;
-      const absoluteEndMinutes = endParts.totalMinutes - boardStartMinutes;
 
-      // 2. Exact duration
+      const absoluteStartMinutes = startMinutes - boardStartMinutes;
+      const absoluteEndMinutes = endMinutes - boardStartMinutes;
+
       const durationMinutes = Math.max(30, absoluteEndMinutes - absoluteStartMinutes);
 
-      // 3. Convert minutes directly to pixels (58px per 60 mins)
       const topPixels = (absoluteStartMinutes / 60) * hourRowHeight;
       const heightPixels = (durationMinutes / 60) * hourRowHeight;
 
-      // 4. Visual gaps to avoid covering grid lines
       const verticalGap = 4;
       const finalTop = topPixels + verticalGap;
       const finalHeight = heightPixels - verticalGap * 2;
 
-      const left = 2 + slotIndex * (slotWidth + slotGap);
-      const width = Math.max(20, slotWidth - Math.min(slotIndex, 2) * 2);
+      // Calculate left position based on the assigned column
+      // We cap the visual shift at 3 columns to prevent it from going off-screen
+      const displayColumnIndex = Math.min(columnIndex, 3);
+      const left = 2 + displayColumnIndex * (slotWidth + slotGap);
+      const width = Math.max(20, slotWidth - Math.min(displayColumnIndex, 2) * 2);
 
       return {
         ...block,
@@ -844,7 +860,7 @@ function FlowNotesBoard({
         <DialogContent
           showCloseButton={false}
           aria-describedby={undefined}
-          className="fixed left-[50%] top-[50%] z-[9999] grid w-full max-w-[calc(100%-1rem)] sm:max-w-[640px] translate-x-[-50%] translate-y-[-50%] gap-4 border border-[#e3dfea] bg-white p-0 shadow-lg duration-200 rounded-2xl"
+          className="fixed left-[50%] top-[50%] z-[100000] w-full max-w-[calc(100%-1rem)] -translate-x-1/2 -translate-y-1/2 rounded-2xl border border-[#e3dfea] bg-white p-0 shadow-2xl sm:max-w-[640px] overflow-hidden"
         >
           <DialogTitle className="sr-only">Activity Details</DialogTitle>
           <form className="px-6 py-5" onSubmit={handleSaveActivity}>
@@ -1185,10 +1201,10 @@ export function EventPlannerPage() {
             if (isMounted) {
               setCurrentClientName(
                 userData?.name ||
-                userData?.firstName ||
-                userData?.realName ||
-                userData?.clientName ||
-                ''
+                  userData?.firstName ||
+                  userData?.realName ||
+                  userData?.clientName ||
+                  ''
               );
             }
           })
@@ -1233,8 +1249,8 @@ export function EventPlannerPage() {
         if (isMounted) {
           const mappedFlows = Array.isArray(flowData)
             ? flowData
-              .map((item: any, index: number) => mapBackendFlowToUI(item, index))
-              .sort((a: any, b: any) => a.startHour - b.startHour)
+                .map((item: any, index: number) => mapBackendFlowToUI(item, index))
+                .sort((a: any, b: any) => a.startHour - b.startHour)
             : [];
           setOverviewFlows(mappedFlows);
         }
@@ -1244,20 +1260,12 @@ export function EventPlannerPage() {
       }
 
       try {
-        const [notesResponse, checklistResponse] = await Promise.all([
-          getEventNotes(selectedEventId),
-          getEventChecklist(selectedEventId),
-        ]);
+        const notesResponse = await getEventNotes(selectedEventId);
         if (isMounted) {
           setPlannerNotes(notesResponse);
-          if (checklistResponse && checklistResponse.length > 0) {
-            setPlannerTaskCards(checklistResponse);
-          } else {
-            setPlannerTaskCards(taskCards);
-          }
         }
       } catch (error) {
-        console.error('Failed to load notes or checklist:', error);
+        console.error('Failed to load notes:', error);
       }
 
       try {
@@ -1272,9 +1280,9 @@ export function EventPlannerPage() {
           const group = backendTasks[status] || [];
           group.forEach((task: any) => {
             formattedTasks.push({
-              id: task.id,
-              title: task.title,
-              details: task.description,
+              id: String(task.id || task._id), // Clean ID assignment
+              title: task.title || 'Untitled',
+              details: task.description || '',
               editorType: 'Text',
               lane: mapBackendStatusToLane(task.status || status),
               checklist: [],
@@ -1363,10 +1371,12 @@ export function EventPlannerPage() {
       {
         id: 'overview-package',
         label: 'Event Package',
-        value: selectedEventDetails?.package?.name ||
+        value:
+          selectedEventDetails?.package?.name ||
           selectedEventDetails?.eventPackage ||
           selectedEventDetails?.eventPackageKey ||
-          selectedProject.eventPackage || 'N/A',
+          selectedProject.eventPackage ||
+          'N/A',
         imageSrc: '/Pictures/organizerpics/event-package-illustration.png',
         accent: 'text-[#6b2aa5] bg-[#fbf6ff] border-[#eee3fb]',
         valueClassName: 'text-[14px] font-semibold leading-[1.15] text-[#6d677b]',
@@ -1374,7 +1384,12 @@ export function EventPlannerPage() {
       {
         id: 'overview-pax',
         label: 'Event Pax',
-        value: String(selectedEventDetails?.package?.pax || selectedEventDetails?.eventPax || selectedProject.eventPax || '0'),
+        value: String(
+          selectedEventDetails?.package?.pax ||
+            selectedEventDetails?.eventPax ||
+            selectedProject.eventPax ||
+            '0'
+        ),
         imageSrc: '/Pictures/organizerpics/event-pax-illustration.png',
         accent: 'text-[#88511a] bg-[#fff8ef] border-[#f3e2cc]',
         valueClassName: 'text-[32px] font-semibold leading-none tracking-tight text-[#4f4a58]',
@@ -1534,42 +1549,18 @@ export function EventPlannerPage() {
     }
   };
 
-  const handleToggleTaskItem = async (cardId: string, itemId: string) => {
-    const card = plannerTaskCards.find((c) => c.id === cardId);
-    if (!card) return;
-    const item = card.items.find((i) => i.id === itemId);
-    if (!item) return;
-
-    const newStatus = !item.done;
-
+  const handleToggleTaskItem = (cardId: string, itemId: string) => {
     setPlannerTaskCards((previousCards) =>
-      previousCards.map((c) => {
-        if (c.id !== cardId) {
-          return c;
-        }
-
+      previousCards.map((card) => {
+        if (card.id !== cardId) return card;
         return {
-          ...c,
-          items: c.items.map((i) => (i.id === itemId ? { ...i, done: newStatus } : i)),
+          ...card,
+          items: card.items.map((item) =>
+            item.id === itemId ? { ...item, done: !item.done } : item
+          ),
         };
       })
     );
-
-    try {
-      await updateEventChecklistItem(selectedEventId, cardId, itemId, newStatus);
-    } catch (error) {
-      console.error('Failed to update task item:', error);
-      // Revert on failure
-      setPlannerTaskCards((previousCards) =>
-        previousCards.map((c) => {
-          if (c.id !== cardId) return c;
-          return {
-            ...c,
-            items: c.items.map((i) => (i.id === itemId ? { ...i, done: !newStatus } : i)),
-          };
-        })
-      );
-    }
   };
 
   const handleAddEmptyTask = () => {
@@ -1608,42 +1599,27 @@ export function EventPlannerPage() {
   const handleDropTaskToLane = async (event: DragEvent<HTMLElement>, lane: TaskLane) => {
     event.preventDefault();
     const droppedId = event.dataTransfer.getData('text/plain') || draggedTaskId;
-
-    if (!droppedId) {
-      return;
-    }
+    if (!droppedId) return;
 
     const taskStrId = String(droppedId);
-
-    // find current task to inspect its lane
     const current = boardTasks.find((t) => String(t.id) === taskStrId);
     if (!current) return;
 
-    // disallow dragging back to To Do once it has been moved to In Progress
-    if (current.lane === 'in-progress' && lane === 'todo') {
-      return;
-    }
+    if (current.lane === 'in-progress' && lane === 'todo') return;
+    if (current.lane === 'completed' && lane !== 'completed') return;
 
-    // disallow moving completed tasks back to other lanes
-    if (current.lane === 'completed' && lane !== 'completed') {
-      return;
-    }
-
-    // only allow In Progress -> Completed when every checklist item is checked
     if (current.lane === 'in-progress' && lane === 'completed') {
       const checklist = Array.isArray(current.checklist) ? current.checklist : [];
-      if (checklist.length === 0 || checklist.some((item) => !item.done)) {
-        return;
-      }
+      if (checklist.length === 0 || checklist.some((item) => !item.done)) return;
     }
 
     const previousTasksState = [...boardTasks];
 
+    // Optimistic Update
     setBoardTasks((previousTasks) =>
       previousTasks.map((task) => {
         if (String(task.id) !== taskStrId) return task;
 
-        // when moving from To Do -> In Progress, auto-convert to a checklist if none exists
         if (task.lane === 'todo' && lane === 'in-progress') {
           const hasChecklist = Array.isArray(task.checklist) && task.checklist.length > 0;
           if (!hasChecklist) {
@@ -1656,42 +1632,36 @@ export function EventPlannerPage() {
             if (items.length === 0) {
               items.push({ id: `${task.id}-chk-0`, label: 'New checklist item', done: false });
             }
-
             return { ...task, lane, checklist: items };
           }
         }
 
         if (lane === 'completed') {
           const timestamp = new Date().toISOString();
-          const checklistSource: Array<{
-            id: string;
-            label: string;
-            done: boolean;
-            doneAt?: string;
-          }> =
+          const checklistSource: any[] =
             Array.isArray(task.checklist) && task.checklist.length > 0
               ? task.checklist
               : task.details
-                .split('\n')
-                .map((s) => s.trim())
-                .filter(Boolean)
-                .map((line, idx) => ({ id: `${task.id}-chk-${idx}`, label: line, done: false }));
+                  .split('\n')
+                  .map((s) => s.trim())
+                  .filter(Boolean)
+                  .map((line, idx) => ({ id: `${task.id}-chk-${idx}`, label: line, done: false }));
 
           const checklist =
             checklistSource.length > 0
               ? checklistSource.map((item) => ({
-                ...item,
-                done: true,
-                doneAt: item.doneAt ?? timestamp,
-              }))
-              : [
-                {
-                  id: `${task.id}-chk-0`,
-                  label: 'Task completed',
+                  ...item,
                   done: true,
-                  doneAt: timestamp,
-                },
-              ];
+                  doneAt: (item as any).doneAt ?? timestamp,
+                }))
+              : [
+                  {
+                    id: `${task.id}-chk-0`,
+                    label: 'Task completed',
+                    done: true,
+                    doneAt: timestamp,
+                  },
+                ];
 
           return { ...task, lane, checklist };
         }
@@ -1699,17 +1669,20 @@ export function EventPlannerPage() {
         return { ...task, lane };
       })
     );
-
     setDraggedTaskId(null);
 
+    // API Call
     try {
       if (taskStrId.startsWith('board-task-')) {
         throw new Error('Please edit and save this new task first before moving it.');
       }
+
       const newStatus = mapLaneToBackendStatus(lane);
-      await moveBoardTask(selectedEventId, taskStrId, {
-        newStatus,
-        newOrder: 0,
+      await updateBoardTask(selectedEventId, taskStrId, {
+        title: current.title,
+        description: current.details,
+        status: newStatus,
+        checklist: current.checklist,
       });
     } catch (error) {
       setBoardTasks(previousTasksState);
@@ -1727,18 +1700,18 @@ export function EventPlannerPage() {
         ? selectedTask?.checklist?.length
           ? selectedTask.checklist
           : (selectedTask?.details ?? '')
-            .split('\n')
-            .map((line) => line.trim())
-            .filter(Boolean)
-            .map((line, index) => ({
-              id: `${selectedTask?.id ?? taskId}-chk-${index}`,
-              label: line,
-              done: false,
-            }))
+              .split('\n')
+              .map((line) => line.trim())
+              .filter(Boolean)
+              .map((line, index) => ({
+                id: `${selectedTask?.id ?? taskId}-chk-${index}`,
+                label: line,
+                done: false,
+              }))
         : (selectedTask?.checklist ?? []).map((item) => ({
-          ...item,
-          doneAt: item.doneAt,
-        }))
+            ...item,
+            doneAt: item.doneAt,
+          }))
     );
     setTaskActionMessage(`Editing ${selectedTask?.title || 'task'}.`);
     setTaskActionTone('info');
@@ -1746,21 +1719,12 @@ export function EventPlannerPage() {
   };
 
   const handleSaveTaskPreview = async () => {
-    if (!selectedBoardTaskId || selectedBoardTask?.lane !== 'todo') {
-      return;
-    }
+    if (!selectedBoardTaskId || selectedBoardTask?.lane !== 'todo') return;
 
     const normalizedChecklist = taskPreviewChecklist
-      .map((item) => ({
-        ...item,
-        label: item.label.trim(),
-      }))
+      .map((item) => ({ ...item, label: item.label.trim() }))
       .filter((item) => item.label.length > 0)
-      .map((item) => ({
-        id: item.id,
-        label: item.label,
-        done: false,
-      }));
+      .map((item) => ({ id: item.id, label: item.label, done: false }));
 
     const normalizedDetails = taskPreviewDetails.trim();
     const finalDetails =
@@ -1779,23 +1743,26 @@ export function EventPlannerPage() {
         savedTask = await updateBoardTask(selectedEventId, selectedBoardTaskId, payload);
       }
 
+      // Safe extraction accounting for nested backend responses
+      const actualTask = (savedTask as any)?.task || (savedTask as any)?.data || savedTask || {};
+      const newId = actualTask?.id || actualTask?._id || selectedBoardTaskId;
+
       setBoardTasks((previousTasks) =>
         previousTasks.map((task) =>
-          task.id === selectedBoardTaskId
+          String(task.id) === String(selectedBoardTaskId)
             ? {
-              ...task,
-              id: savedTask.id,
-              title: savedTask.title,
-              details: savedTask.description || finalDetails,
-              checklist: normalizedChecklist,
-            }
+                ...task,
+                id: String(newId),
+                title: payload.title,
+                details: finalDetails,
+                checklist: normalizedChecklist,
+              }
             : task
         )
       );
 
-      setTaskActionMessage(`Saved ${taskPreviewTitle || 'task'} successfully.`);
+      setTaskActionMessage(`Saved ${payload.title} successfully.`);
       setTaskActionTone('success');
-
       setIsTaskPreviewOpen(false);
       setSelectedBoardTaskId(null);
     } catch (error) {
@@ -1813,7 +1780,9 @@ export function EventPlannerPage() {
         await deleteBoardTask(selectedEventId, taskStrId);
       }
 
-      setBoardTasks((previousTasks) => previousTasks.filter((task) => String(task.id) !== taskStrId));
+      setBoardTasks((previousTasks) =>
+        previousTasks.filter((task) => String(task.id) !== taskStrId)
+      );
       setTaskCardMenuOpenFor(null);
       setTaskActionMessage(`Deleted ${targetTask?.title || 'task'} successfully.`);
       setTaskActionTone('error');
@@ -1826,33 +1795,25 @@ export function EventPlannerPage() {
     if (!selectedEventId) return;
     const timestamp = new Date().toISOString();
 
-    // Find the target task to prepare the updated checklist
     const targetTask = boardTasks.find((t) => String(t.id) === String(taskId));
     if (!targetTask || !Array.isArray(targetTask.checklist)) return;
 
-    // Calculate the new checklist state
     const updatedChecklist = targetTask.checklist.map((item) =>
       item.id === itemId
-        ? {
-          ...item,
-          done: !item.done,
-          doneAt: !item.done ? timestamp : undefined,
-        }
+        ? { ...item, done: !item.done, doneAt: !item.done ? timestamp : undefined }
         : item
     );
 
     const previousTasksState = [...boardTasks];
 
-    // Optimistic UI update
     setBoardTasks((previousTasks) =>
       previousTasks.map((task) =>
-        task.id === taskId ? { ...task, checklist: updatedChecklist } : task
+        String(task.id) === String(taskId) ? { ...task, checklist: updatedChecklist } : task
       )
     );
 
     try {
-      if (taskId.startsWith('board-task-')) {
-        // Can't toggle unpersisted items in the backend yet
+      if (String(taskId).startsWith('board-task-')) {
         throw new Error('Please edit and save this new task first before modifying its checklist.');
       }
 
@@ -1862,9 +1823,8 @@ export function EventPlannerPage() {
         checklist: updatedChecklist,
       };
 
-      await updateBoardTask(selectedEventId, taskId, payload);
+      await updateBoardTask(selectedEventId, String(taskId), payload);
     } catch (error) {
-      // Revert on failure
       setBoardTasks(previousTasksState);
       alert(error instanceof Error ? error.message : 'Failed to update checklist item.');
     }
@@ -1909,53 +1869,24 @@ export function EventPlannerPage() {
     ? Math.round((checklistDoneCount / checklistItems.length) * 100)
     : 0;
 
-  const handleAddChecklistItem = async () => {
+  const handleAddChecklistItem = () => {
     if (!checklistTaskCard) return;
-
-    const nextLabel = `New checklist item ${checklistTaskCard.items.length + 1}`;
-    const tempId = `temp-${Date.now()}`;
-
     setPlannerTaskCards((previousCards) =>
       previousCards.map((card) => {
         if (card.id !== checklistTaskCard.id) return card;
+
+        const nextItemId = `cost-${Date.now()}`;
+        const nextLabel = `New checklist item ${card.items.length + 1}`;
         return {
           ...card,
-          items: [...card.items, { id: tempId, label: nextLabel, done: false }],
+          items: [...card.items, { id: nextItemId, label: nextLabel, done: false }],
         };
       })
     );
-
-    try {
-      const addedItem = await addEventChecklistItem(selectedEventId, nextLabel);
-      setPlannerTaskCards((previousCards) =>
-        previousCards.map((card) => {
-          if (card.id !== checklistTaskCard.id) return card;
-          return {
-            ...card,
-            items: card.items.map((i) =>
-              i.id === tempId ? { ...i, id: addedItem.id || addedItem._id || tempId } : i
-            ),
-          };
-        })
-      );
-    } catch (e) {
-      console.error(e);
-      setPlannerTaskCards((previousCards) =>
-        previousCards.map((card) => {
-          if (card.id !== checklistTaskCard.id) return card;
-          return {
-            ...card,
-            items: card.items.filter((i) => i.id !== tempId),
-          };
-        })
-      );
-    }
   };
 
-  const handleRemoveChecklistItem = async (itemId: string) => {
+  const handleRemoveChecklistItem = (itemId: string) => {
     if (!checklistTaskCard) return;
-
-    const previousState = [...plannerTaskCards];
     setPlannerTaskCards((previousCards) =>
       previousCards.map((card) => {
         if (card.id !== checklistTaskCard.id) return card;
@@ -1965,15 +1896,6 @@ export function EventPlannerPage() {
         };
       })
     );
-
-    try {
-      if (!itemId.startsWith('temp-')) {
-        await deleteEventChecklistItem(selectedEventId, itemId);
-      }
-    } catch (error) {
-      console.error('Failed to delete checklist item:', error);
-      setPlannerTaskCards(previousState);
-    }
   };
 
   const openChecklistDeleteValidation = (item: { id: string; label: string }) => {
@@ -2170,7 +2092,7 @@ export function EventPlannerPage() {
                         className={[
                           'min-w-0 flex-1 whitespace-pre-line',
                           card.valueClassName ??
-                          'text-[24px] font-black leading-none tracking-tight text-[#2f2b39]',
+                            'text-[24px] font-black leading-none tracking-tight text-[#2f2b39]',
                         ].join(' ')}
                       >
                         {card.value}
@@ -2218,7 +2140,7 @@ export function EventPlannerPage() {
                           <p>Theme: {eventAllocation.decorations.theme || 'None specified'}</p>
                           <p className="mt-1 font-semibold text-[#5a546a]">Materials</p>
                           {eventAllocation.decorations.materials &&
-                            eventAllocation.decorations.materials.length > 0 ? (
+                          eventAllocation.decorations.materials.length > 0 ? (
                             eventAllocation.decorations.materials.map(
                               (mat: string, idx: number) => (
                                 <p key={idx}>
@@ -2284,8 +2206,8 @@ export function EventPlannerPage() {
                       <p className="text-[11px] font-black text-[#3a3442]">Meetings</p>
                       {eventMeetings.length > 0 ? (
                         <div className="mt-1 space-y-1">
-                          {eventMeetings.map((meeting) => (
-                            <div key={meeting.id || meeting._id}>
+                          {eventMeetings.map((meeting, index) => (
+                            <div key={meeting.id || meeting._id || `meeting-${index}`}>
                               <p className="font-semibold text-[#5a546a]">{meeting.title}</p>
                               <p className="text-[10px] text-[#8c8498]">
                                 {meeting.startTime || meeting.time || ''}{' '}
@@ -2404,9 +2326,9 @@ export function EventPlannerPage() {
                         onDragOver={handleLaneDragOver}
                         onDrop={(event) => handleDropTaskToLane(event, lane.id)}
                       >
-                        {laneTasks.map((task) => (
+                        {laneTasks.map((task, index) => (
                           <article
-                            key={task.id}
+                            key={String(task.id || `fallback-task-${lane.id}-${index}`)}
                             draggable={task.lane !== 'completed'}
                             onDragStart={(event) => handleDragTaskStart(event, task.id)}
                             onDragEnd={handleDragTaskEnd}
@@ -2532,10 +2454,11 @@ export function EventPlannerPage() {
                                           }}
                                         />
                                         <span
-                                          className={`min-w-0 flex-1 truncate text-[11px] font-medium ${item.done
-                                            ? 'text-[#a29faf] line-through'
-                                            : 'text-[#5a546a]'
-                                            }`}
+                                          className={`min-w-0 flex-1 truncate text-[11px] font-medium ${
+                                            item.done
+                                              ? 'text-[#a29faf] line-through'
+                                              : 'text-[#5a546a]'
+                                          }`}
                                         >
                                           {item.label}
                                         </span>
@@ -2830,7 +2753,7 @@ export function EventPlannerPage() {
         <DialogContent
           showCloseButton={false}
           aria-describedby={undefined}
-          className="fixed left-[50%] top-[50%] z-[9999] grid w-full max-w-[calc(100%-1rem)] sm:max-w-[600px] translate-x-[-50%] translate-y-[-50%] gap-4 border border-[#e3dfea] bg-white p-0 shadow-2xl duration-200 rounded-xl overflow-hidden"
+          className="fixed left-[50%] top-[50%] z-[100000] w-full max-w-[calc(100%-1rem)] -translate-x-1/2 -translate-y-1/2 rounded-xl border border-[#e3dfea] bg-white p-0 shadow-2xl sm:max-w-[600px] overflow-hidden"
         >
           <DialogTitle className="sr-only">Note Details</DialogTitle>
           <div className="flex max-h-[85vh] flex-col bg-white">
@@ -2923,7 +2846,7 @@ export function EventPlannerPage() {
         <DialogContent
           showCloseButton={false}
           aria-describedby={undefined}
-          className="fixed left-[50%] top-[50%] z-[9999] grid w-full max-w-[calc(100%-1rem)] sm:max-w-[760px] translate-x-[-50%] translate-y-[-50%] gap-4 border border-[#e3dfea] bg-white p-0 shadow-lg duration-200 rounded-xl"
+          className="fixed left-[50%] top-[50%] z-[100000] w-full max-w-[calc(100%-1rem)] -translate-x-1/2 -translate-y-1/2 rounded-xl border border-[#e3dfea] bg-white p-0 shadow-2xl sm:max-w-[760px] overflow-hidden"
         >
           <DialogTitle className="sr-only">Task Preview</DialogTitle>
           {selectedBoardTask ? (
@@ -3044,7 +2967,7 @@ export function EventPlannerPage() {
                         {taskPreviewChecklist.length > 0 ? (
                           taskPreviewChecklist.map((item, index) => (
                             <div
-                              key={item.id}
+                              key={item.id || `preview-chk-${index}`}
                               className="flex items-start gap-2 rounded-md border border-[#e9e3f1] bg-white px-2.5 py-2"
                             >
                               <span className="mt-2 inline-flex w-4 shrink-0 justify-center text-[14px] font-black leading-none text-[#8b84a0]">
@@ -3134,9 +3057,9 @@ export function EventPlannerPage() {
 
                       <div className="mt-3 max-h-[280px] space-y-2 overflow-y-auto pr-1 [scrollbar-width:thin]">
                         {(selectedBoardTask?.checklist ?? []).length > 0 ? (
-                          (selectedBoardTask?.checklist ?? []).map((item) => (
+                          (selectedBoardTask?.checklist ?? []).map((item, index) => (
                             <div
-                              key={item.id}
+                              key={item.id || `view-chk-${index}`}
                               className="rounded-md border border-[#ece8f0] bg-[#faf8fd] px-3 py-2"
                             >
                               <div className="flex items-start gap-2">
@@ -3201,7 +3124,7 @@ export function EventPlannerPage() {
         <DialogContent
           showCloseButton={false}
           aria-describedby={undefined}
-          className="fixed left-[50%] top-[50%] z-[9999] grid w-full max-w-[calc(100%-1rem)] sm:max-w-[520px] translate-x-[-50%] translate-y-[-50%] gap-4 border border-[#e3dfea] bg-white p-0 shadow-lg duration-200 rounded-2xl"
+          className="fixed left-[50%] top-[50%] z-[100000] w-full max-w-[calc(100%-1rem)] -translate-x-1/2 -translate-y-1/2 rounded-2xl border border-[#e3dfea] bg-white p-0 shadow-2xl sm:max-w-[520px] overflow-hidden"
         >
           <DialogTitle className="sr-only">Delete Confirmation</DialogTitle>
           <form
