@@ -17,6 +17,7 @@ export interface TasksResponse {
 export interface BoardTaskPayload {
   title: string;
   description: string;
+  status?: string; // Added for drag-and-drop status updates
   checklist?: Array<{
     id: string;
     label: string;

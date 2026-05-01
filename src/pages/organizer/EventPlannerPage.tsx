@@ -19,17 +19,29 @@ import {
   X,
 } from 'lucide-react';
 
-import { Dialog, DialogContent } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {
   getBoardTasks,
   createBoardTask,
   updateBoardTask,
-  moveBoardTask,
   deleteBoardTask,
 } from '@/api/planner-tasks';
-import { getEvents, getEventUser, getEventAllocation } from '@/api/events';
+import {
+  getEvents,
+  getEventUser,
+  getEventAllocation,
+  getEventNotes,
+  createEventNote,
+  updateEventNote,
+  deleteEventNote,
+  getEventFlow,
+  saveEventFlow,
+  deleteEventActivity,
+  getEventById,
+} from '@/api/events';
+import { getCalendarEntries } from '@/api/calendar';
 
 type PlannerTab = 'overview' | 'task' | 'notes' | 'flow' | 'checklist';
 
@@ -38,6 +50,7 @@ type ProjectSlot = {
   title: string;
   startDate?: string;
   endDate?: string;
+  rawStartDate?: string;
   eventType?: string;
   eventPackage?: string;
   eventPax?: number;
@@ -195,45 +208,6 @@ const taskLaneConfig: Array<{
   },
 ];
 
-const overviewServiceRequirements = [
-  'Classic Buffet',
-  '1. Appetizer',
-  'Light finger foods and canapes',
-  '2. Main Course',
-  'Chicken inasal, cordon bleu, and seafood',
-  '3. Dessert',
-  'Seasonal fruits, mousse cups, and custom cake',
-];
-
-const overviewAllocationResources = [
-  {
-    title: 'Event Coordinator',
-    detail: 'Ken Chan',
-    time: '08:00 - 08:00',
-  },
-  {
-    title: 'Host',
-    detail: 'Angel U. Nicorn',
-    time: '08:00 - 08:00',
-  },
-  {
-    title: 'Technicals',
-    detail:
-      '1. Audio Cue\n2. Lighting Cue\n3. Visual/Screen Cue\n4. System Tech/Troubleshooter\n5. Dry Run Team',
-    time: '',
-  },
-];
-
-const overviewMeetings = ['Meeting 1 | 2hrs Coffee', 'Meeting 2 | 2hrs Coffee', 'Meeting 3 | 2hrs'];
-
-const overviewChecklist = [
-  'Technical manpower',
-  'Lights and trussing',
-  'Fresh flowers delivered',
-  'Dry run DAY1',
-  'Dry run DAY2',
-];
-
 // Utility functions moved outside component to avoid recreating on every render
 const formatTimeInput = (hour: number, minute = 0) => {
   const normalizedHour = String(Math.min(Math.max(hour, 0), 23)).padStart(2, '0');
@@ -324,52 +298,80 @@ const mapLaneToBackendStatus = (lane: TaskLane): string => {
   return 'TODO';
 };
 
-function FlowNotesBoard() {
+const flowBlockTones = [
+  'border-[#f0bfd8] bg-[#fdeaf3] text-[#7b295f]',
+  'border-[#cfe0f3] bg-[#eef6ff] text-[#2a5f91]',
+  'border-[#dbe8dc] bg-[#f1fbf3] text-[#2d6640]',
+  'border-[#e8dcc8] bg-[#fdf6ec] text-[#7a5c2e]',
+  'border-[#d8cef3] bg-[#f3eeff] text-[#5a3d91]',
+  'border-[#f0d8c8] bg-[#fdf1ec] text-[#7a4a2e]',
+];
+
+function mapBackendFlowToUI(item: any, index: number) {
+  const startDate = item.start_time ? new Date(item.start_time) : null;
+  const endDate = item.end_time ? new Date(item.end_time) : null;
+
+  const startHour = startDate && !isNaN(startDate.getTime()) ? startDate.getHours() : 5;
+  const startMinute = startDate && !isNaN(startDate.getTime()) ? startDate.getMinutes() : 0;
+  const endHour = endDate && !isNaN(endDate.getTime()) ? endDate.getHours() : startHour + 1;
+  const endMinute = endDate && !isNaN(endDate.getTime()) ? endDate.getMinutes() : 0;
+
+  const fromTime = `${String(startHour).padStart(2, '0')}:${String(startMinute).padStart(2, '0')}`;
+  const toTime = `${String(endHour).padStart(2, '0')}:${String(endMinute).padStart(2, '0')}`;
+
+  return {
+    id: item.id || `flow-${Date.now()}-${index}`,
+    title: item.title || 'Untitled Activity',
+    from: fromTime,
+    to: toTime,
+    description: item.description || '',
+    startHour,
+    endHour: endHour === startHour ? endHour + 1 : endHour,
+    left: '2%',
+    width: '27%',
+    tone: flowBlockTones[index % flowBlockTones.length],
+  };
+}
+
+function FlowNotesBoard({
+  selectedEventId,
+  eventDate,
+}: {
+  selectedEventId: string;
+  eventDate: string;
+}) {
   const timelineStartHour = 5;
   const timelineEndHour = 11;
   const hourRowHeight = 58;
   const minAllowedTime = '05:00';
   const maxAllowedTime = '11:00';
 
-  const [timelineBlocks, setTimelineBlocks] = useState([
-    {
-      id: 'timeline-primary',
-      title: 'Guests Welcoming & Opening Ceremony',
-      from: '05:00',
-      to: '06:00',
-      description:
-        'Lorem ipsum sit amet, consectetur adipiscing elit. In tincidunt justo quis viverra bibendum.',
-      startHour: 5,
-      endHour: 6,
-      left: '2%',
-      width: '27%',
-      tone: 'border-[#f0bfd8] bg-[#fdeaf3] text-[#7b295f]',
-    },
-    {
-      id: 'timeline-secondary',
-      title: 'Example',
-      from: '08:00',
-      to: '09:00',
-      description: 'Description',
-      startHour: 8,
-      endHour: 9,
-      left: '31%',
-      width: '26%',
-      tone: 'border-[#cfe0f3] bg-[#eef6ff] text-[#2a5f91]',
-    },
-    {
-      id: 'timeline-third',
-      title: 'Example',
-      from: '10:00',
-      to: '11:00',
-      description: 'Description',
-      startHour: 10,
-      endHour: 11,
-      left: '2%',
-      width: '27%',
-      tone: 'border-[#dbe8dc] bg-[#f1fbf3] text-[#2d6640]',
-    },
-  ]);
+  const [timelineBlocks, setTimelineBlocks] = useState<any[]>([]);
+
+  useEffect(() => {
+    let isMounted = true;
+    const fetchFlow = async () => {
+      if (!selectedEventId) {
+        setTimelineBlocks([]);
+        return;
+      }
+      try {
+        const flowData = await getEventFlow(selectedEventId);
+        if (isMounted) {
+          const mapped = Array.isArray(flowData)
+            ? flowData.map((item: any, index: number) => mapBackendFlowToUI(item, index))
+            : [];
+          setTimelineBlocks(mapped);
+        }
+      } catch (error) {
+        console.error('Failed to load event flow:', error);
+      }
+    };
+    fetchFlow();
+    return () => {
+      isMounted = false;
+    };
+  }, [selectedEventId]);
 
   const [isActivityInfoOpen, setIsActivityInfoOpen] = useState(false);
   const [isEditingActivity, setIsEditingActivity] = useState(false);
@@ -454,16 +456,21 @@ function FlowNotesBoard() {
     setIsActivityInfoOpen(true);
   };
 
-  const handleDeleteActivity = (activityId: string) => {
-    setTimelineBlocks((previous) => previous.filter((block) => block.id !== activityId));
-    if (selectedActivityId === activityId) {
-      setSelectedActivityId(null);
-      setIsActivityInfoOpen(false);
-      setIsEditingActivity(false);
+  const handleDeleteActivity = async (activityId: string) => {
+    try {
+      await deleteEventActivity(selectedEventId, activityId);
+      setTimelineBlocks((previous) => previous.filter((block) => block.id !== activityId));
+      if (selectedActivityId === activityId) {
+        setSelectedActivityId(null);
+        setIsActivityInfoOpen(false);
+        setIsEditingActivity(false);
+      }
+    } catch (error) {
+      console.error('Failed to delete activity:', error);
     }
   };
 
-  const handleSaveActivity = (event: FormEvent<HTMLFormElement>) => {
+  const handleSaveActivity = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
     const normalizedFromInput = clampTimeInputRange(
@@ -488,31 +495,48 @@ function FlowNotesBoard() {
       timelineEndHour
     );
 
+    // Build ISO 8601 start_time / end_time using the event's date
+    const baseDateStr = eventDate || new Date().toISOString();
+    const baseDate = new Date(baseDateStr);
+    const datePrefix = isNaN(baseDate.getTime())
+      ? new Date().toISOString().split('T')[0]
+      : baseDate.toISOString().split('T')[0];
+
+    const fromTimeStr = normalizedFromInput || formatTimeInput(normalizedStartHour);
+    const toTimeStr = normalizedToInput || formatTimeInput(normalizedEndHour);
+    const startTimeISO = new Date(`${datePrefix}T${fromTimeStr}:00`).toISOString();
+    const endTimeISO = new Date(`${datePrefix}T${toTimeStr}:00`).toISOString();
+
     const nextId = selectedActivityId ?? `timeline-${Date.now()}`;
-    const nextActivity = {
+
+    // Payload for backend: ONLY { title, description, start_time, end_time }
+    const apiPayload = {
       id: nextId,
       title: activityDraft.title.trim() || 'Example',
-      from: normalizedFromInput || formatTimeInput(normalizedStartHour),
-      to: normalizedToInput || formatTimeInput(normalizedEndHour),
       description: activityDraft.description.trim() || 'Description',
-      startHour: normalizedStartHour,
-      endHour: normalizedEndHour,
-      left: activityDraft.left,
-      width: activityDraft.width,
-      tone: activityDraft.tone,
+      start_time: startTimeISO,
+      end_time: endTimeISO,
     };
 
-    setTimelineBlocks((previous) => {
-      if (selectedActivityId) {
-        return previous.map((block) => (block.id === selectedActivityId ? nextActivity : block));
-      }
+    try {
+      const savedData = await saveEventFlow(selectedEventId, apiPayload);
 
-      return [...previous, nextActivity];
-    });
+      // Map the returned backend data back to UI format
+      const uiBlock = mapBackendFlowToUI(savedData ?? apiPayload, timelineBlocks.length);
 
-    setSelectedActivityId(nextId);
-    setIsEditingActivity(false);
-    setIsActivityInfoOpen(false);
+      setTimelineBlocks((previous) => {
+        if (selectedActivityId) {
+          return previous.map((block) => (block.id === selectedActivityId ? uiBlock : block));
+        }
+        return [...previous, uiBlock];
+      });
+
+      setSelectedActivityId(uiBlock.id);
+      setIsEditingActivity(false);
+      setIsActivityInfoOpen(false);
+    } catch (error) {
+      console.error('Failed to save activity:', error);
+    }
   };
 
   const handleAddSummary = () => {
@@ -549,56 +573,77 @@ function FlowNotesBoard() {
   }, [timelineBlocks]);
 
   const positionedTimelineBlocks = useMemo(() => {
-    const sortedSameHourBlocks = new Map<number, typeof timelineBlocks>();
+    // 1. Sort all blocks by start time, then duration (longest first)
+    const sortedBlocks = [...timelineBlocks].sort((a, b) => {
+      const aStart = parseTimeParts(a.from, a.startHour).totalMinutes;
+      const bStart = parseTimeParts(b.from, b.startHour).totalMinutes;
+      if (aStart !== bStart) return aStart - bStart;
 
-    timelineBlocks.forEach((block) => {
-      const sameHourBlocks = sortedSameHourBlocks.get(block.startHour) ?? [];
-      sameHourBlocks.push(block);
-      sortedSameHourBlocks.set(block.startHour, sameHourBlocks);
+      const aEnd = parseTimeParts(a.to, a.endHour).totalMinutes;
+      const bEnd = parseTimeParts(b.to, b.endHour).totalMinutes;
+      return bEnd - bStart - (aEnd - aStart); // Longest first
     });
 
-    sortedSameHourBlocks.forEach((blocks, startHour) => {
-      blocks.sort((first, second) => {
-        const firstParts = parseTimeParts(first.from, first.startHour);
-        const secondParts = parseTimeParts(second.from, second.startHour);
-
-        if (firstParts.minute !== secondParts.minute) return firstParts.minute - secondParts.minute;
-        if (firstParts.totalMinutes !== secondParts.totalMinutes)
-          return firstParts.totalMinutes - secondParts.totalMinutes;
-        return first.id.localeCompare(second.id);
-      });
-      sortedSameHourBlocks.set(startHour, blocks);
-    });
-
-    const slotWidth = 25;
+    const slotWidth = 25; // Base width percentage
     const slotGap = 2.5;
 
-    return timelineBlocks.map((block) => {
+    // Array to keep track of columns (each column is an array of placed blocks)
+    const columns: (typeof sortedBlocks)[] = [];
+
+    return sortedBlocks.map((block) => {
       const startParts = parseTimeParts(block.from, block.startHour);
       const endParts = parseTimeParts(block.to, block.endHour);
-      const sameHourBlocks = sortedSameHourBlocks.get(block.startHour) ?? [];
-      const slotIndex = sameHourBlocks.findIndex((item) => item.id === block.id);
 
-      // 1. Calculate absolute minutes elapsed since the very top of the visible board
+      const startMinutes = startParts.totalMinutes;
+      const endMinutes = endParts.totalMinutes;
+
+      // Find the first column where this block fits (i.e., doesn't overlap with the last block in that column)
+      let columnIndex = 0;
+      let placed = false;
+
+      for (let i = 0; i < columns.length; i++) {
+        const column = columns[i];
+        const lastBlockInColumn = column[column.length - 1];
+        const lastBlockEndMinutes = parseTimeParts(
+          lastBlockInColumn.to,
+          lastBlockInColumn.endHour
+        ).totalMinutes;
+
+        // If the current block starts after or exactly when the last block in this column ends
+        if (startMinutes >= lastBlockEndMinutes) {
+          column.push(block);
+          columnIndex = i;
+          placed = true;
+          break;
+        }
+      }
+
+      // If it didn't fit in any existing column, create a new one
+      if (!placed) {
+        columns.push([block]);
+        columnIndex = columns.length - 1;
+      }
+
       const boardStartHour = visibleHours.length > 0 ? visibleHours[0] : timelineStartHour;
       const boardStartMinutes = boardStartHour * 60;
-      const absoluteStartMinutes = startParts.totalMinutes - boardStartMinutes;
-      const absoluteEndMinutes = endParts.totalMinutes - boardStartMinutes;
 
-      // 2. Exact duration
+      const absoluteStartMinutes = startMinutes - boardStartMinutes;
+      const absoluteEndMinutes = endMinutes - boardStartMinutes;
+
       const durationMinutes = Math.max(30, absoluteEndMinutes - absoluteStartMinutes);
 
-      // 3. Convert minutes directly to pixels (58px per 60 mins)
       const topPixels = (absoluteStartMinutes / 60) * hourRowHeight;
       const heightPixels = (durationMinutes / 60) * hourRowHeight;
 
-      // 4. Visual gaps to avoid covering grid lines
       const verticalGap = 4;
       const finalTop = topPixels + verticalGap;
       const finalHeight = heightPixels - verticalGap * 2;
 
-      const left = 2 + slotIndex * (slotWidth + slotGap);
-      const width = Math.max(20, slotWidth - Math.min(slotIndex, 2) * 2);
+      // Calculate left position based on the assigned column
+      // We cap the visual shift at 3 columns to prevent it from going off-screen
+      const displayColumnIndex = Math.min(columnIndex, 3);
+      const left = 2 + displayColumnIndex * (slotWidth + slotGap);
+      const width = Math.max(20, slotWidth - Math.min(displayColumnIndex, 2) * 2);
 
       return {
         ...block,
@@ -748,11 +793,13 @@ function FlowNotesBoard() {
                           Time: {formatDisplayTime(block.from, block.startHour)} -{' '}
                           {formatDisplayTime(block.to, block.endHour)}
                         </p>
-                        <div className="mt-1 flex-1 min-h-0">
-                          <p className="text-[10px] leading-tight text-inherit/80 break-words whitespace-normal line-clamp-4">
-                            {block.description}
-                          </p>
-                        </div>
+                        {block.calculatedHeight > 60 && (
+                          <div className="mt-1 flex-1 min-h-0">
+                            <p className="text-[10px] leading-tight text-inherit/80 break-words whitespace-normal line-clamp-4">
+                              {block.description}
+                            </p>
+                          </div>
+                        )}
                       </article>
                     );
                   })}
@@ -812,8 +859,10 @@ function FlowNotesBoard() {
       >
         <DialogContent
           showCloseButton={false}
-          className="max-w-[calc(100%-1rem)] rounded-2xl border border-[#e3dfea] bg-white p-0 sm:max-w-[640px]"
+          aria-describedby={undefined}
+          className="fixed left-[50%] top-[50%] z-[100000] w-full max-w-[calc(100%-1rem)] -translate-x-1/2 -translate-y-1/2 rounded-2xl border border-[#e3dfea] bg-white p-0 shadow-2xl sm:max-w-[640px] overflow-hidden"
         >
+          <DialogTitle className="sr-only">Activity Details</DialogTitle>
           <form className="px-6 py-5" onSubmit={handleSaveActivity}>
             <div className="mb-4 flex items-start justify-between gap-3 border-b border-[#eee9f2] pb-4">
               <div className="flex items-center gap-2">
@@ -1019,19 +1068,6 @@ function FlowNotesBoard() {
   );
 }
 
-const initialPlannerNotes: PlannerQuickNote[] = [
-  {
-    id: 'note-requests',
-    title: 'Requests',
-    body: 'Strict timeline\nrequested by parents',
-  },
-  {
-    id: 'note-catering',
-    title: 'Catering',
-    body: 'Avoid serving nuts\n(guest allergy concern)',
-  },
-];
-
 const noteTileThemes = [
   {
     shellClassName: 'border-[#edd9e6] bg-[#fff7fb] text-[#6f295a]',
@@ -1067,33 +1103,6 @@ const noteTileThemes = [
   },
 ];
 
-const overviewScheduleSummary = [
-  {
-    id: 'overview-summary-1',
-    timeRange: '7:00AM - 9:00AM',
-    title: 'Description Here',
-    body: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. In tincidunt justo quis viverra bibendum.',
-  },
-  {
-    id: 'overview-summary-2',
-    timeRange: '00:00 - 00:00',
-    title: 'Description Here',
-    body: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. In tincidunt justo quis viverra bibendum.',
-  },
-  {
-    id: 'overview-summary-3',
-    timeRange: '00:00 - 00:00',
-    title: 'Description Here',
-    body: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. In tincidunt justo quis viverra bibendum.',
-  },
-  {
-    id: 'overview-summary-4',
-    timeRange: '00:00 - 00:00',
-    title: 'Description Here',
-    body: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. In tincidunt justo quis viverra bibendum.',
-  },
-];
-
 export function EventPlannerPage() {
   const [selectedEventId, setSelectedEventId] = useState('');
   const [projectSlots, setProjectSlots] = useState<ProjectSlot[]>([]);
@@ -1102,6 +1111,9 @@ export function EventPlannerPage() {
   const [boardTasks, setBoardTasks] = useState<PlannerBoardTask[]>([]);
   const [currentClientName, setCurrentClientName] = useState('');
   const [eventAllocation, setEventAllocation] = useState<any>(null);
+  const [eventMeetings, setEventMeetings] = useState<any[]>([]);
+  const [overviewFlows, setOverviewFlows] = useState<any[]>([]);
+  const [selectedEventDetails, setSelectedEventDetails] = useState<any>(null);
 
   useEffect(() => {
     let isMounted = true;
@@ -1133,6 +1145,7 @@ export function EventPlannerPage() {
             title: e.title || 'Untitled Event',
             startDate: formatDateReadable(e.startDate || e.eventDate) || 'No Date Set',
             endDate: formatDateReadable(e.endDate) || 'TBD',
+            rawStartDate: e.startDate || e.eventDate || '',
             eventType: e.eventType,
             eventPackage: e.eventPackage,
             eventPax: e.eventPax || 0,
@@ -1160,12 +1173,23 @@ export function EventPlannerPage() {
     let isMounted = true;
 
     const loadTasks = async () => {
+      setSelectedEventDetails(null);
+
       if (!selectedEventId) {
         setBoardTasks([]);
         setCurrentClientName('');
         setEventAllocation(null);
         return;
       }
+
+      getEventById(selectedEventId)
+        .then((details) => {
+          if (isMounted) setSelectedEventDetails(details);
+        })
+        .catch((e) => {
+          console.error('Failed to fetch event details', e);
+          if (isMounted) setSelectedEventDetails(null);
+        });
 
       setCurrentClientName('');
       setEventAllocation(null);
@@ -1177,15 +1201,17 @@ export function EventPlannerPage() {
             if (isMounted) {
               setCurrentClientName(
                 userData?.name ||
-                  userData?.firstName ||
-                  userData?.realName ||
-                  userData?.clientName ||
-                  ''
+                userData?.firstName ||
+                userData?.realName ||
+                userData?.clientName ||
+                ''
               );
             }
           })
-          .catch((e) => {
-            console.error('Failed to fetch event user', e);
+          .catch((e: any) => {
+            if (e?.response?.status !== 404) {
+              console.error('Failed to fetch event user', e);
+            }
             if (isMounted) setCurrentClientName('');
           });
       }
@@ -1196,10 +1222,51 @@ export function EventPlannerPage() {
             setEventAllocation(allocationData);
           }
         })
-        .catch((e) => {
-          console.error('Failed to fetch event allocation', e);
+        .catch((e: any) => {
+          if (e?.response?.status !== 404) {
+            console.error('Failed to fetch event allocation', e);
+          }
           if (isMounted) setEventAllocation(null);
         });
+
+      try {
+        const entries = await getCalendarEntries();
+        if (isMounted) {
+          setEventMeetings(
+            entries.filter(
+              (item: any) =>
+                item.eventId === selectedEventId && item.label?.toUpperCase() === 'MEETING'
+            )
+          );
+        }
+      } catch (error) {
+        console.error('Failed to fetch meetings', error);
+        if (isMounted) setEventMeetings([]);
+      }
+
+      try {
+        const flowData = await getEventFlow(selectedEventId);
+        if (isMounted) {
+          const mappedFlows = Array.isArray(flowData)
+            ? flowData
+              .map((item: any, index: number) => mapBackendFlowToUI(item, index))
+              .sort((a: any, b: any) => a.startHour - b.startHour)
+            : [];
+          setOverviewFlows(mappedFlows);
+        }
+      } catch (error) {
+        console.error('Failed to fetch event flow for overview', error);
+        if (isMounted) setOverviewFlows([]);
+      }
+
+      try {
+        const notesResponse = await getEventNotes(selectedEventId);
+        if (isMounted) {
+          setPlannerNotes(notesResponse);
+        }
+      } catch (error) {
+        console.error('Failed to load notes:', error);
+      }
 
       try {
         const response = await getBoardTasks(selectedEventId);
@@ -1213,9 +1280,9 @@ export function EventPlannerPage() {
           const group = backendTasks[status] || [];
           group.forEach((task: any) => {
             formattedTasks.push({
-              id: task.id,
-              title: task.title,
-              details: task.description,
+              id: String(task.id || task._id), // Clean ID assignment
+              title: task.title || 'Untitled',
+              details: task.description || '',
               editorType: 'Text',
               lane: mapBackendStatusToLane(task.status || status),
               checklist: [],
@@ -1252,7 +1319,7 @@ export function EventPlannerPage() {
   } | null>(null);
   const [checklistDeleteValidation, setChecklistDeleteValidation] = useState('');
   const [checklistDeleteError, setChecklistDeleteError] = useState('');
-  const [plannerNotes, setPlannerNotes] = useState<PlannerQuickNote[]>(initialPlannerNotes);
+  const [plannerNotes, setPlannerNotes] = useState<PlannerQuickNote[]>([]);
   const [noteDraftTitle, setNoteDraftTitle] = useState('');
   const [noteDraftBody, setNoteDraftBody] = useState('');
   const [noteDraftImageDataUrl, setNoteDraftImageDataUrl] = useState<string | undefined>(undefined);
@@ -1304,7 +1371,12 @@ export function EventPlannerPage() {
       {
         id: 'overview-package',
         label: 'Event Package',
-        value: selectedProject.eventPackage || 'N/A',
+        value:
+          selectedEventDetails?.package?.name ||
+          selectedEventDetails?.eventPackage ||
+          selectedEventDetails?.eventPackageKey ||
+          selectedProject.eventPackage ||
+          'N/A',
         imageSrc: '/Pictures/organizerpics/event-package-illustration.png',
         accent: 'text-[#6b2aa5] bg-[#fbf6ff] border-[#eee3fb]',
         valueClassName: 'text-[14px] font-semibold leading-[1.15] text-[#6d677b]',
@@ -1312,7 +1384,12 @@ export function EventPlannerPage() {
       {
         id: 'overview-pax',
         label: 'Event Pax',
-        value: String(selectedProject.eventPax || '0'),
+        value: String(
+          selectedEventDetails?.package?.pax ||
+          selectedEventDetails?.eventPax ||
+          selectedProject.eventPax ||
+          '0'
+        ),
         imageSrc: '/Pictures/organizerpics/event-pax-illustration.png',
         accent: 'text-[#88511a] bg-[#fff8ef] border-[#f3e2cc]',
         valueClassName: 'text-[32px] font-semibold leading-none tracking-tight text-[#4f4a58]',
@@ -1334,15 +1411,12 @@ export function EventPlannerPage() {
         valueClassName: 'text-[32px] font-semibold leading-none tracking-tight text-[#4f4a58]',
       },
     ],
-    [selectedProject]
+    [selectedProject, selectedEventDetails]
   );
 
   const selectedBoardTask = useMemo(() => {
-    if (!selectedBoardTaskId) {
-      return null;
-    }
-
-    return boardTasks.find((task) => task.id === selectedBoardTaskId) ?? null;
+    if (!selectedBoardTaskId) return null;
+    return boardTasks.find((task) => String(task.id) === String(selectedBoardTaskId)) ?? null;
   }, [boardTasks, selectedBoardTaskId]);
 
   const resetNoteDraft = () => {
@@ -1370,8 +1444,8 @@ export function EventPlannerPage() {
       return;
     }
 
-    if (file.size > 5 * 1024 * 1024) {
-      setNoteDraftError('Image is too large. Please use a file under 5MB.');
+    if (file.size > 100 * 1024 * 1024) {
+      setNoteDraftError('Image is too large. Please use a file under 100MB.');
       event.target.value = '';
       return;
     }
@@ -1389,7 +1463,7 @@ export function EventPlannerPage() {
     event.target.value = '';
   };
 
-  const handleSavePlannerNote = () => {
+  const handleSavePlannerNote = async () => {
     const normalizedTitle = noteDraftTitle.trim();
     const normalizedBody = noteDraftBody.trim();
 
@@ -1399,22 +1473,49 @@ export function EventPlannerPage() {
       return;
     }
 
-    const nextNote: PlannerQuickNote = {
-      id: editingPlannerNoteId ?? `note-${Date.now()}`,
-      title: normalizedTitle || 'Untitled',
-      body: normalizedBody || 'No details provided.',
-      imageDataUrl: noteDraftImageDataUrl ?? undefined,
-    };
-
-    setPlannerNotes((previousNotes) => {
+    try {
       if (editingPlannerNoteId) {
-        return previousNotes.map((note) => (note.id === editingPlannerNoteId ? nextNote : note));
+        const updatedNote = await updateEventNote(selectedEventId, editingPlannerNoteId, {
+          title: normalizedTitle || 'Untitled',
+          body: normalizedBody || 'No details provided.',
+          imageDataUrl: noteDraftImageDataUrl ?? undefined,
+        });
+        setPlannerNotes((prev) =>
+          prev.map((n) => (n.id === editingPlannerNoteId ? updatedNote : n))
+        );
+      } else {
+        const newNote = await createEventNote(selectedEventId, {
+          title: normalizedTitle || 'Untitled',
+          body: normalizedBody || 'No details provided.',
+          imageDataUrl: noteDraftImageDataUrl ?? undefined,
+        });
+        setPlannerNotes((prev) => [newNote, ...prev]);
+      }
+      closePlannerNoteModal();
+    } catch (error: any) {
+      console.error('Failed to save planner note:', error);
+
+      let userMessage = 'Failed to save note. Please try again.';
+      if (error?.response) {
+        const status = error.response.status;
+        const serverMsg = error.response.data?.message || error.response.data?.error;
+        if (status === 500) {
+          userMessage = 'Server error: Unable to save note at this time.';
+        } else if (status === 400) {
+          userMessage = serverMsg
+            ? `Bad request: ${serverMsg}`
+            : 'Invalid note data. Please check your input.';
+        } else if (status === 404) {
+          userMessage = 'Event not found. Please refresh and try again.';
+        } else if (serverMsg) {
+          userMessage = `Error (${status}): ${serverMsg}`;
+        }
+      } else if (error?.message) {
+        userMessage = `Network error: ${error.message}`;
       }
 
-      return [nextNote, ...previousNotes];
-    });
-
-    closePlannerNoteModal();
+      setNoteDraftError(userMessage);
+    }
   };
 
   const handleCloseInlineNote = () => {
@@ -1435,21 +1536,23 @@ export function EventPlannerPage() {
     setIsNoteModalOpen(true);
   };
 
-  const handleDeletePlannerNote = (noteId: string) => {
-    setPlannerNotes((previousNotes) => previousNotes.filter((note) => note.id !== noteId));
+  const handleDeletePlannerNote = async (noteId: string) => {
+    try {
+      await deleteEventNote(selectedEventId, noteId);
+      setPlannerNotes((previousNotes) => previousNotes.filter((note) => note.id !== noteId));
 
-    if (editingPlannerNoteId === noteId) {
-      resetNoteDraft();
+      if (editingPlannerNoteId === noteId) {
+        resetNoteDraft();
+      }
+    } catch (error) {
+      console.error('Failed to delete planner note:', error);
     }
   };
 
   const handleToggleTaskItem = (cardId: string, itemId: string) => {
     setPlannerTaskCards((previousCards) =>
       previousCards.map((card) => {
-        if (card.id !== cardId) {
-          return card;
-        }
-
+        if (card.id !== cardId) return card;
         return {
           ...card,
           items: card.items.map((item) =>
@@ -1496,40 +1599,27 @@ export function EventPlannerPage() {
   const handleDropTaskToLane = async (event: DragEvent<HTMLElement>, lane: TaskLane) => {
     event.preventDefault();
     const droppedId = event.dataTransfer.getData('text/plain') || draggedTaskId;
+    if (!droppedId) return;
 
-    if (!droppedId) {
-      return;
-    }
-
-    // find current task to inspect its lane
-    const current = boardTasks.find((t) => t.id === droppedId);
+    const taskStrId = String(droppedId);
+    const current = boardTasks.find((t) => String(t.id) === taskStrId);
     if (!current) return;
 
-    // disallow dragging back to To Do once it has been moved to In Progress
-    if (current.lane === 'in-progress' && lane === 'todo') {
-      return;
-    }
+    if (current.lane === 'in-progress' && lane === 'todo') return;
+    if (current.lane === 'completed' && lane !== 'completed') return;
 
-    // disallow moving completed tasks back to other lanes
-    if (current.lane === 'completed' && lane !== 'completed') {
-      return;
-    }
-
-    // only allow In Progress -> Completed when every checklist item is checked
     if (current.lane === 'in-progress' && lane === 'completed') {
       const checklist = Array.isArray(current.checklist) ? current.checklist : [];
-      if (checklist.length === 0 || checklist.some((item) => !item.done)) {
-        return;
-      }
+      if (checklist.length === 0 || checklist.some((item) => !item.done)) return;
     }
 
     const previousTasksState = [...boardTasks];
 
+    // Optimistic Update
     setBoardTasks((previousTasks) =>
       previousTasks.map((task) => {
-        if (task.id !== droppedId) return task;
+        if (String(task.id) !== taskStrId) return task;
 
-        // when moving from To Do -> In Progress, auto-convert to a checklist if none exists
         if (task.lane === 'todo' && lane === 'in-progress') {
           const hasChecklist = Array.isArray(task.checklist) && task.checklist.length > 0;
           if (!hasChecklist) {
@@ -1542,19 +1632,13 @@ export function EventPlannerPage() {
             if (items.length === 0) {
               items.push({ id: `${task.id}-chk-0`, label: 'New checklist item', done: false });
             }
-
             return { ...task, lane, checklist: items };
           }
         }
 
         if (lane === 'completed') {
           const timestamp = new Date().toISOString();
-          const checklistSource: Array<{
-            id: string;
-            label: string;
-            done: boolean;
-            doneAt?: string;
-          }> =
+          const checklistSource: any[] =
             Array.isArray(task.checklist) && task.checklist.length > 0
               ? task.checklist
               : task.details
@@ -1568,7 +1652,7 @@ export function EventPlannerPage() {
               ? checklistSource.map((item) => ({
                   ...item,
                   done: true,
-                  doneAt: item.doneAt ?? timestamp,
+                  doneAt: (item as any).doneAt ?? timestamp,
                 }))
               : [
                   {
@@ -1585,17 +1669,20 @@ export function EventPlannerPage() {
         return { ...task, lane };
       })
     );
-
     setDraggedTaskId(null);
 
+    // API Call
     try {
-      if (droppedId.startsWith('board-task-')) {
+      if (taskStrId.startsWith('board-task-')) {
         throw new Error('Please edit and save this new task first before moving it.');
       }
+
       const newStatus = mapLaneToBackendStatus(lane);
-      await moveBoardTask(selectedEventId, droppedId, {
-        newStatus,
-        newOrder: 0,
+      await updateBoardTask(selectedEventId, taskStrId, {
+        title: current.title,
+        description: current.details,
+        status: newStatus,
+        checklist: current.checklist,
       });
     } catch (error) {
       setBoardTasks(previousTasksState);
@@ -1604,7 +1691,7 @@ export function EventPlannerPage() {
   };
 
   const openTaskPreview = (taskId: string) => {
-    const selectedTask = boardTasks.find((task) => task.id === taskId);
+    const selectedTask = boardTasks.find((task) => String(task.id) === String(taskId));
     setSelectedBoardTaskId(taskId);
     setTaskPreviewTitle(selectedTask?.title ?? '');
     setTaskPreviewDetails(selectedTask?.details ?? '');
@@ -1632,21 +1719,12 @@ export function EventPlannerPage() {
   };
 
   const handleSaveTaskPreview = async () => {
-    if (!selectedBoardTaskId || selectedBoardTask?.lane !== 'todo') {
-      return;
-    }
+    if (!selectedBoardTaskId || selectedBoardTask?.lane !== 'todo') return;
 
     const normalizedChecklist = taskPreviewChecklist
-      .map((item) => ({
-        ...item,
-        label: item.label.trim(),
-      }))
+      .map((item) => ({ ...item, label: item.label.trim() }))
       .filter((item) => item.label.length > 0)
-      .map((item) => ({
-        id: item.id,
-        label: item.label,
-        done: false,
-      }));
+      .map((item) => ({ id: item.id, label: item.label, done: false }));
 
     const normalizedDetails = taskPreviewDetails.trim();
     const finalDetails =
@@ -1665,23 +1743,26 @@ export function EventPlannerPage() {
         savedTask = await updateBoardTask(selectedEventId, selectedBoardTaskId, payload);
       }
 
+      // Safe extraction accounting for nested backend responses
+      const actualTask = (savedTask as any)?.task || (savedTask as any)?.data || savedTask || {};
+      const newId = actualTask?.id || actualTask?._id || selectedBoardTaskId;
+
       setBoardTasks((previousTasks) =>
         previousTasks.map((task) =>
-          task.id === selectedBoardTaskId
+          String(task.id) === String(selectedBoardTaskId)
             ? {
-                ...task,
-                id: savedTask.id,
-                title: savedTask.title,
-                details: savedTask.description || finalDetails,
-                checklist: normalizedChecklist,
-              }
+              ...task,
+              id: String(newId),
+              title: payload.title,
+              details: finalDetails,
+              checklist: normalizedChecklist,
+            }
             : task
         )
       );
 
-      setTaskActionMessage(`Saved ${taskPreviewTitle || 'task'} successfully.`);
+      setTaskActionMessage(`Saved ${payload.title} successfully.`);
       setTaskActionTone('success');
-
       setIsTaskPreviewOpen(false);
       setSelectedBoardTaskId(null);
     } catch (error) {
@@ -1689,15 +1770,19 @@ export function EventPlannerPage() {
     }
   };
 
-  const handleDeleteBoardTask = async (taskId: string) => {
-    const targetTask = boardTasks.find((task) => task.id === taskId);
+  const handleDeleteBoardTask = async (taskId: string | number) => {
+    const taskStrId = String(taskId);
+    const targetTask = boardTasks.find((task) => String(task.id) === taskStrId);
+    if (!targetTask) return;
 
     try {
-      if (!taskId.startsWith('board-task-')) {
-        await deleteBoardTask(selectedEventId, taskId);
+      if (!taskStrId.startsWith('board-task-')) {
+        await deleteBoardTask(selectedEventId, taskStrId);
       }
 
-      setBoardTasks((previousTasks) => previousTasks.filter((task) => task.id !== taskId));
+      setBoardTasks((previousTasks) =>
+        previousTasks.filter((task) => String(task.id) !== taskStrId)
+      );
       setTaskCardMenuOpenFor(null);
       setTaskActionMessage(`Deleted ${targetTask?.title || 'task'} successfully.`);
       setTaskActionTone('error');
@@ -1710,33 +1795,25 @@ export function EventPlannerPage() {
     if (!selectedEventId) return;
     const timestamp = new Date().toISOString();
 
-    // Find the target task to prepare the updated checklist
-    const targetTask = boardTasks.find((t) => t.id === taskId);
+    const targetTask = boardTasks.find((t) => String(t.id) === String(taskId));
     if (!targetTask || !Array.isArray(targetTask.checklist)) return;
 
-    // Calculate the new checklist state
     const updatedChecklist = targetTask.checklist.map((item) =>
       item.id === itemId
-        ? {
-            ...item,
-            done: !item.done,
-            doneAt: !item.done ? timestamp : undefined,
-          }
+        ? { ...item, done: !item.done, doneAt: !item.done ? timestamp : undefined }
         : item
     );
 
     const previousTasksState = [...boardTasks];
 
-    // Optimistic UI update
     setBoardTasks((previousTasks) =>
       previousTasks.map((task) =>
-        task.id === taskId ? { ...task, checklist: updatedChecklist } : task
+        String(task.id) === String(taskId) ? { ...task, checklist: updatedChecklist } : task
       )
     );
 
     try {
-      if (taskId.startsWith('board-task-')) {
-        // Can't toggle unpersisted items in the backend yet
+      if (String(taskId).startsWith('board-task-')) {
         throw new Error('Please edit and save this new task first before modifying its checklist.');
       }
 
@@ -1746,9 +1823,8 @@ export function EventPlannerPage() {
         checklist: updatedChecklist,
       };
 
-      await updateBoardTask(selectedEventId, taskId, payload);
+      await updateBoardTask(selectedEventId, String(taskId), payload);
     } catch (error) {
-      // Revert on failure
       setBoardTasks(previousTasksState);
       alert(error instanceof Error ? error.message : 'Failed to update checklist item.');
     }
@@ -1794,15 +1870,10 @@ export function EventPlannerPage() {
     : 0;
 
   const handleAddChecklistItem = () => {
-    if (!checklistTaskCard) {
-      return;
-    }
-
+    if (!checklistTaskCard) return;
     setPlannerTaskCards((previousCards) =>
       previousCards.map((card) => {
-        if (card.id !== checklistTaskCard.id) {
-          return card;
-        }
+        if (card.id !== checklistTaskCard.id) return card;
 
         const nextItemId = `cost-${Date.now()}`;
         const nextLabel = `New checklist item ${card.items.length + 1}`;
@@ -1815,16 +1886,10 @@ export function EventPlannerPage() {
   };
 
   const handleRemoveChecklistItem = (itemId: string) => {
-    if (!checklistTaskCard) {
-      return;
-    }
-
+    if (!checklistTaskCard) return;
     setPlannerTaskCards((previousCards) =>
       previousCards.map((card) => {
-        if (card.id !== checklistTaskCard.id) {
-          return card;
-        }
-
+        if (card.id !== checklistTaskCard.id) return card;
         return {
           ...card,
           items: card.items.filter((item) => item.id !== itemId),
@@ -2048,14 +2113,21 @@ export function EventPlannerPage() {
                   <article className="min-h-[166px] rounded-lg border border-[#ded9e7] bg-white p-3 shadow-[0_2px_6px_rgba(31,18,54,0.05)]">
                     <p className="text-[12px] font-bold text-[#5e586d]">Service Requirements</p>
                     <div className="mt-2 space-y-1 text-[11px] leading-snug text-[#6f687f]">
-                      {eventAllocation?.food_package ? (
-                        <p className="font-semibold text-[#5a546a]">
-                          {eventAllocation.food_package}
-                        </p>
+                      {eventAllocation?.food_package || eventAllocation?.flow_type ? (
+                        <>
+                          {eventAllocation?.food_package && (
+                            <p className="font-semibold text-[#5a546a]">
+                              Food Package: {eventAllocation.food_package}
+                            </p>
+                          )}
+                          {eventAllocation?.flow_type && (
+                            <p className="font-semibold text-[#5a546a]">
+                              Flow Type: {eventAllocation.flow_type}
+                            </p>
+                          )}
+                        </>
                       ) : (
-                        overviewServiceRequirements.map((item, index) => (
-                          <p key={`${item}-${index}`}>{item}</p>
-                        ))
+                        <p className="italic text-[#8b84a0]">No service requirements specified.</p>
                       )}
                     </div>
                   </article>
@@ -2063,13 +2135,28 @@ export function EventPlannerPage() {
                   <article className="min-h-[112px] rounded-lg border border-[#ded9e7] bg-white p-3 shadow-[0_2px_6px_rgba(31,18,54,0.05)]">
                     <p className="text-[12px] font-bold text-[#5e586d]">Decorations</p>
                     <div className="mt-2 text-[10px] leading-snug text-[#6f687f]">
-                      <p>Theme: {eventAllocation?.theme || 'Enchanted Forest'}</p>
-                      <p>Fairy greens, hanging vines, twinkle lights, wood accents.</p>
-                      <p className="mt-1 font-semibold text-[#5a546a]">Materials</p>
-                      <p>1. Recycled crate centerpieces</p>
-                      <p>2. Rustic lantern lighting</p>
-                      <p>3. Willow arch and floral drapes</p>
-                      <p>4. Moss runner tablescape</p>
+                      {eventAllocation?.decorations ? (
+                        <>
+                          <p>Theme: {eventAllocation.decorations.theme || 'None specified'}</p>
+                          <p className="mt-1 font-semibold text-[#5a546a]">Materials</p>
+                          {eventAllocation.decorations.materials &&
+                            eventAllocation.decorations.materials.length > 0 ? (
+                            eventAllocation.decorations.materials.map(
+                              (mat: string, idx: number) => (
+                                <p key={idx}>
+                                  {idx + 1}. {mat}
+                                </p>
+                              )
+                            )
+                          ) : (
+                            <p className="italic text-[#8b84a0]">No materials specified.</p>
+                          )}
+                        </>
+                      ) : (
+                        <p className="italic text-[#8b84a0]">
+                          No decorations specified for this event.
+                        </p>
+                      )}
                     </div>
                   </article>
                 </div>
@@ -2077,53 +2164,38 @@ export function EventPlannerPage() {
                 <article className="min-h-[286px] rounded-lg border border-[#ded9e7] bg-white p-3 shadow-[0_2px_6px_rgba(31,18,54,0.05)]">
                   <p className="text-[12px] font-bold text-[#5e586d]">Allocation Resources</p>
                   <div className="mt-2 space-y-2">
-                    {eventAllocation ? (
-                      <>
-                        {eventAllocation.vendors && eventAllocation.vendors.length > 0 && (
-                          <div className="rounded-md border border-[#ece8f0] bg-[#fbf9fe] p-2.5 text-[10px] leading-snug text-[#6f687f]">
-                            <p className="text-[11px] font-black text-[#3a3442]">Vendors</p>
-                            <p className="mt-0.5 whitespace-pre-line break-words">
-                              {eventAllocation.vendors.map((v: any) => v.name || v.type).join('\n')}
-                            </p>
-                          </div>
+                    <div className="rounded-md border border-[#ece8f0] bg-[#fbf9fe] p-2.5 text-[10px] leading-snug text-[#6f687f]">
+                      <p className="text-[11px] font-black text-[#3a3442]">Vendors</p>
+                      <p className="mt-0.5 whitespace-pre-line break-words">
+                        {eventAllocation?.vendors && eventAllocation.vendors.length > 0 ? (
+                          eventAllocation.vendors.map((v: any) => v.name).join('\n')
+                        ) : (
+                          <span className="italic text-[#8b84a0]">None assigned</span>
                         )}
-                        {eventAllocation.manpower && eventAllocation.manpower.length > 0 && (
-                          <div className="rounded-md border border-[#ece8f0] bg-[#fbf9fe] p-2.5 text-[10px] leading-snug text-[#6f687f]">
-                            <p className="text-[11px] font-black text-[#3a3442]">Manpower</p>
-                            <p className="mt-0.5 whitespace-pre-line break-words">
-                              {eventAllocation.manpower
-                                .map((m: any) => m.name || m.role)
-                                .join('\n')}
-                            </p>
-                          </div>
+                      </p>
+                    </div>
+                    <div className="rounded-md border border-[#ece8f0] bg-[#fbf9fe] p-2.5 text-[10px] leading-snug text-[#6f687f]">
+                      <p className="text-[11px] font-black text-[#3a3442]">Manpower</p>
+                      <p className="mt-0.5 whitespace-pre-line break-words">
+                        {eventAllocation?.manpower && eventAllocation.manpower.length > 0 ? (
+                          eventAllocation.manpower.map((m: any) => m.role).join('\n')
+                        ) : (
+                          <span className="italic text-[#8b84a0]">None assigned</span>
                         )}
-                        {eventAllocation.supplies && eventAllocation.supplies.length > 0 && (
-                          <div className="rounded-md border border-[#ece8f0] bg-[#fbf9fe] p-2.5 text-[10px] leading-snug text-[#6f687f]">
-                            <p className="text-[11px] font-black text-[#3a3442]">Supplies</p>
-                            <p className="mt-0.5 whitespace-pre-line break-words">
-                              {eventAllocation.supplies
-                                .map((s: any) => s.name || s.item)
-                                .join('\n')}
-                            </p>
-                          </div>
+                      </p>
+                    </div>
+                    <div className="rounded-md border border-[#ece8f0] bg-[#fbf9fe] p-2.5 text-[10px] leading-snug text-[#6f687f]">
+                      <p className="text-[11px] font-black text-[#3a3442]">Supplies</p>
+                      <p className="mt-0.5 whitespace-pre-line break-words">
+                        {eventAllocation?.supplies && eventAllocation.supplies.length > 0 ? (
+                          eventAllocation.supplies
+                            .map((s: any) => `${s.item} (${s.quantity})`)
+                            .join('\n')
+                        ) : (
+                          <span className="italic text-[#8b84a0]">None assigned</span>
                         )}
-                      </>
-                    ) : (
-                      overviewAllocationResources.map((resource) => (
-                        <div
-                          key={resource.title}
-                          className="rounded-md border border-[#ece8f0] bg-[#fbf9fe] p-2.5 text-[10px] leading-snug text-[#6f687f]"
-                        >
-                          <p className="text-[11px] font-black text-[#3a3442]">{resource.title}</p>
-                          <p className="mt-0.5 whitespace-pre-line break-words">
-                            {resource.detail}
-                          </p>
-                          {resource.time ? (
-                            <p className="mt-1 text-[10px] text-[#8c8498]">{resource.time}</p>
-                          ) : null}
-                        </div>
-                      ))
-                    )}
+                      </p>
+                    </div>
                   </div>
                 </article>
 
@@ -2132,15 +2204,31 @@ export function EventPlannerPage() {
                   <div className="mt-2 space-y-2 text-[11px] leading-snug text-[#6f687f]">
                     <div className="min-h-[82px] rounded-md border border-[#ece8f0] bg-[#fbf9fe] p-2">
                       <p className="text-[11px] font-black text-[#3a3442]">Meetings</p>
-                      {overviewMeetings.map((meeting) => (
-                        <p key={meeting}>{meeting}</p>
-                      ))}
+                      {eventMeetings.length > 0 ? (
+                        <div className="mt-1 space-y-1">
+                          {eventMeetings.map((meeting, index) => (
+                            <div key={meeting.id || meeting._id || `meeting-${index}`}>
+                              <p className="font-semibold text-[#5a546a]">{meeting.title}</p>
+                              <p className="text-[10px] text-[#8c8498]">
+                                {meeting.startTime || meeting.time || ''}{' '}
+                                {meeting.endTime ? `- ${meeting.endTime}` : ''}
+                              </p>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <p className="italic text-[#8b84a0]">No scheduled meetings yet.</p>
+                      )}
                     </div>
                     <div className="min-h-[162px] rounded-md border border-[#ece8f0] bg-[#fbf9fe] p-2">
                       <p className="text-[11px] font-black text-[#3a3442]">Checked</p>
-                      {overviewChecklist.map((item) => (
-                        <p key={item}>• {item}</p>
-                      ))}
+                      {checklistItems.filter((item) => item.done).length > 0 ? (
+                        checklistItems
+                          .filter((item) => item.done)
+                          .map((item) => <p key={item.id}>• {item.label}</p>)
+                      ) : (
+                        <p className="italic text-[#8b84a0]">No completed checklist items.</p>
+                      )}
                     </div>
                   </div>
                 </article>
@@ -2148,20 +2236,29 @@ export function EventPlannerPage() {
                 <article className="min-h-[286px] rounded-lg border border-[#ded9e7] bg-white p-3 shadow-[0_2px_6px_rgba(31,18,54,0.05)]">
                   <p className="text-[12px] font-bold text-[#5e586d]">Program Flow</p>
                   <div className="mt-2 space-y-2">
-                    {overviewScheduleSummary.map((summary) => (
-                      <div
-                        key={summary.id}
-                        className="grid grid-cols-[76px_1fr] gap-2 text-[10px] leading-snug text-[#6f687f]"
-                      >
-                        <p>{summary.timeRange}</p>
-                        <div className="border-l border-[#ebe6f0] pl-2">
-                          <p className="text-[11px] font-black text-[#3a3442]">{summary.title}</p>
-                          <p className="mt-0.5 line-clamp-3 text-[10px] italic text-[#8a8495]">
-                            {summary.body}
+                    {overviewFlows.length > 0 ? (
+                      overviewFlows.map((flow) => (
+                        <div
+                          key={flow.id}
+                          className="grid grid-cols-[76px_1fr] gap-2 text-[10px] leading-snug text-[#6f687f]"
+                        >
+                          <p>
+                            {formatDisplayTime(flow.from, flow.startHour)} -{' '}
+                            {formatDisplayTime(flow.to, flow.endHour)}
                           </p>
+                          <div className="border-l border-[#ebe6f0] pl-2">
+                            <p className="text-[11px] font-black text-[#3a3442]">{flow.title}</p>
+                            <p className="mt-0.5 line-clamp-3 text-[10px] italic text-[#8a8495]">
+                              {flow.description || 'No description provided.'}
+                            </p>
+                          </div>
                         </div>
-                      </div>
-                    ))}
+                      ))
+                    ) : (
+                      <p className="text-[11px] italic text-[#8b84a0]">
+                        No program flow scheduled yet.
+                      </p>
+                    )}
                   </div>
                 </article>
               </div>
@@ -2229,9 +2326,9 @@ export function EventPlannerPage() {
                         onDragOver={handleLaneDragOver}
                         onDrop={(event) => handleDropTaskToLane(event, lane.id)}
                       >
-                        {laneTasks.map((task) => (
+                        {laneTasks.map((task, index) => (
                           <article
-                            key={task.id}
+                            key={String(task.id || `fallback-task-${lane.id}-${index}`)}
                             draggable={task.lane !== 'completed'}
                             onDragStart={(event) => handleDragTaskStart(event, task.id)}
                             onDragEnd={handleDragTaskEnd}
@@ -2631,7 +2728,10 @@ export function EventPlannerPage() {
               </button>
             </section>
           ) : activeTab === 'flow' ? (
-            <FlowNotesBoard />
+            <FlowNotesBoard
+              selectedEventId={selectedEventId}
+              eventDate={selectedProject.rawStartDate || ''}
+            />
           ) : (
             <section className="rounded-2xl border border-[#ddd8e8] bg-white px-4 py-10 text-center">
               <p className="text-sm font-semibold text-[#7c748f]">
@@ -2652,8 +2752,10 @@ export function EventPlannerPage() {
       >
         <DialogContent
           showCloseButton={false}
-          className="max-w-[calc(100%-1rem)] rounded-xl border border-[#e3dfea] bg-white p-0 sm:max-w-[600px] overflow-hidden shadow-2xl"
+          aria-describedby={undefined}
+          className="fixed left-[50%] top-[50%] z-[100000] w-full max-w-[calc(100%-1rem)] -translate-x-1/2 -translate-y-1/2 rounded-xl border border-[#e3dfea] bg-white p-0 shadow-2xl sm:max-w-[600px] overflow-hidden"
         >
+          <DialogTitle className="sr-only">Note Details</DialogTitle>
           <div className="flex max-h-[85vh] flex-col bg-white">
             <div className="overflow-y-auto [scrollbar-width:none]">
               {/* Image Header */}
@@ -2738,13 +2840,16 @@ export function EventPlannerPage() {
             setTaskPreviewTitle('');
             setTaskPreviewDetails('');
             setTaskPreviewChecklist([]);
+
           }
         }}
       >
         <DialogContent
           showCloseButton={false}
-          className="max-w-[calc(100%-1rem)] rounded-xl border border-[#e3dfea] bg-white p-0 sm:max-w-[760px]"
+          aria-describedby={undefined}
+          className="fixed left-[50%] top-[50%] z-[100000] w-full max-w-[calc(100%-1rem)] -translate-x-1/2 -translate-y-1/2 rounded-xl border border-[#e3dfea] bg-white p-0 shadow-2xl sm:max-w-[760px] overflow-hidden"
         >
+          <DialogTitle className="sr-only">Task Preview</DialogTitle>
           {selectedBoardTask ? (
             <article>
               <header className="flex items-center justify-between border-b border-[#eee9f2] px-4 py-2">
@@ -2863,7 +2968,7 @@ export function EventPlannerPage() {
                         {taskPreviewChecklist.length > 0 ? (
                           taskPreviewChecklist.map((item, index) => (
                             <div
-                              key={item.id}
+                              key={item.id || `preview-chk-${index}`}
                               className="flex items-start gap-2 rounded-md border border-[#e9e3f1] bg-white px-2.5 py-2"
                             >
                               <span className="mt-2 inline-flex w-4 shrink-0 justify-center text-[14px] font-black leading-none text-[#8b84a0]">
@@ -2953,9 +3058,9 @@ export function EventPlannerPage() {
 
                       <div className="mt-3 max-h-[280px] space-y-2 overflow-y-auto pr-1 [scrollbar-width:thin]">
                         {(selectedBoardTask?.checklist ?? []).length > 0 ? (
-                          (selectedBoardTask?.checklist ?? []).map((item) => (
+                          (selectedBoardTask?.checklist ?? []).map((item, index) => (
                             <div
-                              key={item.id}
+                              key={item.id || `view-chk-${index}`}
                               className="rounded-md border border-[#ece8f0] bg-[#faf8fd] px-3 py-2"
                             >
                               <div className="flex items-start gap-2">
@@ -3001,7 +3106,11 @@ export function EventPlannerPage() {
                 </div>
               )}
             </article>
-          ) : null}
+          ) : (
+            <div className="flex items-center justify-center p-20 text-sm font-semibold text-gray-400">
+              {selectedBoardTaskId ? 'Loading task details...' : 'No task selected.'}
+            </div>
+          )}
         </DialogContent>
       </Dialog>
 
@@ -3015,8 +3124,10 @@ export function EventPlannerPage() {
       >
         <DialogContent
           showCloseButton={false}
-          className="max-w-[calc(100%-1rem)] rounded-2xl border border-[#e3dfea] bg-white p-0 sm:max-w-[520px]"
+          aria-describedby={undefined}
+          className="fixed left-[50%] top-[50%] z-[100000] w-full max-w-[calc(100%-1rem)] -translate-x-1/2 -translate-y-1/2 rounded-2xl border border-[#e3dfea] bg-white p-0 shadow-2xl sm:max-w-[520px] overflow-hidden"
         >
+          <DialogTitle className="sr-only">Delete Confirmation</DialogTitle>
           <form
             className="px-6 py-5"
             onSubmit={(event) => {
