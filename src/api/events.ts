@@ -1,4 +1,5 @@
 import axiosInstance from './axios-instance';
+import { getUsers } from './users';
 
 export type EventStatus = 'Completed' | 'Pending' | 'Execution' | 'Cancelled';
 
@@ -16,11 +17,14 @@ export interface EventManagerEvent {
   rsvp: number;
   status: EventStatus;
   clientId: string;
+  organizerId: string;
+  organizerName: string;
 }
 
 interface BackendEvent {
   id: string;
   clientId?: string;
+  headOrganizerId?: string;
   title?: string;
   startDate?: string;
   endDate?: string;
@@ -96,12 +100,12 @@ function mapEventStatus(status?: string): EventStatus {
 
 function mapToManagerRow(
   baseEvent: BackendEvent,
-  details?: BackendEventDetails
+  userMap: Map<string, string>
 ): EventManagerEvent {
-  const rawStartDate = details?.dateStart || baseEvent.startDate || baseEvent.eventDate || '';
-  const rawEndDate = details?.dateEnd || baseEvent.endDate || '';
-  const packageName = details?.package?.name || baseEvent.eventPackageKey || baseEvent.eventPackage || '-';
-  const packagePax = details?.package?.pax ?? baseEvent.eventPax ?? 0;
+  const rawStartDate = baseEvent.startDate || baseEvent.eventDate || '';
+  const rawEndDate = baseEvent.endDate || '';
+  const packageName = baseEvent.eventPackageKey || baseEvent.eventPackage || '-';
+  const packagePax = baseEvent.eventPax ?? 0;
 
   const formattedStart = formatDate(rawStartDate);
   const formattedEnd = formatDate(rawEndDate);
@@ -110,6 +114,9 @@ function mapToManagerRow(
       ? `${formattedStart} – ${formattedEnd}`
       : formattedStart;
 
+  const clientName = baseEvent.clientId ? userMap.get(baseEvent.clientId) || baseEvent.clientId : 'Unknown client';
+  const organizerName = baseEvent.headOrganizerId ? userMap.get(baseEvent.headOrganizerId) || '' : '';
+
   return {
     id: baseEvent.id,
     title: baseEvent.title || 'Untitled event',
@@ -117,13 +124,15 @@ function mapToManagerRow(
     startDate: rawStartDate,
     endDate: rawEndDate,
     timeSlot: '-',
-    client: details?.clientName || baseEvent.clientId || 'Unknown client',
+    client: clientName,
     type: baseEvent.eventType || '-',
     package: packagePax > 0 ? `${packageName} (${packagePax})` : packageName,
     venue: baseEvent.venue || '-',
-    rsvp: Number(details?.headcount?.expectedAttendee || 0),
+    rsvp: 0,
     status: mapEventStatus(baseEvent.status),
     clientId: baseEvent.clientId || '',
+    organizerId: baseEvent.headOrganizerId || '',
+    organizerName,
   };
 }
 
@@ -138,22 +147,16 @@ export async function getEventById(eventId: string): Promise<BackendEventDetails
 }
 
 export async function getEventManagerEvents(): Promise<EventManagerEvent[]> {
-  const events = await getEvents();
-  if (!events.length) {
-    return [];
+  const [events, allUsers] = await Promise.all([getEvents(), getUsers()]);
+
+  // Build a lookup map: userId -> "FirstName LastName"
+  const userMap = new Map<string, string>();
+  for (const user of allUsers) {
+    const name = `${user.firstName || ''} ${user.lastName || ''}`.trim();
+    if (name) userMap.set(user.user_id, name);
   }
 
-  const details = await Promise.all(
-    events.map(async (event) => {
-      try {
-        return await getEventById(event.id);
-      } catch {
-        return undefined;
-      }
-    })
-  );
-
-  return events.map((event, index) => mapToManagerRow(event, details[index]));
+  return events.map((event) => mapToManagerRow(event, userMap));
 }
 
 export async function createEvent(payload: CreateEventPayload): Promise<BackendEvent> {

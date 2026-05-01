@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import {
   Briefcase,
+  CalendarDays,
   Pencil,
   Search,
   Trash2,
@@ -48,9 +49,15 @@ import {
   getVendorEntitiesByEventId,
   getVendors,
   updateVendor,
+  getVendorWorkersList,
+  getVendorEventHistory,
+  createVendorWorker as createVendorWorkerApi,
+  deleteVendorWorker as deleteVendorWorkerApi,
   type CreateVendorPayload,
   type UpdateVendorPayload,
   type Vendor,
+  type VendorWorker,
+  type VendorEvent,
 } from '@/api/vendors';
 import { getEvents } from '@/api/events';
 
@@ -804,148 +811,162 @@ export function AdminVendorPoolPage() {
       ) : null}
 
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="max-w-lg">
+        <DialogContent className="max-w-7xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>{dialogMode === 'create' ? 'Add Vendor' : 'Edit Vendor'}</DialogTitle>
             <DialogDescription>
               {dialogMode === 'create'
                 ? 'Create a vendor and assign it to an event.'
-                : 'Update vendor details and event assignment.'}
+                : 'Update vendor details, manage workers, and view event assignments.'}
             </DialogDescription>
           </DialogHeader>
 
-          <div className="grid gap-3">
-            <Input
-              placeholder="Vendor name"
-              value={vendorForm.vendorName}
-              onChange={(event) =>
-                setVendorForm((current) => ({ ...current, vendorName: event.target.value }))
-              }
-            />
+          <div className={`grid gap-6 ${dialogMode === 'edit' ? 'md:grid-cols-2' : 'grid-cols-1'}`}>
+            {/* ──── LEFT COLUMN: Vendor Form ──── */}
+            <div className="space-y-3">
+              <h3 className="text-sm font-black uppercase tracking-widest text-[#7c7390] border-b border-[#f1eef5] pb-2">
+                Vendor Details
+              </h3>
 
-            <Input
-              placeholder="Service type"
-              value={vendorForm.serviceType}
-              onChange={(event) =>
-                setVendorForm((current) => ({ ...current, serviceType: event.target.value }))
-              }
-            />
+              <Input
+                placeholder="Vendor name *"
+                value={vendorForm.vendorName}
+                onChange={(event) =>
+                  setVendorForm((current) => ({ ...current, vendorName: event.target.value }))
+                }
+              />
 
-            <Input
-              placeholder="Contact person"
-              value={vendorForm.contactPerson || ''}
-              onChange={(event) =>
-                setVendorForm((current) => ({ ...current, contactPerson: event.target.value }))
-              }
-            />
+              <Input
+                placeholder="Service type *"
+                value={vendorForm.serviceType}
+                onChange={(event) =>
+                  setVendorForm((current) => ({ ...current, serviceType: event.target.value }))
+                }
+              />
 
-            <Select
-              value={vendorForm.eventId || 'none'}
-              onValueChange={(value) =>
-                setVendorForm((current) => ({ ...current, eventId: value === 'none' ? '' : value }))
-              }
-            >
-              <SelectTrigger className="h-10 w-full">
-                <SelectValue placeholder="Assign event (optional)" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="none">No event for now</SelectItem>
-                {events.map((event) => (
-                  <SelectItem key={event.id} value={event.id}>
-                    {event.title}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+              <Input
+                placeholder="Contact person"
+                value={vendorForm.contactPerson || ''}
+                onChange={(event) =>
+                  setVendorForm((current) => ({ ...current, contactPerson: event.target.value }))
+                }
+              />
 
-            <Input
-              placeholder="Contact email"
-              value={vendorForm.email || ''}
-              onChange={(event) =>
-                setVendorForm((current) => ({ ...current, email: event.target.value }))
-              }
-            />
+              <Select
+                value={vendorForm.eventId || 'none'}
+                onValueChange={(value) =>
+                  setVendorForm((current) => ({ ...current, eventId: value === 'none' ? '' : value }))
+                }
+              >
+                <SelectTrigger className="h-10 w-full">
+                  <SelectValue placeholder="Assign event (optional)" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">No event for now</SelectItem>
+                  {events.map((event) => (
+                    <SelectItem key={event.id} value={event.id}>
+                      {event.title}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
 
-            <Input
-              placeholder="Contact phone"
-              value={vendorForm.contactNumber || ''}
-              onChange={(event) =>
-                setVendorForm((current) => ({ ...current, contactNumber: event.target.value }))
-              }
-            />
+              <div className="grid grid-cols-2 gap-3">
+                <Input
+                  placeholder="Contact email"
+                  value={vendorForm.email || ''}
+                  onChange={(event) =>
+                    setVendorForm((current) => ({ ...current, email: event.target.value }))
+                  }
+                />
+                <Input
+                  placeholder="Contact phone"
+                  value={vendorForm.contactNumber || ''}
+                  onChange={(event) =>
+                    setVendorForm((current) => ({ ...current, contactNumber: event.target.value }))
+                  }
+                />
+              </div>
 
-            <Input
-              placeholder="Type of supply"
-              value={vendorForm.typeOfSupply || ''}
-              onChange={(event) =>
-                setVendorForm((current) => ({ ...current, typeOfSupply: event.target.value }))
-              }
-            />
+              <Input
+                placeholder="Type of supply"
+                value={vendorForm.typeOfSupply || ''}
+                onChange={(event) =>
+                  setVendorForm((current) => ({ ...current, typeOfSupply: event.target.value }))
+                }
+              />
 
-            <Input
-              placeholder="Services offered"
-              value={vendorForm.servicesOffered || ''}
-              onChange={(event) =>
-                setVendorForm((current) => ({ ...current, servicesOffered: event.target.value }))
-              }
-            />
+              <Input
+                placeholder="Services offered"
+                value={vendorForm.servicesOffered || ''}
+                onChange={(event) =>
+                  setVendorForm((current) => ({ ...current, servicesOffered: event.target.value }))
+                }
+              />
 
-            <Input
-              placeholder="Pricing"
-              value={vendorForm.pricing || ''}
-              onChange={(event) =>
-                setVendorForm((current) => ({ ...current, pricing: event.target.value }))
-              }
-            />
+              <div className="grid grid-cols-2 gap-3">
+                <Input
+                  placeholder="Pricing"
+                  value={vendorForm.pricing || ''}
+                  onChange={(event) =>
+                    setVendorForm((current) => ({ ...current, pricing: event.target.value }))
+                  }
+                />
+                <Input
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  placeholder="Price"
+                  value={vendorForm.price ?? ''}
+                  onChange={(event) => {
+                    const nextValue = event.target.value;
+                    setVendorForm((current) => ({
+                      ...current,
+                      price: nextValue === '' ? null : Number(nextValue),
+                    }));
+                  }}
+                />
+              </div>
 
-            <Input
-              type="number"
-              min="0"
-              step="0.01"
-              placeholder="Price"
-              value={vendorForm.price ?? ''}
-              onChange={(event) => {
-                const nextValue = event.target.value;
-                setVendorForm((current) => ({
-                  ...current,
-                  price: nextValue === '' ? null : Number(nextValue),
-                }));
-              }}
-            />
+              <Input
+                placeholder="Last event handled"
+                value={vendorForm.lastEventHandled || ''}
+                onChange={(event) =>
+                  setVendorForm((current) => ({ ...current, lastEventHandled: event.target.value }))
+                }
+              />
 
-            <Input
-              placeholder="Last event handled"
-              value={vendorForm.lastEventHandled || ''}
-              onChange={(event) =>
-                setVendorForm((current) => ({ ...current, lastEventHandled: event.target.value }))
-              }
-            />
+              <Input
+                placeholder="Notes"
+                value={vendorForm.notes || ''}
+                onChange={(event) =>
+                  setVendorForm((current) => ({ ...current, notes: event.target.value }))
+                }
+              />
 
-            <Input
-              placeholder="Notes"
-              value={vendorForm.notes || ''}
-              onChange={(event) =>
-                setVendorForm((current) => ({ ...current, notes: event.target.value }))
-              }
-            />
+              <Select
+                value={normalizeStatus(vendorForm.availabilityStatus || 'inactive')}
+                onValueChange={(value) =>
+                  setVendorForm((current) => ({
+                    ...current,
+                    availabilityStatus: normalizeStatus(value),
+                  }))
+                }
+              >
+                <SelectTrigger className="h-10 w-full">
+                  <SelectValue placeholder="Select status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="active">Active</SelectItem>
+                  <SelectItem value="inactive">Inactive</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
 
-            <Select
-              value={normalizeStatus(vendorForm.availabilityStatus || 'inactive')}
-              onValueChange={(value) =>
-                setVendorForm((current) => ({
-                  ...current,
-                  availabilityStatus: normalizeStatus(value),
-                }))
-              }
-            >
-              <SelectTrigger className="h-10 w-full">
-                <SelectValue placeholder="Select status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="active">Active</SelectItem>
-                <SelectItem value="inactive">Inactive</SelectItem>
-              </SelectContent>
-            </Select>
+            {/* ──── RIGHT COLUMN: Workers & Events (edit mode only) ──── */}
+            {dialogMode === 'edit' && editingVendorId && (
+              <VendorSidepanel vendorId={editingVendorId} />
+            )}
           </div>
 
           <DialogFooter>
@@ -958,6 +979,267 @@ export function AdminVendorPoolPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+    </div>
+  );
+}
+
+// ─── SIDE PANEL COMPONENT: Workers + Events ─────────────────────────────────
+
+function VendorSidepanel({ vendorId }: { vendorId: string }) {
+  const [workers, setWorkers] = useState<VendorWorker[]>([]);
+  const [vendorEvents, setVendorEvents] = useState<VendorEvent[]>([]);
+  const [isLoadingWorkers, setIsLoadingWorkers] = useState(false);
+  const [isLoadingEvents, setIsLoadingEvents] = useState(false);
+  const [isAddingWorker, setIsAddingWorker] = useState(false);
+  const [isDeletingWorkerId, setIsDeletingWorkerId] = useState<string>('');
+
+  const [showAddForm, setShowAddForm] = useState(false);
+  const [newWorkerForm, setNewWorkerForm] = useState({
+    workerName: '',
+    role: '',
+    email: '',
+    contactNumber: '',
+    jobTitle: '',
+  });
+
+  const loadWorkers = useCallback(async () => {
+    setIsLoadingWorkers(true);
+    try {
+      const data = await getVendorWorkersList(vendorId);
+      setWorkers(data);
+    } catch {
+      setWorkers([]);
+    } finally {
+      setIsLoadingWorkers(false);
+    }
+  }, [vendorId]);
+
+  const loadEvents = useCallback(async () => {
+    setIsLoadingEvents(true);
+    try {
+      const data = await getVendorEventHistory(vendorId);
+      setVendorEvents(data);
+    } catch {
+      setVendorEvents([]);
+    } finally {
+      setIsLoadingEvents(false);
+    }
+  }, [vendorId]);
+
+  useEffect(() => {
+    void loadWorkers();
+    void loadEvents();
+  }, [loadWorkers, loadEvents]);
+
+  const handleAddWorker = async () => {
+    if (!newWorkerForm.workerName.trim()) return;
+    setIsAddingWorker(true);
+    try {
+      await createVendorWorkerApi(vendorId, {
+        workerName: newWorkerForm.workerName.trim(),
+        role: newWorkerForm.role.trim() || undefined,
+        email: newWorkerForm.email.trim() || undefined,
+        contactNumber: newWorkerForm.contactNumber.trim() || undefined,
+        jobTitle: newWorkerForm.jobTitle.trim() || undefined,
+        availabilityStatus: 'Active',
+      });
+      setNewWorkerForm({ workerName: '', role: '', email: '', contactNumber: '', jobTitle: '' });
+      setShowAddForm(false);
+      await loadWorkers();
+    } catch {
+      window.alert('Failed to add worker.');
+    } finally {
+      setIsAddingWorker(false);
+    }
+  };
+
+  const handleDeleteWorker = async (workerId: string) => {
+    if (!window.confirm('Remove this worker?')) return;
+    setIsDeletingWorkerId(workerId);
+    try {
+      await deleteVendorWorkerApi(vendorId, workerId);
+      await loadWorkers();
+    } catch {
+      window.alert('Failed to remove worker.');
+    } finally {
+      setIsDeletingWorkerId('');
+    }
+  };
+
+  return (
+    <div className="space-y-5">
+      {/* ──── Workers Section ──── */}
+      <div>
+        <div className="flex items-center justify-between border-b border-[#f1eef5] pb-2 mb-3">
+          <h3 className="text-sm font-black uppercase tracking-widest text-[#7c7390]">
+            Workers ({workers.length})
+          </h3>
+          <button
+            type="button"
+            onClick={() => setShowAddForm(!showAddForm)}
+            className="text-xs font-bold text-[#df1b8b] hover:text-[#c11776] transition-colors"
+          >
+            {showAddForm ? '✕ Cancel' : '+ Add Worker'}
+          </button>
+        </div>
+
+        {/* Add Worker Form */}
+        {showAddForm && (
+          <div className="mb-3 rounded-xl border border-[#e1d5eb] bg-[#faf7fd] p-3 space-y-2">
+            <Input
+              placeholder="Worker name *"
+              value={newWorkerForm.workerName}
+              onChange={(e) => setNewWorkerForm((f) => ({ ...f, workerName: e.target.value }))}
+              className="h-8 text-sm bg-white"
+            />
+            <div className="grid grid-cols-2 gap-2">
+              <Input
+                placeholder="Role"
+                value={newWorkerForm.role}
+                onChange={(e) => setNewWorkerForm((f) => ({ ...f, role: e.target.value }))}
+                className="h-8 text-sm bg-white"
+              />
+              <Input
+                placeholder="Job Title"
+                value={newWorkerForm.jobTitle}
+                onChange={(e) => setNewWorkerForm((f) => ({ ...f, jobTitle: e.target.value }))}
+                className="h-8 text-sm bg-white"
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              <Input
+                placeholder="Email"
+                value={newWorkerForm.email}
+                onChange={(e) => setNewWorkerForm((f) => ({ ...f, email: e.target.value }))}
+                className="h-8 text-sm bg-white"
+              />
+              <Input
+                placeholder="Phone"
+                value={newWorkerForm.contactNumber}
+                onChange={(e) => setNewWorkerForm((f) => ({ ...f, contactNumber: e.target.value }))}
+                className="h-8 text-sm bg-white"
+              />
+            </div>
+            <Button
+              type="button"
+              size="sm"
+              onClick={() => void handleAddWorker()}
+              disabled={isAddingWorker || !newWorkerForm.workerName.trim()}
+              className="w-full h-8 bg-[#df1b8b] hover:bg-[#c11776] text-white text-xs font-bold"
+            >
+              {isAddingWorker ? 'Adding...' : 'Add Worker'}
+            </Button>
+          </div>
+        )}
+
+        {/* Workers List */}
+        <div className="max-h-52 overflow-y-auto space-y-2 pr-1 [scrollbar-width:thin]">
+          {isLoadingWorkers ? (
+            <p className="text-xs font-semibold text-[#a49db4] text-center py-4">Loading workers...</p>
+          ) : workers.length === 0 ? (
+            <div className="rounded-xl border border-dashed border-[#e1d5eb] bg-[#faf9fc] py-6 text-center">
+              <Briefcase className="mx-auto mb-1.5 h-5 w-5 text-[#d4c5e3]" />
+              <p className="text-xs font-semibold text-[#8b839c]">No workers yet</p>
+            </div>
+          ) : (
+            workers.map((worker) => (
+              <div
+                key={worker.id}
+                className="flex items-center justify-between rounded-lg border border-[#f1eef5] bg-white px-3 py-2.5 transition-all hover:border-[#df1b8b]/30 hover:shadow-sm group"
+              >
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-bold text-[#2e2837] truncate">{worker.workerName}</p>
+                  <div className="flex items-center gap-2 mt-0.5">
+                    {worker.role && (
+                      <span className="text-[10px] font-semibold text-[#8b839c]">{worker.role}</span>
+                    )}
+                    {worker.email && (
+                      <span className="text-[10px] font-semibold text-[#a49db4] truncate">{worker.email}</span>
+                    )}
+                  </div>
+                </div>
+                <div className="flex items-center gap-1.5 ml-2">
+                  <Badge
+                    className={`text-[9px] px-1.5 py-0.5 ${
+                      worker.status.toLowerCase() === 'active'
+                        ? 'bg-[#e6f4ea] text-[#1e7e34]'
+                        : 'bg-[#f3f0f7] text-[#7c7390]'
+                    }`}
+                  >
+                    {worker.status}
+                  </Badge>
+                  <button
+                    type="button"
+                    onClick={() => void handleDeleteWorker(worker.id)}
+                    disabled={isDeletingWorkerId === worker.id}
+                    className="opacity-0 group-hover:opacity-100 transition-opacity text-[#c5221f] hover:text-[#a31b18] disabled:opacity-50"
+                    title="Remove worker"
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </button>
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+      </div>
+
+      {/* ──── Assigned Events Section ──── */}
+      <div>
+        <h3 className="text-sm font-black uppercase tracking-widest text-[#7c7390] border-b border-[#f1eef5] pb-2 mb-3">
+          Event History ({vendorEvents.length})
+        </h3>
+
+        <div className="max-h-44 overflow-y-auto space-y-2 pr-1 [scrollbar-width:thin]">
+          {isLoadingEvents ? (
+            <p className="text-xs font-semibold text-[#a49db4] text-center py-4">Loading events...</p>
+          ) : vendorEvents.length === 0 ? (
+            <div className="rounded-xl border border-dashed border-[#e1d5eb] bg-[#faf9fc] py-6 text-center">
+              <CalendarDays className="mx-auto mb-1.5 h-5 w-5 text-[#d4c5e3]" />
+              <p className="text-xs font-semibold text-[#8b839c]">No events assigned yet</p>
+            </div>
+          ) : (
+            vendorEvents.map((evt) => {
+              const isCompleted = evt.status.toLowerCase() === 'completed' || evt.status.toLowerCase() === 'confirmed';
+              const dateStr = evt.startDate || evt.eventDate;
+              const formattedDate = dateStr
+                ? new Date(dateStr).toLocaleDateString('en-US', {
+                    month: 'short',
+                    day: 'numeric',
+                    year: 'numeric',
+                  })
+                : 'Date TBD';
+
+              return (
+                <div
+                  key={evt.eventId}
+                  className={`flex items-center justify-between rounded-lg border px-3 py-2.5 transition-all ${
+                    isCompleted
+                      ? 'border-[#f1eef5] bg-[#faf9fc] opacity-70'
+                      : 'border-[#f1eef5] bg-white hover:border-[#df1b8b]/30 hover:shadow-sm'
+                  }`}
+                >
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-bold text-[#2e2837] truncate">{evt.title}</p>
+                    <p className="text-[10px] font-semibold text-[#a49db4]">{formattedDate}</p>
+                  </div>
+                  <Badge
+                    className={`text-[9px] px-1.5 py-0.5 ${
+                      isCompleted
+                        ? 'bg-[#f4e6fc] text-[#8637c3]'
+                        : evt.status.toLowerCase() === 'execution'
+                          ? 'bg-[#ffe6f1] text-[#df1b8b]'
+                          : 'bg-[#fff5d3] text-[#b68c17]'
+                    }`}
+                  >
+                    {evt.status}
+                  </Badge>
+                </div>
+              );
+            })
+          )}
+        </div>
+      </div>
     </div>
   );
 }
