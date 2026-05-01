@@ -28,6 +28,7 @@ import {
 } from '@/api/workers';
 import { getRSVPList } from '@/api/rsvp';
 import { CalendarDays, X } from 'lucide-react';
+import { EventDetailsModal, type EventFormData } from '@/components/organizer/EventDetailsModal';
 
 type VendorStatus = EventManagerVendor['status'];
 type EventManagerTab = 'Events' | 'Vendor' | 'Workers';
@@ -136,16 +137,31 @@ export function EventManagerPage() {
 
   const handleUpdateEventTitle = useCallback(
     async (event: EventManagerEvent) => {
-      const nextTitle = window.prompt('Update event title', event.title);
-      if (!nextTitle?.trim() || nextTitle.trim() === event.title) {
-        return;
-      }
+      setSelectedEventForDetails(event);
+      setIsEventDetailsModalOpen(true);
+    },
+    []
+  );
 
+  const handleUpdateEventFromModal = useCallback(
+    async (eventId: string, data: EventFormData) => {
       setIsMutating(true);
       setError('');
       try {
-        await updateEvent(event.id, { title: nextTitle.trim() });
+        await updateEvent(eventId, {
+          title: data.title,
+          startDate: data.startDate,
+          endDate: data.endDate || undefined,
+          eventType: data.eventType,
+          eventPackage: data.eventPackage,
+          eventPax: data.eventPax,
+          venue: data.venue,
+          status: data.status,
+          notes: data.notes || undefined,
+        });
         await fetchEvents();
+        setIsEventDetailsModalOpen(false);
+        setSelectedEventForDetails(null);
       } catch {
         setError('Unable to update event.');
       } finally {
@@ -247,6 +263,11 @@ export function EventManagerPage() {
   const [assignedEventsList, setAssignedEventsList] = useState<any[]>([]);
   const [isLoadingAssignedEvents, setIsLoadingAssignedEvents] = useState(false);
   const [assignedEventsTargetName, setAssignedEventsTargetName] = useState('');
+
+  const [isEventDetailsModalOpen, setIsEventDetailsModalOpen] = useState(false);
+  const [selectedEventForDetails, setSelectedEventForDetails] = useState<EventManagerEvent | null>(
+    null
+  );
 
   const handleOpenAssignedEvents = useCallback(
     async (type: 'Vendor' | 'Worker') => {
@@ -632,7 +653,11 @@ export function EventManagerPage() {
                 ? filteredData.data.map((event) => (
                     <TableRow
                       key={event.id}
-                      onClick={() => setSelectedEventId(event.id)}
+                      onClick={() => {
+                        setSelectedEventId(event.id);
+                        setSelectedEventForDetails(event);
+                        setIsEventDetailsModalOpen(true);
+                      }}
                       className={`group transition-all cursor-pointer border-b border-[#f6f4f9] ${
                         selectedEventId === event.id
                           ? 'bg-[#fdf2f8] border-l-4 border-l-[#df1b8b] shadow-sm'
@@ -663,7 +688,10 @@ export function EventManagerPage() {
                           {event.rsvp}
                           <button
                             type="button"
-                            onClick={() => setRsvpModalEvent(event)}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setRsvpModalEvent(event);
+                            }}
                             className="text-[9px] font-bold uppercase tracking-wider text-[#760CB4] hover:brightness-125 hover:underline"
                           >
                             View RSVP
@@ -1239,6 +1267,20 @@ export function EventManagerPage() {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Event Details Modal */}
+      {selectedEventForDetails && (
+        <EventDetailsModal
+          event={selectedEventForDetails}
+          isOpen={isEventDetailsModalOpen}
+          onClose={() => {
+            setIsEventDetailsModalOpen(false);
+            setSelectedEventForDetails(null);
+          }}
+          onUpdate={handleUpdateEventFromModal}
+          isUpdating={isMutating}
+        />
       )}
     </div>
   );
