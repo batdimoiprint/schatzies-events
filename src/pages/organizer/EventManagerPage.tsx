@@ -342,7 +342,7 @@ export function EventManagerPage() {
   }, [rsvpModalEvent]);
 
   return (
-    <div className="relative space-y-4 bg-transparent font-sans">
+    <div className="relative w-full max-w-full min-h-screen flex flex-col gap-4 overflow-x-hidden bg-[#fbf8fd] font-sans p-2 sm:p-4 lg:p-6 pb-10">
       {error ? (
         <Card className="border-0 bg-[#fff1f2] py-3 ring-1 ring-[#fecdd3]">
           <CardContent>
@@ -351,9 +351,9 @@ export function EventManagerPage() {
         </Card>
       ) : null}
 
-      <div className="flex-1 flex flex-col rounded-xl border border-[#eef0f4] bg-white p-6 shadow-sm overflow-hidden min-h-[calc(100vh-150px)]">
-        <div className="mb-4 flex flex-wrap items-center justify-between border-b border-[#f1eef5] pb-0">
-          <div className="flex gap-1">
+      <div className="flex-1 flex flex-col rounded-xl border border-[#eef0f4] bg-white p-3 sm:p-6 shadow-sm overflow-hidden min-h-[calc(100vh-150px)]">
+        <div className="mb-4 flex flex-col lg:flex-row lg:items-center justify-between border-b border-[#f1eef5] pb-0 gap-4">
+          <div className="flex gap-1 overflow-x-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden whitespace-nowrap pb-1">
             {EVENT_MANAGER_TABS.map((tabLabel) => {
               const internalTab = tabLabel;
               const isActive = activeTab === internalTab;
@@ -363,7 +363,7 @@ export function EventManagerPage() {
                   key={tabLabel}
                   type="button"
                   onClick={() => setActiveTab(internalTab)}
-                  className={`relative top-px z-10 rounded-t-lg px-6 py-2.5 text-sm font-bold transition-colors ${
+                  className={`relative top-px z-10 rounded-t-lg px-4 sm:px-6 py-2.5 text-xs sm:text-sm font-bold transition-colors ${
                     isActive
                       ? 'border border-[#f1eef5] border-b-white bg-white text-[#302a3a]'
                       : 'border border-transparent bg-[#faf9fc] text-[#a49db4] hover:bg-[#f3f0f7]'
@@ -375,7 +375,7 @@ export function EventManagerPage() {
             })}
           </div>
 
-          <div className="mb-2 flex items-center gap-3">
+          <div className="mb-2 grid grid-cols-2 sm:flex sm:items-center gap-2 sm:gap-3 w-full sm:w-auto">
             <div className="relative">
               <button
                 type="button"
@@ -384,7 +384,7 @@ export function EventManagerPage() {
                   setIsActionsOpen(!isActionsOpen);
                   setIsStatusOpen(false);
                 }}
-                className="flex h-9 items-center gap-2 rounded-full bg-linear-to-r from-[#df1b8b] to-[#9f1baf] px-5 font-sans text-xs font-bold text-white shadow-sm transition-all hover:shadow-md disabled:cursor-not-allowed disabled:opacity-60"
+                className="flex h-9 w-full sm:w-auto justify-center items-center gap-2 rounded-full bg-linear-to-r from-[#df1b8b] to-[#9f1baf] px-4 sm:px-5 font-sans text-[11px] sm:text-xs font-bold text-white shadow-sm transition-all hover:shadow-md disabled:cursor-not-allowed disabled:opacity-60"
               >
                 Actions
                 <svg
@@ -401,7 +401,7 @@ export function EventManagerPage() {
                 </svg>
               </button>
               {isActionsOpen && (
-                <div className="absolute right-0 z-20 mt-2 w-48 overflow-hidden rounded-xl border border-[#f1eef5] bg-white py-1 shadow-lg">
+                <div className="absolute left-0 z-50 mt-2 w-48 origin-top-left overflow-hidden rounded-xl border border-[#f1eef5] bg-white py-1 shadow-xl">
                   {activeTab === 'Events' && selectedEventId && (
                     <button
                       type="button"
@@ -523,7 +523,7 @@ export function EventManagerPage() {
                   setIsStatusOpen(!isStatusOpen);
                   setIsActionsOpen(false);
                 }}
-                className="flex h-9 items-center gap-2 rounded-full bg-[#9f1baf] px-5 font-sans text-xs font-bold text-white shadow-sm transition-all hover:shadow-md disabled:cursor-not-allowed disabled:opacity-60"
+                className="flex h-9 w-full sm:w-auto justify-center items-center gap-2 rounded-full bg-[#9f1baf] px-4 sm:px-5 font-sans text-[11px] sm:text-xs font-bold text-white shadow-sm transition-all hover:shadow-md disabled:cursor-not-allowed disabled:opacity-60"
               >
                 Status
                 <svg
@@ -540,7 +540,7 @@ export function EventManagerPage() {
                 </svg>
               </button>
               {isStatusOpen && activeTab === 'Events' && selectedEventId && (
-                <div className="absolute right-0 z-20 mt-2 w-32 overflow-hidden rounded-xl border border-[#f1eef5] bg-white py-1 shadow-lg">
+                <div className="absolute right-0 z-50 mt-2 w-48 origin-top-right overflow-hidden rounded-xl border border-[#f1eef5] bg-white py-1 shadow-xl">
                   <button
                     type="button"
                     onClick={() => handleUpdateEventStatus('Pending')}
@@ -571,27 +571,45 @@ export function EventManagerPage() {
           </div>
         </div>
 
-        <div className="flex-1 overflow-auto rounded-lg">
-          <Table className="w-full text-xs relative">
+        <div className="flex-1 overflow-x-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden rounded-lg">
+          <Table className="w-full text-[11px] sm:text-xs relative">
             <TableHeader>
               {activeTab === 'Events' ? (
                 <TableRow className="border-b-2 border-[#f1eef5] hover:bg-transparent">
                   <TableHead className="h-10 font-black text-[#211a2f]">Title</TableHead>
                   <TableHead className="h-10 font-black text-[#211a2f]">Date</TableHead>
                   <TableHead className="h-10 font-black text-[#211a2f]">Time</TableHead>
-                  <TableHead className="h-10 font-black text-[#211a2f]">Client</TableHead>
-                  <TableHead className="h-10 font-black text-[#211a2f]">Type</TableHead>
-                  <TableHead className="h-10 font-black text-[#211a2f]">Package</TableHead>
-                  <TableHead className="h-10 font-black text-[#211a2f]">Venue</TableHead>
-                  <TableHead className="h-10 font-black text-[#211a2f]">RSVP</TableHead>
-                  <TableHead className="h-10 font-black text-[#211a2f]">Status</TableHead>
+                  <TableHead className="h-10 font-black text-[#211a2f] hidden md:table-cell">
+                    Client
+                  </TableHead>
+                  <TableHead className="h-10 font-black text-[#211a2f] hidden md:table-cell">
+                    Type
+                  </TableHead>
+                  <TableHead className="h-10 font-black text-[#211a2f] hidden md:table-cell">
+                    Package
+                  </TableHead>
+                  <TableHead className="h-10 font-black text-[#211a2f] hidden md:table-cell">
+                    Venue
+                  </TableHead>
+                  <TableHead className="h-10 font-black text-[#211a2f] hidden md:table-cell">
+                    RSVP
+                  </TableHead>
+                  <TableHead className="h-10 font-black text-[#211a2f] hidden md:table-cell">
+                    Status
+                  </TableHead>
                 </TableRow>
               ) : activeTab === 'Vendor' ? (
                 <TableRow className="border-b-2 border-[#f1eef5] hover:bg-transparent">
                   <TableHead className="h-10 font-black text-[#211a2f]">Name</TableHead>
-                  <TableHead className="h-10 font-black text-[#211a2f]">Contact Person</TableHead>
-                  <TableHead className="h-10 font-black text-[#211a2f]">Email</TableHead>
-                  <TableHead className="h-10 font-black text-[#211a2f]">Phone</TableHead>
+                  <TableHead className="h-10 font-black text-[#211a2f] hidden md:table-cell">
+                    Contact Person
+                  </TableHead>
+                  <TableHead className="h-10 font-black text-[#211a2f] hidden md:table-cell">
+                    Email
+                  </TableHead>
+                  <TableHead className="h-10 font-black text-[#211a2f] hidden md:table-cell">
+                    Phone
+                  </TableHead>
                   <TableHead className="h-10 font-black text-[#211a2f]">Service</TableHead>
                   <TableHead className="h-10 font-black text-[#211a2f]">Status</TableHead>
                 </TableRow>
@@ -599,8 +617,12 @@ export function EventManagerPage() {
                 <TableRow className="border-b-2 border-[#f1eef5] hover:bg-transparent">
                   <TableHead className="h-10 font-black text-[#211a2f]">Worker Name</TableHead>
                   <TableHead className="h-10 font-black text-[#211a2f]">Role</TableHead>
-                  <TableHead className="h-10 font-black text-[#211a2f]">Contact</TableHead>
-                  <TableHead className="h-10 font-black text-[#211a2f]">Email</TableHead>
+                  <TableHead className="h-10 font-black text-[#211a2f] hidden md:table-cell">
+                    Contact
+                  </TableHead>
+                  <TableHead className="h-10 font-black text-[#211a2f] hidden md:table-cell">
+                    Email
+                  </TableHead>
                   <TableHead className="h-10 font-black text-[#211a2f]">Status</TableHead>
                 </TableRow>
               )}
@@ -624,19 +646,19 @@ export function EventManagerPage() {
                       <TableCell className="py-4 font-semibold text-[#5c546a]">
                         {event.timeSlot}
                       </TableCell>
-                      <TableCell className="py-4 font-semibold text-[#5c546a]">
+                      <TableCell className="py-4 font-semibold text-[#5c546a] hidden md:table-cell">
                         {event.client}
                       </TableCell>
-                      <TableCell className="py-4 font-semibold text-[#5c546a]">
+                      <TableCell className="py-4 font-semibold text-[#5c546a] hidden md:table-cell">
                         {event.type}
                       </TableCell>
-                      <TableCell className="py-4 font-semibold text-[#5c546a]">
+                      <TableCell className="py-4 font-semibold text-[#5c546a] hidden md:table-cell">
                         {event.package}
                       </TableCell>
-                      <TableCell className="py-4 font-semibold text-[#5c546a]">
+                      <TableCell className="py-4 font-semibold text-[#5c546a] hidden md:table-cell">
                         {event.venue}
                       </TableCell>
-                      <TableCell className="py-4 font-bold text-[#5c546a]">
+                      <TableCell className="py-4 font-bold text-[#5c546a] hidden md:table-cell">
                         <div className="flex items-center gap-1.5">
                           {event.rsvp}
                           <button
@@ -648,7 +670,7 @@ export function EventManagerPage() {
                           </button>
                         </div>
                       </TableCell>
-                      <TableCell className="py-4">
+                      <TableCell className="py-4 hidden md:table-cell">
                         <span
                           className={`inline-flex items-center gap-1.5 rounded-sm px-3 py-1 text-[10px] font-black tracking-wide ${
                             event.status === 'Completed'
@@ -690,13 +712,13 @@ export function EventManagerPage() {
                         <TableCell className="py-4 font-bold text-[#5c546a]">
                           {vendor.name}
                         </TableCell>
-                        <TableCell className="py-4 font-semibold text-[#5c546a]">
+                        <TableCell className="py-4 font-semibold text-[#5c546a] hidden md:table-cell">
                           {vendor.contactPerson}
                         </TableCell>
-                        <TableCell className="py-4 font-semibold text-[#5c546a]">
+                        <TableCell className="py-4 font-semibold text-[#5c546a] hidden md:table-cell">
                           {vendor.email}
                         </TableCell>
-                        <TableCell className="py-4 font-semibold text-[#5c546a]">
+                        <TableCell className="py-4 font-semibold text-[#5c546a] hidden md:table-cell">
                           {vendor.phone}
                         </TableCell>
                         <TableCell className="py-4 font-semibold text-[#5c546a]">
@@ -726,8 +748,10 @@ export function EventManagerPage() {
                           <TableCell className="py-4 font-semibold text-[#5c546a]">
                             {worker.role}
                           </TableCell>
-                          <TableCell className="py-4 font-semibold text-[#5c546a]">N/A</TableCell>
-                          <TableCell className="py-4 font-semibold text-[#5c546a]">
+                          <TableCell className="py-4 font-semibold text-[#5c546a] hidden md:table-cell">
+                            N/A
+                          </TableCell>
+                          <TableCell className="py-4 font-semibold text-[#5c546a] hidden md:table-cell">
                             {worker.email}
                           </TableCell>
                           <TableCell className="py-4">
