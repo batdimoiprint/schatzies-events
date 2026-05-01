@@ -139,13 +139,10 @@ export function EventManagerPage() {
     void fetchVendors();
   }, [fetchVendors]);
 
-  const handleUpdateEventTitle = useCallback(
-    async (event: EventManagerEvent) => {
-      setSelectedEventForDetails(event);
-      setIsEventDetailsModalOpen(true);
-    },
-    []
-  );
+  const handleUpdateEventTitle = useCallback(async (event: EventManagerEvent) => {
+    setSelectedEventForDetails(event);
+    setIsEventDetailsModalOpen(true);
+  }, []);
 
   const handleUpdateEventFromModal = useCallback(
     async (eventId: string, data: EventFormData) => {
