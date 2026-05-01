@@ -158,11 +158,13 @@ export function EventPlanViewingPage() {
         </div>
 
         {/* ── 6. Bottom 2×2 Grid ────────────────────────────────────────────── */}
-        <div className="grid grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
           {/* Card 1 — Service Requirements */}
           <div className="bg-white rounded-xl shadow-md p-6">
-            <div className="flex justify-between items-center mb-4">
-              <span className="text-pink-500 font-semibold text-sm">Service Requirements</span>
+            <div className="flex flex-wrap items-center justify-between gap-2 mb-4">
+              <span className="text-pink-500 font-semibold text-sm min-w-0">
+                Service Requirements
+              </span>
               <button
                 onClick={() => setShowServiceReq(true)}
                 className="bg-pink-400 text-white rounded-full px-4 py-1 text-[10px] font-bold shadow-sm hover:bg-pink-500 transition-colors"
@@ -191,8 +193,10 @@ export function EventPlanViewingPage() {
 
           {/* Card 2 — Allocation Resources */}
           <div className="bg-white rounded-xl shadow-md p-6">
-            <div className="flex justify-between items-center mb-4">
-              <span className="text-pink-500 font-semibold text-sm">Allocation Resources</span>
+            <div className="flex flex-wrap items-center justify-between gap-2 mb-4">
+              <span className="text-pink-500 font-semibold text-sm min-w-0">
+                Allocation Resources
+              </span>
               <button
                 onClick={() => setShowAllocationRes(true)}
                 className="bg-pink-400 text-white rounded-full px-4 py-1 text-[10px] font-bold shadow-sm hover:bg-pink-500 transition-colors"
@@ -216,8 +220,10 @@ export function EventPlanViewingPage() {
 
           {/* Card 3 — Checklist & Meeting */}
           <div className="bg-white rounded-xl shadow-md p-6">
-            <div className="flex justify-between items-center mb-4">
-              <span className="text-pink-500 font-semibold text-sm">Checklist &amp; Meeting</span>
+            <div className="flex flex-wrap items-center justify-between gap-2 mb-4">
+              <span className="text-pink-500 font-semibold text-sm min-w-0">
+                Checklist &amp; Meeting
+              </span>
               <button
                 onClick={() => setShowChecklist(true)}
                 className="bg-pink-400 text-white rounded-full px-4 py-1 text-[10px] font-bold shadow-sm hover:bg-pink-500 transition-colors"
@@ -236,9 +242,9 @@ export function EventPlanViewingPage() {
 
           {/* Card 4 — Program Flow */}
           <div className="bg-white rounded-xl shadow-md p-6">
-            <div className="flex justify-between items-center mb-4">
-              <span className="text-pink-500 font-semibold text-sm">Program Flow</span>
-              <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center justify-between gap-2 mb-4">
+              <span className="text-pink-500 font-semibold text-sm min-w-0">Program Flow</span>
+              <div className="flex items-center gap-2 shrink-0">
                 <button className="flex items-center gap-1 border border-gray-200 text-gray-500 rounded-full px-3 py-1 text-[10px] font-bold shadow-sm hover:bg-gray-50 transition-colors">
                   <svg className="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path
