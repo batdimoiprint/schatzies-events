@@ -6,6 +6,8 @@ export interface EventManagerEvent {
   id: string;
   title: string;
   date: string;
+  startDate: string;
+  endDate: string;
   timeSlot: string;
   client: string;
   type: string;
@@ -25,6 +27,7 @@ interface BackendEvent {
   eventDate?: string;
   eventType?: string;
   eventPackage?: string;
+  eventPackageKey?: string;
   eventPax?: number | null;
   venue?: string;
   status?: string;
@@ -80,27 +83,6 @@ function formatDate(dateValue?: string): string {
   });
 }
 
-function formatTimeRange(startDate?: string, endDate?: string): string {
-  const start = startDate ? new Date(startDate) : null;
-  const end = endDate ? new Date(endDate) : null;
-  if (!start || Number.isNaN(start.getTime())) return '-';
-
-  const startLabel = start.toLocaleTimeString('en-US', {
-    hour: 'numeric',
-    minute: '2-digit',
-  });
-
-  if (!end || Number.isNaN(end.getTime())) {
-    return startLabel;
-  }
-
-  const endLabel = end.toLocaleTimeString('en-US', {
-    hour: 'numeric',
-    minute: '2-digit',
-  });
-
-  return `${startLabel} - ${endLabel}`;
-}
 
 function mapEventStatus(status?: string): EventStatus {
   const normalized = String(status || '')
@@ -116,16 +98,25 @@ function mapToManagerRow(
   baseEvent: BackendEvent,
   details?: BackendEventDetails
 ): EventManagerEvent {
-  const startDate = details?.dateStart || baseEvent.startDate || baseEvent.eventDate;
-  const endDate = details?.dateEnd || baseEvent.endDate;
-  const packageName = details?.package?.name || baseEvent.eventPackage || '-';
+  const rawStartDate = details?.dateStart || baseEvent.startDate || baseEvent.eventDate || '';
+  const rawEndDate = details?.dateEnd || baseEvent.endDate || '';
+  const packageName = details?.package?.name || baseEvent.eventPackageKey || baseEvent.eventPackage || '-';
   const packagePax = details?.package?.pax ?? baseEvent.eventPax ?? 0;
+
+  const formattedStart = formatDate(rawStartDate);
+  const formattedEnd = formatDate(rawEndDate);
+  const dateDisplay =
+    formattedEnd && formattedEnd !== '-' && formattedEnd !== formattedStart
+      ? `${formattedStart} – ${formattedEnd}`
+      : formattedStart;
 
   return {
     id: baseEvent.id,
     title: baseEvent.title || 'Untitled event',
-    date: formatDate(startDate),
-    timeSlot: formatTimeRange(startDate, endDate),
+    date: dateDisplay,
+    startDate: rawStartDate,
+    endDate: rawEndDate,
+    timeSlot: '-',
     client: details?.clientName || baseEvent.clientId || 'Unknown client',
     type: baseEvent.eventType || '-',
     package: packagePax > 0 ? `${packageName} (${packagePax})` : packageName,

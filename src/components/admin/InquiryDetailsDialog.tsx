@@ -92,6 +92,10 @@ function normalizeInquiryStatus(status?: string) {
     return INQUIRY_STATUS_OPTIONS.PENDING_REVIEW;
   }
 
+  if (normalized === 'meeting scheduled') {
+    return INQUIRY_STATUS_OPTIONS.MEETING_SCHEDULED;
+  }
+
   if (normalized === 'resolved') {
     return INQUIRY_STATUS_OPTIONS.APPROVED;
   }
@@ -207,12 +211,13 @@ export function InquiryDetailsDialog({
     const organizerId = String(
       selectedInquiry?.meetingDetails?.organizerId || selectedMeetingOrganizerId || ''
     ).trim();
-    const eventDateSource = String(
-      selectedInquiry?.meetingDetails?.date || selectedInquiry.date || ''
+    const meetingDateSource = String(
+      selectedInquiry?.meetingDetails?.date || selectedInquiry?.meetingDetails?.startDateKey || ''
     ).trim();
-    const eventTimeSource = String(
+    const meetingTimeSource = String(
       selectedInquiry?.meetingDetails?.time || selectedInquiry?.meetingDetails?.startTime || ''
     ).trim();
+    const plannedDateSource = String(selectedInquiry.date || '').trim();
     const eventTitle = String(
       selectedInquiry?.title ||
         selectedInquiry?.subject ||
@@ -233,8 +238,13 @@ export function InquiryDetailsDialog({
         return;
       }
 
-      if (!eventDateSource) {
-        setStatusChangeError('Inquiry date is required before creating the event.');
+      if (!meetingDateSource) {
+        setStatusChangeError('A scheduled meeting is required before approving this inquiry.');
+        return;
+      }
+
+      if (!plannedDateSource) {
+        setStatusChangeError('Inquiry planned date is required before creating the event.');
         return;
       }
     }
@@ -245,16 +255,22 @@ export function InquiryDetailsDialog({
       await updateInquiryStatus(id, pendingStatus);
 
       if (canCreateApprovedEvent) {
-        const eventDate = buildEventDateTime(eventDateSource, eventTimeSource);
+        const startDate = buildEventDateTime(meetingDateSource, meetingTimeSource);
+        const endDate = buildEventDateTime(plannedDateSource, '00:00');
 
-        if (!eventDate) {
-          throw new Error('Unable to build a valid event date for approval.');
+        if (!startDate) {
+          throw new Error('Unable to build a valid start date from the meeting.');
+        }
+
+        if (!endDate) {
+          throw new Error('Unable to build a valid end date from the inquiry planned date.');
         }
 
         try {
           await createEvent({
             title: eventTitle,
-            startDate: eventDate,
+            startDate,
+            endDate,
             client_id: clientId,
             organizer_id: organizerId,
             eventType: String(selectedInquiry.eventType || '').trim() || 'General',
@@ -266,8 +282,7 @@ export function InquiryDetailsDialog({
               selectedInquiry.eventPax !== undefined && selectedInquiry.eventPax !== null
                 ? Number(selectedInquiry.eventPax)
                 : undefined,
-            eventDate,
-            eventTime: eventTimeSource || '00:00',
+            eventDate: endDate,
             eventLocation: '',
             venue: '',
             status: 'Planning',
@@ -458,6 +473,16 @@ export function InquiryDetailsDialog({
     }
   };
 
+  // Determine the normalized current status and build options.
+  // Exclude "Requires Clarification" from the selectable list unless
+  // the inquiry currently has that status, so the Select can display it.
+  const currentStatusValue = normalizeInquiryStatus(selectedInquiry?.status);
+  const statusOptions = getInquiryStatusOptions(selectedInquiry?.status).filter(
+    (opt) =>
+      opt.value !== INQUIRY_STATUS_OPTIONS.REQUIRES_CLARIFICATION ||
+      opt.value === currentStatusValue
+  );
+
   return (
     <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
       <DialogContent className="sm:max-w-6xl">
@@ -606,15 +631,15 @@ export function InquiryDetailsDialog({
                   <Label className="text-[10px] font-black uppercase text-[#857a98] mb-2 block">
                     Change State
                   </Label>
-                  <Select
-                    value={normalizeInquiryStatus(selectedInquiry.status)}
-                    onValueChange={handleStatusChange}
-                  >
+                    <Select
+                      value={currentStatusValue}
+                      onValueChange={handleStatusChange}
+                    >
                     <SelectTrigger className="w-full h-11 border-[#e5ddee] bg-white rounded-xl font-bold text-[#4e4560]">
                       <SelectValue placeholder="Update status" />
                     </SelectTrigger>
                     <SelectContent className="rounded-xl border-[#e5ddee]">
-                      {getInquiryStatusOptions(selectedInquiry.status).map((option) => (
+                      {statusOptions.map((option) => (
                         <SelectItem
                           key={option.value}
                           value={option.value}
@@ -661,14 +686,14 @@ export function InquiryDetailsDialog({
                       </div>
                       <div className="space-y-3 text-[11px] font-semibold">
                         <p className="flex justify-between border-b border-[#eee7f4] pb-1.5">
-                          <span className="text-[#a094b8]">Location</span>
+                          <span className="text-[#a094b8]">Meeting Location</span>
                           <span className="text-[#5f4f7a]">
                             {selectedInquiry.meetingDetails.location || 'TBA'}
                           </span>
                         </p>
                         <div className="space-y-2">
                           <p className="flex justify-between">
-                            <span className="text-[#a094b8]">Current Expert</span>
+                            <span className="text-[#a094b8]">Current Organizer</span>
                             <span className="text-[#5f4f7a] text-right">
                               {getOrganizerLabel(selectedInquiry.meetingDetails.organizerId || '')}
                             </span>

@@ -34,6 +34,39 @@ export interface EventFormData {
   notes: string;
 }
 
+function parseISODate(rawValue?: string): string {
+  if (!rawValue) return '';
+  // If already YYYY-MM-DD, return directly
+  if (/^\d{4}-\d{2}-\d{2}$/.test(rawValue)) return rawValue;
+  // Try ISO string
+  const parsed = new Date(rawValue);
+  if (Number.isNaN(parsed.getTime())) return '';
+  return parsed.toISOString().slice(0, 10);
+}
+
+function parseFormattedDate(formattedDate?: string): string {
+  if (!formattedDate) return '';
+
+  // Handle "MM/DD/YY" format
+  const dateParts = formattedDate.split('/');
+  if (dateParts.length === 3) {
+    const [month, day, year] = dateParts;
+    const fullYear = year.length === 2 ? `20${year}` : year;
+    return `${fullYear}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+  }
+
+  return '';
+}
+
+function parsePackageInfo(packageStr?: string): { name: string; pax: number } {
+  if (!packageStr || packageStr === '-') return { name: '', pax: 0 };
+  const match = packageStr.match(/^(.+?)\s*\((\d+)\)$/);
+  if (match) {
+    return { name: match[1].trim(), pax: parseInt(match[2], 10) };
+  }
+  return { name: packageStr, pax: 0 };
+}
+
 export function EventDetailsModal({
   event,
   isOpen,
@@ -54,7 +87,7 @@ export function EventDetailsModal({
       startDate: '',
       endDate: '',
       eventType: event.type,
-      eventPackage: event.package,
+      eventPackage: '',
       eventPax: 0,
       venue: event.venue,
       status: event.status,
@@ -66,24 +99,17 @@ export function EventDetailsModal({
 
   useEffect(() => {
     if (isOpen && event) {
-      // Parse the date from the event (format: MM/DD/YY)
-      const dateParts = event.date.split('/');
-      let startDateISO = '';
-      if (dateParts.length === 3) {
-        const [month, day, year] = dateParts;
-        const fullYear = `20${year}`;
-        startDateISO = `${fullYear}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
-      }
+      // Parse start and end dates — prefer raw ISO, fall back to formatted date string
+      const startDateISO = parseISODate(event.startDate) || parseFormattedDate(event.date?.split(' – ')[0]);
+      const endDateISO = parseISODate(event.endDate) || parseFormattedDate(event.date?.split(' – ')[1]);
 
       // Parse package to extract name and pax
-      const packageMatch = event.package.match(/^(.+?)\s*\((\d+)\)$/);
-      const packageName = packageMatch ? packageMatch[1] : event.package;
-      const packagePax = packageMatch ? parseInt(packageMatch[2], 10) : 0;
+      const { name: packageName, pax: packagePax } = parsePackageInfo(event.package);
 
       reset({
         title: event.title,
         startDate: startDateISO,
-        endDate: '',
+        endDate: endDateISO,
         eventType: event.type,
         eventPackage: packageName,
         eventPax: packagePax,
@@ -194,7 +220,7 @@ export function EventDetailsModal({
                 id="eventPackage"
                 {...register('eventPackage')}
                 className="border-[#e1d5eb] focus:border-[#df1b8b] focus:ring-[#df1b8b]"
-                placeholder="e.g., Premium, Standard"
+                placeholder="e.g., Bloom, Grandezza"
                 disabled={isUpdating}
               />
             </div>

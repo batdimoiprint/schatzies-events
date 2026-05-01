@@ -27,11 +27,13 @@ import {
   getWorkerAssignedEvents,
 } from '@/api/workers';
 import { getRSVPList } from '@/api/rsvp';
-import { CalendarDays, X } from 'lucide-react';
+import { CalendarDays, X, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
 import { EventDetailsModal, type EventFormData } from '@/components/organizer/EventDetailsModal';
 
 type VendorStatus = EventManagerVendor['status'];
 type EventManagerTab = 'Events' | 'Vendor' | 'Workers';
+type SortDirection = 'asc' | 'desc' | null;
+type EventSortKey = 'title' | 'date' | 'client' | 'type' | 'package' | 'venue' | 'rsvp' | 'status';
 
 const EVENT_MANAGER_TABS: EventManagerTab[] = ['Events', 'Vendor', 'Workers'];
 
@@ -57,6 +59,8 @@ export function EventManagerPage() {
   const [isMutating, setIsMutating] = useState(false);
   const [error, setError] = useState<string>('');
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [sortKey, setSortKey] = useState<EventSortKey | null>(null);
+  const [sortDirection, setSortDirection] = useState<SortDirection>(null);
 
   const fetchEvents = useCallback(async () => {
     setIsLoading(true);
@@ -189,6 +193,20 @@ export function EventManagerPage() {
     [selectedEventId, fetchEvents]
   );
 
+  const handleSortToggle = (key: EventSortKey) => {
+    if (sortKey === key) {
+      if (sortDirection === 'asc') {
+        setSortDirection('desc');
+      } else if (sortDirection === 'desc') {
+        setSortKey(null);
+        setSortDirection(null);
+      }
+    } else {
+      setSortKey(key);
+      setSortDirection('asc');
+    }
+  };
+
   const filteredData = useMemo(() => {
     const normalizedSearchTerm = searchTerm.trim().toLowerCase();
     const matchesSearch = (searchableFields: string[]) =>
@@ -196,11 +214,10 @@ export function EventManagerPage() {
       searchableFields.some((field) => field.toLowerCase().includes(normalizedSearchTerm));
 
     if (activeTab === 'Events') {
-      const data = events.filter((event) => {
+      let data = events.filter((event) => {
         const searchableFields = [
           event.title,
           event.date,
-          event.timeSlot,
           event.client,
           event.type,
           event.package,
@@ -211,6 +228,52 @@ export function EventManagerPage() {
 
         return matchesSearch(searchableFields);
       });
+
+      if (sortKey && sortDirection) {
+        data = [...data].sort((a, b) => {
+          let aVal: string | number = '';
+          let bVal: string | number = '';
+
+          switch (sortKey) {
+            case 'title':
+              aVal = a.title.toLowerCase();
+              bVal = b.title.toLowerCase();
+              break;
+            case 'date':
+              aVal = a.startDate || '';
+              bVal = b.startDate || '';
+              break;
+            case 'client':
+              aVal = a.client.toLowerCase();
+              bVal = b.client.toLowerCase();
+              break;
+            case 'type':
+              aVal = a.type.toLowerCase();
+              bVal = b.type.toLowerCase();
+              break;
+            case 'package':
+              aVal = a.package.toLowerCase();
+              bVal = b.package.toLowerCase();
+              break;
+            case 'venue':
+              aVal = a.venue.toLowerCase();
+              bVal = b.venue.toLowerCase();
+              break;
+            case 'rsvp':
+              aVal = a.rsvp;
+              bVal = b.rsvp;
+              break;
+            case 'status':
+              aVal = a.status.toLowerCase();
+              bVal = b.status.toLowerCase();
+              break;
+          }
+
+          if (aVal < bVal) return sortDirection === 'asc' ? -1 : 1;
+          if (aVal > bVal) return sortDirection === 'asc' ? 1 : -1;
+          return 0;
+        });
+      }
 
       return { activeTab: 'Events' as const, data };
     }
@@ -245,7 +308,7 @@ export function EventManagerPage() {
     });
 
     return { activeTab: 'Workers' as const, data };
-  }, [activeTab, events, searchTerm, vendors, workers]);
+  }, [activeTab, events, searchTerm, vendors, workers, sortKey, sortDirection]);
 
   const [rsvpModalEvent, setRsvpModalEvent] = useState<EventManagerEvent | null>(null);
   const [modalRsvps, setModalRsvps] = useState<any[]>([]);
@@ -597,27 +660,39 @@ export function EventManagerPage() {
             <TableHeader>
               {activeTab === 'Events' ? (
                 <TableRow className="border-b-2 border-[#f1eef5] hover:bg-transparent">
-                  <TableHead className="h-10 font-black text-[#211a2f]">Title</TableHead>
-                  <TableHead className="h-10 font-black text-[#211a2f]">Date</TableHead>
-                  <TableHead className="h-10 font-black text-[#211a2f]">Time</TableHead>
-                  <TableHead className="h-10 font-black text-[#211a2f] hidden md:table-cell">
-                    Client
-                  </TableHead>
-                  <TableHead className="h-10 font-black text-[#211a2f] hidden md:table-cell">
-                    Type
-                  </TableHead>
-                  <TableHead className="h-10 font-black text-[#211a2f] hidden md:table-cell">
-                    Package
-                  </TableHead>
-                  <TableHead className="h-10 font-black text-[#211a2f] hidden md:table-cell">
-                    Venue
-                  </TableHead>
-                  <TableHead className="h-10 font-black text-[#211a2f] hidden md:table-cell">
-                    RSVP
-                  </TableHead>
-                  <TableHead className="h-10 font-black text-[#211a2f] hidden md:table-cell">
-                    Status
-                  </TableHead>
+                  {([
+                    { key: 'title', label: 'Title', alwaysVisible: true },
+                    { key: 'date', label: 'Date', alwaysVisible: true },
+                    { key: 'client', label: 'Client', alwaysVisible: false },
+                    { key: 'type', label: 'Type', alwaysVisible: false },
+                    { key: 'package', label: 'Package', alwaysVisible: false },
+                    { key: 'venue', label: 'Venue', alwaysVisible: false },
+                    { key: 'rsvp', label: 'RSVP', alwaysVisible: false },
+                    { key: 'status', label: 'Status', alwaysVisible: false },
+                  ] as { key: EventSortKey; label: string; alwaysVisible: boolean }[]).map(
+                    (col) => (
+                      <TableHead
+                        key={col.key}
+                        className={`h-10 font-black text-[#211a2f] cursor-pointer select-none transition-colors hover:text-[#df1b8b] ${
+                          !col.alwaysVisible ? 'hidden md:table-cell' : ''
+                        }`}
+                        onClick={() => handleSortToggle(col.key)}
+                      >
+                        <div className="flex items-center gap-1">
+                          {col.label}
+                          {sortKey === col.key ? (
+                            sortDirection === 'asc' ? (
+                              <ArrowUp className="h-3 w-3 text-[#df1b8b]" />
+                            ) : (
+                              <ArrowDown className="h-3 w-3 text-[#df1b8b]" />
+                            )
+                          ) : (
+                            <ArrowUpDown className="h-3 w-3 text-[#c4bdd0] opacity-0 group-hover:opacity-100 transition-opacity" />
+                          )}
+                        </div>
+                      </TableHead>
+                    )
+                  )}
                 </TableRow>
               ) : activeTab === 'Vendor' ? (
                 <TableRow className="border-b-2 border-[#f1eef5] hover:bg-transparent">
@@ -667,9 +742,6 @@ export function EventManagerPage() {
                       <TableCell className="py-4 font-bold text-[#5c546a]">{event.title}</TableCell>
                       <TableCell className="py-4 font-semibold text-[#5c546a]">
                         {event.date}
-                      </TableCell>
-                      <TableCell className="py-4 font-semibold text-[#5c546a]">
-                        {event.timeSlot}
                       </TableCell>
                       <TableCell className="py-4 font-semibold text-[#5c546a] hidden md:table-cell">
                         {event.client}
@@ -799,7 +871,7 @@ export function EventManagerPage() {
               {filteredData.data.length === 0 ? (
                 <TableRow>
                   <TableCell
-                    colSpan={activeTab === 'Events' ? 9 : activeTab === 'Vendor' ? 6 : 5}
+                    colSpan={activeTab === 'Events' ? 8 : activeTab === 'Vendor' ? 6 : 5}
                     className="py-12 text-center text-sm text-[#8f879f]"
                   >
                     {isLoading

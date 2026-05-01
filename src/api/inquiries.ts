@@ -48,6 +48,7 @@ export interface InquiryStatusOption {
  */
 export const INQUIRY_STATUS_OPTIONS = {
   PENDING_REVIEW: 'Pending Review',
+  MEETING_SCHEDULED: 'Meeting Scheduled',
   REQUIRES_CLARIFICATION: 'Requires Clarification',
   APPROVED: 'Approved',
   DECLINED: 'Declined',
@@ -78,6 +79,7 @@ export const getInquiryStatusOptions = (currentStatus?: string): InquiryStatusOp
   // All possible status options
   const allOptions: InquiryStatusOption[] = [
     { value: INQUIRY_STATUS_OPTIONS.PENDING_REVIEW, label: INQUIRY_STATUS_OPTIONS.PENDING_REVIEW },
+    { value: INQUIRY_STATUS_OPTIONS.MEETING_SCHEDULED, label: INQUIRY_STATUS_OPTIONS.MEETING_SCHEDULED },
     {
       value: INQUIRY_STATUS_OPTIONS.REQUIRES_CLARIFICATION,
       label: INQUIRY_STATUS_OPTIONS.REQUIRES_CLARIFICATION,
@@ -92,13 +94,23 @@ export const getInquiryStatusOptions = (currentStatus?: string): InquiryStatusOp
     currentNormalized === 'new' ||
     currentNormalized === 'pending'
   ) {
-    // From Pending Review: can only move to Requires Clarification
+    // From Pending Review: can move to Meeting Scheduled or Requires Clarification
     return allOptions.map((option) => ({
       ...option,
       disabled:
         option.value === INQUIRY_STATUS_OPTIONS.PENDING_REVIEW ||
         option.value === INQUIRY_STATUS_OPTIONS.APPROVED ||
         option.value === INQUIRY_STATUS_OPTIONS.DECLINED,
+    }));
+  }
+
+  if (currentNormalized === 'meeting scheduled') {
+    // From Meeting Scheduled: can move to Requires Clarification, Approved, or Declined
+    return allOptions.map((option) => ({
+      ...option,
+      disabled:
+        option.value === INQUIRY_STATUS_OPTIONS.PENDING_REVIEW ||
+        option.value === INQUIRY_STATUS_OPTIONS.MEETING_SCHEDULED,
     }));
   }
 
