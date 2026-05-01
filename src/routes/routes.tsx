@@ -44,6 +44,7 @@ import { RSVPPage as OrganizerRSVPPage } from '@/pages/organizer/RSVPPage';
 import { CostBreakdownPage } from '@/pages/organizer/CostBreakdownPage';
 import { OrganizerProfilePage } from '@/pages/organizer/OrganizerProfilePage';
 import { InvitationPage } from '@/pages/public/InvitationPage';
+import { RSVPVerifyPage } from '@/pages/public/RSVPVerifyPage';
 import VerifyEmailPage from '@/pages/public/VerifyEmailPage';
 
 function NotFoundPage() {
@@ -113,7 +114,16 @@ const router = createBrowserRouter(
     },
     {
       path: 'rsvp',
-      Component: RSVPPage,
+      children: [
+        {
+          index: true,
+          Component: RSVPPage,
+        },
+        {
+          path: 'verify',
+          Component: RSVPVerifyPage,
+        },
+      ],
     },
     {
       path: 'admin',

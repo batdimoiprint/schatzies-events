@@ -25,8 +25,8 @@ export function RSVPInvitationPage({
     }, 100);
   };
 
-  const name1 = selectedEvent.couple?.name1 || 'Partner';
-  const name2 = selectedEvent.couple?.name2 || 'Partner';
+  const name1 = selectedEvent.couple?.name1 || 'Event';
+  const name2 = selectedEvent.couple?.name2 || '';
   const parsedDate = new Date(selectedEvent.date);
   const isValidDate = !isNaN(parsedDate.getTime());
   const dayOfWeek = isValidDate ? parsedDate.toLocaleDateString('en-US', { weekday: 'long' }) : '';
@@ -36,6 +36,27 @@ export function RSVPInvitationPage({
   const dayNum = isValidDate ? parsedDate.getDate() : '';
   const yearNum = isValidDate ? parsedDate.getFullYear() : '';
   const atTime = `at ${(selectedEvent.time || 'TBA').replace(/:00(?=\s|$)/, '').trim()}`;
+
+  // Get event type (wedding, debut, etc.)
+  const eventType = (selectedEvent.description || 'wedding').toLowerCase();
+
+  // Get dynamic messages based on event type
+  const getEventTypeLabel = () => {
+    if (eventType.includes('debut')) {
+      return 'debutante ball';
+    }
+    return 'wedding';
+  };
+
+  const getEventTypeMessage = () => {
+    if (eventType.includes('debut')) {
+      return 'Together with their family and friends invites you to celebrate their debutante ball!';
+    }
+    return 'Together with their family and friends invites you to their wedding ceremony!';
+  };
+
+  const eventTypeLabel = getEventTypeLabel();
+  const eventTypeMessage = getEventTypeMessage();
 
   return (
     <>
@@ -58,18 +79,23 @@ export function RSVPInvitationPage({
           Your <span className="font-bold text-[#df2b80]">MOST TRUSTED</span> team!
         </p>
         <div className="mb-5 w-3/4 h-px bg-gradient-to-r from-transparent via-pink-300 to-transparent" />
-        <p className="mb-3 text-xs sm:text-sm tracking-wide text-gray-600">The wedding of</p>
+        <p className="mb-3 text-xs sm:text-sm tracking-wide text-gray-600">The {eventTypeLabel} of</p>
         <h2 className="font-serif text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold leading-tight text-pink-600 mb-1">
           {name1}
         </h2>
-        <p className="font-serif text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold leading-tight text-pink-600 mb-1">
-          &
-        </p>
-        <p className="font-serif text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold leading-tight text-pink-600 mb-6">
-          {name2}
-        </p>
+        {name2 && (
+          <>
+            <p className="font-serif text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold leading-tight text-pink-600 mb-1">
+              &
+            </p>
+            <p className="font-serif text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold leading-tight text-pink-600 mb-6">
+              {name2}
+            </p>
+          </>
+        )}
+        {!name2 && <div className="mb-6"></div>}
         <p className="mb-6 text-xs sm:text-sm leading-relaxed text-gray-600 max-w-xs px-4">
-          Together with their family and friends invites you to their wedding ceremony!
+          {eventTypeMessage}
         </p>
         <div className="flex flex-row items-center justify-center gap-2 sm:gap-4 mb-2 px-4">
           <div className="border-y border-pink-400 px-2 sm:px-3 py-1">

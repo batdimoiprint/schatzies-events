@@ -124,6 +124,7 @@ export function RSVPPage() {
           contactNumber: item.contactNumber || item.contact_number || '',
           status: isAttending ? 'Attending' : 'Not Attending',
           isScanned: scanned,
+          isVerified: item.isVerified === true || (item.isVerified && typeof item.isVerified === 'object' && item.isVerified.BOOL === true) || item.isVerified === 'true',
           qrCode: item.qrCode?.S || item.qrCode || '', // CRITICAL: Include the Base64 data!
           message: item.message || '',
         };
@@ -368,13 +369,15 @@ export function RSVPPage() {
       (statusFilter === 'Attending' && rsvp.status === 'Attending') ||
       (statusFilter === 'Not Attending' && rsvp.status === 'Not Attending') ||
       (statusFilter === 'Arrived' && rsvp.isScanned);
-    return matchesSearch && matchesStatus;
+    return matchesSearch && matchesStatus && rsvp.isVerified;
   });
 
-  const totalRSVPs = rsvps.length;
-  const attendingCount = rsvps.filter((r) => r.status === 'Attending').length;
-  const notAttendingCount = rsvps.filter((r) => r.status === 'Not Attending').length;
-  const arrivedCount = rsvps.filter((r) => r.isScanned).length;
+  const verifiedRsvps = rsvps.filter((r) => r.isVerified);
+  const totalRSVPs = verifiedRsvps.length;
+  const attendingCount = verifiedRsvps.filter((r) => r.status === 'Attending').length;
+  const notAttendingCount = verifiedRsvps.filter((r) => r.status === 'Not Attending').length;
+  const arrivedCount = verifiedRsvps.filter((r) => r.isScanned).length;
+  const pendingVerificationCount = rsvps.length - verifiedRsvps.length;
 
   const stats = [
     {
@@ -392,14 +395,11 @@ export function RSVPPage() {
       text: 'text-red-500',
     },
     {
-      label: 'Pending',
-      count: totalRSVPs - attendingCount - notAttendingCount,
-      pct:
-        totalRSVPs > 0
-          ? `${((totalRSVPs - attendingCount - notAttendingCount) / totalRSVPs) * 100}%`
-          : '0%',
-      bar: 'bg-yellow-400',
-      text: 'text-yellow-600',
+      label: 'Unverified',
+      count: pendingVerificationCount,
+      pct: rsvps.length > 0 ? `${(pendingVerificationCount / rsvps.length) * 100}%` : '0%',
+      bar: 'bg-orange-300',
+      text: 'text-orange-600',
     },
   ];
 
@@ -420,13 +420,15 @@ export function RSVPPage() {
               </button>
             ))}
           </div>
-          <button
-            onClick={() => setState('idle')}
-            className="mb-2 flex w-full sm:w-auto items-center justify-center gap-2 rounded-md bg-gray-200 px-5 py-3 text-sm font-semibold text-gray-700 shadow-md hover:bg-gray-300 transition active:scale-95"
-            disabled={isLoading}
-          >
-            <PlusCircle weight="bold" size={18} /> Create QR Code
-          </button>
+          {!qrCode && (
+            <button
+              onClick={() => setState('idle')}
+              className="mb-2 flex w-full sm:w-auto items-center justify-center gap-2 rounded-md bg-gray-200 px-5 py-3 text-sm font-semibold text-gray-700 shadow-md hover:bg-gray-300 transition active:scale-95"
+              disabled={isLoading}
+            >
+              <PlusCircle weight="bold" size={18} /> Create QR Code
+            </button>
+          )}
         </div>
       )}
 
@@ -616,9 +618,9 @@ export function RSVPPage() {
                       <td className="px-4 py-3.5 text-[#696373]">{rsvp.contactNumber}</td>
                       <td className="px-4 py-3.5">
                         <span
-                          className={`inline-flex items-center gap-1.5 rounded-full px-3 py-0.5 text-[10px] font-bold ${rsvp.isScanned ? 'bg-blue-100 text-blue-700' : 'bg-yellow-100 text-yellow-700'}`}
+                          className={`inline-flex items-center gap-1.5 rounded-full px-3 py-0.5 text-[10px] font-bold ${rsvp.isScanned ? 'bg-blue-100 text-blue-700' : rsvp.status === 'Not Attending' ? 'bg-red-100 text-red-700' : 'bg-yellow-100 text-yellow-700'}`}
                         >
-                          {rsvp.isScanned ? 'Arrived' : 'Pending'}
+                          {rsvp.isScanned ? 'Arrived' : rsvp.status === 'Not Attending' ? 'Absent' : 'Pending'}
                         </span>
                       </td>
                       <td className="px-4 py-3.5 text-center">

@@ -27,6 +27,7 @@ export function RSVPListContent({ eventId, eventTitle }: RSVPListContentProps) {
         middleName: item.middle_name || item.middleName || '',
         lastName: item.last_name || item.lastName || '',
         contactNumber: item.contact_number || item.contactNumber || '',
+        email: item.email || '',
         status:
           item.status === 'ATTENDING'
             ? 'Attending'
@@ -34,8 +35,11 @@ export function RSVPListContent({ eventId, eventTitle }: RSVPListContentProps) {
               ? 'Not Attending'
               : item.status || 'Attending',
         isScanned: !!item.is_scanned || !!item.isScanned || false,
+        isVerified: !!item.is_verified || !!item.isVerified || false,
       }));
-      setRsvps(mappedData);
+      // Filter to only show verified guests
+      const verifiedGuests = mappedData.filter((guest) => guest.isVerified);
+      setRsvps(verifiedGuests);
     } catch (err: any) {
       console.error('Error fetching RSVPs:', err);
       setFetchError('Failed to load guest list from server.');
@@ -173,10 +177,12 @@ export function RSVPListContent({ eventId, eventTitle }: RSVPListContentProps) {
                         className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-[10px] font-black uppercase tracking-tight ${
                           rsvp.isScanned
                             ? 'bg-blue-100 text-blue-700'
+                            : rsvp.status === 'Not Attending'
+                            ? 'bg-red-100 text-red-700'
                             : 'bg-amber-100 text-amber-700'
                         }`}
                       >
-                        {rsvp.isScanned ? 'Arrived' : 'Pending'}
+                        {rsvp.isScanned ? 'Arrived' : rsvp.status === 'Not Attending' ? 'Absent' : 'Pending'}
                       </span>
                     </td>
                     <td className="px-4 py-4 text-center">
