@@ -1,25 +1,13 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Calendar, Clock } from 'lucide-react';
 import { ServiceRequirementsModal } from '@/components/client/ServiceRequirementsModal';
 import { AllocationResourcesModal } from '@/components/client/AllocationResourcesModal';
 import { ChecklistMeetingModal } from '@/components/client/ChecklistMeetingModal';
 import { ProgramFlowModal } from '@/components/client/ProgramFlowModal';
 
-// ── Mock Data ──────────────────────────────────────────────────────────────────
-const EVENT = {
-  title: 'Kring and Dave Wedding',
-  date: 'January 3, 2026',
-  completion: 89,
-  organizer: 'John Errol Sebial',
-  email: 'john.sebial@schatzies.com',
-  contact: '+63 912 345 6789',
-  packageName: 'Blooms Package',
-  pax: 150,
-  eventType: 'Debut Event Type',
-  cost: '50,000',
-};
-
-// ── Illustration placeholders (img tags) ─────────────────────────────────────
+import { getEventManagerEvents, getEventById, getEventUser } from '@/api/events';
+import { useAuth } from '@/hooks/useAuth';
+import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 function PackageIllustration() {
   return (
     <img
@@ -58,10 +46,129 @@ function CostIllustration() {
 }
 
 export function EventPlanViewingPage() {
+  const { user } = useAuth();
+  const [eventData, setEventData] = useState<any>(null);
+  const [isLoading, setIsLoading] = useState(true);
+
   const [showServiceReq, setShowServiceReq] = useState(false);
   const [showAllocationRes, setShowAllocationRes] = useState(false);
   const [showChecklist, setShowChecklist] = useState(false);
   const [showProgramFlow, setShowProgramFlow] = useState(false);
+
+  useEffect(() => {
+    let isMounted = true;
+    async function fetchEvent() {
+      if (!user) {
+        setIsLoading(false);
+        return;
+      }
+      try {
+        setIsLoading(true);
+        const events = await getEventManagerEvents();
+        
+        const userFullName = `${user.firstName || ''} ${user.lastName || ''}`.trim().toLowerCase();
+        const userEvents =
+          user.role === 'CLIENT'
+            ? events.filter(
+                (e) =>
+                  e.clientId === user.user_id ||
+                  e.clientId === user.client_id ||
+                  (e.client && e.client.toLowerCase().includes(userFullName))
+              )
+            : events;
+
+        const userEventBase = userEvents.length > 0 ? userEvents[0] : null;
+
+        if (userEventBase) {
+          const fullEvent = await getEventById(userEventBase.id);
+          
+          const orgId =
+            (fullEvent as any).organizer_id ||
+            (fullEvent as any).organizerId ||
+            userEventBase.organizerId ||
+            (userEventBase as any).organizer_id;
+            
+          let organizerName = 'Assigned Organizer';
+          let organizerEmail = 'contact@schatzies.com';
+          let organizerContact = '-';
+          
+          if (orgId) {
+            try {
+              const org = await getEventUser(orgId);
+              organizerName = `${org.firstName || ''} ${org.lastName || ''}`.trim() || 'Assigned Organizer';
+              organizerEmail = org.email || 'contact@schatzies.com';
+              organizerContact = org.contact_number || org.contactPhone || org.contactNumber || '-';
+            } catch (e) {
+              console.error('Error fetching organizer:', e);
+            }
+          }
+
+          const endDateStr = fullEvent.endDate || fullEvent.dateEnd || fullEvent.eventDate || '';
+          
+          const formattedDate = endDateStr
+            ? new Date(endDateStr).toLocaleDateString('en-US', {
+                month: 'long',
+                day: 'numeric',
+                year: 'numeric',
+              })
+            : 'TBD';
+
+          const pkgName =
+            fullEvent.eventPackageKey ||
+            userEventBase.package ||
+            fullEvent.package?.name ||
+            fullEvent.eventPackage ||
+            'Custom Package';
+            
+          const paxCount = fullEvent.eventPax || (userEventBase as any).pax || (fullEvent as any).package?.pax || 0;
+          const costValue = (fullEvent as any).cost || 'TBD';
+
+          if (isMounted) {
+            setEventData({
+              title: fullEvent.title || userEventBase.title || 'Your Event',
+              date: formattedDate,
+              completion: fullEvent.status === 'Completed' ? 100 : 89,
+              organizer: organizerName,
+              email: organizerEmail,
+              contact: organizerContact,
+              packageName: pkgName,
+              pax: paxCount,
+              eventType: fullEvent.eventType || userEventBase.type || 'Event',
+              cost: costValue,
+            });
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching client event:', error);
+      } finally {
+        if (isMounted) setIsLoading(false);
+      }
+    }
+
+    void fetchEvent();
+    return () => {
+      isMounted = false;
+    };
+  }, [user]);
+
+  if (isLoading) {
+    return (
+      <div className="flex h-[50vh] items-center justify-center">
+        <LoadingSpinner />
+      </div>
+    );
+  }
+
+  if (!eventData) {
+    return (
+      <div className="flex h-[50vh] flex-col items-center justify-center gap-4 text-[#8a8697]">
+        <Calendar className="h-12 w-12 opacity-20" />
+        <p className="text-sm font-medium">No event plan assigned to your account yet.</p>
+      </div>
+    );
+  }
+
+  const EVENT = eventData;
 
   return (
     <div className="flex flex-col gap-6">
@@ -110,7 +217,7 @@ export function EventPlanViewingPage() {
             </div>
             <div className="text-xs text-white/80 leading-relaxed self-end text-right">
               <p>Organizer Name: {EVENT.organizer}</p>
-              <p>Email | Contact Number</p>
+              <p>{EVENT.email} | {EVENT.contact}</p>
             </div>
           </div>
         </div>

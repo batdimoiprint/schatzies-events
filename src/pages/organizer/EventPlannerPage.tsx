@@ -45,8 +45,9 @@ import {
   getEventById,
 } from '@/api/events';
 import { getCalendarEntries } from '@/api/calendar';
+import { getVendorsByEventId, getVendors, assignVendorToEvent, unassignVendorFromEvent, type EventManagerVendor, type Vendor } from '@/api/vendors';
 
-type PlannerTab = 'overview' | 'task' | 'notes' | 'flow' | 'checklist';
+type PlannerTab = 'overview' | 'task' | 'notes' | 'flow' | 'checklist' | 'vendors';
 
 type ProjectSlot = {
   id: string;
@@ -94,6 +95,7 @@ const tabs: Array<{ id: PlannerTab; label: string }> = [
   { id: 'notes', label: 'Notes' },
   { id: 'flow', label: 'Flow' },
   { id: 'checklist', label: 'Checklist' },
+  { id: 'vendors', label: 'Vendors' },
 ];
 
 const taskLaneConfig: Array<{
@@ -1036,6 +1038,10 @@ export function EventPlannerPage() {
   const [eventMeetings, setEventMeetings] = useState<any[]>([]);
   const [overviewFlows, setOverviewFlows] = useState<any[]>([]);
   const [selectedEventDetails, setSelectedEventDetails] = useState<any>(null);
+  const [eventVendors, setEventVendors] = useState<EventManagerVendor[]>([]);
+  const [vendorPool, setVendorPool] = useState<Vendor[]>([]);
+  const [isAssignVendorModalOpen, setIsAssignVendorModalOpen] = useState(false);
+  const [isAssigningVendor, setIsAssigningVendor] = useState(false);
 
   useEffect(() => {
     let isMounted = true;
@@ -1199,6 +1205,14 @@ export function EventPlannerPage() {
       }
 
       try {
+        const vendorsData = await getVendorsByEventId(selectedEventId);
+        if (isMounted) setEventVendors(vendorsData || []);
+      } catch (error) {
+        console.error('Failed to load vendors:', error);
+        if (isMounted) setEventVendors([]);
+      }
+
+      try {
         const response = await getBoardTasks(selectedEventId);
 
         if (!isMounted) return;
@@ -1232,6 +1246,52 @@ export function EventPlannerPage() {
       isMounted = false;
     };
   }, [selectedEventId, projectSlots]);
+
+  const normalizeStatus = (status: string) => {
+    return String(status).trim().toLowerCase() === 'active' ? 'active' : 'inactive';
+  };
+
+  const handleOpenAssignVendorModal = async () => {
+    setIsAssigningVendor(true);
+    try {
+      const allVendors = await getVendors();
+      setVendorPool(allVendors.filter(v => normalizeStatus(v.status) === 'active'));
+      setIsAssignVendorModalOpen(true);
+    } catch (error) {
+      console.error('Failed to load vendors pool:', error);
+      alert('Failed to load vendors pool.');
+    } finally {
+      setIsAssigningVendor(false);
+    }
+  };
+
+  const handleAssignVendor = async (vendorId: string) => {
+    setIsAssigningVendor(true);
+    try {
+      await assignVendorToEvent(vendorId, selectedEventId);
+      const vendorsData = await getVendorsByEventId(selectedEventId);
+      setEventVendors(vendorsData || []);
+      setIsAssignVendorModalOpen(false);
+    } catch (error) {
+      console.error('Failed to assign vendor:', error);
+      alert('Failed to assign vendor. Please try again.');
+    } finally {
+      setIsAssigningVendor(false);
+    }
+  };
+
+  const handleUnassignVendor = async (vendorId: string) => {
+    if (!window.confirm('Are you sure you want to unassign this vendor?')) return;
+    try {
+      await unassignVendorFromEvent(vendorId);
+      const vendorsData = await getVendorsByEventId(selectedEventId);
+      setEventVendors(vendorsData || []);
+    } catch (error) {
+      console.error('Failed to unassign vendor:', error);
+      alert('Failed to unassign vendor. Please try again.');
+    }
+  };
+
   const [isTaskPreviewOpen, setIsTaskPreviewOpen] = useState(false);
   const [selectedBoardTaskId, setSelectedBoardTaskId] = useState<string | null>(null);
   const [taskPreviewTitle, setTaskPreviewTitle] = useState('');
@@ -2648,6 +2708,74 @@ export function EventPlannerPage() {
                 <span>Add Checklist Item</span>
               </button>
             </section>
+          ) : activeTab === 'vendors' ? (
+            <section className="rounded-2xl border border-[#ddd8e8] bg-[#fbfafd] p-4 shadow-[0_6px_14px_rgba(31,18,54,0.05)]">
+              <header className="mb-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div>
+                  <h3 className="text-lg font-black tracking-tight text-[#1f1f21]">
+                    Event Vendors
+                  </h3>
+                  <p className="text-xs font-semibold text-[#6e687d]">
+                    Vendors currently assigned to this event
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={handleOpenAssignVendorModal}
+                  disabled={isAssigningVendor}
+                  className="inline-flex h-9 items-center gap-2 rounded-lg bg-linear-to-r from-[#f1589e] via-[#d735b3] to-[#8a1fd0] px-4 text-[11px] font-black text-white shadow-[0_10px_20px_rgba(125,31,186,0.24)] transition hover:brightness-105 disabled:opacity-50"
+                >
+                  <Plus className="size-3.5" />
+                  Assign from Pool
+                </button>
+              </header>
+              <div className="space-y-3">
+                {eventVendors.length > 0 ? (
+                  eventVendors.map((vendor) => (
+                    <article
+                      key={vendor.id}
+                      className="flex items-center justify-between rounded-xl border border-[#e3deeb] bg-white p-3 shadow-sm"
+                    >
+                      <div>
+                        <p className="text-[14px] font-black text-[#2f2b39]">{vendor.name}</p>
+                        <p className="text-[11px] font-semibold text-[#6f687f]">
+                          {vendor.service || 'Service not specified'}
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-4">
+                        <div className="text-right">
+                          <span
+                            className={`inline-flex rounded-full px-2 py-0.5 text-[10px] font-bold ${
+                              vendor.status === 'Active'
+                                ? 'bg-[#e6f4e8] text-[#2e6b37]'
+                                : 'bg-[#f4e6e6] text-[#b53e3e]'
+                            }`}
+                          >
+                            {vendor.status}
+                          </span>
+                          <div className="mt-1 flex items-center justify-end gap-2 text-[10px] text-[#8c8598]">
+                            {vendor.email !== '-' && <span>{vendor.email}</span>}
+                            {vendor.phone !== '-' && <span>{vendor.phone}</span>}
+                          </div>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => handleUnassignVendor(vendor.id)}
+                          className="inline-flex size-8 items-center justify-center rounded-md border border-[#e1d8ef] bg-white text-[#7b6f90] transition hover:border-[#f1589e] hover:text-[#f1589e]"
+                          aria-label="Unassign vendor"
+                        >
+                          <Trash2 className="size-3.5" />
+                        </button>
+                      </div>
+                    </article>
+                  ))
+                ) : (
+                  <div className="rounded-lg border border-dashed border-[#d8d2e2] bg-white/60 p-8 text-center text-sm font-semibold text-[#8b84a0]">
+                    No vendors assigned to this event yet.
+                  </div>
+                )}
+              </div>
+            </section>
           ) : activeTab === 'flow' ? (
             <FlowNotesBoard
               selectedEventId={selectedEventId}
@@ -3104,6 +3232,79 @@ export function EventPlannerPage() {
               </button>
             </div>
           </form>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog
+        open={isAssignVendorModalOpen}
+        onOpenChange={(open) => {
+          if (!open && !isAssigningVendor) {
+            setIsAssignVendorModalOpen(false);
+          }
+        }}
+      >
+        <DialogContent
+          showCloseButton={false}
+          aria-describedby={undefined}
+          className="fixed left-[50%] top-[50%] z-[100000] w-full max-w-[calc(100%-1rem)] -translate-x-1/2 -translate-y-1/2 rounded-2xl border border-[#e3dfea] bg-[#fbfafd] p-0 shadow-2xl sm:max-w-[560px] overflow-hidden flex flex-col max-h-[85vh]"
+        >
+          <DialogTitle className="sr-only">Assign Vendor</DialogTitle>
+          <header className="flex items-center justify-between border-b border-[#eee9f2] bg-white px-5 py-4">
+            <div>
+              <h3 className="text-lg font-black tracking-tight text-[#1f1f21]">
+                Assign Vendor
+              </h3>
+              <p className="text-[11px] font-semibold text-[#8b84a0]">
+                Select a vendor from the active pool
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => setIsAssignVendorModalOpen(false)}
+              disabled={isAssigningVendor}
+              className="inline-flex size-8 items-center justify-center rounded-full text-[#9f97ad] transition hover:bg-[#f3eff8] disabled:opacity-50"
+            >
+              <X className="size-4" />
+            </button>
+          </header>
+          <div className="flex-1 overflow-y-auto p-5 [scrollbar-width:thin]">
+            <div className="space-y-3">
+              {vendorPool.length > 0 ? (
+                vendorPool.map((vendor) => {
+                  const isAssigned = eventVendors.some(ev => ev.id === vendor.id);
+                  return (
+                    <article
+                      key={vendor.id}
+                      className="flex items-center justify-between rounded-xl border border-[#e3deeb] bg-white p-3 shadow-sm"
+                    >
+                      <div>
+                        <p className="text-[14px] font-black text-[#2f2b39]">{vendor.name}</p>
+                        <p className="text-[11px] font-semibold text-[#6f687f]">
+                          {vendor.serviceType || 'Service not specified'}
+                        </p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => handleAssignVendor(vendor.id)}
+                        disabled={isAssigned || isAssigningVendor}
+                        className={`inline-flex h-8 items-center justify-center rounded-lg px-3 text-[11px] font-bold transition ${
+                          isAssigned
+                            ? 'bg-[#f4f1f8] text-[#9f97ad] cursor-not-allowed'
+                            : 'bg-[#eef5ff] text-[#2a6fb0] hover:bg-[#e0efff] border border-[#d6e8ff]'
+                        }`}
+                      >
+                        {isAssigned ? 'Assigned' : 'Assign'}
+                      </button>
+                    </article>
+                  );
+                })
+              ) : (
+                <div className="rounded-lg border border-dashed border-[#d8d2e2] bg-white/60 p-8 text-center text-sm font-semibold text-[#8b84a0]">
+                  No active vendors found in the pool.
+                </div>
+              )}
+            </div>
+          </div>
         </DialogContent>
       </Dialog>
     </div>
