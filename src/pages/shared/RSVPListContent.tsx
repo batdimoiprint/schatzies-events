@@ -178,11 +178,15 @@ export function RSVPListContent({ eventId, eventTitle }: RSVPListContentProps) {
                           rsvp.isScanned
                             ? 'bg-blue-100 text-blue-700'
                             : rsvp.status === 'Not Attending'
-                            ? 'bg-red-100 text-red-700'
-                            : 'bg-amber-100 text-amber-700'
+                              ? 'bg-red-100 text-red-700'
+                              : 'bg-amber-100 text-amber-700'
                         }`}
                       >
-                        {rsvp.isScanned ? 'Arrived' : rsvp.status === 'Not Attending' ? 'Absent' : 'Pending'}
+                        {rsvp.isScanned
+                          ? 'Arrived'
+                          : rsvp.status === 'Not Attending'
+                            ? 'Absent'
+                            : 'Pending'}
                       </span>
                     </td>
                     <td className="px-4 py-4 text-center">

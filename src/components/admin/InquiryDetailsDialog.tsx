@@ -110,7 +110,6 @@ function normalizeInquiryStatus(status?: string) {
   return String(status || '').trim();
 }
 
-
 export function InquiryDetailsDialog({
   isDialogOpen,
   setIsDialogOpen,
@@ -619,10 +618,7 @@ export function InquiryDetailsDialog({
                   <Label className="text-[10px] font-black uppercase text-[#857a98] mb-2 block">
                     Change State
                   </Label>
-                    <Select
-                      value={currentStatusValue}
-                      onValueChange={handleStatusChange}
-                    >
+                  <Select value={currentStatusValue} onValueChange={handleStatusChange}>
                     <SelectTrigger className="w-full h-11 border-[#e5ddee] bg-white rounded-xl font-bold text-[#4e4560]">
                       <SelectValue placeholder="Update status" />
                     </SelectTrigger>
@@ -952,7 +948,9 @@ export function InquiryDetailsDialog({
                 Cancel
               </Button>
               <Button
-                onClick={() => deleteInquiryMutation.mutate(selectedInquiry?.id || selectedInquiry?._id || '')}
+                onClick={() =>
+                  deleteInquiryMutation.mutate(selectedInquiry?.id || selectedInquiry?._id || '')
+                }
                 disabled={deleteInquiryMutation.isPending}
                 variant="destructive"
                 className="flex-1 h-11 font-black rounded-xl shadow-md"

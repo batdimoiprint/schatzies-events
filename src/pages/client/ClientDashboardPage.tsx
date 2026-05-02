@@ -41,22 +41,23 @@ export function ClientDashboardPage() {
   useEffect(() => {
     const fetchData = async () => {
       if (!user) return;
-      
+
       setIsLoadingEvent(true);
       setIsLoadingGuests(true);
-      
+
       try {
         const events = await getEventManagerEvents();
 
         // Filter events: Clients only see their own
         const userFullName = `${user.firstName || ''} ${user.lastName || ''}`.trim().toLowerCase();
         const userEvents =
-          user.role === 'CLIENT' 
-            ? events.filter((e) => 
-                e.clientId === user.user_id || 
-                e.clientId === user.client_id ||
-                (e.client && e.client.toLowerCase().includes(userFullName))
-              ) 
+          user.role === 'CLIENT'
+            ? events.filter(
+                (e) =>
+                  e.clientId === user.user_id ||
+                  e.clientId === user.client_id ||
+                  (e.client && e.client.toLowerCase().includes(userFullName))
+              )
             : events;
 
         const userEventBase = userEvents.length > 0 ? userEvents[0] : null;
@@ -65,18 +66,23 @@ export function ClientDashboardPage() {
           // Fetch full event details to get specific fields
           const fullEvent = await getEventById(userEventBase.id);
           console.log('Full event details:', fullEvent);
-          
+
           // Fetch Organizer if available (check all possible ID fields)
-          const orgId = fullEvent.organizer_id || fullEvent.organizerId || userEventBase.organizerId || userEventBase.organizer_id;
+          const orgId =
+            fullEvent.organizer_id ||
+            fullEvent.organizerId ||
+            userEventBase.organizerId ||
+            userEventBase.organizer_id;
           let organizerName = 'Assigned Organizer';
           if (orgId) {
             try {
               const org = await getEventUser(orgId);
-              organizerName = `${org.firstName || ''} ${org.lastName || ''}`.trim() || 'Assigned Organizer';
+              organizerName =
+                `${org.firstName || ''} ${org.lastName || ''}`.trim() || 'Assigned Organizer';
               console.log('Organizer found:', organizerName);
-            } catch (e) { 
+            } catch (e) {
               console.error('Error fetching organizer:', e);
-              organizerName = 'Assigned Organizer'; 
+              organizerName = 'Assigned Organizer';
             }
           }
 
@@ -90,18 +96,26 @@ export function ClientDashboardPage() {
             daysToGo = Math.max(0, Math.ceil(diff / (1000 * 60 * 60 * 24)));
           }
 
-          const formattedDate = endDateStr ? new Date(endDateStr).toLocaleDateString('en-US', {
-            month: 'long',
-            day: 'numeric',
-            year: 'numeric',
-            weekday: 'long',
-          }) : 'TBD';
+          const formattedDate = endDateStr
+            ? new Date(endDateStr).toLocaleDateString('en-US', {
+                month: 'long',
+                day: 'numeric',
+                year: 'numeric',
+                weekday: 'long',
+              })
+            : 'TBD';
 
           // Extract package and pax info correctly (check both base and full details)
-          const pkgName = fullEvent.eventPackageKey || userEventBase.package || fullEvent.package?.name || fullEvent.eventPackage || 'Custom Package';
+          const pkgName =
+            fullEvent.eventPackageKey ||
+            userEventBase.package ||
+            fullEvent.package?.name ||
+            fullEvent.eventPackage ||
+            'Custom Package';
           const paxCount = fullEvent.eventPax || userEventBase.pax || fullEvent.package?.pax || 0;
           const costValue = fullEvent.cost || 'TBD';
-          const venueValue = fullEvent.venue || fullEvent.eventLocation || userEventBase.venue || 'Araneta';
+          const venueValue =
+            fullEvent.venue || fullEvent.eventLocation || userEventBase.venue || 'Araneta';
 
           setEventData({
             daysToGo,
@@ -123,26 +137,38 @@ export function ClientDashboardPage() {
             try {
               const alt = await getRSVPList(`EVENT#${userEventBase.id}`);
               if (alt && alt.length > 0) rsvpList = alt;
-            } catch (e) { /* ignore */ }
+            } catch (e) {
+              /* ignore */
+            }
           }
 
           // Map and Filter Guests (Show verified or Not Attending)
           const mappedGuests = (Array.isArray(rsvpList) ? rsvpList : [])
             .filter((rsvp: any) => {
-              const isVerified = rsvp.isVerified === true || 
-                               (rsvp.isVerified && typeof rsvp.isVerified === 'object' && 'BOOL' in rsvp.isVerified && (rsvp.isVerified as { BOOL: boolean }).BOOL === true) ||
-                               rsvp.isVerified === 'true';
+              const isVerified =
+                rsvp.isVerified === true ||
+                (rsvp.isVerified &&
+                  typeof rsvp.isVerified === 'object' &&
+                  'BOOL' in rsvp.isVerified &&
+                  (rsvp.isVerified as { BOOL: boolean }).BOOL === true) ||
+                rsvp.isVerified === 'true';
               const rawStatus = (rsvp.status || '').toString().toUpperCase();
               // Show if verified OR if they are Not Attending (even if unverified)
               return isVerified || rawStatus === 'NOT_ATTENDING' || rawStatus === 'NOT ATTENDING';
             })
             .map((rsvp: any) => {
               const rawStatus = (rsvp.status || '').toString().toUpperCase();
-              const isAttending = rawStatus === 'ATTENDING' || rawStatus === 'CONFIRMED' || rawStatus === 'TRUE';
-              const isDeclined = rawStatus === 'NOT_ATTENDING' || rawStatus === 'NOT ATTENDING' || rawStatus === 'FALSE';
+              const isAttending =
+                rawStatus === 'ATTENDING' || rawStatus === 'CONFIRMED' || rawStatus === 'TRUE';
+              const isDeclined =
+                rawStatus === 'NOT_ATTENDING' ||
+                rawStatus === 'NOT ATTENDING' ||
+                rawStatus === 'FALSE';
 
               return {
-                name: `${rsvp.guestfirstName || rsvp.firstName || ''} ${rsvp.guestlastName || rsvp.lastName || ''}`.trim() || 'Guest',
+                name:
+                  `${rsvp.guestfirstName || rsvp.firstName || ''} ${rsvp.guestlastName || rsvp.lastName || ''}`.trim() ||
+                  'Guest',
                 status: isAttending ? 'Confirmed' : isDeclined ? 'Declined' : 'Pending',
               };
             });

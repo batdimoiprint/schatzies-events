@@ -71,14 +71,19 @@ export function QrCodePage() {
         if (userEvents.length > 0) {
           const firstEvent = userEvents[0];
           setSelectedEventId((prev) => prev || firstEvent.id);
-          
+
           // Set initial capacity from summary if available
           if (firstEvent.pax) setEventPax(Number(firstEvent.pax));
 
           // Fetch full details to get the most accurate capacity (eventPax)
           try {
             const fullDetails = await getEventById(firstEvent.id);
-            const pax = fullDetails.eventPax || fullDetails.event_pax || (fullDetails.package as any)?.pax || firstEvent.pax || 200;
+            const pax =
+              fullDetails.eventPax ||
+              fullDetails.event_pax ||
+              (fullDetails.package as any)?.pax ||
+              firstEvent.pax ||
+              200;
             if (pax > 0) setEventPax(Number(pax));
           } catch (e) {
             console.error('Error fetching event capacity:', e);
@@ -129,39 +134,52 @@ export function QrCodePage() {
         try {
           const altData = await getRSVPList(`EVENT#${eventId}`);
           if (altData && altData.length > 0) data = altData;
-        } catch { /* ignore fallback error */ }
+        } catch {
+          /* ignore fallback error */
+        }
       }
 
       // Map database fields to the format the UI expects
-      const mappedData: RSVPResponse[] = (Array.isArray(data) ? data : []).map((item: BackendRSVPItem) => {
-        const rawStatus = (item.status || '').toString().toUpperCase();
-        const isAttending = rawStatus === 'ATTENDING' || rawStatus === 'CONFIRMED' || rawStatus === 'TRUE';
-        
-        const scanned = item.isScanned === true || 
-          (item.isScanned && typeof item.isScanned === 'object' && 'BOOL' in item.isScanned && 
-            (item.isScanned as { BOOL: boolean }).BOOL === true) ||
-          item.isScanned === 'true';
+      const mappedData: RSVPResponse[] = (Array.isArray(data) ? data : []).map(
+        (item: BackendRSVPItem) => {
+          const rawStatus = (item.status || '').toString().toUpperCase();
+          const isAttending =
+            rawStatus === 'ATTENDING' || rawStatus === 'CONFIRMED' || rawStatus === 'TRUE';
 
-        return {
-          id: String(item.guestId || item.SK?.split('#')[1] || item.id || ''),
-          guestId: String(item.guestId || item.SK?.split('#')[1] || item.id || ''),
-          firstName: String(item.guestfirstName || item.firstName || item.first_name || 'Guest'),
-          lastName: String(item.guestlastName || item.lastName || item.last_name || ''),
-          middleName: String(item.guestmiddleName || item.middleName || item.middle_name || ''),
-          contactNumber: String(item.contactNumber || item.contact_number || ''),
-          status: (isAttending ? 'Attending' : 'Not Attending') as 'Attending' | 'Not Attending',
-          isScanned: scanned,
-          isVerified: Boolean(item.isVerified === true || 
-                      (item.isVerified && typeof item.isVerified === 'object' && 'BOOL' in (item.isVerified as any) && (item.isVerified as any).BOOL === true) ||
-                      item.isVerified === 'true'),
-          qrCode: String(
-            typeof item.qrCode === 'object' && item.qrCode && 'S' in (item.qrCode as any)
-              ? (item.qrCode as any).S
-              : item.qrCode || ''
-          ),
-          message: String(item.message || ''),
-        } as RSVPResponse;
-      });
+          const scanned =
+            item.isScanned === true ||
+            (item.isScanned &&
+              typeof item.isScanned === 'object' &&
+              'BOOL' in item.isScanned &&
+              (item.isScanned as { BOOL: boolean }).BOOL === true) ||
+            item.isScanned === 'true';
+
+          return {
+            id: String(item.guestId || item.SK?.split('#')[1] || item.id || ''),
+            guestId: String(item.guestId || item.SK?.split('#')[1] || item.id || ''),
+            firstName: String(item.guestfirstName || item.firstName || item.first_name || 'Guest'),
+            lastName: String(item.guestlastName || item.lastName || item.last_name || ''),
+            middleName: String(item.guestmiddleName || item.middleName || item.middle_name || ''),
+            contactNumber: String(item.contactNumber || item.contact_number || ''),
+            status: (isAttending ? 'Attending' : 'Not Attending') as 'Attending' | 'Not Attending',
+            isScanned: scanned,
+            isVerified: Boolean(
+              item.isVerified === true ||
+              (item.isVerified &&
+                typeof item.isVerified === 'object' &&
+                'BOOL' in (item.isVerified as any) &&
+                (item.isVerified as any).BOOL === true) ||
+              item.isVerified === 'true'
+            ),
+            qrCode: String(
+              typeof item.qrCode === 'object' && item.qrCode && 'S' in (item.qrCode as any)
+                ? (item.qrCode as any).S
+                : item.qrCode || ''
+            ),
+            message: String(item.message || ''),
+          } as RSVPResponse;
+        }
+      );
 
       setRsvps(mappedData);
     } catch (err) {
@@ -222,7 +240,9 @@ export function QrCodePage() {
   const displayRsvps = rsvps.filter((r) => r.isVerified || r.status === 'Not Attending');
   const verifiedRsvps = rsvps.filter((r) => r.isVerified);
   const totalRSVPs = displayRsvps.length;
-  const attendingCount = displayRsvps.filter((r) => r.status === 'Attending' && r.isVerified).length;
+  const attendingCount = displayRsvps.filter(
+    (r) => r.status === 'Attending' && r.isVerified
+  ).length;
   const notAttendingCount = displayRsvps.filter((r) => r.status === 'Not Attending').length;
   const arrivedCount = verifiedRsvps.filter((r) => r.isScanned).length;
   const pendingCount = Math.max(0, eventPax - attendingCount - notAttendingCount);
@@ -389,13 +409,16 @@ export function QrCodePage() {
               </div>
               <div className="mt-6 flex justify-between items-center text-xs text-[#696373]">
                 <div className="flex gap-4">
-                    Capacity: <strong>{eventPax}</strong>
+                  Capacity: <strong>{eventPax}</strong>
                   <span>
                     Arrived: <strong className="text-blue-600">{arrivedCount}</strong>
                   </span>
                 </div>
                 <span>
-                  Total Responses: <strong>{totalRSVPs}/{eventPax}</strong>
+                  Total Responses:{' '}
+                  <strong>
+                    {totalRSVPs}/{eventPax}
+                  </strong>
                 </span>
               </div>
             </div>
@@ -475,7 +498,11 @@ export function QrCodePage() {
                         <span
                           className={`inline-flex items-center gap-1.5 rounded-full px-3 py-0.5 text-[10px] font-bold ${rsvp.isScanned ? 'bg-blue-100 text-blue-700' : rsvp.status === 'Not Attending' ? 'bg-red-100 text-red-700' : 'bg-yellow-100 text-yellow-700'}`}
                         >
-                          {rsvp.isScanned ? 'Arrived' : rsvp.status === 'Not Attending' ? 'Absent' : 'Pending'}
+                          {rsvp.isScanned
+                            ? 'Arrived'
+                            : rsvp.status === 'Not Attending'
+                              ? 'Absent'
+                              : 'Pending'}
                         </span>
                       </td>
                       <td className="px-4 py-3.5 text-center">

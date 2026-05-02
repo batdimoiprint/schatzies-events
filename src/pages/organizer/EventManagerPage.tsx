@@ -12,23 +12,65 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import type { OrganizerLayoutOutletContext } from '@/components/layouts/OrganizerLayout';
-import { getEventManagerEvents, updateEvent, deleteEvent, type EventManagerEvent } from '@/api/events';
-import { ArrowUpDown, ArrowUp, ArrowDown, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Search } from 'lucide-react';
+import {
+  getEventManagerEvents,
+  updateEvent,
+  deleteEvent,
+  type EventManagerEvent,
+} from '@/api/events';
+import {
+  ArrowUpDown,
+  ArrowUp,
+  ArrowDown,
+  ChevronLeft,
+  ChevronRight,
+  ChevronsLeft,
+  ChevronsRight,
+  Search,
+} from 'lucide-react';
 import { EventDetailsModal, type EventFormData } from '@/components/organizer/EventDetailsModal';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/hooks/useAuth';
 
 type SortDirection = 'asc' | 'desc' | null;
-type EventSortKey = 'title' | 'date' | 'client' | 'type' | 'package' | 'venue' | 'status' | 'createdAt';
+type EventSortKey =
+  | 'title'
+  | 'date'
+  | 'client'
+  | 'type'
+  | 'package'
+  | 'venue'
+  | 'status'
+  | 'createdAt';
 
 const STATUS_OPTIONS = [
-  { value: 'Pending', label: 'Planning', dot: 'bg-[#e2b020]', bg: 'bg-[#fff5d3]', text: 'text-[#b68c17]' },
-  { value: 'Execution', label: 'Execution', dot: 'bg-[#df1b8b]', bg: 'bg-[#ffe6f1]', text: 'text-[#df1b8b]' },
-  { value: 'Completed', label: 'Completed', dot: 'bg-[#8637c3]', bg: 'bg-[#f4e6fc]', text: 'text-[#8637c3]' },
+  {
+    value: 'Pending',
+    label: 'Planning',
+    dot: 'bg-[#e2b020]',
+    bg: 'bg-[#fff5d3]',
+    text: 'text-[#b68c17]',
+  },
+  {
+    value: 'Execution',
+    label: 'Execution',
+    dot: 'bg-[#df1b8b]',
+    bg: 'bg-[#ffe6f1]',
+    text: 'text-[#df1b8b]',
+  },
+  {
+    value: 'Completed',
+    label: 'Completed',
+    dot: 'bg-[#8637c3]',
+    bg: 'bg-[#f4e6fc]',
+    text: 'text-[#8637c3]',
+  },
 ];
 
 function getStatusOption(status: string) {
-  const normalized = String(status || '').trim().toLowerCase();
+  const normalized = String(status || '')
+    .trim()
+    .toLowerCase();
   if (normalized === 'completed' || normalized === 'confirmed') return STATUS_OPTIONS[2];
   if (normalized === 'execution') return STATUS_OPTIONS[1];
   return STATUS_OPTIONS[0];
@@ -49,7 +91,9 @@ export function EventManagerPage() {
   const [rowsPerPage, setRowsPerPage] = useState(10);
 
   const [isEventDetailsModalOpen, setIsEventDetailsModalOpen] = useState(false);
-  const [selectedEventForDetails, setSelectedEventForDetails] = useState<EventManagerEvent | null>(null);
+  const [selectedEventForDetails, setSelectedEventForDetails] = useState<EventManagerEvent | null>(
+    null
+  );
   const [statusDropdownEventId, setStatusDropdownEventId] = useState<string>('');
 
   // TanStack Query with 10s polling
@@ -135,10 +179,14 @@ export function EventManagerPage() {
         event.client,
         event.type,
         event.package,
-        (event.venue && !["", "-", "–", "—", "n/a", "tba"].includes(event.venue.trim().toLowerCase())) ? event.venue : "Venue Required",
+        event.venue && !['', '-', '–', '—', 'n/a', 'tba'].includes(event.venue.trim().toLowerCase())
+          ? event.venue
+          : 'Venue Required',
         event.status,
       ];
-      return searchableFields.some((field) => field && field.toLowerCase().includes(combinedSearchTerm));
+      return searchableFields.some(
+        (field) => field && field.toLowerCase().includes(combinedSearchTerm)
+      );
     });
 
     if (sortKey && sortDirection) {
@@ -200,9 +248,12 @@ export function EventManagerPage() {
     return filteredEvents.slice(start, start + rowsPerPage);
   }, [filteredEvents, currentPage, rowsPerPage]);
 
-
-
-  const errorMessage = queryError instanceof Error ? queryError.message : queryError ? 'Unable to load events right now.' : '';
+  const errorMessage =
+    queryError instanceof Error
+      ? queryError.message
+      : queryError
+        ? 'Unable to load events right now.'
+        : '';
 
   return (
     <div className="relative w-full max-w-full min-h-screen flex flex-col gap-4 overflow-x-hidden bg-[#fbf8fd] font-sans p-2 sm:p-4 lg:p-6 pb-10">
@@ -217,7 +268,9 @@ export function EventManagerPage() {
       {updateEventMutation.isError && (
         <Card className="border-0 bg-[#fff1f2] py-3 ring-1 ring-[#fecdd3]">
           <CardContent>
-            <p className="text-sm font-medium text-[#b42318]">Unable to update event. Please try again.</p>
+            <p className="text-sm font-medium text-[#b42318]">
+              Unable to update event. Please try again.
+            </p>
           </CardContent>
         </Card>
       )}
@@ -234,8 +287,19 @@ export function EventManagerPage() {
                   fill="none"
                   viewBox="0 0 24 24"
                 >
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  <circle
+                    className="opacity-25"
+                    cx="12"
+                    cy="12"
+                    r="10"
+                    stroke="currentColor"
+                    strokeWidth="4"
+                  ></circle>
+                  <path
+                    className="opacity-75"
+                    fill="currentColor"
+                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                  ></path>
                 </svg>
                 Loading...
               </div>
@@ -256,39 +320,39 @@ export function EventManagerPage() {
           <Table className="w-full text-[11px] sm:text-xs relative">
             <TableHeader>
               <TableRow className="border-b-2 border-[#f1eef5] hover:bg-transparent">
-                {([
-                  { key: 'title', label: 'Title', alwaysVisible: true },
-                  { key: 'date', label: 'Date', alwaysVisible: true },
-                  { key: 'client', label: 'Client', alwaysVisible: false },
-                  { key: 'type', label: 'Type', alwaysVisible: false },
-                  { key: 'package', label: 'Package', alwaysVisible: false },
-                  { key: 'venue', label: 'Venue', alwaysVisible: false },
-                  { key: 'status', label: 'Status', alwaysVisible: false },
-                  { key: 'createdAt', label: 'Approved Date', alwaysVisible: false },
-                ] as { key: EventSortKey; label: string; alwaysVisible: boolean }[]).map(
-                  (col) => (
-                    <TableHead
-                      key={col.key}
-                      className={`h-10 font-black text-[#211a2f] cursor-pointer select-none transition-colors hover:text-[#df1b8b] ${
-                        !col.alwaysVisible ? 'hidden md:table-cell' : ''
-                      }`}
-                      onClick={() => handleSortToggle(col.key)}
-                    >
-                      <div className="flex items-center gap-1">
-                        {col.label}
-                        {sortKey === col.key ? (
-                          sortDirection === 'asc' ? (
-                            <ArrowUp className="h-3 w-3 text-[#df1b8b]" />
-                          ) : (
-                            <ArrowDown className="h-3 w-3 text-[#df1b8b]" />
-                          )
+                {(
+                  [
+                    { key: 'title', label: 'Title', alwaysVisible: true },
+                    { key: 'date', label: 'Date', alwaysVisible: true },
+                    { key: 'client', label: 'Client', alwaysVisible: false },
+                    { key: 'type', label: 'Type', alwaysVisible: false },
+                    { key: 'package', label: 'Package', alwaysVisible: false },
+                    { key: 'venue', label: 'Venue', alwaysVisible: false },
+                    { key: 'status', label: 'Status', alwaysVisible: false },
+                    { key: 'createdAt', label: 'Approved Date', alwaysVisible: false },
+                  ] as { key: EventSortKey; label: string; alwaysVisible: boolean }[]
+                ).map((col) => (
+                  <TableHead
+                    key={col.key}
+                    className={`h-10 font-black text-[#211a2f] cursor-pointer select-none transition-colors hover:text-[#df1b8b] ${
+                      !col.alwaysVisible ? 'hidden md:table-cell' : ''
+                    }`}
+                    onClick={() => handleSortToggle(col.key)}
+                  >
+                    <div className="flex items-center gap-1">
+                      {col.label}
+                      {sortKey === col.key ? (
+                        sortDirection === 'asc' ? (
+                          <ArrowUp className="h-3 w-3 text-[#df1b8b]" />
                         ) : (
-                          <ArrowUpDown className="h-3 w-3 text-[#c4bdd0]" />
-                        )}
-                      </div>
-                    </TableHead>
-                  )
-                )}
+                          <ArrowDown className="h-3 w-3 text-[#df1b8b]" />
+                        )
+                      ) : (
+                        <ArrowUpDown className="h-3 w-3 text-[#c4bdd0]" />
+                      )}
+                    </div>
+                  </TableHead>
+                ))}
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -307,9 +371,7 @@ export function EventManagerPage() {
                   }`}
                 >
                   <TableCell className="py-4 font-bold text-[#5c546a]">{event.title}</TableCell>
-                  <TableCell className="py-4 font-semibold text-[#5c546a]">
-                    {event.date}
-                  </TableCell>
+                  <TableCell className="py-4 font-semibold text-[#5c546a]">{event.date}</TableCell>
                   <TableCell className="py-4 font-semibold text-[#5c546a] hidden md:table-cell">
                     {event.client}
                   </TableCell>
@@ -320,7 +382,10 @@ export function EventManagerPage() {
                     {event.package}
                   </TableCell>
                   <TableCell className="py-4 font-semibold text-[#5c546a] hidden md:table-cell">
-                    {event.venue && !["", "-", "–", "—", "n/a", "tba"].includes(event.venue.trim().toLowerCase()) ? (
+                    {event.venue &&
+                    !['', '-', '–', '—', 'n/a', 'tba'].includes(
+                      event.venue.trim().toLowerCase()
+                    ) ? (
                       event.venue
                     ) : (
                       <span className="font-extrabold text-red-600 uppercase tracking-tight">
@@ -341,9 +406,20 @@ export function EventManagerPage() {
                         disabled={updateEventMutation.isPending}
                         className={`inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-[10px] font-black tracking-wide transition-all hover:ring-2 hover:ring-[#df1b8b]/20 disabled:opacity-50 ${getStatusOption(event.status).bg} ${getStatusOption(event.status).text}`}
                       >
-                        <span className={`h-1.5 w-1.5 rounded-full ${getStatusOption(event.status).dot}`}></span>
+                        <span
+                          className={`h-1.5 w-1.5 rounded-full ${getStatusOption(event.status).dot}`}
+                        ></span>
                         {getStatusOption(event.status).label.toUpperCase()}
-                        <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                        <svg
+                          width="8"
+                          height="8"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="3"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        >
                           <path d="m6 9 6 6 6-6" />
                         </svg>
                       </button>
@@ -366,7 +442,15 @@ export function EventManagerPage() {
                               <span className={`h-1.5 w-1.5 rounded-full ${opt.dot}`}></span>
                               {opt.label}
                               {getStatusOption(event.status).value === opt.value && (
-                                <svg className="ml-auto h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                                <svg
+                                  className="ml-auto h-3 w-3"
+                                  viewBox="0 0 24 24"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  strokeWidth="3"
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                >
                                   <path d="M20 6 9 17l-5-5" />
                                 </svg>
                               )}
@@ -377,20 +461,19 @@ export function EventManagerPage() {
                     </div>
                   </TableCell>
                   <TableCell className="py-4 font-semibold text-[#8f879f] hidden md:table-cell">
-                    {event.createdAt ? new Date(event.createdAt).toLocaleDateString('en-US', {
-                      month: 'short',
-                      day: 'numeric',
-                      year: 'numeric'
-                    }) : '-'}
+                    {event.createdAt
+                      ? new Date(event.createdAt).toLocaleDateString('en-US', {
+                          month: 'short',
+                          day: 'numeric',
+                          year: 'numeric',
+                        })
+                      : '-'}
                   </TableCell>
                 </TableRow>
               ))}
               {paginatedEvents.length === 0 && (
                 <TableRow>
-                  <TableCell
-                    colSpan={8}
-                    className="py-12 text-center text-sm text-[#8f879f]"
-                  >
+                  <TableCell colSpan={8} className="py-12 text-center text-sm text-[#8f879f]">
                     {isLoading ? 'Loading events...' : 'No events found.'}
                   </TableCell>
                 </TableRow>
@@ -467,8 +550,6 @@ export function EventManagerPage() {
           </div>
         </div>
       </div>
-
-
 
       {/* Event Details Modal */}
       {selectedEventForDetails && (

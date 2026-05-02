@@ -22,7 +22,6 @@ import { AdminRSVPPage } from '@/pages/admin/AdminRSVPPage';
 import { AdminCostBreakdownPage } from '@/pages/admin/AdminCostBreakdownPage';
 import { AdminVendorPoolPage } from '@/pages/admin/AdminVendorPoolPage';
 import { AdminInquiriesPage } from '@/pages/admin/AdminInquiriesPage';
-import { AdminMessagePage } from '@/pages/admin/AdminMessagePage';
 import { AdminNotificationsPage } from '@/pages/admin/AdminNotificationsPage';
 import { AdminSettingsPage } from '@/pages/admin/AdminSettingsPage';
 import { ProfilePage } from '@/pages/admin/ProfilePage';
@@ -167,7 +166,7 @@ const router = createBrowserRouter(
         },
         {
           path: 'message',
-          Component: AdminMessagePage,
+          Component: OrganizerMessagePage,
         },
         {
           path: 'notifications',

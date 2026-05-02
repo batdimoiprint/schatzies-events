@@ -300,7 +300,9 @@ export function ScheduleMeetingDialog({
                         today.setHours(0, 0, 0, 0);
                         const startDate = keyToDate(startDateKey);
                         const floor = startDate && startDate > today ? startDate : today;
-                        return date < new Date(floor.getFullYear(), floor.getMonth(), floor.getDate());
+                        return (
+                          date < new Date(floor.getFullYear(), floor.getMonth(), floor.getDate())
+                        );
                       }}
                     />
                   </PopoverContent>

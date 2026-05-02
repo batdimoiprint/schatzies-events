@@ -7,6 +7,7 @@ export interface ConversationParticipant {
   contactNumber?: string;
   role?: string;
   initial?: string;
+  profilePic?: string;
 }
 
 export interface Conversation {
@@ -89,5 +90,17 @@ export async function initiateConversation(
     message: ChatMessage;
   }>('/messages/send', { body });
 
+  return data;
+}
+
+/**
+ * Admin-only: Delete a conversation and all its messages.
+ */
+export async function deleteConversation(
+  conversationId: string
+): Promise<{ success: boolean; deleted: number }> {
+  const { data } = await axiosInstance.delete<{ success: boolean; deleted: number }>(
+    `/messages/conversations/${encodeURIComponent(conversationId)}`
+  );
   return data;
 }

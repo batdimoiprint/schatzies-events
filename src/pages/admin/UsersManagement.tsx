@@ -595,7 +595,9 @@ export function UsersManagement() {
                         </Select>
                       </div>
                     </TableCell>
-                    <TableCell className="text-sm text-[#635a73]">{user.contactNumber || '-'}</TableCell>
+                    <TableCell className="text-sm text-[#635a73]">
+                      {user.contactNumber || '-'}
+                    </TableCell>
                     <TableCell className="text-sm text-[#4e4560]">
                       {user.created_at ? new Date(user.created_at).toLocaleDateString() : '-'}
                     </TableCell>

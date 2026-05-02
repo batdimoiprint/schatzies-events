@@ -40,9 +40,9 @@ export function AdminInquiriesPage() {
   });
 
   const [searchQuery, setSearchQuery] = useState('');
-  const [sortBy, setSortBy] = useState<'createdAt' | 'date' | 'status' | 'eventType' | 'sender' | 'email' | 'package' | 'guestCount'>(
-    'createdAt'
-  );
+  const [sortBy, setSortBy] = useState<
+    'createdAt' | 'date' | 'status' | 'eventType' | 'sender' | 'email' | 'package' | 'guestCount'
+  >('createdAt');
   const [sortOrder, setSortOrder] = useState<'desc' | 'asc'>('desc');
   const [selectedInquiry, setSelectedInquiry] = useState<any | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -255,7 +255,17 @@ export function AdminInquiriesPage() {
     );
   };
 
-  const toggleSort = (field: 'createdAt' | 'date' | 'status' | 'eventType' | 'sender' | 'email' | 'package' | 'guestCount') => {
+  const toggleSort = (
+    field:
+      | 'createdAt'
+      | 'date'
+      | 'status'
+      | 'eventType'
+      | 'sender'
+      | 'email'
+      | 'package'
+      | 'guestCount'
+  ) => {
     if (sortBy === field) {
       setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
     } else {
@@ -264,7 +274,19 @@ export function AdminInquiriesPage() {
     }
   };
 
-  const SortIcon = ({ field }: { field: 'createdAt' | 'date' | 'status' | 'eventType' | 'sender' | 'email' | 'package' | 'guestCount' }) => {
+  const SortIcon = ({
+    field,
+  }: {
+    field:
+      | 'createdAt'
+      | 'date'
+      | 'status'
+      | 'eventType'
+      | 'sender'
+      | 'email'
+      | 'package'
+      | 'guestCount';
+  }) => {
     if (sortBy !== field) return <ArrowUpDown className="ml-2 h-4 w-4 opacity-50" />;
     return sortOrder === 'asc' ? (
       <ArrowUp className="ml-2 h-4 w-4 text-[#8f1fd1]" />
@@ -282,9 +304,7 @@ export function AdminInquiriesPage() {
 
         <div className="relative flex flex-wrap items-center justify-between gap-3">
           <div>
-            <h1 className="text-xl font-black text-[#2e2837] md:text-2xl">
-              Client Inquiries
-            </h1>
+            <h1 className="text-xl font-black text-[#2e2837] md:text-2xl">Client Inquiries</h1>
             <p className="mt-0.5 text-sm font-semibold text-[#8f879f]">
               Manage requests, meetings &amp; bookings.
             </p>
@@ -292,22 +312,30 @@ export function AdminInquiriesPage() {
 
           <div className="flex items-center gap-2">
             <div className="flex items-center gap-1.5 rounded-lg border border-[#f1e8f7] bg-white/80 px-3 py-1.5">
-              <span className="text-[10px] font-bold uppercase tracking-wide text-[#8a7ca3]">Total</span>
+              <span className="text-[10px] font-bold uppercase tracking-wide text-[#8a7ca3]">
+                Total
+              </span>
               <span className="text-lg font-black text-[#2e2837]">{statusCounts.total}</span>
             </div>
             <div className="flex items-center gap-1.5 rounded-lg border border-[#f1e8f7] bg-white/80 px-3 py-1.5">
               <Clock3 className="h-3 w-3 text-[#8a7ca3]" />
-              <span className="text-[10px] font-bold uppercase tracking-wide text-[#8a7ca3]">Pending</span>
+              <span className="text-[10px] font-bold uppercase tracking-wide text-[#8a7ca3]">
+                Pending
+              </span>
               <span className="text-lg font-black text-[#2e2837]">{statusCounts.pending}</span>
             </div>
             <div className="flex items-center gap-1.5 rounded-lg border border-[#f1e8f7] bg-white/80 px-3 py-1.5">
               <CalendarIcon className="h-3 w-3 text-[#8a7ca3]" />
-              <span className="text-[10px] font-bold uppercase tracking-wide text-[#8a7ca3]">Scheduled</span>
+              <span className="text-[10px] font-bold uppercase tracking-wide text-[#8a7ca3]">
+                Scheduled
+              </span>
               <span className="text-lg font-black text-[#2e2837]">{statusCounts.scheduled}</span>
             </div>
             <div className="flex items-center gap-1.5 rounded-lg border border-[#f1e8f7] bg-white/80 px-3 py-1.5">
               <CheckCircle2 className="h-3 w-3 text-[#8a7ca3]" />
-              <span className="text-[10px] font-bold uppercase tracking-wide text-[#8a7ca3]">Approved</span>
+              <span className="text-[10px] font-bold uppercase tracking-wide text-[#8a7ca3]">
+                Approved
+              </span>
               <span className="text-lg font-black text-[#2e2837]">{statusCounts.approved}</span>
             </div>
           </div>
@@ -440,10 +468,21 @@ export function AdminInquiriesPage() {
                     {inquiry.eventType || inquiry.subject || 'Inquiry'}
                   </TableCell>
                   <TableCell className="font-semibold text-lg text-[#4e4560]">
-                    {inquiry.createdAt || inquiry.created_at ? new Date(inquiry.createdAt || inquiry.created_at).toLocaleDateString('en-US', { month: 'long', day: '2-digit', year: 'numeric' }) : 'N/A'}
+                    {inquiry.createdAt || inquiry.created_at
+                      ? new Date(inquiry.createdAt || inquiry.created_at).toLocaleDateString(
+                          'en-US',
+                          { month: 'long', day: '2-digit', year: 'numeric' }
+                        )
+                      : 'N/A'}
                   </TableCell>
                   <TableCell className="font-semibold text-lg text-[#4e4560]">
-                    {inquiry.date ? new Date(inquiry.date).toLocaleDateString('en-US', { month: 'long', day: '2-digit', year: 'numeric' }) : 'N/A'}
+                    {inquiry.date
+                      ? new Date(inquiry.date).toLocaleDateString('en-US', {
+                          month: 'long',
+                          day: '2-digit',
+                          year: 'numeric',
+                        })
+                      : 'N/A'}
                   </TableCell>
                   <TableCell className="font-semibold text-lg text-[#4e4560]">
                     {inquiry.eventPackage || inquiry.package?.name || 'N/A'}
@@ -486,12 +525,15 @@ export function AdminInquiriesPage() {
                 className="rounded-md border border-[#e5ddee] bg-white px-2 py-1 text-sm font-semibold text-[#2e2837] outline-none focus:ring-2 focus:ring-[#8f1fd1]/30"
               >
                 {[5, 10, 25, 50].map((n) => (
-                  <option key={n} value={n}>{n}</option>
+                  <option key={n} value={n}>
+                    {n}
+                  </option>
                 ))}
               </select>
               <span className="ml-2 text-[#8a7ca3]">
-                {(currentPage - 1) * rowsPerPage + 1}–{Math.min(currentPage * rowsPerPage, filteredAndSortedInquiries.length)}{' '}
-                of {filteredAndSortedInquiries.length}
+                {(currentPage - 1) * rowsPerPage + 1}–
+                {Math.min(currentPage * rowsPerPage, filteredAndSortedInquiries.length)} of{' '}
+                {filteredAndSortedInquiries.length}
               </span>
             </div>
 

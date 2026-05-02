@@ -52,15 +52,24 @@ export function RSVPPage() {
           try {
             const orgResponse = await axiosInstance.get(`/users/${orgId}`);
             const orgData = orgResponse.data.user || orgResponse.data;
-            organizerName = `${orgData.firstName || ''} ${orgData.lastName || ''}`.trim() || organizerName;
-          } catch (e) { /* ignore */ }
+            organizerName =
+              `${orgData.firstName || ''} ${orgData.lastName || ''}`.trim() || organizerName;
+          } catch (e) {
+            /* ignore */
+          }
         }
 
         // Map backend fields to the format the invitation page expects
         setSelectedEvent({
           id: eventData.id,
           title: eventData.title || 'Wedding Celebration',
-          date: eventData.endDate || eventData.dateEnd || eventData.dateStart || eventData.startDate || eventData.eventDate || '',
+          date:
+            eventData.endDate ||
+            eventData.dateEnd ||
+            eventData.dateStart ||
+            eventData.startDate ||
+            eventData.eventDate ||
+            '',
           time: eventData.dateStart
             ? new Date(eventData.dateStart).toLocaleTimeString([], {
                 hour: '2-digit',
@@ -121,10 +130,13 @@ export function RSVPPage() {
     try {
       // Check if email already exists in the system
       try {
-        const checkResponse = await axiosInstance.get(`/rsvp/check-email/${formData.email}?eventId=${selectedEvent.id}`);
+        const checkResponse = await axiosInstance.get(
+          `/rsvp/check-email/${formData.email}?eventId=${selectedEvent.id}`
+        );
         if (checkResponse.data.exists) {
           setFormErrors({
-            email: 'This email has already been registered for this event. Please use a different email or contact support.',
+            email:
+              'This email has already been registered for this event. Please use a different email or contact support.',
           });
           setLoading(false);
           return;
@@ -165,7 +177,7 @@ export function RSVPPage() {
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       };
-      
+
       setRsvpResponse(finalRsvp);
       if (response.data.qrCode) {
         setQrCode(response.data.qrCode);
