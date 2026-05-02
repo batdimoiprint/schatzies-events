@@ -227,7 +227,7 @@ export const deleteInquiry = async (id: string): Promise<void> => {
 export const getBookedDates = async (): Promise<string[]> => {
   try {
     const response = await axiosInstance.get('/inquiries/booked-dates');
-    return response.data;
+    return Array.isArray(response.data) ? response.data : [];
   } catch (error) {
     console.error('Failed to fetch booked dates:', error);
     return [];

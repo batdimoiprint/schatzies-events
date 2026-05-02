@@ -907,7 +907,10 @@ export function InquiryForm({ onClose, selectedPackageId, selectedEventType }: I
 
                                       // 2. Must not be in bookedDates
                                       const dateStr = date.toISOString().split('T')[0];
-                                      return bookedDates.some((d) => d.split('T')[0] === dateStr);
+                                      return (
+                                        Array.isArray(bookedDates) &&
+                                        bookedDates.some((d) => d.split('T')[0] === dateStr)
+                                      );
                                     }}
                                     initialFocus
                                   />
