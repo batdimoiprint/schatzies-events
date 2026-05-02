@@ -159,7 +159,7 @@ export function InquiryForm({ onClose, selectedPackageId, selectedEventType }: I
   // Helper to check verification status (called on Blur)
   const handleEmailBlur = async () => {
     if (!watchedEmail) return;
-    
+
     // Basic email format check before calling API
     const emailRegex = /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i;
     if (!emailRegex.test(watchedEmail)) return;
@@ -187,7 +187,7 @@ export function InquiryForm({ onClose, selectedPackageId, selectedEventType }: I
             setEmailVerified(true);
             setVerificationSent(false);
             if (pollingRef.current) clearInterval(pollingRef.current);
-            
+
             // Trigger automatic submit since verification is complete
             setShouldAutoSubmit(true);
           }
@@ -553,11 +553,10 @@ export function InquiryForm({ onClose, selectedPackageId, selectedEventType }: I
                                         </svg>
                                       </span>
                                       <span
-                                        className={`text-[0.78rem] leading-snug ${
-                                          isHighlight
+                                        className={`text-[0.78rem] leading-snug ${isHighlight
                                             ? 'font-semibold text-[#e61f83]'
                                             : 'text-[#2d1a3d]'
-                                        }`}
+                                          }`}
                                       >
                                         {text}
                                       </span>

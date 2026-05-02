@@ -304,11 +304,10 @@ export function OrganizerMessagePage() {
                 <div
                   key={conv.id}
                   onClick={() => handleSelectConversation(conv.id)}
-                  className={`flex cursor-pointer items-center gap-3 border-b border-[#f0edf4] p-4 transition-colors ${
-                    activeConvId === conv.id
+                  className={`flex cursor-pointer items-center gap-3 border-b border-[#f0edf4] p-4 transition-colors ${activeConvId === conv.id
                       ? 'border-l-4 border-l-[#df2b80] bg-[#fafafa]'
                       : 'border-l-4 border-l-transparent hover:bg-[#fafafa]'
-                  }`}
+                    }`}
                 >
                   <div
                     className={`relative flex size-12 shrink-0 items-center justify-center rounded-full text-lg font-bold text-white ${color}`}
@@ -411,18 +410,16 @@ export function OrganizerMessagePage() {
                       >
                         <div className="flex max-w-[70%] flex-col gap-1">
                           <div
-                            className={`rounded-2xl px-4 py-3 text-sm ${
-                              outgoing
+                            className={`rounded-2xl px-4 py-3 text-sm ${outgoing
                                 ? 'rounded-br-none bg-gradient-to-r from-[#df2b80] to-[#8f1fd1] text-white'
                                 : 'rounded-bl-none border border-[#e2deea] bg-white text-[#4f4a56] shadow-sm'
-                            }`}
+                              }`}
                           >
                             {msg.body}
                           </div>
                           <span
-                            className={`text-[10px] font-semibold text-[#a49cb3] ${
-                              outgoing ? 'text-right' : 'text-left'
-                            }`}
+                            className={`text-[10px] font-semibold text-[#a49cb3] ${outgoing ? 'text-right' : 'text-left'
+                              }`}
                           >
                             {formatMessageTime(msg.createdAt)}
                           </span>
