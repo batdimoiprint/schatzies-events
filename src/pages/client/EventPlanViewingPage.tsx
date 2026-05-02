@@ -5,7 +5,7 @@ import { AllocationResourcesModal } from '@/components/client/AllocationResource
 import { ChecklistMeetingModal } from '@/components/client/ChecklistMeetingModal';
 import { ProgramFlowModal } from '@/components/client/ProgramFlowModal';
 
-import { getEventManagerEvents, getEventById, getEventUser, getEventAllocation, getEventChecklist, getEventFlow } from '@/api/events';
+import { getEventManagerEvents, getEventById, getEventUser, getEventAllocation, getEventFlow } from '@/api/events';
 import { getCalendarEntries } from '@/api/calendar';
 import { useAuth } from '@/hooks/useAuth';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
@@ -50,7 +50,6 @@ export function EventPlanViewingPage() {
   const { user } = useAuth();
   const [eventData, setEventData] = useState<any>(null);
   const [allocation, setAllocation] = useState<any>(null);
-  const [checklist, setChecklist] = useState<any[]>([]);
   const [meetings, setMeetings] = useState<any[]>([]);
   const [flow, setFlow] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -130,16 +129,14 @@ export function EventPlanViewingPage() {
 
           // Fetch additional data modules
           try {
-            const [allocRes, checkRes, flowRes, calRes] = await Promise.all([
+            const [allocRes, flowRes, calRes] = await Promise.all([
               getEventAllocation(userEventBase.id).catch(() => null),
-              getEventChecklist(userEventBase.id).catch(() => []),
               getEventFlow(userEventBase.id).catch(() => []),
               getCalendarEntries().catch(() => [])
             ]);
 
             if (isMounted) {
               setAllocation(allocRes);
-              setChecklist(checkRes || []);
               
               const formatDisplayTime = (val: any) => {
                 if (!val) return '00:00';
