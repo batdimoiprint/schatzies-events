@@ -5,7 +5,8 @@ import { AllocationResourcesModal } from '@/components/client/AllocationResource
 import { ChecklistMeetingModal } from '@/components/client/ChecklistMeetingModal';
 import { ProgramFlowModal } from '@/components/client/ProgramFlowModal';
 
-import { getEventManagerEvents, getEventById, getEventUser } from '@/api/events';
+import { getEventManagerEvents, getEventById, getEventUser, getEventAllocation, getEventChecklist, getEventFlow } from '@/api/events';
+import { getCalendarEntries } from '@/api/calendar';
 import { useAuth } from '@/hooks/useAuth';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 function PackageIllustration() {
@@ -48,6 +49,10 @@ function CostIllustration() {
 export function EventPlanViewingPage() {
   const { user } = useAuth();
   const [eventData, setEventData] = useState<any>(null);
+  const [allocation, setAllocation] = useState<any>(null);
+  const [checklist, setChecklist] = useState<any[]>([]);
+  const [meetings, setMeetings] = useState<any[]>([]);
+  const [flow, setFlow] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   const [showServiceReq, setShowServiceReq] = useState(false);
@@ -122,6 +127,48 @@ export function EventPlanViewingPage() {
             
           const paxCount = fullEvent.eventPax || (userEventBase as any).pax || (fullEvent as any).package?.pax || 0;
           const costValue = (fullEvent as any).cost || 'TBD';
+
+          // Fetch additional data modules
+          try {
+            const [allocRes, checkRes, flowRes, calRes] = await Promise.all([
+              getEventAllocation(userEventBase.id).catch(() => null),
+              getEventChecklist(userEventBase.id).catch(() => []),
+              getEventFlow(userEventBase.id).catch(() => []),
+              getCalendarEntries().catch(() => [])
+            ]);
+
+            if (isMounted) {
+              setAllocation(allocRes);
+              setChecklist(checkRes || []);
+              
+              const formatDisplayTime = (val: any) => {
+                if (!val) return '00:00';
+                return val;
+              };
+
+              const mappedFlows = Array.isArray(flowRes)
+                ? flowRes
+                    .map((item: any) => ({
+                      id: item.id || Math.random().toString(),
+                      title: item.title || item.activity || 'Activity',
+                      from: formatDisplayTime(item.startTime || item.start),
+                      to: formatDisplayTime(item.endTime || item.end),
+                      description: item.description || '',
+                      startHour: parseFloat(item.startHour) || 0,
+                    }))
+                    .sort((a: any, b: any) => a.startHour - b.startHour)
+                : [];
+              setFlow(mappedFlows);
+
+              const eventMeetings = (calRes || []).filter(
+                (item: any) =>
+                  item.eventId === userEventBase.id && item.label?.toUpperCase() === 'MEETING'
+              );
+              setMeetings(eventMeetings);
+            }
+          } catch (e) {
+            console.error('Error fetching event extra details:', e);
+          }
 
           if (isMounted) {
             setEventData({
@@ -279,23 +326,24 @@ export function EventPlanViewingPage() {
                 View
               </button>
             </div>
-            <ul className="space-y-0.5 text-xs text-[#696373]">
-              <li className="font-medium text-[#2d2834]">• Food</li>
-              <li className="pl-3">Classic Buffet</li>
-              <li className="pl-3 font-medium text-[#2d2834]">1. Appetizer</li>
-              <li className="pl-4 text-[11px] text-[#8a8697]">
-                1 light bite (e.g., finger foods, soup, or a fresh salad)
-              </li>
-              <li className="pl-3 font-medium text-[#2d2834]">2. Main Course</li>
-              <li className="pl-4 text-[11px] text-[#8a8697]">
-                1 chicken dish (e.g., Cordon Bleu, Baked Chicken, or Garlic Parmesan Chicken)
-              </li>
-              <li className="pl-3 font-medium text-[#2d2834]">3. Dessert</li>
-              <li className="pl-4 text-[11px] text-[#8a8697]">
-                1 to 2 sweet treats (e.g., Mango Bravo style cakes, panna cotta, or a chocolate
-                fountain)
-              </li>
-            </ul>
+            <div className="space-y-1 text-xs text-[#696373]">
+              {allocation?.food_package || allocation?.flow_type ? (
+                <>
+                  {allocation?.food_package && (
+                    <p className="font-medium text-[#2d2834]">
+                      Food Package: {allocation.food_package}
+                    </p>
+                  )}
+                  {allocation?.flow_type && (
+                    <p className="font-medium text-[#2d2834]">
+                      Flow Type: {allocation.flow_type}
+                    </p>
+                  )}
+                </>
+              ) : (
+                <p className="italic">No service requirements specified.</p>
+              )}
+            </div>
           </div>
 
           {/* Card 2 — Allocation Resources */}
@@ -311,18 +359,28 @@ export function EventPlanViewingPage() {
                 View
               </button>
             </div>
-            <ul className="space-y-3 text-xs">
-              <li>
-                <span className="font-medium text-pink-500">• Event Coordinator</span>
-                <p className="pl-3 text-[#2d2834]">Ken Chan</p>
-                <p className="pl-3 text-[#8a8697]">00:00 – 00:00</p>
-              </li>
-              <li>
-                <span className="font-medium text-orange-400">• Host</span>
-                <p className="pl-3 text-[#2d2834]">Angel U. Nicorn</p>
-                <p className="pl-3 text-[#8a8697]">00:00 – 00:00</p>
-              </li>
-            </ul>
+            <div className="space-y-3 text-xs">
+              <div>
+                <span className="font-medium text-pink-500">• Vendors</span>
+                {allocation?.vendors && allocation.vendors.length > 0 ? (
+                  allocation.vendors.map((v: any, i: number) => (
+                    <p key={i} className="pl-3 text-[#2d2834]">{v.name}</p>
+                  ))
+                ) : (
+                  <p className="pl-3 italic text-[#8a8697]">None assigned</p>
+                )}
+              </div>
+              <div>
+                <span className="font-medium text-orange-400">• Manpower</span>
+                {allocation?.manpower && allocation.manpower.length > 0 ? (
+                  allocation.manpower.map((m: any, i: number) => (
+                    <p key={i} className="pl-3 text-[#2d2834]">{m.role}</p>
+                  ))
+                ) : (
+                  <p className="pl-3 italic text-[#8a8697]">None assigned</p>
+                )}
+              </div>
+            </div>
           </div>
 
           {/* Card 3 — Checklist & Meeting */}
@@ -338,13 +396,23 @@ export function EventPlanViewingPage() {
                 View
               </button>
             </div>
-            <ul className="space-y-0.5 text-xs">
-              <li className="font-medium text-pink-500">• Meetings</li>
-              <li className="pl-3 text-[#2d2834]">Meeting 1 | Zus Coffee</li>
-              <li className="pl-3 text-[#8a8697]">00:00 – 00:00</li>
-              <li className="pl-3 text-[#2d2834]">Meeting 2 | Zus Coffee</li>
-              <li className="pl-3 text-[#8a8697]">00:00 – 00:00</li>
-            </ul>
+            <div className="space-y-3 text-xs">
+              <div>
+                <span className="font-medium text-pink-500">• Meetings</span>
+                {meetings.length > 0 ? (
+                  meetings.map((meeting: any, index: number) => (
+                    <div key={index} className="pl-3 mb-1">
+                      <p className="text-[#2d2834] font-medium">{meeting.title}</p>
+                      <p className="text-[#8a8697]">
+                        {meeting.startTime || meeting.time || ''} {meeting.endTime ? `- ${meeting.endTime}` : ''}
+                      </p>
+                    </div>
+                  ))
+                ) : (
+                  <p className="pl-3 italic text-[#8a8697]">No scheduled meetings yet.</p>
+                )}
+              </div>
+            </div>
           </div>
 
           {/* Card 4 — Program Flow */}
@@ -371,19 +439,26 @@ export function EventPlanViewingPage() {
                 </button>
               </div>
             </div>
-            <div>
-              <p className="font-bold text-lg text-[#2d2834] mb-3">DATE AND TIME</p>
-              <div className="flex gap-4 items-start">
-                <p className="text-xs text-[#8a8697] shrink-0">00:00</p>
-                <div className="w-px bg-gray-200 self-stretch"></div>
-                <div className="flex-1">
-                  <p className="font-medium text-[#2d2834] text-sm">Description Here</p>
-                  <p className="line-clamp-3 text-[11px] text-[#8a8697] mt-1 leading-relaxed">
-                    Lorem ipsum dolor sit amet, consectetur adipiscing elit. In tincidunt justo quis
-                    viverra bibendum. Curabitur ipsum mi, bibendum ut dictum non, commodo a purus.
-                  </p>
-                </div>
-              </div>
+            <div className="mt-2 space-y-4">
+              {flow.length > 0 ? (
+                flow.map((f: any) => (
+                  <div key={f.id} className="flex gap-4 items-start">
+                    <div className="text-xs text-[#8a8697] shrink-0 w-16">
+                      <p>{f.from}</p>
+                      <p>{f.to}</p>
+                    </div>
+                    <div className="w-px bg-pink-200 self-stretch"></div>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-medium text-[#2d2834] text-sm truncate">{f.title}</p>
+                      <p className="line-clamp-3 text-[11px] text-[#8a8697] mt-1 leading-relaxed break-words whitespace-pre-wrap">
+                        {f.description || 'No description provided.'}
+                      </p>
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <p className="text-xs italic text-[#8a8697]">No program flow scheduled yet.</p>
+              )}
             </div>
           </div>
         </div>
