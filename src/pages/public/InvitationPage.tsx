@@ -1,50 +1,21 @@
 import { useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { getEventById } from '@/lib/rsvpStorage';
-
-interface QRCodeData {
-  id: string;
-  scans?: number;
-}
 
 export function InvitationPage() {
-  const { eventId, qrId } = useParams<{ eventId: string; qrId: string }>();
+  const { eventId } = useParams<{ eventId: string; qrId: string }>();
   const navigate = useNavigate();
 
   useEffect(() => {
-    const handleRedirect = () => {
-      if (!eventId) {
-        navigate('/', { replace: true });
-        return;
-      }
+    if (!eventId) {
+      navigate('/', { replace: true });
+      return;
+    }
 
-      // Track QR scan if qrId is provided
-      if (qrId) {
-        const event = getEventById(eventId);
-        if (event) {
-          const storedQRs = localStorage.getItem(`qr-codes-${eventId}`);
-          if (storedQRs) {
-            try {
-              const qrCodes = JSON.parse(storedQRs);
-              const updatedQRs = qrCodes.map((qr: QRCodeData) =>
-                qr.id === qrId ? { ...qr, scans: (qr.scans || 0) + 1 } : qr
-              );
-              localStorage.setItem(`qr-codes-${eventId}`, JSON.stringify(updatedQRs));
-            } catch (error) {
-              console.error('Error tracking QR scan:', error);
-            }
-          }
-        }
-      }
-
-      // Redirect to the new RSVP route
-      setTimeout(() => {
-        navigate(`/rsvp?eventId=${eventId}`, { replace: true });
-      }, 300);
-    };
-
-    handleRedirect();
-  }, [eventId, qrId, navigate]);
+    // Redirect to the RSVP page with the eventId
+    setTimeout(() => {
+      navigate(`/rsvp?eventId=${eventId}`, { replace: true });
+    }, 300);
+  }, [eventId, navigate]);
 
   return (
     <div className="flex h-screen items-center justify-center bg-gradient-to-b from-pink-100 to-pink-50">

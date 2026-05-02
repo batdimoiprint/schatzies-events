@@ -3,9 +3,8 @@ import type { AxiosError } from 'axios';
 import { useSearchParams } from 'react-router-dom';
 
 import type { EventData, RSVPResponse } from '@/types/rsvp';
-import axiosInstance from '@/api/axios-instance'; // Added for API calls
+import axiosInstance from '@/api/axios-instance';
 import { downloadQRCode } from '@/lib/qrCodeGenerator';
-import { getEventById } from '@/lib/rsvpStorage';
 import { RSVPInvitationPage } from './RSVPInvitationPage';
 import { RSVPFormPage } from './RSVPFormPage';
 import { RSVPSuccessPage } from './RSVPSuccessPage';
@@ -27,6 +26,7 @@ export function RSVPPage() {
     firstName: '',
     lastName: '',
     middleName: '',
+    email: '',
     contactNumber: '',
     attending: true,
     message: '',
@@ -37,18 +37,38 @@ export function RSVPPage() {
   useEffect(() => {
     const eventIdParam = searchParams.get('eventId');
 
-    // Fetch event details from backend to ensure capacity and existence
+    // Fetch event details from backend
     const fetchEvent = async () => {
       if (!eventIdParam) return;
       try {
         const response = await axiosInstance.get(`/events/${eventIdParam}`);
         const eventData = response.data.event || response.data;
 
+        // Fetch full details to get organizer name
+        let organizerName = eventData.clientName || eventData.client || 'Schatzies Events';
+        const orgId = eventData.organizer_id || eventData.organizerId;
+        if (orgId) {
+          try {
+            const orgResponse = await axiosInstance.get(`/users/${orgId}`);
+            const orgData = orgResponse.data.user || orgResponse.data;
+            organizerName =
+              `${orgData.firstName || ''} ${orgData.lastName || ''}`.trim() || organizerName;
+          } catch (e) {
+            /* ignore */
+          }
+        }
+
         // Map backend fields to the format the invitation page expects
         setSelectedEvent({
           id: eventData.id,
           title: eventData.title || 'Wedding Celebration',
-          date: eventData.dateStart || eventData.startDate || eventData.eventDate || '',
+          date:
+            eventData.endDate ||
+            eventData.dateEnd ||
+            eventData.dateStart ||
+            eventData.startDate ||
+            eventData.eventDate ||
+            '',
           time: eventData.dateStart
             ? new Date(eventData.dateStart).toLocaleTimeString([], {
                 hour: '2-digit',
@@ -57,19 +77,14 @@ export function RSVPPage() {
             : 'TBA',
           location: eventData.venue || eventData.location || 'TBA',
           couple: {
-            name1: eventData.title?.split('&')[0]?.trim() || 'Partner 1',
-            name2: eventData.title?.split('&')[1]?.trim() || 'Partner 2',
+            name1: eventData.title || 'Event',
+            name2: '',
           },
-          organizerName: eventData.clientName || 'Schatzies Events',
+          organizerName: organizerName,
           description: eventData.eventType || '',
         });
       } catch (error) {
-        console.error('Error fetching event from API, trying local storage:', error);
-        // Fallback to local storage for demo events like evt-001
-        const localEvent = getEventById(eventIdParam);
-        if (localEvent) {
-          setSelectedEvent(localEvent);
-        }
+        console.error('Error fetching event from API:', error);
       }
     };
 
@@ -84,6 +99,11 @@ export function RSVPPage() {
     }
     if (!formData.lastName.trim()) {
       errors.lastName = 'Last name is required';
+    }
+    if (!formData.email.trim()) {
+      errors.email = 'Email address is required';
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+      errors.email = 'Please enter a valid email address';
     }
     if (!formData.contactNumber.trim()) {
       errors.contactNumber = 'Contact number is required';
@@ -102,52 +122,60 @@ export function RSVPPage() {
     setFormErrors({});
 
     try {
+      // Check if email already exists in the system
+      try {
+        const checkResponse = await axiosInstance.get(
+          `/rsvp/check-email/${formData.email}?eventId=${selectedEvent.id}`
+        );
+        if (checkResponse.data.exists) {
+          setFormErrors({
+            email:
+              'This email has already been registered for this event. Please use a different email or contact support.',
+          });
+          setLoading(false);
+          return;
+        }
+      } catch (checkError) {
+        // If the endpoint doesn't exist, continue with submission
+        console.log('Email check endpoint not available, proceeding with submission');
+      }
+
       // Map frontend state to backend expected snake_case payload
       const payload = {
         event_id: selectedEvent.id,
         first_name: formData.firstName,
         last_name: formData.lastName,
-        middle_name: formData.middleName || undefined,
+        ...(formData.middleName && { middle_name: formData.middleName }),
+        email: formData.email,
         contact_number: formData.contactNumber,
         status: formData.attending ? 'ATTENDING' : 'NOT_ATTENDING',
-        message: formData.message || undefined,
+        ...(formData.message && { message: formData.message }),
       };
 
       // POST to backend RSVP endpoint
       const response = await axiosInstance.post('/rsvp', payload);
 
-      // Swagger says it returns "RSVP submitted successfully" (a string)
-      // So we generate a QR code locally for the guest
-      const { generateRSVPQRCode } = await import('@/lib/qrCodeGenerator');
-
-      // Use a combination of eventId and name/contact to create a stable unique ID if possible
-      // or just a timestamp for now
-      // Get the REAL ID from the backend response
-      const createdGuest = response.data.guest || response.data;
-      const guestId =
-        createdGuest.guestId ||
-        createdGuest.id ||
-        createdGuest.SK?.split('#')[1] ||
-        `guest-${Date.now()}`;
-
-      const invitationUrl = `${window.location.origin}/invitation/${selectedEvent.id}/${guestId}`;
-      const qrCodeUrl = await generateRSVPQRCode(invitationUrl, selectedEvent.id);
-
-      setRsvpResponse({
-        id: guestId,
+      // Set response data - use backend response values if available, otherwise default to unverified
+      const finalRsvp = {
+        id: response.data.guestId || response.data.id || `guest-${Date.now()}`,
         eventId: selectedEvent.id,
         firstName: formData.firstName,
         lastName: formData.lastName,
+        email: formData.email,
         contactNumber: formData.contactNumber,
         attending: formData.attending,
         status: formData.attending ? 'Attending' : 'Not Attending',
         isScanned: false,
-        qrCode: qrCodeUrl,
+        isVerified: response.data.isVerified || false,
+        qrCode: response.data.qrCode || '',
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
-      });
+      };
 
-      setQrCode(qrCodeUrl);
+      setRsvpResponse(finalRsvp);
+      if (response.data.qrCode) {
+        setQrCode(response.data.qrCode);
+      }
       setCurrentStep('success');
     } catch (error) {
       console.error('Error submitting RSVP:', error);
@@ -211,6 +239,8 @@ export function RSVPPage() {
       <RSVPSuccessPage
         loading={loading}
         qrCode={qrCode}
+        isAttending={formData.attending}
+        isVerified={rsvpResponse.isVerified || false}
         navigating={navigating}
         onDownloadQR={handleDownloadQR}
         onVisitHome={handleVisitHome}

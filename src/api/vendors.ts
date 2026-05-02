@@ -201,3 +201,77 @@ export async function getVendorAssignedEvents(vendorId: string) {
   const response = await axiosInstance.get(`/vendors/${vendorId}/events`);
   return Array.isArray(response.data) ? response.data : response.data.events || [];
 }
+
+export interface VendorWorker {
+  id: string;
+  vendorId: string;
+  workerName: string;
+  firstName: string;
+  lastName: string;
+  role: string;
+  email: string;
+  contactNumber: string;
+  jobTitle: string;
+  status: string;
+  eventId?: string;
+  notes?: string;
+}
+
+export async function getVendorWorkersList(vendorId: string): Promise<VendorWorker[]> {
+  const response = await axiosInstance.get(`/vendors/${vendorId}/workers`);
+  const workers = response.data.workers || response.data || [];
+  return workers.map((w: any) => ({
+    id: w.id || w.workerId || '',
+    vendorId: w.vendorId || vendorId,
+    workerName: w.workerName || `${w.firstName || ''} ${w.lastName || ''}`.trim() || 'Worker',
+    firstName: w.firstName || w.workerName?.split(' ')[0] || '',
+    lastName: w.lastName || w.workerName?.split(' ').slice(1).join(' ') || '',
+    role: w.role || '',
+    email: w.email || '',
+    contactNumber: w.contactNumber || w.contactPhone || '',
+    jobTitle: w.jobTitle || '',
+    status: String(w.status || w.availabilityStatus || 'Active'),
+    eventId: w.eventId || '',
+    notes: w.notes || '',
+  }));
+}
+
+export interface VendorEvent {
+  eventId: string;
+  title: string;
+  status: string;
+  startDate?: string;
+  eventDate?: string;
+}
+
+export async function getVendorEventHistory(vendorId: string): Promise<VendorEvent[]> {
+  const response = await axiosInstance.get(`/vendors/${vendorId}/events`);
+  const events = Array.isArray(response.data) ? response.data : response.data.events || [];
+  return events.map((e: any) => ({
+    eventId: e.eventId || e.id || '',
+    title: e.title || e.eventTitle || 'Untitled Event',
+    status: e.status || 'Unknown',
+    startDate: e.startDate || '',
+    eventDate: e.eventDate || '',
+  }));
+}
+
+export async function createVendorWorker(
+  vendorId: string,
+  payload: {
+    workerName: string;
+    role?: string;
+    contactNumber?: string;
+    email?: string;
+    jobTitle?: string;
+    availabilityStatus?: string;
+    notes?: string;
+  }
+): Promise<any> {
+  const response = await axiosInstance.post(`/vendors/${vendorId}/workers`, payload);
+  return response.data;
+}
+
+export async function deleteVendorWorker(vendorId: string, workerId: string): Promise<void> {
+  await axiosInstance.delete(`/vendors/${vendorId}/workers/${workerId}`);
+}

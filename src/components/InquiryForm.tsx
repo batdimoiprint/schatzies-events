@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { format } from 'date-fns';
 import { useForm, Controller } from 'react-hook-form';
 import { cn } from '@/lib/utils';
@@ -11,7 +11,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import LoadingScreen from '@/components/ui/LoadingScreen';
-import { submitInquiry } from '@/api/inquiries';
+import { submitInquiry, getBookedDates } from '@/api/inquiries';
+import { checkOrSendVerification, checkEmailVerified } from '@/api/email-verification';
 import { getPackageById, getPackagesByType } from '@/data/packages';
 import {
   Select,
@@ -88,6 +89,30 @@ export function InquiryForm({ onClose, selectedPackageId, selectedEventType }: I
   const [showTerms, setShowTerms] = useState(false);
   const [showPackageDetails, setShowPackageDetails] = useState(false);
 
+  // ── Email verification state ──
+  const [emailVerified, setEmailVerified] = useState(false);
+  const [verificationSending, setVerificationSending] = useState(false);
+  const [verificationSent, setVerificationSent] = useState(false);
+  const [verificationError, setVerificationError] = useState<string | null>(null);
+  const [shouldAutoSubmit, setShouldAutoSubmit] = useState(false);
+  const [verificationCooldown, setVerificationCooldown] = useState(0);
+  const [bookedDates, setBookedDates] = useState<string[]>([]);
+  const pollingRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const cooldownRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  // Fetch booked dates on mount
+  useEffect(() => {
+    const fetchBooked = async () => {
+      try {
+        const dates = await getBookedDates();
+        setBookedDates(dates);
+      } catch (err) {
+        console.error('Failed to fetch booked dates:', err);
+      }
+    };
+    fetchBooked();
+  }, []);
+
   // Get the selected package info if available
   const selectedPackage =
     selectedEventType && selectedPackageId
@@ -120,6 +145,112 @@ export function InquiryForm({ onClose, selectedPackageId, selectedEventType }: I
   const watchedEventType = watch('eventType');
   const watchedEventPackage = watch('eventPackage');
   const watchedTermsAccepted = watch('termsAccepted');
+  const watchedEmail = watch('email');
+
+  // ── No more localStorage caching, relying purely on backend ──
+
+  // Reset verification state if email changes
+  useEffect(() => {
+    setVerificationSent(false);
+    setVerificationError(null);
+    setEmailVerified(false);
+  }, [watchedEmail]);
+
+  // Helper to check verification status (called on Blur)
+  const handleEmailBlur = async () => {
+    if (!watchedEmail) return;
+
+    // Basic email format check before calling API
+    const emailRegex = /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i;
+    if (!emailRegex.test(watchedEmail)) return;
+
+    try {
+      const { verified } = await checkEmailVerified(watchedEmail);
+      if (verified) {
+        setEmailVerified(true);
+        setVerificationSent(false);
+        setVerificationError(null);
+      }
+    } catch {
+      // If check fails, we just don't show the verified status
+    }
+  };
+
+  // Poll backend for verification while waiting
+  useEffect(() => {
+    if (verificationSent && !emailVerified && watchedEmail) {
+      pollingRef.current = setInterval(async () => {
+        // Ask backend
+        try {
+          const { verified } = await checkEmailVerified(watchedEmail);
+          if (verified) {
+            setEmailVerified(true);
+            setVerificationSent(false);
+            if (pollingRef.current) clearInterval(pollingRef.current);
+
+            // Trigger automatic submit since verification is complete
+            setShouldAutoSubmit(true);
+          }
+        } catch {
+          /* ignore polling errors */
+        }
+      }, 4000);
+    }
+    return () => {
+      if (pollingRef.current) clearInterval(pollingRef.current);
+    };
+  }, [verificationSent, emailVerified, watchedEmail]);
+
+  // Cooldown timer to prevent spamming verification emails
+  useEffect(() => {
+    if (verificationCooldown > 0) {
+      cooldownRef.current = setInterval(() => {
+        setVerificationCooldown((prev) => {
+          if (prev <= 1) {
+            if (cooldownRef.current) clearInterval(cooldownRef.current);
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+    }
+    return () => {
+      if (cooldownRef.current) clearInterval(cooldownRef.current);
+    };
+  }, [verificationCooldown]);
+
+  // ── Send verification email handler (called automatically on submit) ──
+  const handleSendVerification = async (email: string, pendingInquiry?: any): Promise<boolean> => {
+    setVerificationSending(true);
+    setVerificationError(null);
+    try {
+      const result = await checkOrSendVerification(email, pendingInquiry);
+      if (result.alreadyUsed) {
+        if (result.reason) {
+          setVerificationError(result.reason);
+          return false;
+        }
+        // If no reason, it means it was just auto-submitted by the backend
+        setSubmitted(true);
+        return false;
+      }
+      if (result.verified) {
+        setEmailVerified(true);
+        setVerificationSent(false);
+        return true; // already verified, can proceed
+      } else {
+        setVerificationSent(true);
+        setVerificationCooldown(30); // 30 second cooldown
+        return false; // email sent, do not proceed
+      }
+    } catch (err: any) {
+      const msg = err.response?.data?.error || err.response?.data?.message;
+      setVerificationError(msg || 'Failed to send verification email. Please try again.');
+      return false;
+    } finally {
+      setVerificationSending(false);
+    }
+  };
 
   // Reset package and pax when event type changes
   useEffect(() => {
@@ -168,39 +299,48 @@ export function InquiryForm({ onClose, selectedPackageId, selectedEventType }: I
 
   const onFormSubmit = async (data: IInquiryForm) => {
     setError(null);
+
+    const inquiryData = {
+      firstName: data.firstName.trim(),
+      lastName: data.lastName.trim(),
+      middleName: data.middleName.trim() || undefined,
+      email: data.email.trim(),
+      contactNumber: `+63${data.contactNumber.trim()}`,
+      date: data.eventDate,
+      eventType: data.eventType,
+      eventPackage: data.eventPackage,
+      eventPax: Number.parseInt(data.eventPax, 10),
+      message: data.message.trim() || undefined,
+    };
+
+    // ── Automatic email verification check on submit ──
+    const email = data.email.trim();
+    const canProceed = await handleSendVerification(email, inquiryData);
+    if (!canProceed) {
+      // Verification email was sent (with pending data), or it was already submitted, or error.
+      return;
+    }
     setIsLoading(true);
 
     try {
-      await submitInquiry({
-        firstName: data.firstName.trim(),
-        lastName: data.lastName.trim(),
-        middleName: data.middleName.trim() || undefined,
-        email: data.email.trim(),
-        contactNumber: `+63${data.contactNumber.trim()}`,
-        date: data.eventDate,
-        eventType: data.eventType,
-        eventPackage: data.eventPackage,
-        eventPax: Number.parseInt(data.eventPax, 10),
-        message: data.message.trim() || undefined,
-      });
-
+      await submitInquiry(inquiryData);
       setSubmitted(true);
-    } catch (submitError) {
-      const message =
-        typeof submitError === 'object' &&
-        submitError !== null &&
-        'response' in submitError &&
-        typeof (submitError as { response?: { data?: { message?: string } } }).response?.data
-          ?.message === 'string'
-          ? (submitError as { response?: { data?: { message?: string } } }).response?.data?.message
-          : 'Failed to submit inquiry. Please try again.';
-
-      setError(message ?? 'Failed to submit inquiry. Please try again.');
+    } catch (submitError: any) {
+      const apiMessage = submitError.response?.data?.error || submitError.response?.data?.message;
+      setError(apiMessage || 'Failed to submit inquiry. Please try again.');
       console.error('Error submitting inquiry:', submitError);
     } finally {
       setIsLoading(false);
     }
   };
+
+  // Handle auto-submit after verification
+  useEffect(() => {
+    if (shouldAutoSubmit) {
+      setShouldAutoSubmit(false);
+      handleSubmit(onFormSubmit)();
+    }
+  }, [shouldAutoSubmit, handleSubmit]);
 
   return (
     <>
@@ -413,11 +553,10 @@ export function InquiryForm({ onClose, selectedPackageId, selectedEventType }: I
                                         </svg>
                                       </span>
                                       <span
-                                        className={`text-[0.78rem] leading-snug ${
-                                          isHighlight
+                                        className={`text-[0.78rem] leading-snug ${isHighlight
                                             ? 'font-semibold text-[#e61f83]'
                                             : 'text-[#2d1a3d]'
-                                        }`}
+                                          }`}
                                       >
                                         {text}
                                       </span>
@@ -620,6 +759,7 @@ export function InquiryForm({ onClose, selectedPackageId, selectedEventType }: I
                           />
                         </Field>
                       </div>
+
                       <Field error={errors.middleName?.message}>
                         <Input
                           type="text"
@@ -630,21 +770,55 @@ export function InquiryForm({ onClose, selectedPackageId, selectedEventType }: I
                           className={fieldBase}
                         />
                       </Field>
+
                       <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2">
-                        <Field required error={errors.email?.message}>
-                          <Input
-                            type="email"
-                            placeholder="Email Address"
-                            {...register('email', {
-                              required: 'Email is required',
-                              pattern: {
-                                value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
-                                message: 'Invalid email address',
-                              },
-                            })}
-                            className={fieldBase}
-                          />
-                        </Field>
+                        {/* ── Email field ── */}
+                        <div className="space-y-2">
+                          <Field
+                            required
+                            error={errors.email?.message || verificationError || undefined}
+                          >
+                            <div className="relative">
+                              <Input
+                                type="email"
+                                placeholder="Email Address"
+                                {...register('email', {
+                                  required: 'Email is required',
+                                  pattern: {
+                                    value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
+                                    message: 'Invalid email address',
+                                  },
+                                })}
+                                onBlur={(e) => {
+                                  // Call standard react-hook-form onBlur
+                                  const { onBlur } = register('email');
+                                  onBlur(e);
+                                  // Also check verification status
+                                  handleEmailBlur();
+                                }}
+                                className={fieldBase}
+                              />
+                            </div>
+                          </Field>
+
+                          {/* Verification status — simple badge below input */}
+                          {emailVerified && (
+                            <div className="flex items-center gap-1 px-2 py-1 rounded bg-emerald-50 border border-emerald-100 mt-1">
+                              <span className="text-[0.65rem] font-bold text-emerald-600">
+                                Email verified ✅ You can now submit the form.
+                              </span>
+                            </div>
+                          )}
+                          {verificationSent && !emailVerified && (
+                            <div className="flex items-center gap-1 px-2 py-1 rounded bg-amber-50 border border-amber-100 mt-1">
+                              <span className="text-[0.65rem] font-medium text-amber-600 animate-pulse">
+                                Verification link sent. Please check your email before submitting.
+                              </span>
+                            </div>
+                          )}
+                        </div>
+
+                        {/* ── Contact number ── */}
                         <Field required error={errors.contactNumber?.message}>
                           <div className="flex items-stretch overflow-hidden rounded-lg bg-[#e8e8e8] focus-within:ring-2 focus-within:ring-[#3d2052]/25">
                             <span className="flex items-center border-r border-gray-300 px-3 text-[0.85rem] font-medium text-gray-600">
@@ -727,7 +901,14 @@ export function InquiryForm({ onClose, selectedPackageId, selectedEventType }: I
                                       field.value ? new Date(field.value) : getMinDate()
                                     }
                                     onSelect={(date) => field.onChange(date?.toISOString())}
-                                    disabled={(date) => date < getMinDate()}
+                                    disabled={(date) => {
+                                      // 1. Must be at least 1 month in advance
+                                      if (date < getMinDate()) return true;
+
+                                      // 2. Must not be in bookedDates
+                                      const dateStr = date.toISOString().split('T')[0];
+                                      return bookedDates.some((d) => d.split('T')[0] === dateStr);
+                                    }}
                                     initialFocus
                                   />
                                 </PopoverContent>
@@ -913,13 +1094,40 @@ export function InquiryForm({ onClose, selectedPackageId, selectedEventType }: I
                   </section>
 
                   {/* ── Submit ── */}
-                  <div className="flex justify-center">
+                  <div className="flex flex-col items-center gap-2">
                     <button
                       type="submit"
-                      disabled={isLoading || !watchedTermsAccepted}
+                      disabled={
+                        isLoading ||
+                        verificationSending ||
+                        !watchedTermsAccepted ||
+                        verificationCooldown > 0
+                      }
                       className="h-10 rounded-full bg-gradient-to-r from-[#FF0066] to-[#700F81] px-12 text-[0.88rem] font-bold tracking-wide text-white shadow-[0_6px_20px_rgba(112,15,129,0.3)] transition hover:brightness-110 active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                      {isLoading ? 'Submitting...' : 'Submit'}
+                      {verificationSending ? (
+                        <span className="flex items-center gap-2">
+                          <svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none">
+                            <circle
+                              cx="12"
+                              cy="12"
+                              r="10"
+                              stroke="currentColor"
+                              strokeWidth="3"
+                              strokeDasharray="31.4"
+                              strokeDashoffset="10"
+                              strokeLinecap="round"
+                            />
+                          </svg>
+                          Checking…
+                        </span>
+                      ) : isLoading ? (
+                        'Submitting...'
+                      ) : verificationCooldown > 0 ? (
+                        `Retry in ${verificationCooldown}s`
+                      ) : (
+                        'Submit'
+                      )}
                     </button>
                   </div>
                 </form>

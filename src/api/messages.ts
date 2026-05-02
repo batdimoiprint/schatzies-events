@@ -7,6 +7,7 @@ export interface ConversationParticipant {
   contactNumber?: string;
   role?: string;
   initial?: string;
+  profilePic?: string;
 }
 
 export interface Conversation {
@@ -30,6 +31,10 @@ export interface ChatMessage {
   /** @deprecated Use senderRole instead */
   senderType?: string;
   createdAt?: string;
+  /** Alias — same as `id`, included for stable polling contract */
+  messageId?: string;
+  /** Alias — same as `body`, included for stable polling contract */
+  content?: string;
 }
 
 /**
@@ -49,7 +54,7 @@ export async function getMessageConversations(): Promise<Conversation[]> {
  */
 export async function getConversationMessages(conversationId: string): Promise<ChatMessage[]> {
   const { data } = await axiosInstance.get<{ messages: ChatMessage[] } | ChatMessage[]>(
-    `/messages/conversations/${conversationId}/messages`
+    `/messages/conversations/${encodeURIComponent(conversationId)}/messages`
   );
 
   if (Array.isArray(data)) return data;
@@ -64,7 +69,7 @@ export async function sendConversationMessage(
   body: string
 ): Promise<ChatMessage> {
   const { data } = await axiosInstance.post<{ message: ChatMessage } | ChatMessage>(
-    `/messages/conversations/${conversationId}/messages`,
+    `/messages/conversations/${encodeURIComponent(conversationId)}/messages`,
     { body }
   );
 
@@ -85,5 +90,17 @@ export async function initiateConversation(
     message: ChatMessage;
   }>('/messages/send', { body });
 
+  return data;
+}
+
+/**
+ * Admin-only: Delete a conversation and all its messages.
+ */
+export async function deleteConversation(
+  conversationId: string
+): Promise<{ success: boolean; deleted: number }> {
+  const { data } = await axiosInstance.delete<{ success: boolean; deleted: number }>(
+    `/messages/conversations/${encodeURIComponent(conversationId)}`
+  );
   return data;
 }

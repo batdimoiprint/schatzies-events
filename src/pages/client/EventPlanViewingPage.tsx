@@ -1,25 +1,14 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Calendar, Clock } from 'lucide-react';
 import { ServiceRequirementsModal } from '@/components/client/ServiceRequirementsModal';
 import { AllocationResourcesModal } from '@/components/client/AllocationResourcesModal';
 import { ChecklistMeetingModal } from '@/components/client/ChecklistMeetingModal';
 import { ProgramFlowModal } from '@/components/client/ProgramFlowModal';
 
-// ── Mock Data ──────────────────────────────────────────────────────────────────
-const EVENT = {
-  title: 'Kring and Dave Wedding',
-  date: 'January 3, 2026',
-  completion: 89,
-  organizer: 'John Errol Sebial',
-  email: 'john.sebial@schatzies.com',
-  contact: '+63 912 345 6789',
-  packageName: 'Blooms Package',
-  pax: 150,
-  eventType: 'Debut Event Type',
-  cost: '50,000',
-};
-
-// ── Illustration placeholders (img tags) ─────────────────────────────────────
+import { getEventManagerEvents, getEventById, getEventUser, getEventAllocation, getEventFlow } from '@/api/events';
+import { getCalendarEntries } from '@/api/calendar';
+import { useAuth } from '@/hooks/useAuth';
+import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 function PackageIllustration() {
   return (
     <img
@@ -58,10 +47,172 @@ function CostIllustration() {
 }
 
 export function EventPlanViewingPage() {
+  const { user } = useAuth();
+  const [eventData, setEventData] = useState<any>(null);
+  const [allocation, setAllocation] = useState<any>(null);
+  const [meetings, setMeetings] = useState<any[]>([]);
+  const [flow, setFlow] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
   const [showServiceReq, setShowServiceReq] = useState(false);
   const [showAllocationRes, setShowAllocationRes] = useState(false);
   const [showChecklist, setShowChecklist] = useState(false);
   const [showProgramFlow, setShowProgramFlow] = useState(false);
+
+  useEffect(() => {
+    let isMounted = true;
+    async function fetchEvent() {
+      if (!user) {
+        setIsLoading(false);
+        return;
+      }
+      try {
+        setIsLoading(true);
+        const events = await getEventManagerEvents();
+        
+        const userFullName = `${user.firstName || ''} ${user.lastName || ''}`.trim().toLowerCase();
+        const userEvents =
+          user.role === 'CLIENT'
+            ? events.filter(
+                (e) =>
+                  e.clientId === user.user_id ||
+                  e.clientId === user.client_id ||
+                  (e.client && e.client.toLowerCase().includes(userFullName))
+              )
+            : events;
+
+        const userEventBase = userEvents.length > 0 ? userEvents[0] : null;
+
+        if (userEventBase) {
+          const fullEvent = await getEventById(userEventBase.id);
+          
+          const orgId =
+            (fullEvent as any).organizer_id ||
+            (fullEvent as any).organizerId ||
+            userEventBase.organizerId ||
+            (userEventBase as any).organizer_id;
+            
+          let organizerName = 'Assigned Organizer';
+          let organizerEmail = 'contact@schatzies.com';
+          let organizerContact = '-';
+          
+          if (orgId) {
+            try {
+              const org = await getEventUser(orgId);
+              organizerName = `${org.firstName || ''} ${org.lastName || ''}`.trim() || 'Assigned Organizer';
+              organizerEmail = org.email || 'contact@schatzies.com';
+              organizerContact = org.contact_number || org.contactPhone || org.contactNumber || '-';
+            } catch (e) {
+              console.error('Error fetching organizer:', e);
+            }
+          }
+
+          const endDateStr = fullEvent.endDate || fullEvent.dateEnd || fullEvent.eventDate || '';
+          
+          const formattedDate = endDateStr
+            ? new Date(endDateStr).toLocaleDateString('en-US', {
+                month: 'long',
+                day: 'numeric',
+                year: 'numeric',
+              })
+            : 'TBD';
+
+          const pkgName =
+            fullEvent.eventPackageKey ||
+            userEventBase.package ||
+            fullEvent.package?.name ||
+            fullEvent.eventPackage ||
+            'Custom Package';
+            
+          const paxCount = fullEvent.eventPax || (userEventBase as any).pax || (fullEvent as any).package?.pax || 0;
+          const costValue = (fullEvent as any).cost || 'TBD';
+
+          // Fetch additional data modules
+          try {
+            const [allocRes, flowRes, calRes] = await Promise.all([
+              getEventAllocation(userEventBase.id).catch(() => null),
+              getEventFlow(userEventBase.id).catch(() => []),
+              getCalendarEntries().catch(() => [])
+            ]);
+
+            if (isMounted) {
+              setAllocation(allocRes);
+              
+              const formatDisplayTime = (val: any) => {
+                if (!val) return '00:00';
+                return val;
+              };
+
+              const mappedFlows = Array.isArray(flowRes)
+                ? flowRes
+                    .map((item: any) => ({
+                      id: item.id || Math.random().toString(),
+                      title: item.title || item.activity || 'Activity',
+                      from: formatDisplayTime(item.startTime || item.start),
+                      to: formatDisplayTime(item.endTime || item.end),
+                      description: item.description || '',
+                      startHour: parseFloat(item.startHour) || 0,
+                    }))
+                    .sort((a: any, b: any) => a.startHour - b.startHour)
+                : [];
+              setFlow(mappedFlows);
+
+              const eventMeetings = (calRes || []).filter(
+                (item: any) =>
+                  item.eventId === userEventBase.id && item.label?.toUpperCase() === 'MEETING'
+              );
+              setMeetings(eventMeetings);
+            }
+          } catch (e) {
+            console.error('Error fetching event extra details:', e);
+          }
+
+          if (isMounted) {
+            setEventData({
+              title: fullEvent.title || userEventBase.title || 'Your Event',
+              date: formattedDate,
+              completion: fullEvent.status === 'Completed' ? 100 : 89,
+              organizer: organizerName,
+              email: organizerEmail,
+              contact: organizerContact,
+              packageName: pkgName,
+              pax: paxCount,
+              eventType: fullEvent.eventType || userEventBase.type || 'Event',
+              cost: costValue,
+            });
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching client event:', error);
+      } finally {
+        if (isMounted) setIsLoading(false);
+      }
+    }
+
+    void fetchEvent();
+    return () => {
+      isMounted = false;
+    };
+  }, [user]);
+
+  if (isLoading) {
+    return (
+      <div className="flex h-[50vh] items-center justify-center">
+        <LoadingSpinner />
+      </div>
+    );
+  }
+
+  if (!eventData) {
+    return (
+      <div className="flex h-[50vh] flex-col items-center justify-center gap-4 text-[#8a8697]">
+        <Calendar className="h-12 w-12 opacity-20" />
+        <p className="text-sm font-medium">No event plan assigned to your account yet.</p>
+      </div>
+    );
+  }
+
+  const EVENT = eventData;
 
   return (
     <div className="flex flex-col gap-6">
@@ -110,7 +261,7 @@ export function EventPlanViewingPage() {
             </div>
             <div className="text-xs text-white/80 leading-relaxed self-end text-right">
               <p>Organizer Name: {EVENT.organizer}</p>
-              <p>Email | Contact Number</p>
+              <p>{EVENT.email} | {EVENT.contact}</p>
             </div>
           </div>
         </div>
@@ -172,23 +323,24 @@ export function EventPlanViewingPage() {
                 View
               </button>
             </div>
-            <ul className="space-y-0.5 text-xs text-[#696373]">
-              <li className="font-medium text-[#2d2834]">• Food</li>
-              <li className="pl-3">Classic Buffet</li>
-              <li className="pl-3 font-medium text-[#2d2834]">1. Appetizer</li>
-              <li className="pl-4 text-[11px] text-[#8a8697]">
-                1 light bite (e.g., finger foods, soup, or a fresh salad)
-              </li>
-              <li className="pl-3 font-medium text-[#2d2834]">2. Main Course</li>
-              <li className="pl-4 text-[11px] text-[#8a8697]">
-                1 chicken dish (e.g., Cordon Bleu, Baked Chicken, or Garlic Parmesan Chicken)
-              </li>
-              <li className="pl-3 font-medium text-[#2d2834]">3. Dessert</li>
-              <li className="pl-4 text-[11px] text-[#8a8697]">
-                1 to 2 sweet treats (e.g., Mango Bravo style cakes, panna cotta, or a chocolate
-                fountain)
-              </li>
-            </ul>
+            <div className="space-y-1 text-xs text-[#696373]">
+              {allocation?.food_package || allocation?.flow_type ? (
+                <>
+                  {allocation?.food_package && (
+                    <p className="font-medium text-[#2d2834]">
+                      Food Package: {allocation.food_package}
+                    </p>
+                  )}
+                  {allocation?.flow_type && (
+                    <p className="font-medium text-[#2d2834]">
+                      Flow Type: {allocation.flow_type}
+                    </p>
+                  )}
+                </>
+              ) : (
+                <p className="italic">No service requirements specified.</p>
+              )}
+            </div>
           </div>
 
           {/* Card 2 — Allocation Resources */}
@@ -204,18 +356,28 @@ export function EventPlanViewingPage() {
                 View
               </button>
             </div>
-            <ul className="space-y-3 text-xs">
-              <li>
-                <span className="font-medium text-pink-500">• Event Coordinator</span>
-                <p className="pl-3 text-[#2d2834]">Ken Chan</p>
-                <p className="pl-3 text-[#8a8697]">00:00 – 00:00</p>
-              </li>
-              <li>
-                <span className="font-medium text-orange-400">• Host</span>
-                <p className="pl-3 text-[#2d2834]">Angel U. Nicorn</p>
-                <p className="pl-3 text-[#8a8697]">00:00 – 00:00</p>
-              </li>
-            </ul>
+            <div className="space-y-3 text-xs">
+              <div>
+                <span className="font-medium text-pink-500">• Vendors</span>
+                {allocation?.vendors && allocation.vendors.length > 0 ? (
+                  allocation.vendors.map((v: any, i: number) => (
+                    <p key={i} className="pl-3 text-[#2d2834]">{v.name}</p>
+                  ))
+                ) : (
+                  <p className="pl-3 italic text-[#8a8697]">None assigned</p>
+                )}
+              </div>
+              <div>
+                <span className="font-medium text-orange-400">• Manpower</span>
+                {allocation?.manpower && allocation.manpower.length > 0 ? (
+                  allocation.manpower.map((m: any, i: number) => (
+                    <p key={i} className="pl-3 text-[#2d2834]">{m.role}</p>
+                  ))
+                ) : (
+                  <p className="pl-3 italic text-[#8a8697]">None assigned</p>
+                )}
+              </div>
+            </div>
           </div>
 
           {/* Card 3 — Checklist & Meeting */}
@@ -231,13 +393,23 @@ export function EventPlanViewingPage() {
                 View
               </button>
             </div>
-            <ul className="space-y-0.5 text-xs">
-              <li className="font-medium text-pink-500">• Meetings</li>
-              <li className="pl-3 text-[#2d2834]">Meeting 1 | Zus Coffee</li>
-              <li className="pl-3 text-[#8a8697]">00:00 – 00:00</li>
-              <li className="pl-3 text-[#2d2834]">Meeting 2 | Zus Coffee</li>
-              <li className="pl-3 text-[#8a8697]">00:00 – 00:00</li>
-            </ul>
+            <div className="space-y-3 text-xs">
+              <div>
+                <span className="font-medium text-pink-500">• Meetings</span>
+                {meetings.length > 0 ? (
+                  meetings.map((meeting: any, index: number) => (
+                    <div key={index} className="pl-3 mb-1">
+                      <p className="text-[#2d2834] font-medium">{meeting.title}</p>
+                      <p className="text-[#8a8697]">
+                        {meeting.startTime || meeting.time || ''} {meeting.endTime ? `- ${meeting.endTime}` : ''}
+                      </p>
+                    </div>
+                  ))
+                ) : (
+                  <p className="pl-3 italic text-[#8a8697]">No scheduled meetings yet.</p>
+                )}
+              </div>
+            </div>
           </div>
 
           {/* Card 4 — Program Flow */}
@@ -264,19 +436,26 @@ export function EventPlanViewingPage() {
                 </button>
               </div>
             </div>
-            <div>
-              <p className="font-bold text-lg text-[#2d2834] mb-3">DATE AND TIME</p>
-              <div className="flex gap-4 items-start">
-                <p className="text-xs text-[#8a8697] shrink-0">00:00</p>
-                <div className="w-px bg-gray-200 self-stretch"></div>
-                <div className="flex-1">
-                  <p className="font-medium text-[#2d2834] text-sm">Description Here</p>
-                  <p className="line-clamp-3 text-[11px] text-[#8a8697] mt-1 leading-relaxed">
-                    Lorem ipsum dolor sit amet, consectetur adipiscing elit. In tincidunt justo quis
-                    viverra bibendum. Curabitur ipsum mi, bibendum ut dictum non, commodo a purus.
-                  </p>
-                </div>
-              </div>
+            <div className="mt-2 space-y-4">
+              {flow.length > 0 ? (
+                flow.map((f: any) => (
+                  <div key={f.id} className="flex gap-4 items-start">
+                    <div className="text-xs text-[#8a8697] shrink-0 w-16">
+                      <p>{f.from}</p>
+                      <p>{f.to}</p>
+                    </div>
+                    <div className="w-px bg-pink-200 self-stretch"></div>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-medium text-[#2d2834] text-sm truncate">{f.title}</p>
+                      <p className="line-clamp-3 text-[11px] text-[#8a8697] mt-1 leading-relaxed break-words whitespace-pre-wrap">
+                        {f.description || 'No description provided.'}
+                      </p>
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <p className="text-xs italic text-[#8a8697]">No program flow scheduled yet.</p>
+              )}
             </div>
           </div>
         </div>

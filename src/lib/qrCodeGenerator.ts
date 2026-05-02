@@ -9,7 +9,13 @@ import QRCode from 'qrcode';
 export async function generateRSVPQRCode(rsvpId: string, eventId: string): Promise<string> {
   try {
     // Get the current origin (localhost:5173, production domain, etc.)
-    const origin = typeof window !== 'undefined' ? window.location.origin : 'http://localhost:5173';
+    // Use window.location.hostname to support access from other devices on the network
+    let origin = 'http://localhost:5173';
+
+    if (typeof window !== 'undefined') {
+      const { protocol, hostname, port } = window.location;
+      origin = port ? `${protocol}//${hostname}:${port}` : `${protocol}//${hostname}`;
+    }
 
     // If the first argument is already a full URL, use it directly
     // Otherwise, construct the standard invitation URL

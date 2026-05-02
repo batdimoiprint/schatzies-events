@@ -9,6 +9,10 @@ import {
   ArrowUpDown,
   ArrowUp,
   ArrowDown,
+  ChevronLeft,
+  ChevronRight,
+  ChevronsLeft,
+  ChevronsRight,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -36,15 +40,17 @@ export function AdminInquiriesPage() {
   });
 
   const [searchQuery, setSearchQuery] = useState('');
-  const [sortBy, setSortBy] = useState<'date' | 'status' | 'eventType' | 'sender' | 'email'>(
-    'date'
-  );
-  const [sortOrder, setSortOrder] = useState<'desc' | 'asc'>('asc');
+  const [sortBy, setSortBy] = useState<
+    'createdAt' | 'date' | 'status' | 'eventType' | 'sender' | 'email' | 'package' | 'guestCount'
+  >('createdAt');
+  const [sortOrder, setSortOrder] = useState<'desc' | 'asc'>('desc');
   const [selectedInquiry, setSelectedInquiry] = useState<any | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isScheduleModalOpen, setIsScheduleModalOpen] = useState(false);
   const [organizers, setOrganizers] = useState<any[]>([]);
   const [organizersLoading, setOrganizersLoading] = useState(true);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
 
   const statusCounts = useMemo(() => {
     const counts = {
@@ -162,14 +168,47 @@ export function AdminInquiriesPage() {
         }
       }
 
-      const aDate = new Date(a.date || a.createdAt || 0).getTime();
-      const bDate = new Date(b.date || b.createdAt || 0).getTime();
-      const dateCompare = aDate - bDate;
-      return sortOrder === 'asc' ? dateCompare : -dateCompare;
+      if (sortBy === 'date') {
+        const aDate = new Date(a.date || 0).getTime();
+        const bDate = new Date(b.date || 0).getTime();
+        const dateCompare = aDate - bDate;
+        if (dateCompare !== 0) return sortOrder === 'asc' ? dateCompare : -dateCompare;
+      } else if (sortBy === 'createdAt') {
+        const aDate = new Date(a.createdAt || a.created_at || 0).getTime();
+        const bDate = new Date(b.createdAt || b.created_at || 0).getTime();
+        const dateCompare = aDate - bDate;
+        if (dateCompare !== 0) return sortOrder === 'asc' ? dateCompare : -dateCompare;
+      } else if (sortBy === 'package') {
+        const pkgA = (a.eventPackage || a.package?.name || '').toLowerCase();
+        const pkgB = (b.eventPackage || b.package?.name || '').toLowerCase();
+        const pkgCompare = pkgA.localeCompare(pkgB);
+        if (pkgCompare !== 0) return sortOrder === 'asc' ? pkgCompare : -pkgCompare;
+      } else if (sortBy === 'guestCount') {
+        const guestA = parseInt(a.eventPax || a.package?.pax || '0', 10);
+        const guestB = parseInt(b.eventPax || b.package?.pax || '0', 10);
+        const guestCompare = guestA - guestB;
+        if (guestCompare !== 0) return sortOrder === 'asc' ? guestCompare : -guestCompare;
+      }
+
+      const aFallback = new Date(a.createdAt || a.created_at || 0).getTime();
+      const bFallback = new Date(b.createdAt || b.created_at || 0).getTime();
+      const fallbackCompare = aFallback - bFallback;
+      return sortOrder === 'asc' ? fallbackCompare : -fallbackCompare;
     });
 
     return sorted;
   }, [inquiries, searchQuery, sortBy, sortOrder]);
+
+  // Reset to page 1 whenever search or sort changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, sortBy, sortOrder]);
+
+  const totalPages = Math.max(1, Math.ceil(filteredAndSortedInquiries.length / rowsPerPage));
+  const paginatedInquiries = useMemo(() => {
+    const start = (currentPage - 1) * rowsPerPage;
+    return filteredAndSortedInquiries.slice(start, start + rowsPerPage);
+  }, [filteredAndSortedInquiries, currentPage, rowsPerPage]);
 
   useEffect(() => {
     const fetchOrganizers = async () => {
@@ -216,7 +255,17 @@ export function AdminInquiriesPage() {
     );
   };
 
-  const toggleSort = (field: 'date' | 'status' | 'eventType' | 'sender' | 'email') => {
+  const toggleSort = (
+    field:
+      | 'createdAt'
+      | 'date'
+      | 'status'
+      | 'eventType'
+      | 'sender'
+      | 'email'
+      | 'package'
+      | 'guestCount'
+  ) => {
     if (sortBy === field) {
       setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
     } else {
@@ -225,7 +274,19 @@ export function AdminInquiriesPage() {
     }
   };
 
-  const SortIcon = ({ field }: { field: 'date' | 'status' | 'eventType' | 'sender' | 'email' }) => {
+  const SortIcon = ({
+    field,
+  }: {
+    field:
+      | 'createdAt'
+      | 'date'
+      | 'status'
+      | 'eventType'
+      | 'sender'
+      | 'email'
+      | 'package'
+      | 'guestCount';
+  }) => {
     if (sortBy !== field) return <ArrowUpDown className="ml-2 h-4 w-4 opacity-50" />;
     return sortOrder === 'asc' ? (
       <ArrowUp className="ml-2 h-4 w-4 text-[#8f1fd1]" />
@@ -235,46 +296,48 @@ export function AdminInquiriesPage() {
   };
 
   return (
-    <div className="space-y-6 p-4 ">
-      {/* Summary */}
-      <section className="relative overflow-hidden rounded-2xl border border-[#efe6f6] bg-linear-to-r from-[#fff8fc] via-[#fef9ff] to-[#f4f7ff] p-5 md:p-7">
-        <div className="pointer-events-none absolute -right-10 -top-16 h-44 w-44 rounded-full bg-[#f347a5]/10 blur-3xl" />
-        <div className="pointer-events-none absolute -bottom-14 left-20 h-40 w-40 rounded-full bg-[#8f1fd1]/10 blur-3xl" />
+    <div className="space-y-4 p-4">
+      {/* Compact Summary */}
+      <section className="relative overflow-hidden rounded-2xl border border-[#efe6f6] bg-linear-to-r from-[#fff8fc] via-[#fef9ff] to-[#f4f7ff] px-5 py-4">
+        <div className="pointer-events-none absolute -right-10 -top-16 h-36 w-36 rounded-full bg-[#f347a5]/10 blur-3xl" />
+        <div className="pointer-events-none absolute -bottom-14 left-20 h-32 w-32 rounded-full bg-[#8f1fd1]/10 blur-3xl" />
 
-        <div className="relative flex flex-wrap items-start justify-between gap-4">
+        <div className="relative flex flex-wrap items-center justify-between gap-3">
           <div>
-            <h1 className="mt-3 text-2xl font-black text-[#2e2837] md:text-3xl">
-              Client Inquiries
-            </h1>
-            <p className="mt-1 max-w-2xl text-lg font-semibold text-[#8f879f] md:text-[15px]">
-              Review incoming requests, schedule discovery meetings, and move clients through your
-              booking pipeline.
+            <h1 className="text-xl font-black text-[#2e2837] md:text-2xl">Client Inquiries</h1>
+            <p className="mt-0.5 text-sm font-semibold text-[#8f879f]">
+              Manage requests, meetings &amp; bookings.
             </p>
           </div>
-        </div>
 
-        <div className="relative mt-5 grid grid-cols-2 gap-3 md:grid-cols-4">
-          <div className="rounded-xl border border-[#f1e8f7] bg-white/80 p-3">
-            <p className="text-[11px] font-bold uppercase tracking-wide text-[#8a7ca3]">Total</p>
-            <p className="mt-1 text-2xl font-black text-[#2e2837]">{statusCounts.total}</p>
-          </div>
-          <div className="rounded-xl border border-[#f1e8f7] bg-white/80 p-3">
-            <p className="inline-flex items-center gap-1 text-[11px] font-bold uppercase tracking-wide text-[#8a7ca3]">
-              <Clock3 className="h-3.5 w-3.5" /> Pending
-            </p>
-            <p className="mt-1 text-2xl font-black text-[#2e2837]">{statusCounts.pending}</p>
-          </div>
-          <div className="rounded-xl border border-[#f1e8f7] bg-white/80 p-3">
-            <p className="inline-flex items-center gap-1 text-[11px] font-bold uppercase tracking-wide text-[#8a7ca3]">
-              <CalendarIcon className="h-3.5 w-3.5" /> Scheduled
-            </p>
-            <p className="mt-1 text-2xl font-black text-[#2e2837]">{statusCounts.scheduled}</p>
-          </div>
-          <div className="rounded-xl border border-[#f1e8f7] bg-white/80 p-3">
-            <p className="inline-flex items-center gap-1 text-[11px] font-bold uppercase tracking-wide text-[#8a7ca3]">
-              <CheckCircle2 className="h-3.5 w-3.5" /> Approved
-            </p>
-            <p className="mt-1 text-2xl font-black text-[#2e2837]">{statusCounts.approved}</p>
+          <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1.5 rounded-lg border border-[#f1e8f7] bg-white/80 px-3 py-1.5">
+              <span className="text-[10px] font-bold uppercase tracking-wide text-[#8a7ca3]">
+                Total
+              </span>
+              <span className="text-lg font-black text-[#2e2837]">{statusCounts.total}</span>
+            </div>
+            <div className="flex items-center gap-1.5 rounded-lg border border-[#f1e8f7] bg-white/80 px-3 py-1.5">
+              <Clock3 className="h-3 w-3 text-[#8a7ca3]" />
+              <span className="text-[10px] font-bold uppercase tracking-wide text-[#8a7ca3]">
+                Pending
+              </span>
+              <span className="text-lg font-black text-[#2e2837]">{statusCounts.pending}</span>
+            </div>
+            <div className="flex items-center gap-1.5 rounded-lg border border-[#f1e8f7] bg-white/80 px-3 py-1.5">
+              <CalendarIcon className="h-3 w-3 text-[#8a7ca3]" />
+              <span className="text-[10px] font-bold uppercase tracking-wide text-[#8a7ca3]">
+                Scheduled
+              </span>
+              <span className="text-lg font-black text-[#2e2837]">{statusCounts.scheduled}</span>
+            </div>
+            <div className="flex items-center gap-1.5 rounded-lg border border-[#f1e8f7] bg-white/80 px-3 py-1.5">
+              <CheckCircle2 className="h-3 w-3 text-[#8a7ca3]" />
+              <span className="text-[10px] font-bold uppercase tracking-wide text-[#8a7ca3]">
+                Approved
+              </span>
+              <span className="text-lg font-black text-[#2e2837]">{statusCounts.approved}</span>
+            </div>
           </div>
         </div>
       </section>
@@ -345,11 +408,38 @@ export function AdminInquiriesPage() {
                 </TableHead>
                 <TableHead
                   className="h-12 text-lg font-black uppercase tracking-[0.06em] text-[#7c7390] cursor-pointer hover:text-[#8f1fd1] transition-colors"
+                  onClick={() => toggleSort('createdAt')}
+                >
+                  <div className="flex items-center">
+                    Submitted
+                    <SortIcon field="createdAt" />
+                  </div>
+                </TableHead>
+                <TableHead
+                  className="h-12 text-lg font-black uppercase tracking-[0.06em] text-[#7c7390] cursor-pointer hover:text-[#8f1fd1] transition-colors"
                   onClick={() => toggleSort('date')}
                 >
                   <div className="flex items-center">
-                    Date
+                    Event Date
                     <SortIcon field="date" />
+                  </div>
+                </TableHead>
+                <TableHead
+                  className="h-12 text-lg font-black uppercase tracking-[0.06em] text-[#7c7390] cursor-pointer hover:text-[#8f1fd1] transition-colors"
+                  onClick={() => toggleSort('package')}
+                >
+                  <div className="flex items-center">
+                    Package
+                    <SortIcon field="package" />
+                  </div>
+                </TableHead>
+                <TableHead
+                  className="h-12 text-lg font-black uppercase tracking-[0.06em] text-[#7c7390] cursor-pointer hover:text-[#8f1fd1] transition-colors"
+                  onClick={() => toggleSort('guestCount')}
+                >
+                  <div className="flex items-center">
+                    Guest Count
+                    <SortIcon field="guestCount" />
                   </div>
                 </TableHead>
                 <TableHead
@@ -365,7 +455,7 @@ export function AdminInquiriesPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredAndSortedInquiries.map((inquiry: any) => (
+              {paginatedInquiries.map((inquiry: any) => (
                 <TableRow
                   key={inquiry.id || inquiry._id}
                   className="border-b border-[#f3edf8] hover:bg-[#fcf9ff]"
@@ -378,7 +468,27 @@ export function AdminInquiriesPage() {
                     {inquiry.eventType || inquiry.subject || 'Inquiry'}
                   </TableCell>
                   <TableCell className="font-semibold text-lg text-[#4e4560]">
-                    {new Date(inquiry.date || inquiry.createdAt).toLocaleDateString()}
+                    {inquiry.createdAt || inquiry.created_at
+                      ? new Date(inquiry.createdAt || inquiry.created_at).toLocaleDateString(
+                          'en-US',
+                          { month: 'long', day: '2-digit', year: 'numeric' }
+                        )
+                      : 'N/A'}
+                  </TableCell>
+                  <TableCell className="font-semibold text-lg text-[#4e4560]">
+                    {inquiry.date
+                      ? new Date(inquiry.date).toLocaleDateString('en-US', {
+                          month: 'long',
+                          day: '2-digit',
+                          year: 'numeric',
+                        })
+                      : 'N/A'}
+                  </TableCell>
+                  <TableCell className="font-semibold text-lg text-[#4e4560]">
+                    {inquiry.eventPackage || inquiry.package?.name || 'N/A'}
+                  </TableCell>
+                  <TableCell className="font-semibold text-lg text-[#4e4560]">
+                    {inquiry.eventPax || inquiry.package?.pax || 'N/A'}
                   </TableCell>
                   <TableCell>
                     <Badge className={getStatusBadgeClass(inquiry.status)}>
@@ -399,6 +509,76 @@ export function AdminInquiriesPage() {
               ))}
             </TableBody>
           </Table>
+        )}
+
+        {/* Pagination Bar */}
+        {!loading && filteredAndSortedInquiries.length > 0 && (
+          <div className="flex flex-col gap-3 border-t border-[#f1eaf7] bg-[#fcf9ff] px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex items-center gap-2 text-sm text-[#7c7390]">
+              <span className="font-semibold">Rows per page:</span>
+              <select
+                value={rowsPerPage}
+                onChange={(e) => {
+                  setRowsPerPage(Number(e.target.value));
+                  setCurrentPage(1);
+                }}
+                className="rounded-md border border-[#e5ddee] bg-white px-2 py-1 text-sm font-semibold text-[#2e2837] outline-none focus:ring-2 focus:ring-[#8f1fd1]/30"
+              >
+                {[5, 10, 25, 50].map((n) => (
+                  <option key={n} value={n}>
+                    {n}
+                  </option>
+                ))}
+              </select>
+              <span className="ml-2 text-[#8a7ca3]">
+                {(currentPage - 1) * rowsPerPage + 1}–
+                {Math.min(currentPage * rowsPerPage, filteredAndSortedInquiries.length)} of{' '}
+                {filteredAndSortedInquiries.length}
+              </span>
+            </div>
+
+            <div className="flex items-center gap-1">
+              <Button
+                variant="outline"
+                size="icon"
+                className="h-8 w-8 border-[#e5ddee] disabled:opacity-40"
+                onClick={() => setCurrentPage(1)}
+                disabled={currentPage === 1}
+              >
+                <ChevronsLeft className="h-4 w-4" />
+              </Button>
+              <Button
+                variant="outline"
+                size="icon"
+                className="h-8 w-8 border-[#e5ddee] disabled:opacity-40"
+                onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                disabled={currentPage === 1}
+              >
+                <ChevronLeft className="h-4 w-4" />
+              </Button>
+              <span className="mx-2 text-sm font-bold text-[#2e2837]">
+                Page {currentPage} of {totalPages}
+              </span>
+              <Button
+                variant="outline"
+                size="icon"
+                className="h-8 w-8 border-[#e5ddee] disabled:opacity-40"
+                onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                disabled={currentPage === totalPages}
+              >
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+              <Button
+                variant="outline"
+                size="icon"
+                className="h-8 w-8 border-[#e5ddee] disabled:opacity-40"
+                onClick={() => setCurrentPage(totalPages)}
+                disabled={currentPage === totalPages}
+              >
+                <ChevronsRight className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
         )}
       </div>
 

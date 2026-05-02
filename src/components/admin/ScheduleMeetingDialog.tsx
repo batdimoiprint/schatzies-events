@@ -4,6 +4,10 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
+import { Calendar } from '@/components/ui/calendar';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { CalendarIcon } from 'lucide-react';
+import { cn } from '@/lib/utils';
 import { scheduleInquiryMeeting, type ScheduleInquiryMeetingPayload } from '@/api/inquiries';
 
 interface ScheduleMeetingDialogProps {
@@ -20,6 +24,32 @@ type ScheduleMeetingFormValues = ScheduleInquiryMeetingPayload;
 const DEFAULT_START_TIME = '09:00';
 const DEFAULT_END_TIME = '10:00';
 
+/** Convert a YYYY-MM-DD key to a local Date (noon to avoid timezone shift). */
+function keyToDate(key: string | undefined): Date | undefined {
+  if (!key) return undefined;
+  const [y, m, d] = key.split('-').map(Number);
+  if (!y || !m || !d) return undefined;
+  return new Date(y, m - 1, d, 12);
+}
+
+/** Convert a Date to a YYYY-MM-DD key. */
+function dateToKey(date: Date): string {
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, '0');
+  const d = String(date.getDate()).padStart(2, '0');
+  return `${y}-${m}-${d}`;
+}
+
+/** Format a Date nicely for the button label. */
+function formatDateLabel(date: Date | undefined): string {
+  if (!date) return 'Pick a date';
+  return date.toLocaleDateString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+  });
+}
+
 export function ScheduleMeetingDialog({
   isScheduleModalOpen,
   setIsScheduleModalOpen,
@@ -28,7 +58,8 @@ export function ScheduleMeetingDialog({
   selectedInquiry,
   onInquiryUpdated,
 }: ScheduleMeetingDialogProps) {
-  const todayKey = new Date().toISOString().split('T')[0];
+  // Use local date (YYYY-MM-DD) so defaults reflect the user's current day
+  const todayKey = new Date().toLocaleDateString('en-CA');
   const [scheduleError, setScheduleError] = useState('');
   const {
     register,
@@ -79,9 +110,6 @@ export function ScheduleMeetingDialog({
 
     if (!selectedInquiry) return;
 
-    const inquiryDateKey = selectedInquiry?.date
-      ? new Date(selectedInquiry.date).toISOString().split('T')[0]
-      : todayKey;
     const existingMeeting = selectedInquiry?.meetingDetails || {};
     const inquiryUserId =
       selectedInquiry?.userId || selectedInquiry?.user_id || existingMeeting?.inquiryUserId || '';
@@ -90,9 +118,9 @@ export function ScheduleMeetingDialog({
       title:
         existingMeeting?.title ||
         `Meeting with ${selectedInquiry?.firstName} ${selectedInquiry?.lastName}`,
-      startDateKey: existingMeeting?.startDateKey || existingMeeting?.date || inquiryDateKey,
+      startDateKey: existingMeeting?.startDateKey || existingMeeting?.date || todayKey,
       startTime: existingMeeting?.startTime || existingMeeting?.time || DEFAULT_START_TIME,
-      endDateKey: existingMeeting?.endDateKey || existingMeeting?.date || inquiryDateKey,
+      endDateKey: existingMeeting?.endDateKey || existingMeeting?.date || todayKey,
       endTime: existingMeeting?.endTime || DEFAULT_END_TIME,
       label: existingMeeting?.label || 'Meeting',
       organizerId: existingMeeting?.organizerId || organizers[0]?.user_id || '',
@@ -147,7 +175,7 @@ export function ScheduleMeetingDialog({
 
   return (
     <Dialog open={isScheduleModalOpen} onOpenChange={setIsScheduleModalOpen}>
-      <DialogContent className="sm:max-w-[760px]">
+      <DialogContent className="sm:max-w-6xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="text-xl font-black text-[#2e2837]">Schedule Meeting</DialogTitle>
         </DialogHeader>
@@ -160,7 +188,7 @@ export function ScheduleMeetingDialog({
         >
           <div className="w-full space-y-3 md:w-1/2">
             <div className="space-y-1.5">
-              <Label htmlFor="calendar-title" className="text-[11px] font-bold text-[#6a627c]">
+              <Label htmlFor="calendar-title" className="text-sm font-bold text-[#6a627c]">
                 Title
               </Label>
               <Input
@@ -168,16 +196,16 @@ export function ScheduleMeetingDialog({
                 required
                 {...register('title', { required: true })}
                 placeholder="Enter title"
-                className="h-9 rounded-lg border-[#ddd8e8] bg-white px-3 text-lg text-[#4c455e]"
+                className="h-11 rounded-lg border-[#ddd8e8] bg-white px-3 text-xl text-[#4c455e]"
               />
             </div>
 
             <div className="space-y-1.5">
-              <Label className="text-[11px] font-bold text-[#6a627c]">Assign Organizer *</Label>
+              <Label className="text-sm font-bold text-[#6a627c]">Assign Organizer *</Label>
               <select
                 required
                 {...register('organizerId', { required: true })}
-                className="h-9 w-full rounded-lg border border-[#ddd8e8] bg-white px-2 text-xs font-semibold text-[#4c455e] outline-none focus:border-[#be8de4]"
+                className="h-11 w-full rounded-lg border border-[#ddd8e8] bg-white px-2 text-sm font-semibold text-[#4c455e] outline-none focus:border-[#be8de4]"
               >
                 <option value="">
                   {organizersLoading ? 'Loading organizers...' : 'Select organizer'}
@@ -200,39 +228,93 @@ export function ScheduleMeetingDialog({
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-1.5">
-                <Label className="text-[11px] font-bold text-[#6a627c]">Start Date</Label>
-                <Input
-                  type="date"
-                  required
-                  {...register('startDateKey', { required: true })}
-                  className="h-9 rounded-lg border-[#ddd8e8] text-lg text-[#4c455e]"
-                />
+                <Label className="text-sm font-bold text-[#6a627c]">Start Date</Label>
+                <input type="hidden" {...register('startDateKey', { required: true })} />
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className={cn(
+                        'h-11 w-full justify-start rounded-lg border-[#ddd8e8] px-3 text-left text-sm font-semibold text-[#4c455e]',
+                        !startDateKey && 'text-[#a49cb3]'
+                      )}
+                    >
+                      <CalendarIcon className="mr-2 h-4 w-4 text-[#8a7ca3]" />
+                      {formatDateLabel(keyToDate(startDateKey))}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="z-100000 w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={keyToDate(startDateKey)}
+                      onSelect={(date) => {
+                        if (date) setValue('startDateKey', dateToKey(date));
+                      }}
+                      defaultMonth={new Date()}
+                      disabled={(date) => {
+                        const today = new Date();
+                        today.setHours(0, 0, 0, 0);
+                        return date < today;
+                      }}
+                    />
+                  </PopoverContent>
+                </Popover>
               </div>
               <div className="space-y-1.5">
-                <Label className="text-[11px] font-bold text-[#6a627c]">Start Time</Label>
+                <Label className="text-sm font-bold text-[#6a627c]">Start Time</Label>
                 <Input
                   type="time"
                   required
                   {...register('startTime', { required: true })}
-                  className="h-9 rounded-lg border-[#ddd8e8] text-lg text-[#4c455e]"
+                  className="h-11 rounded-lg border-[#ddd8e8] text-xl text-[#4c455e]"
                 />
               </div>
               <div className="space-y-1.5">
-                <Label className="text-[11px] font-bold text-[#6a627c]">End Date</Label>
-                <Input
-                  type="date"
-                  required
-                  {...register('endDateKey', { required: true })}
-                  className="h-9 rounded-lg border-[#ddd8e8] text-lg text-[#4c455e]"
-                />
+                <Label className="text-sm font-bold text-[#6a627c]">End Date</Label>
+                <input type="hidden" {...register('endDateKey', { required: true })} />
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className={cn(
+                        'h-11 w-full justify-start rounded-lg border-[#ddd8e8] px-3 text-left text-sm font-semibold text-[#4c455e]',
+                        !endDateKey && 'text-[#a49cb3]'
+                      )}
+                    >
+                      <CalendarIcon className="mr-2 h-4 w-4 text-[#8a7ca3]" />
+                      {formatDateLabel(keyToDate(endDateKey))}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="z-100000 w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={keyToDate(endDateKey)}
+                      onSelect={(date) => {
+                        if (date) setValue('endDateKey', dateToKey(date));
+                      }}
+                      defaultMonth={new Date()}
+                      disabled={(date) => {
+                        const today = new Date();
+                        today.setHours(0, 0, 0, 0);
+                        const startDate = keyToDate(startDateKey);
+                        const floor = startDate && startDate > today ? startDate : today;
+                        return (
+                          date < new Date(floor.getFullYear(), floor.getMonth(), floor.getDate())
+                        );
+                      }}
+                    />
+                  </PopoverContent>
+                </Popover>
               </div>
               <div className="space-y-1.5">
-                <Label className="text-[11px] font-bold text-[#6a627c]">End Time</Label>
+                <Label className="text-sm font-bold text-[#6a627c]">End Time</Label>
                 <Input
                   type="time"
                   required
                   {...register('endTime', { required: true })}
-                  className="h-9 rounded-lg border-[#ddd8e8] text-lg text-[#4c455e]"
+                  className="h-11 rounded-lg border-[#ddd8e8] text-xl text-[#4c455e]"
                 />
               </div>
             </div>
@@ -241,10 +323,10 @@ export function ScheduleMeetingDialog({
           <div className="w-full space-y-3 md:w-1/2">
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-1.5">
-                <Label className="text-[11px] font-bold text-[#6a627c]">Label</Label>
+                <Label className="text-sm font-bold text-[#6a627c]">Label</Label>
                 <select
                   {...register('label')}
-                  className="h-9 w-full rounded-lg border border-[#ddd8e8] bg-white px-2 text-xs font-semibold text-[#4c455e] outline-none focus:border-[#be8de4]"
+                  className="h-11 w-full rounded-lg border border-[#ddd8e8] bg-white px-2 text-sm font-semibold text-[#4c455e] outline-none focus:border-[#be8de4]"
                 >
                   <option value="Meeting">Meeting</option>
                   <option value="Task">Task</option>
@@ -252,10 +334,10 @@ export function ScheduleMeetingDialog({
                 </select>
               </div>
               <div className="space-y-1.5">
-                <Label className="text-[11px] font-bold text-[#6a627c]">Event Type</Label>
+                <Label className="text-sm font-bold text-[#6a627c]">Event Type</Label>
                 <select
                   {...register('eventType')}
-                  className="h-9 w-full rounded-lg border border-[#ddd8e8] bg-white px-2 text-xs font-semibold text-[#4c455e] outline-none focus:border-[#be8de4]"
+                  className="h-11 w-full rounded-lg border border-[#ddd8e8] bg-white px-2 text-sm font-semibold text-[#4c455e] outline-none focus:border-[#be8de4]"
                 >
                   <option value="General">General</option>
                   <option value="Booking">Booking</option>
@@ -268,20 +350,20 @@ export function ScheduleMeetingDialog({
             </div>
 
             <div className="space-y-1.5">
-              <Label className="text-[11px] font-bold text-[#6a627c]">Location</Label>
+              <Label className="text-sm font-bold text-[#6a627c]">Meeting Location</Label>
               <Input
                 {...register('location')}
-                placeholder="Optional location / Link"
-                className="h-9 rounded-lg border-[#ddd8e8] px-3 text-lg text-[#4c455e]"
+                placeholder="Location"
+                className="h-11 rounded-lg border-[#ddd8e8] px-3 text-xl text-[#4c455e]"
               />
             </div>
 
             <div className="space-y-1.5">
-              <Label className="text-[11px] font-bold text-[#6a627c]">Description</Label>
+              <Label className="text-sm font-bold text-[#6a627c]">Description</Label>
               <textarea
                 {...register('description')}
                 placeholder="Optional notes"
-                className="h-20 w-full resize-none rounded-lg border border-[#ddd8e8] bg-white px-3 py-2 text-lg text-[#4c455e] outline-none placeholder:text-[#a49cb3] focus:border-[#be8de4]"
+                className="h-24 w-full resize-none rounded-lg border border-[#ddd8e8] bg-white px-3 py-3 text-xl text-[#4c455e] outline-none placeholder:text-[#a49cb3] focus:border-[#be8de4]"
               />
             </div>
 

@@ -6,6 +6,7 @@ export interface RSVPPayload {
   first_name: string;
   last_name: string;
   middle_name?: string;
+  email: string;
   contact_number: string;
   status: 'ATTENDING' | 'NOT_ATTENDING';
   message?: string;
@@ -36,4 +37,24 @@ export const getRSVPList = async (eventId: string): Promise<any[]> => {
     response.data.rsvps ||
     (Array.isArray(response.data) ? response.data : [])
   );
+};
+
+export const verifyRSVP = async (eventId: string, guestId: string, token: string) => {
+  // Swagger: GET /api/rsvp/verify?eventId=...&guestId=...&token=...
+  const response = await axiosInstance.get('/rsvp/verify', {
+    params: { eventId, guestId, token },
+  });
+  return response.data;
+};
+
+/**
+ * Generate (or retrieve existing) RSVP QR code for an event.
+ * The QR is stored in S3 and a presigned URL is returned.
+ * Maps to: POST /api/events/:eventId/rsvp-qr
+ */
+export const generateEventRsvpQr = async (
+  eventId: string
+): Promise<{ qrCode: string; s3Key?: string; url?: string; message?: string }> => {
+  const response = await axiosInstance.post(`/events/${eventId}/rsvp-qr`);
+  return response.data;
 };

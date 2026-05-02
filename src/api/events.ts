@@ -1,4 +1,5 @@
 import axiosInstance from './axios-instance';
+import { getUsers } from './users';
 
 export type EventStatus = 'Completed' | 'Pending' | 'Execution' | 'Cancelled';
 
@@ -6,6 +7,8 @@ export interface EventManagerEvent {
   id: string;
   title: string;
   date: string;
+  startDate: string;
+  endDate: string;
   timeSlot: string;
   client: string;
   type: string;
@@ -14,20 +17,26 @@ export interface EventManagerEvent {
   rsvp: number;
   status: EventStatus;
   clientId: string;
+  organizerId: string;
+  organizerName: string;
+  createdAt: string;
 }
 
 interface BackendEvent {
   id: string;
   clientId?: string;
+  headOrganizerId?: string;
   title?: string;
   startDate?: string;
   endDate?: string;
   eventDate?: string;
   eventType?: string;
   eventPackage?: string;
+  eventPackageKey?: string;
   eventPax?: number | null;
   venue?: string;
   status?: string;
+  createdAt?: string;
 }
 
 interface BackendEventDetails extends BackendEvent {
@@ -80,28 +89,6 @@ function formatDate(dateValue?: string): string {
   });
 }
 
-function formatTimeRange(startDate?: string, endDate?: string): string {
-  const start = startDate ? new Date(startDate) : null;
-  const end = endDate ? new Date(endDate) : null;
-  if (!start || Number.isNaN(start.getTime())) return '-';
-
-  const startLabel = start.toLocaleTimeString('en-US', {
-    hour: 'numeric',
-    minute: '2-digit',
-  });
-
-  if (!end || Number.isNaN(end.getTime())) {
-    return startLabel;
-  }
-
-  const endLabel = end.toLocaleTimeString('en-US', {
-    hour: 'numeric',
-    minute: '2-digit',
-  });
-
-  return `${startLabel} - ${endLabel}`;
-}
-
 function mapEventStatus(status?: string): EventStatus {
   const normalized = String(status || '')
     .trim()
@@ -114,25 +101,40 @@ function mapEventStatus(status?: string): EventStatus {
 
 function mapToManagerRow(
   baseEvent: BackendEvent,
-  details?: BackendEventDetails
+  userMap: Map<string, string>
 ): EventManagerEvent {
-  const startDate = details?.dateStart || baseEvent.startDate || baseEvent.eventDate;
-  const endDate = details?.dateEnd || baseEvent.endDate;
-  const packageName = details?.package?.name || baseEvent.eventPackage || '-';
-  const packagePax = details?.package?.pax ?? baseEvent.eventPax ?? 0;
+  const rawStartDate = baseEvent.startDate || baseEvent.eventDate || '';
+  const rawEndDate = baseEvent.endDate || '';
+  const packageName = baseEvent.eventPackageKey || baseEvent.eventPackage || '-';
+  const packagePax = baseEvent.eventPax ?? 0;
+
+  const formattedStart = formatDate(rawStartDate);
+  const formattedEnd = formatDate(rawEndDate);
+  const dateDisplay =
+    formattedEnd && formattedEnd !== '-' && formattedEnd !== formattedStart
+      ? `${formattedStart} – ${formattedEnd}`
+      : formattedStart;
+
+  const clientName = baseEvent.clientId ? userMap.get(baseEvent.clientId) || baseEvent.clientId : 'Unknown client';
+  const organizerName = baseEvent.headOrganizerId ? userMap.get(baseEvent.headOrganizerId) || '' : '';
 
   return {
     id: baseEvent.id,
     title: baseEvent.title || 'Untitled event',
-    date: formatDate(startDate),
-    timeSlot: formatTimeRange(startDate, endDate),
-    client: details?.clientName || baseEvent.clientId || 'Unknown client',
+    date: dateDisplay,
+    startDate: rawStartDate,
+    endDate: rawEndDate,
+    timeSlot: '-',
+    client: clientName,
     type: baseEvent.eventType || '-',
     package: packagePax > 0 ? `${packageName} (${packagePax})` : packageName,
-    venue: baseEvent.venue || '-',
-    rsvp: Number(details?.headcount?.expectedAttendee || 0),
+    venue: (baseEvent.venue && !['', '-', '–', '—', 'n/a', 'tba'].includes(baseEvent.venue.trim().toLowerCase())) ? baseEvent.venue : '',
+    rsvp: 0,
     status: mapEventStatus(baseEvent.status),
     clientId: baseEvent.clientId || '',
+    organizerId: baseEvent.headOrganizerId || '',
+    organizerName,
+    createdAt: baseEvent.createdAt || '',
   };
 }
 
@@ -147,22 +149,16 @@ export async function getEventById(eventId: string): Promise<BackendEventDetails
 }
 
 export async function getEventManagerEvents(): Promise<EventManagerEvent[]> {
-  const events = await getEvents();
-  if (!events.length) {
-    return [];
+  const [events, allUsers] = await Promise.all([getEvents(), getUsers()]);
+
+  // Build a lookup map: userId -> "FirstName LastName"
+  const userMap = new Map<string, string>();
+  for (const user of allUsers) {
+    const name = `${user.firstName || ''} ${user.lastName || ''}`.trim();
+    if (name) userMap.set(user.user_id, name);
   }
 
-  const details = await Promise.all(
-    events.map(async (event) => {
-      try {
-        return await getEventById(event.id);
-      } catch {
-        return undefined;
-      }
-    })
-  );
-
-  return events.map((event, index) => mapToManagerRow(event, details[index]));
+  return events.map((event) => mapToManagerRow(event, userMap));
 }
 
 export async function createEvent(payload: CreateEventPayload): Promise<BackendEvent> {
@@ -203,4 +199,206 @@ export async function getEventUser(userId: string) {
 export async function getEventAllocation(eventId: string) {
   const response = await axiosInstance.get(`/events/${eventId}/allocation`);
   return response.data.allocation;
+}
+
+// ==========================================
+// NOTES API (With Dynamic JSON/FormData Logic)
+// ==========================================
+
+export async function getEventNotes(eventId: string): Promise<any[]> {
+  try {
+    const response = await axiosInstance.get(`/events/${eventId}/notes`);
+    const rawNotes = response.data?.notes || response.data;
+
+    if (typeof rawNotes === 'string') {
+      try {
+        const parsed = JSON.parse(rawNotes);
+        return Array.isArray(parsed) ? parsed : [];
+      } catch (e) {
+        return [{ id: `note-${Date.now()}`, title: 'Imported Note', body: rawNotes }];
+      }
+    }
+    return Array.isArray(rawNotes) ? rawNotes : [];
+  } catch (error) {
+    return [];
+  }
+}
+
+export async function createEventNote(
+  eventId: string,
+  payload: any,
+  file?: File | null
+): Promise<any> {
+  const currentNotes = await getEventNotes(eventId);
+  const newNote = { ...payload, id: payload.id || `note-${Date.now()}` };
+  const updatedNotes = [...currentNotes, newNote];
+
+  const isFormData = !!file;
+  let requestData: any;
+
+  if (isFormData) {
+    requestData = new FormData();
+    requestData.append('notes', JSON.stringify(updatedNotes));
+    requestData.append('file', file); // Pa-check sa backend kung 'file' o 'image' ang key
+  } else {
+    requestData = { notes: JSON.stringify(updatedNotes) };
+  }
+
+  const response = await axiosInstance.put(`/events/${eventId}/notes`, requestData, {
+    headers: {
+      'Content-Type': isFormData ? 'multipart/form-data' : 'application/json',
+    },
+  });
+
+  return response.data?.notes ? newNote : newNote;
+}
+
+export async function updateEventNote(
+  eventId: string,
+  noteId: string,
+  payload: any,
+  file?: File | null
+): Promise<any> {
+  const currentNotes = await getEventNotes(eventId);
+  const updatedNotes = currentNotes.map((n: any) => (n.id === noteId ? { ...n, ...payload } : n));
+
+  const isFormData = !!file;
+  let requestData: any;
+
+  if (isFormData) {
+    requestData = new FormData();
+    requestData.append('notes', JSON.stringify(updatedNotes));
+    requestData.append('file', file);
+  } else {
+    requestData = { notes: JSON.stringify(updatedNotes) };
+  }
+
+  await axiosInstance.put(`/events/${eventId}/notes`, requestData, {
+    headers: {
+      'Content-Type': isFormData ? 'multipart/form-data' : 'application/json',
+    },
+  });
+
+  return { ...payload, id: noteId };
+}
+
+export async function deleteEventNote(eventId: string, noteId: string): Promise<void> {
+  const currentNotes = await getEventNotes(eventId);
+  const filteredNotes = currentNotes.filter((n: any) => n.id !== noteId);
+
+  // Deletion doesn't need file upload, so JSON is fine
+  await axiosInstance.put(
+    `/events/${eventId}/notes`,
+    { notes: JSON.stringify(filteredNotes) },
+    {
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    }
+  );
+}
+
+// ==========================================
+// CHECKLIST & FLOW API
+// ==========================================
+
+export async function getEventChecklist(eventId: string): Promise<any[]> {
+  try {
+    const response = await axiosInstance.get(`/events/${eventId}/checklist`);
+    const data = response.data?.checklist || response.data;
+    return Array.isArray(data) ? data : [];
+  } catch (error) {
+    return [];
+  }
+}
+
+export async function updateEventChecklistItem(
+  eventId: string,
+  _checklistId: string,
+  itemId: string,
+  done: boolean,
+  label?: string
+): Promise<any> {
+  const payload: any = { id: itemId, done };
+  if (label !== undefined) payload.label = label;
+
+  const response = await axiosInstance.patch(`/events/${eventId}/checklist`, {
+    checklist: [payload],
+  });
+  return response.data;
+}
+
+export async function addEventChecklistItem(eventId: string, label: string): Promise<any> {
+  const tempId = `chk-${Date.now()}`;
+
+  const response = await axiosInstance.post(`/events/${eventId}/checklist`, {
+    checklist: [
+      {
+        id: tempId,
+        label: label,
+        done: false,
+      },
+    ],
+  });
+
+  return response.data;
+}
+
+export async function deleteEventChecklistItem(eventId: string, itemId: string): Promise<void> {
+  await axiosInstance.delete(`/events/${eventId}/checklist/${itemId}`);
+}
+
+export async function saveEventAllocation(eventId: string, payload: any): Promise<any> {
+  const response = await axiosInstance.post(`/events/${eventId}/allocation`, payload);
+  return response.data;
+}
+
+export async function getEventFlow(eventId: string) {
+  try {
+    const response = await axiosInstance.get(`/events/${eventId}/program-flow`);
+    let data = response.data;
+
+    if (typeof data === 'string') {
+      try {
+        data = JSON.parse(data);
+      } catch (e) {}
+    }
+
+    if (Array.isArray(data)) return data;
+
+    if (data && typeof data === 'object') {
+      if (Array.isArray(data.data)) return data.data;
+      if (Array.isArray(data.flow)) return data.flow;
+      if (Array.isArray(data.flows)) return data.flows;
+      if (Array.isArray(data.program_flows)) return data.program_flows;
+    }
+
+    return [];
+  } catch (error) {
+    return [];
+  }
+}
+
+export async function saveEventFlow(eventId: string, payload: any) {
+  const isNew = !payload.id || String(payload.id).startsWith('timeline-');
+  let response;
+
+  if (isNew) {
+    response = await axiosInstance.post(`/events/${eventId}/program-flow`, payload);
+  } else {
+    response = await axiosInstance.put(`/events/program-flow/${payload.id}`, payload);
+  }
+
+  let data = response.data;
+  if (typeof data === 'string') {
+    try {
+      data = JSON.parse(data);
+    } catch (e) {}
+  }
+
+  return data?.flow || data?.data || data;
+}
+
+export async function deleteEventActivity(_eventId: string, activityId: string) {
+  await axiosInstance.delete(`/events/program-flow/${activityId}`);
 }
