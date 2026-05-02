@@ -9,14 +9,15 @@ import axiosInstance from './axios-instance';
  * Backend: POST /api/auth/check-or-send-verification
  */
 export async function checkOrSendVerification(
-  email: string
+  email: string,
+  pendingInquiry?: any
 ): Promise<{ verified: boolean; emailSent?: boolean; reason?: string; alreadyUsed?: boolean }> {
   const { data } = await axiosInstance.post<{
     verified: boolean;
     emailSent?: boolean;
     reason?: string;
     alreadyUsed?: boolean;
-  }>('/auth/check-or-send-verification', { email });
+  }>('/auth/check-or-send-verification', { email, pendingInquiry });
   return data;
 }
 

@@ -215,7 +215,7 @@ export default function VerifyEmailPage() {
           {isSuccess ? (
             <>
               <span className="font-semibold text-[#3d2052]">{email}</span> has been successfully
-              verified. You can now submit the form.
+              verified. Your inquiry has been submitted successfully.
             </>
           ) : (
             <>{friendlyReason}</>
