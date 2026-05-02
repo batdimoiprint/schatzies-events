@@ -37,6 +37,9 @@ export function RSVPPage() {
     guest?: { firstName: string; lastName: string; isScanned: boolean };
   } | null>(null);
   const [isEventsLoading, setIsEventsLoading] = useState(true);
+  // Event List state
+  const [events, setEvents] = useState<any[]>([]);
+  const [eventsSearchQuery, setEventsSearchQuery] = useState('');
 
   const { user } = useAuth();
 
@@ -48,7 +51,9 @@ export function RSVPPage() {
 
         // Filter events: Clients only see their own, Admins/Organizers see everything
         const userEvents =
-          user?.role === 'CLIENT' ? data.filter((e) => e.clientId === user.user_id) : data;
+          user?.role === 'CLIENT' ? data.filter((e: any) => e.clientId === user.user_id) : data;
+        
+        setEvents(userEvents);
 
         if (userEvents.length > 0) {
           // Only set the initial event if one isn't already selected
@@ -408,41 +413,103 @@ export function RSVPPage() {
     },
   ];
 
+
+  const activeEventsList = events.filter((e) => {
+    if (!eventsSearchQuery.trim()) return true;
+    const q = eventsSearchQuery.toLowerCase();
+    return e.title?.toLowerCase().includes(q) || e.client?.toLowerCase().includes(q);
+  });
+
   return (
-    <div className="flex h-full flex-col">
+    <div className="relative flex h-[calc(100vh-150px)] w-full gap-4 lg:gap-6 bg-transparent pb-4 overflow-hidden">
       <LoadingScreen isLoading={isLoading} />
 
-      {state === 'active' && (
-        <div className="mb-6 flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 border-b border-gray-200">
-          <div className="flex gap-4 sm:gap-6">
-            {['overview', 'guest-list', 'scanner'].map((tab) => (
-              <button
-                key={tab}
-                onClick={() => setActiveTab(tab as any)}
-                className={`pb-2 text-sm font-semibold capitalize transition ${activeTab === tab ? 'border-b-2 border-[#df2b80] text-[#df2b80]' : 'text-[#696373] hover:text-[#2d2834]'}`}
-              >
-                {tab.replace('-', ' ')}
-              </button>
-            ))}
+      {/* ─────────── LEFT SIDEBAR (EVENT LIST) ─────────── */}
+      <div className="w-full lg:w-[340px] shrink-0 flex-col overflow-hidden rounded-2xl border border-[#e2deea] bg-white shadow-sm hidden lg:flex">
+        <div className="border-b border-[#f0edf4] p-4">
+          <div className="mb-4 flex items-center justify-between">
+            <h2 className="text-lg font-bold text-[#2d2834]">Select Event</h2>
           </div>
-          {!qrCode && (
-            <button
-              onClick={() => setState('idle')}
-              className="mb-2 flex w-full sm:w-auto items-center justify-center gap-2 rounded-md bg-gray-200 px-5 py-3 text-sm font-semibold text-gray-700 shadow-md hover:bg-gray-300 transition active:scale-95"
-              disabled={isLoading}
-            >
-              <PlusCircle weight="bold" size={18} /> Create QR Code
-            </button>
+          <div className="relative">
+            <MagnifyingGlass className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-[#b2acbf]" />
+            <input
+              type="text"
+              placeholder="Search events..."
+              value={eventsSearchQuery}
+              onChange={(e) => setEventsSearchQuery(e.target.value)}
+              className="w-full rounded-xl border border-[#ddd8e8] bg-[#f6f5f8] py-2.5 pl-10 pr-4 text-sm text-[#4f4a56] outline-none focus:border-[#df2b80]"
+            />
+          </div>
+        </div>
+
+        <div className="scrollbar-thin flex-1 overflow-y-auto">
+          {isEventsLoading ? (
+            <div className="flex items-center justify-center gap-2 p-8">
+              <div className="size-5 animate-spin rounded-full border-2 border-[#df2b80] border-t-transparent" />
+              <span className="text-sm text-[#a49cb3]">Loading events...</span>
+            </div>
+          ) : activeEventsList.length > 0 ? (
+            activeEventsList.map((evt) => (
+              <div
+                key={evt.id}
+                onClick={() => setSelectedEventId(evt.id)}
+                className={`flex cursor-pointer items-center gap-3 border-b border-[#f0edf4] p-4 transition-colors ${selectedEventId === evt.id
+                    ? 'border-l-4 border-l-[#df2b80] bg-[#fafafa]'
+                    : 'border-l-4 border-l-transparent hover:bg-[#fafafa]'
+                  }`}
+              >
+                <div className="min-w-0 flex-1">
+                  <h4 className="truncate text-sm font-bold text-[#2d2834]">
+                    {evt.title || 'Untitled Event'}
+                  </h4>
+                  <p className="truncate text-xs font-medium text-[#696373]">
+                    {evt.client || 'Unknown Client'}
+                  </p>
+                </div>
+              </div>
+            ))
+          ) : (
+            <div className="p-8 text-center text-sm font-medium text-[#a49cb3]">
+              No events found.
+            </div>
           )}
         </div>
-      )}
+      </div>
 
-      {state === 'idle' && (
-        <div className="mt-6 flex flex-1 flex-col items-center justify-center rounded-2xl border-2 border-dashed border-gray-300 bg-[#f8f5fe] shadow-inner p-10 text-center">
-          {isEventsLoading ? (
-            <div className="flex flex-col items-center">
-              <div className="size-10 animate-spin rounded-full border-4 border-[#df2b80] border-t-transparent" />
-              <p className="mt-4 text-sm font-semibold text-[#696373]">Checking for events...</p>
+      {/* ─────────── RIGHT SIDE (MAIN AREA) ─────────── */}
+      <div className="flex-1 flex-col overflow-hidden rounded-2xl border border-[#e2deea] bg-white shadow-sm flex relative">
+        <div className="flex-1 overflow-y-auto p-4 sm:p-6 bg-[#fbf8fd]">
+          {state === 'active' && (
+            <div className="mb-6 flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 border-b border-gray-200 bg-white p-4 rounded-xl shadow-sm">
+              <div className="flex gap-4 sm:gap-6">
+                {['overview', 'guest-list', 'scanner'].map((tab) => (
+                  <button
+                    key={tab}
+                    onClick={() => setActiveTab(tab as any)}
+                    className={`pb-2 text-sm font-semibold capitalize transition ${activeTab === tab ? 'border-b-2 border-[#df2b80] text-[#df2b80]' : 'text-[#696373] hover:text-[#2d2834]'}`}
+                  >
+                    {tab.replace('-', ' ')}
+                  </button>
+                ))}
+              </div>
+              {!qrCode && (
+                <button
+                  onClick={() => setState('idle')}
+                  className="mb-2 flex w-full sm:w-auto items-center justify-center gap-2 rounded-md bg-gray-200 px-5 py-3 text-sm font-semibold text-gray-700 shadow-md hover:bg-gray-300 transition active:scale-95"
+                  disabled={isLoading}
+                >
+                  <PlusCircle weight="bold" size={18} /> Create QR Code
+                </button>
+              )}
+            </div>
+          )}
+
+          {state === 'idle' && (
+            <div className="mt-6 flex flex-1 flex-col items-center justify-center rounded-2xl border-2 border-dashed border-gray-300 bg-[#f8f5fe] shadow-inner p-10 text-center">
+              {isEventsLoading ? (
+                <div className="flex flex-col items-center">
+                  <div className="size-10 animate-spin rounded-full border-4 border-[#df2b80] border-t-transparent" />
+                  <p className="mt-4 text-sm font-semibold text-[#696373]">Checking for events...</p>
             </div>
           ) : !selectedEventId ? (
             <div className="flex flex-col items-center max-w-sm">
@@ -683,10 +750,13 @@ export function RSVPPage() {
         </div>
       )}
 
-      <style>{`
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
-        @keyframes slideUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
-      `}</style>
+        </div>
+        
+        <style>{`
+          @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+          @keyframes slideUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+        `}</style>
+      </div>
     </div>
   );
 }
