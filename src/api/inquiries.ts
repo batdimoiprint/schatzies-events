@@ -79,7 +79,10 @@ export const getInquiryStatusOptions = (currentStatus?: string): InquiryStatusOp
   // All possible status options
   const allOptions: InquiryStatusOption[] = [
     { value: INQUIRY_STATUS_OPTIONS.PENDING_REVIEW, label: INQUIRY_STATUS_OPTIONS.PENDING_REVIEW },
-    { value: INQUIRY_STATUS_OPTIONS.MEETING_SCHEDULED, label: INQUIRY_STATUS_OPTIONS.MEETING_SCHEDULED },
+    {
+      value: INQUIRY_STATUS_OPTIONS.MEETING_SCHEDULED,
+      label: INQUIRY_STATUS_OPTIONS.MEETING_SCHEDULED,
+    },
     {
       value: INQUIRY_STATUS_OPTIONS.REQUIRES_CLARIFICATION,
       label: INQUIRY_STATUS_OPTIONS.REQUIRES_CLARIFICATION,

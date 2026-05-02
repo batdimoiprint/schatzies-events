@@ -256,15 +256,18 @@ export async function getVendorEventHistory(vendorId: string): Promise<VendorEve
   }));
 }
 
-export async function createVendorWorker(vendorId: string, payload: {
-  workerName: string;
-  role?: string;
-  contactNumber?: string;
-  email?: string;
-  jobTitle?: string;
-  availabilityStatus?: string;
-  notes?: string;
-}): Promise<any> {
+export async function createVendorWorker(
+  vendorId: string,
+  payload: {
+    workerName: string;
+    role?: string;
+    contactNumber?: string;
+    email?: string;
+    jobTitle?: string;
+    availabilityStatus?: string;
+    notes?: string;
+  }
+): Promise<any> {
   const response = await axiosInstance.post(`/vendors/${vendorId}/workers`, payload);
   return response.data;
 }

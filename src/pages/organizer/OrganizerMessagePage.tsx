@@ -1,14 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import {
-  Search,
-  MoreVertical,
-  Send,
-  X,
-  Loader2,
-  MessageSquare,
-  ChevronLeft,
-} from 'lucide-react';
+import { Search, MoreVertical, Send, X, Loader2, MessageSquare, ChevronLeft } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import {
   getConversationMessages,

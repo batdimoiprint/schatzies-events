@@ -172,9 +172,7 @@ export function ChangePasswordModal({ onPasswordChanged }: ChangePasswordModalPr
               </button>
             </div>
             {newPassword.length > 0 && !isNewPasswordLongEnough && (
-              <p className="mt-1 text-xs text-amber-600">
-                Password must be at least 6 characters.
-              </p>
+              <p className="mt-1 text-xs text-amber-600">Password must be at least 6 characters.</p>
             )}
           </div>
 
@@ -233,11 +231,7 @@ export function ChangePasswordModal({ onPasswordChanged }: ChangePasswordModalPr
           >
             {isSubmitting ? (
               <span className="inline-flex items-center gap-2">
-                <svg
-                  className="h-4 w-4 animate-spin"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                >
+                <svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none">
                   <circle
                     className="opacity-25"
                     cx="12"

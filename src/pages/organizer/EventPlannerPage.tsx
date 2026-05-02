@@ -7,7 +7,6 @@ import {
   type FormEvent,
 } from 'react';
 import {
-  CalendarDays,
   ChevronLeft,
   ClipboardList,
   Download,
@@ -36,6 +35,10 @@ import {
   createEventNote,
   updateEventNote,
   deleteEventNote,
+  getEventChecklist,
+  updateEventChecklistItem,
+  addEventChecklistItem,
+  deleteEventChecklistItem,
   getEventFlow,
   saveEventFlow,
   deleteEventActivity,
@@ -58,21 +61,6 @@ type ProjectSlot = {
   clientId?: string;
   clientRealName?: string;
   eventCost?: string | number;
-};
-
-type TaskCard = {
-  id: string;
-  title: string;
-  badge: string;
-  accentClassName: string;
-  frameClassName: string;
-  due: string;
-  owner: string;
-  items: Array<{
-    id: string;
-    label: string;
-    done: boolean;
-  }>;
 };
 
 type TaskLane = 'todo' | 'in-progress' | 'completed';
@@ -106,72 +94,6 @@ const tabs: Array<{ id: PlannerTab; label: string }> = [
   { id: 'notes', label: 'Notes' },
   { id: 'flow', label: 'Flow' },
   { id: 'checklist', label: 'Checklist' },
-];
-
-const taskCards: TaskCard[] = [
-  {
-    id: 'task-event-manager',
-    title: 'Event Manager',
-    badge: 'Operations',
-    accentClassName: 'from-[#f6d6e8] to-[#fceef6] text-[#7b2a5c]',
-    frameClassName: 'border-[#edd3e4] bg-white',
-    due: 'Due: Jan 2, 2026',
-    owner: 'Owner: Coordinator Team',
-    items: [
-      { id: 'em-1', label: 'Confirm program timeline with host', done: true },
-      { id: 'em-2', label: 'Finalize entrance and cue sequence', done: false },
-      { id: 'em-3', label: 'Assign backstage task leads', done: false },
-      { id: 'em-4', label: 'Lock floor plan and guest flow', done: true },
-    ],
-  },
-  {
-    id: 'task-rsvp',
-    title: 'RSVP Monitoring',
-    badge: 'Guest Handling',
-    accentClassName: 'from-[#dfe7ff] to-[#eff3ff] text-[#2a4f7b]',
-    frameClassName: 'border-[#d7def1] bg-white',
-    due: 'Due: Jan 1, 2026',
-    owner: 'Owner: RSVP Team',
-    items: [
-      { id: 'rsvp-1', label: 'Send final RSVP reminder blast', done: true },
-      { id: 'rsvp-2', label: 'Follow up VIP non-responders', done: false },
-      { id: 'rsvp-3', label: 'Update confirmed headcount sheet', done: false },
-      { id: 'rsvp-4', label: 'Sync seat map with latest responses', done: false },
-    ],
-  },
-  {
-    id: 'task-vendors',
-    title: 'Vendor Coordination',
-    badge: 'Suppliers',
-    accentClassName: 'from-[#efe3d4] to-[#faf4ea] text-[#7a654d]',
-    frameClassName: 'border-[#e6dccf] bg-white',
-    due: 'Due: Jan 2, 2026',
-    owner: 'Owner: Vendor Lead',
-    items: [
-      { id: 'ven-1', label: 'Confirm catering arrival time', done: true },
-      { id: 'ven-2', label: 'Approve styling mockup revisions', done: false },
-      { id: 'ven-3', label: 'Validate AV equipment checklist', done: false },
-      { id: 'ven-4', label: 'Receive final supplier permits', done: true },
-    ],
-  },
-  {
-    id: 'task-budget',
-    title: 'Cost Breakdown',
-    badge: 'Finance',
-    accentClassName: 'from-[#dff0db] to-[#eef8ea] text-[#5a7335]',
-    frameClassName: 'border-[#d5ebce] bg-white',
-    due: 'Due: Jan 1, 2026',
-    owner: 'Owner: Finance Team',
-    items: [
-      { id: 'cost-1', label: 'Technicals Manpower', done: true },
-      { id: 'cost-2', label: '(2) lighting', done: true },
-      { id: 'cost-3', label: 'Fresh Flowers Delivered', done: true },
-      { id: 'cost-4', label: 'Dry Run Day 1', done: true },
-      { id: 'cost-5', label: 'Dry Run Day 2', done: true },
-      { id: 'cost-6', label: 'Approve program outline', done: false },
-      { id: 'cost-7', label: 'Guest pass validation', done: false },
-    ],
-  },
 ];
 
 const taskLaneConfig: Array<{
@@ -1107,7 +1029,7 @@ export function EventPlannerPage() {
   const [selectedEventId, setSelectedEventId] = useState('');
   const [projectSlots, setProjectSlots] = useState<ProjectSlot[]>([]);
   const [activeTab, setActiveTab] = useState<PlannerTab>('overview');
-  const [plannerTaskCards, setPlannerTaskCards] = useState<TaskCard[]>(taskCards);
+  const [checklistItems, setChecklistItems] = useState<any[]>([]);
   const [boardTasks, setBoardTasks] = useState<PlannerBoardTask[]>([]);
   const [currentClientName, setCurrentClientName] = useState('');
   const [eventAllocation, setEventAllocation] = useState<any>(null);
@@ -1201,10 +1123,10 @@ export function EventPlannerPage() {
             if (isMounted) {
               setCurrentClientName(
                 userData?.name ||
-                userData?.firstName ||
-                userData?.realName ||
-                userData?.clientName ||
-                ''
+                  userData?.firstName ||
+                  userData?.realName ||
+                  userData?.clientName ||
+                  ''
               );
             }
           })
@@ -1249,14 +1171,22 @@ export function EventPlannerPage() {
         if (isMounted) {
           const mappedFlows = Array.isArray(flowData)
             ? flowData
-              .map((item: any, index: number) => mapBackendFlowToUI(item, index))
-              .sort((a: any, b: any) => a.startHour - b.startHour)
+                .map((item: any, index: number) => mapBackendFlowToUI(item, index))
+                .sort((a: any, b: any) => a.startHour - b.startHour)
             : [];
           setOverviewFlows(mappedFlows);
         }
       } catch (error) {
         console.error('Failed to fetch event flow for overview', error);
         if (isMounted) setOverviewFlows([]);
+      }
+
+      try {
+        const checklistData = await getEventChecklist(selectedEventId);
+        if (isMounted) setChecklistItems(checklistData || []);
+      } catch (error) {
+        console.error('Failed to load checklist:', error);
+        if (isMounted) setChecklistItems([]);
       }
 
       try {
@@ -1323,6 +1253,7 @@ export function EventPlannerPage() {
   const [noteDraftTitle, setNoteDraftTitle] = useState('');
   const [noteDraftBody, setNoteDraftBody] = useState('');
   const [noteDraftImageDataUrl, setNoteDraftImageDataUrl] = useState<string | undefined>(undefined);
+  const [noteDraftImageFile, setNoteDraftImageFile] = useState<File | null>(null);
   const [noteDraftError, setNoteDraftError] = useState('');
   const [editingPlannerNoteId, setEditingPlannerNoteId] = useState<string | null>(null);
   const [isNoteModalOpen, setIsNoteModalOpen] = useState(false);
@@ -1386,9 +1317,9 @@ export function EventPlannerPage() {
         label: 'Event Pax',
         value: String(
           selectedEventDetails?.package?.pax ||
-          selectedEventDetails?.eventPax ||
-          selectedProject.eventPax ||
-          '0'
+            selectedEventDetails?.eventPax ||
+            selectedProject.eventPax ||
+            '0'
         ),
         imageSrc: '/Pictures/organizerpics/event-pax-illustration.png',
         accent: 'text-[#88511a] bg-[#fff8ef] border-[#f3e2cc]',
@@ -1423,6 +1354,7 @@ export function EventPlannerPage() {
     setNoteDraftTitle('');
     setNoteDraftBody('');
     setNoteDraftImageDataUrl(undefined);
+    setNoteDraftImageFile(null);
     setNoteDraftError('');
     setEditingPlannerNoteId(null);
   };
@@ -1434,9 +1366,7 @@ export function EventPlannerPage() {
 
   const handlePlannerNoteImageChange = (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
-    if (!file) {
-      return;
-    }
+    if (!file) return;
 
     if (!file.type.startsWith('image/')) {
       setNoteDraftError('Please select an image file only.');
@@ -1450,6 +1380,9 @@ export function EventPlannerPage() {
       return;
     }
 
+    // SAVE THE FILE FOR MUTLER
+    setNoteDraftImageFile(file);
+
     const reader = new FileReader();
     reader.onload = () => {
       if (typeof reader.result === 'string') {
@@ -1459,7 +1392,6 @@ export function EventPlannerPage() {
     };
     reader.readAsDataURL(file);
 
-    // Allow selecting the same file again after removal.
     event.target.value = '';
   };
 
@@ -1475,20 +1407,29 @@ export function EventPlannerPage() {
 
     try {
       if (editingPlannerNoteId) {
-        const updatedNote = await updateEventNote(selectedEventId, editingPlannerNoteId, {
-          title: normalizedTitle || 'Untitled',
-          body: normalizedBody || 'No details provided.',
-          imageDataUrl: noteDraftImageDataUrl ?? undefined,
-        });
+        const updatedNote = await updateEventNote(
+          selectedEventId,
+          editingPlannerNoteId,
+          {
+            title: normalizedTitle || 'Untitled',
+            body: normalizedBody || 'No details provided.',
+            imageDataUrl: noteDraftImageDataUrl ?? undefined, // Keep for optimistic UI
+          },
+          noteDraftImageFile
+        ); // Pass the file here
         setPlannerNotes((prev) =>
           prev.map((n) => (n.id === editingPlannerNoteId ? updatedNote : n))
         );
       } else {
-        const newNote = await createEventNote(selectedEventId, {
-          title: normalizedTitle || 'Untitled',
-          body: normalizedBody || 'No details provided.',
-          imageDataUrl: noteDraftImageDataUrl ?? undefined,
-        });
+        const newNote = await createEventNote(
+          selectedEventId,
+          {
+            title: normalizedTitle || 'Untitled',
+            body: normalizedBody || 'No details provided.',
+            imageDataUrl: noteDraftImageDataUrl ?? undefined, // Keep for optimistic UI
+          },
+          noteDraftImageFile
+        ); // Pass the file here
         setPlannerNotes((prev) => [newNote, ...prev]);
       }
       closePlannerNoteModal();
@@ -1499,17 +1440,11 @@ export function EventPlannerPage() {
       if (error?.response) {
         const status = error.response.status;
         const serverMsg = error.response.data?.message || error.response.data?.error;
-        if (status === 500) {
-          userMessage = 'Server error: Unable to save note at this time.';
-        } else if (status === 400) {
-          userMessage = serverMsg
-            ? `Bad request: ${serverMsg}`
-            : 'Invalid note data. Please check your input.';
-        } else if (status === 404) {
-          userMessage = 'Event not found. Please refresh and try again.';
-        } else if (serverMsg) {
-          userMessage = `Error (${status}): ${serverMsg}`;
-        }
+        if (status === 500) userMessage = 'Server error: Unable to save note at this time.';
+        else if (status === 400)
+          userMessage = serverMsg ? `Bad request: ${serverMsg}` : 'Invalid note data.';
+        else if (status === 404) userMessage = 'Event not found. Please refresh and try again.';
+        else if (serverMsg) userMessage = `Error (${status}): ${serverMsg}`;
       } else if (error?.message) {
         userMessage = `Network error: ${error.message}`;
       }
@@ -1549,18 +1484,51 @@ export function EventPlannerPage() {
     }
   };
 
-  const handleToggleTaskItem = (cardId: string, itemId: string) => {
-    setPlannerTaskCards((previousCards) =>
-      previousCards.map((card) => {
-        if (card.id !== cardId) return card;
-        return {
-          ...card,
-          items: card.items.map((item) =>
-            item.id === itemId ? { ...item, done: !item.done } : item
-          ),
-        };
-      })
+  const handleToggleChecklistItem = async (itemId: string, currentDone: boolean) => {
+    if (!selectedEventId) return;
+    const newDone = !currentDone;
+    const targetItem = checklistItems.find((i) => i.id === itemId);
+
+    // Optimistic Update
+    setChecklistItems((prev) =>
+      prev.map((item) => (item.id === itemId ? { ...item, done: newDone } : item))
     );
+
+    try {
+      if (!String(itemId).startsWith('temp-')) {
+        // Pass the label as well to satisfy backend requirements!
+        await updateEventChecklistItem(
+          selectedEventId,
+          'overall',
+          itemId,
+          newDone,
+          targetItem?.label || 'Task'
+        );
+      }
+    } catch (error) {
+      setChecklistItems((prev) =>
+        prev.map((item) => (item.id === itemId ? { ...item, done: currentDone } : item))
+      );
+      alert('Failed to update status.');
+    }
+  };
+
+  const handleUpdateChecklistLabel = async (itemId: string, newLabel: string) => {
+    // Note: Local state is already updated via onChange. This function purely syncs to the API on blur.
+    try {
+      const targetItem = checklistItems.find((i) => i.id === itemId);
+      if (targetItem && !String(itemId).startsWith('temp-')) {
+        await updateEventChecklistItem(
+          selectedEventId,
+          'overall',
+          itemId,
+          targetItem.done,
+          newLabel
+        );
+      }
+    } catch (error) {
+      console.error('Failed to sync label update', error);
+    }
   };
 
   const handleAddEmptyTask = () => {
@@ -1751,12 +1719,12 @@ export function EventPlannerPage() {
         previousTasks.map((task) =>
           String(task.id) === String(selectedBoardTaskId)
             ? {
-              ...task,
-              id: String(newId),
-              title: payload.title,
-              details: finalDetails,
-              checklist: normalizedChecklist,
-            }
+                ...task,
+                id: String(newId),
+                title: payload.title,
+                details: finalDetails,
+                checklist: normalizedChecklist,
+              }
             : task
         )
       );
@@ -1858,44 +1826,37 @@ export function EventPlannerPage() {
     setTaskPreviewChecklist((previous) => previous.filter((item) => item.id !== itemId));
   };
 
-  const checklistTaskCard = useMemo(() => {
-    return plannerTaskCards.find((card) => card.id === 'task-budget') ?? null;
-  }, [plannerTaskCards]);
-
-  const checklistItems = checklistTaskCard?.items ?? [];
-
-  const checklistDoneCount = checklistItems.filter((it) => it.done).length;
+  const checklistDoneCount = checklistItems.filter((it: any) => it.done).length;
   const checklistProgress = checklistItems.length
     ? Math.round((checklistDoneCount / checklistItems.length) * 100)
     : 0;
 
-  const handleAddChecklistItem = () => {
-    if (!checklistTaskCard) return;
-    setPlannerTaskCards((previousCards) =>
-      previousCards.map((card) => {
-        if (card.id !== checklistTaskCard.id) return card;
+  const handleAddChecklistItem = async () => {
+    if (!selectedEventId) return;
+    try {
+      await addEventChecklistItem(selectedEventId, 'New checklist item');
 
-        const nextItemId = `cost-${Date.now()}`;
-        const nextLabel = `New checklist item ${card.items.length + 1}`;
-        return {
-          ...card,
-          items: [...card.items, { id: nextItemId, label: nextLabel, done: false }],
-        };
-      })
-    );
+      // Re-fetch the entire list to ensure IDs are completely synced and avoid duplicates
+      const freshList = await getEventChecklist(selectedEventId);
+      setChecklistItems(freshList || []);
+    } catch (error) {
+      alert('Failed to add checklist item.');
+    }
   };
 
-  const handleRemoveChecklistItem = (itemId: string) => {
-    if (!checklistTaskCard) return;
-    setPlannerTaskCards((previousCards) =>
-      previousCards.map((card) => {
-        if (card.id !== checklistTaskCard.id) return card;
-        return {
-          ...card,
-          items: card.items.filter((item) => item.id !== itemId),
-        };
-      })
-    );
+  const handleRemoveChecklistItem = async (itemId: string) => {
+    if (!selectedEventId) return;
+    const previousState = [...checklistItems];
+    setChecklistItems((prev) => prev.filter((item) => item.id !== itemId));
+
+    try {
+      if (!String(itemId).startsWith('temp-')) {
+        await deleteEventChecklistItem(selectedEventId, itemId);
+      }
+    } catch (error) {
+      setChecklistItems(previousState);
+      alert('Failed to delete item.');
+    }
   };
 
   const openChecklistDeleteValidation = (item: { id: string; label: string }) => {
@@ -1976,52 +1937,6 @@ export function EventPlannerPage() {
                 );
               })}
             </div>
-          </section>
-
-          <section className="rounded-2xl border border-[#ddd8e8] bg-white p-3 shadow-[0_6px_14px_rgba(31,18,54,0.06)]">
-            <header className="mb-2 flex items-center justify-between">
-              <h2 className="flex items-center gap-1.5 text-sm font-bold text-[#383341]">
-                <ListChecks className="size-3.5 text-[#5a5469]" />
-                Confirmed Events
-              </h2>
-              <button
-                type="button"
-                className="rounded-md p-1 text-[#898399] transition-colors hover:bg-[#f2eff8] hover:text-[#4b4558]"
-                aria-label="Confirmed events options"
-              >
-                <span className="text-lg leading-none">⋮</span>
-              </button>
-            </header>
-
-            <article className="rounded-xl border border-[#e5dfef] bg-[#fcfbfe] p-3">
-              <div className="border-l-[3px] border-[#ed3da5] pl-2.5">
-                <h3 className="text-[13px] font-bold text-[#524d60]">WeddingniSeb&amp;Rox</h3>
-                <p className="mt-1 text-[11px] font-semibold text-[#7f788f]">January 3, 2026</p>
-                <p className="text-[11px] text-[#9a93a8]">Start Date - End Date</p>
-
-                <div className="mt-3 space-y-1 text-[11px] text-[#857f94]">
-                  <p>Event Specification</p>
-                  <p>Event Package</p>
-                  <p>Event Pax</p>
-                  <p>Event Type</p>
-                </div>
-
-                <p className="mt-3 text-[10px] font-semibold text-[#9b94a7]">Description</p>
-                <p className="text-[10px] text-[#9b94a7]">
-                  Lorem ipsum dolor sit amet, consectetur adipiscing elit. In tincidunt justo quis
-                  viverra bibendum.
-                </p>
-
-                <button
-                  type="button"
-                  className="mt-3 inline-flex h-7 items-center justify-center rounded-full bg-linear-to-r from-[#f347a5] to-[#8f1fd1] px-4 text-[10px] font-bold text-white"
-                >
-                  Plan
-                </button>
-              </div>
-            </article>
-
-            <div className="mt-2 h-12 rounded-xl border border-[#e9e4f1] bg-[#fdfcfe]" />
           </section>
         </aside>
 
@@ -2140,7 +2055,7 @@ export function EventPlannerPage() {
                           <p>Theme: {eventAllocation.decorations.theme || 'None specified'}</p>
                           <p className="mt-1 font-semibold text-[#5a546a]">Materials</p>
                           {eventAllocation.decorations.materials &&
-                            eventAllocation.decorations.materials.length > 0 ? (
+                          eventAllocation.decorations.materials.length > 0 ? (
                             eventAllocation.decorations.materials.map(
                               (mat: string, idx: number) => (
                                 <p key={idx}>
@@ -2660,14 +2575,12 @@ export function EventPlannerPage() {
                         key={item.id}
                         className="flex min-h-[56px] items-center justify-between px-4"
                       >
-                        <div className="flex min-w-0 items-center gap-3">
+                        <div className="flex min-w-0 flex-1 items-center gap-3">
                           <button
                             type="button"
-                            onClick={() =>
-                              handleToggleTaskItem(checklistTaskCard?.id ?? '', item.id)
-                            }
+                            onClick={() => handleToggleChecklistItem(item.id, item.done)}
                             aria-label={`${item.done ? 'Uncheck' : 'Check'} ${item.label}`}
-                            className="inline-flex h-8 w-8 items-center justify-center rounded-md border-2 transition-all"
+                            className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md border-2 transition-all"
                             style={{
                               borderColor: color,
                               background: item.done ? color : 'white',
@@ -2682,19 +2595,27 @@ export function EventPlannerPage() {
                             style={{ background: color }}
                           />
 
-                          <span className="truncate text-[15px] font-medium text-[#302c39]">
-                            {item.label}
-                          </span>
+                          <Input
+                            value={item.label}
+                            onChange={(e) => {
+                              // Only update local UI state immediately to feel responsive
+                              setChecklistItems((prev) =>
+                                prev.map((i) =>
+                                  i.id === item.id ? { ...i, label: e.target.value } : i
+                                )
+                              );
+                            }}
+                            onBlur={(e) => {
+                              // Only call API when user finishes typing and clicks away
+                              handleUpdateChecklistLabel(item.id, e.target.value);
+                            }}
+                            className={`h-9 border-transparent bg-transparent px-1 text-[15px] font-medium shadow-none focus-visible:ring-1 focus-visible:ring-[#e3ddea] w-full ${
+                              item.done ? 'text-[#a29faf] line-through' : 'text-[#302c39]'
+                            }`}
+                          />
                         </div>
 
                         <div className="ml-3 flex shrink-0 items-center gap-2">
-                          {item.id === 'cost-2' ? (
-                            <span className="inline-flex items-center gap-1 rounded-md border border-[#d8d3de] bg-[#f6f5f8] px-2 py-1 text-[9px] font-semibold text-[#6f697e]">
-                              <CalendarDays className="size-3" />
-                              Due Jan 2
-                            </span>
-                          ) : null}
-
                           <button
                             type="button"
                             onClick={() =>
@@ -2840,7 +2761,6 @@ export function EventPlannerPage() {
             setTaskPreviewTitle('');
             setTaskPreviewDetails('');
             setTaskPreviewChecklist([]);
-
           }
         }}
       >

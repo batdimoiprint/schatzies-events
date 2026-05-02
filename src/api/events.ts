@@ -89,7 +89,6 @@ function formatDate(dateValue?: string): string {
   });
 }
 
-
 function mapEventStatus(status?: string): EventStatus {
   const normalized = String(status || '')
     .trim()
@@ -100,10 +99,7 @@ function mapEventStatus(status?: string): EventStatus {
   return 'Pending'; // Acts as Planning
 }
 
-function mapToManagerRow(
-  baseEvent: BackendEvent,
-  userMap: Map<string, string>
-): EventManagerEvent {
+function mapToManagerRow(baseEvent: BackendEvent, userMap: Map<string, string>): EventManagerEvent {
   const rawStartDate = baseEvent.startDate || baseEvent.eventDate || '';
   const rawEndDate = baseEvent.endDate || '';
   const packageName = baseEvent.eventPackageKey || baseEvent.eventPackage || '-';
@@ -116,8 +112,12 @@ function mapToManagerRow(
       ? `${formattedStart} – ${formattedEnd}`
       : formattedStart;
 
-  const clientName = baseEvent.clientId ? userMap.get(baseEvent.clientId) || baseEvent.clientId : 'Unknown client';
-  const organizerName = baseEvent.headOrganizerId ? userMap.get(baseEvent.headOrganizerId) || '' : '';
+  const clientName = baseEvent.clientId
+    ? userMap.get(baseEvent.clientId) || baseEvent.clientId
+    : 'Unknown client';
+  const organizerName = baseEvent.headOrganizerId
+    ? userMap.get(baseEvent.headOrganizerId) || ''
+    : '';
 
   return {
     id: baseEvent.id,
@@ -129,7 +129,11 @@ function mapToManagerRow(
     client: clientName,
     type: baseEvent.eventType || '-',
     package: packagePax > 0 ? `${packageName} (${packagePax})` : packageName,
-    venue: (baseEvent.venue && !['', '-', '–', '—', 'n/a', 'tba'].includes(baseEvent.venue.trim().toLowerCase())) ? baseEvent.venue : '',
+    venue:
+      baseEvent.venue &&
+      !['', '-', '–', '—', 'n/a', 'tba'].includes(baseEvent.venue.trim().toLowerCase())
+        ? baseEvent.venue
+        : '',
     rsvp: 0,
     status: mapEventStatus(baseEvent.status),
     clientId: baseEvent.clientId || '',
@@ -224,22 +228,38 @@ export async function getEventNotes(eventId: string): Promise<any[]> {
   }
 }
 
-export async function createEventNote(eventId: string, payload: any): Promise<any> {
+// --- APPLIED FIX: FormData for Notes with File Upload ---
+export async function createEventNote(
+  eventId: string,
+  payload: any,
+  file?: File | null
+): Promise<any> {
   const currentNotes = await getEventNotes(eventId);
   const newNote = { ...payload, id: payload.id || `note-${Date.now()}` };
   const updatedNotes = [...currentNotes, newNote];
 
-  // Stringify the array before sending
-  await axiosInstance.put(`/events/${eventId}/notes`, { notes: JSON.stringify(updatedNotes) });
-  return newNote;
+  const formData = new FormData();
+  formData.append('notes', JSON.stringify(updatedNotes));
+  if (file) formData.append('file', file);
+
+  const response = await axiosInstance.put(`/events/${eventId}/notes`, formData);
+  return response.data?.notes ? newNote : newNote;
 }
 
-export async function updateEventNote(eventId: string, noteId: string, payload: any): Promise<any> {
+export async function updateEventNote(
+  eventId: string,
+  noteId: string,
+  payload: any,
+  file?: File | null
+): Promise<any> {
   const currentNotes = await getEventNotes(eventId);
   const updatedNotes = currentNotes.map((n: any) => (n.id === noteId ? { ...n, ...payload } : n));
 
-  // Stringify the array before sending
-  await axiosInstance.put(`/events/${eventId}/notes`, { notes: JSON.stringify(updatedNotes) });
+  const formData = new FormData();
+  formData.append('notes', JSON.stringify(updatedNotes));
+  if (file) formData.append('file', file);
+
+  await axiosInstance.put(`/events/${eventId}/notes`, formData);
   return { ...payload, id: noteId };
 }
 
@@ -247,9 +267,12 @@ export async function deleteEventNote(eventId: string, noteId: string): Promise<
   const currentNotes = await getEventNotes(eventId);
   const filteredNotes = currentNotes.filter((n: any) => n.id !== noteId);
 
-  // Stringify the array before sending
-  await axiosInstance.put(`/events/${eventId}/notes`, { notes: JSON.stringify(filteredNotes) });
+  const formData = new FormData();
+  formData.append('notes', JSON.stringify(filteredNotes));
+
+  await axiosInstance.put(`/events/${eventId}/notes`, formData);
 }
+// --------------------------------------------------------
 
 export async function getEventChecklist(eventId: string): Promise<any[]> {
   try {
@@ -277,10 +300,25 @@ export async function updateEventChecklistItem(
   return response.data;
 }
 
+// --- RESTORED FIX: Correct Checklist Payload ---
 export async function addEventChecklistItem(eventId: string, label: string): Promise<any> {
-  const response = await axiosInstance.post(`/events/${eventId}/checklist`, { label });
+  // Generate a temporary ID for the frontend to pass to the backend validation
+  const tempId = `chk-${Date.now()}`;
+
+  // Pass the complete object as required by the backend schema
+  const response = await axiosInstance.post(`/events/${eventId}/checklist`, {
+    checklist: [
+      {
+        id: tempId,
+        label: label,
+        done: false,
+      },
+    ],
+  });
+
   return response.data;
 }
+// ------------------------------------------------
 
 export async function deleteEventChecklistItem(eventId: string, itemId: string): Promise<void> {
   await axiosInstance.delete(`/events/${eventId}/checklist/${itemId}`);

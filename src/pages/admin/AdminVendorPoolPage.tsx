@@ -855,7 +855,10 @@ export function AdminVendorPoolPage() {
               <Select
                 value={vendorForm.eventId || 'none'}
                 onValueChange={(value) =>
-                  setVendorForm((current) => ({ ...current, eventId: value === 'none' ? '' : value }))
+                  setVendorForm((current) => ({
+                    ...current,
+                    eventId: value === 'none' ? '' : value,
+                  }))
                 }
               >
                 <SelectTrigger className="h-10 w-full">
@@ -1135,7 +1138,9 @@ function VendorSidepanel({ vendorId }: { vendorId: string }) {
         {/* Workers List */}
         <div className="max-h-52 overflow-y-auto space-y-2 pr-1 [scrollbar-width:thin]">
           {isLoadingWorkers ? (
-            <p className="text-xs font-semibold text-[#a49db4] text-center py-4">Loading workers...</p>
+            <p className="text-xs font-semibold text-[#a49db4] text-center py-4">
+              Loading workers...
+            </p>
           ) : workers.length === 0 ? (
             <div className="rounded-xl border border-dashed border-[#e1d5eb] bg-[#faf9fc] py-6 text-center">
               <Briefcase className="mx-auto mb-1.5 h-5 w-5 text-[#d4c5e3]" />
@@ -1151,10 +1156,14 @@ function VendorSidepanel({ vendorId }: { vendorId: string }) {
                   <p className="text-sm font-bold text-[#2e2837] truncate">{worker.workerName}</p>
                   <div className="flex items-center gap-2 mt-0.5">
                     {worker.role && (
-                      <span className="text-[10px] font-semibold text-[#8b839c]">{worker.role}</span>
+                      <span className="text-[10px] font-semibold text-[#8b839c]">
+                        {worker.role}
+                      </span>
                     )}
                     {worker.email && (
-                      <span className="text-[10px] font-semibold text-[#a49db4] truncate">{worker.email}</span>
+                      <span className="text-[10px] font-semibold text-[#a49db4] truncate">
+                        {worker.email}
+                      </span>
                     )}
                   </div>
                 </div>
@@ -1192,7 +1201,9 @@ function VendorSidepanel({ vendorId }: { vendorId: string }) {
 
         <div className="max-h-44 overflow-y-auto space-y-2 pr-1 [scrollbar-width:thin]">
           {isLoadingEvents ? (
-            <p className="text-xs font-semibold text-[#a49db4] text-center py-4">Loading events...</p>
+            <p className="text-xs font-semibold text-[#a49db4] text-center py-4">
+              Loading events...
+            </p>
           ) : vendorEvents.length === 0 ? (
             <div className="rounded-xl border border-dashed border-[#e1d5eb] bg-[#faf9fc] py-6 text-center">
               <CalendarDays className="mx-auto mb-1.5 h-5 w-5 text-[#d4c5e3]" />
@@ -1200,7 +1211,9 @@ function VendorSidepanel({ vendorId }: { vendorId: string }) {
             </div>
           ) : (
             vendorEvents.map((evt) => {
-              const isCompleted = evt.status.toLowerCase() === 'completed' || evt.status.toLowerCase() === 'confirmed';
+              const isCompleted =
+                evt.status.toLowerCase() === 'completed' ||
+                evt.status.toLowerCase() === 'confirmed';
               const dateStr = evt.startDate || evt.eventDate;
               const formattedDate = dateStr
                 ? new Date(dateStr).toLocaleDateString('en-US', {
