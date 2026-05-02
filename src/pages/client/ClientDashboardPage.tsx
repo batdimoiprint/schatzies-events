@@ -8,23 +8,12 @@ import { ChecklistMeetingModal } from '@/components/client/ChecklistMeetingModal
 import { ProgramFlowModal } from '@/components/client/ProgramFlowModal';
 import { GuestListModal } from '@/components/client/GuestListModal';
 import { getRSVPList } from '@/api/rsvp';
-import { getEventManagerEvents } from '@/api/events';
+import { getEventManagerEvents, getEventById, getEventUser } from '@/api/events';
 import { useAuth } from '@/hooks/useAuth';
+import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 
-// ── Static mock data ──────────────────────────────────────────────────────────
-const EVENT = {
-  daysToGo: 10,
-  organizer: 'John Errol Sebial',
-  eventDate: 'August 22, 2026 (Friday)',
-  venue: 'Manila Marriott Hotel',
-  packageName: 'De Luxe Package',
-  eventType: 'Wedding',
-  pax: 150,
-  cost: 'Php 585,000',
-  eventTitle: 'Kring and Dave Wedding',
-  completion: 89,
-  eventStatus: 'Contract Signing',
-};
+// ── Static mock data fallback ──────────────────────────────────────────────────
+// Removed unused EVENT mock data
 
 export function ClientDashboardPage() {
   const navigate = useNavigate();
@@ -40,76 +29,161 @@ export function ClientDashboardPage() {
   const [showGuestListModal, setShowGuestListModal] = useState(false);
   const [guests, setGuests] = useState<Array<{ name: string; status: string }>>([]);
   const [isLoadingGuests, setIsLoadingGuests] = useState(true);
+  const [eventData, setEventData] = useState<any>(null);
+  const [isLoadingEvent, setIsLoadingEvent] = useState(true);
 
   const handleCloseWelcome = () => {
     setShowWelcome(false);
     localStorage.setItem('clientWelcomeSeen', 'true');
   };
 
-  // Fetch guest list from API
+  // Fetch event and guest data from API
   useEffect(() => {
-    const fetchGuestList = async () => {
+    const fetchData = async () => {
+      if (!user) return;
+      
+      setIsLoadingEvent(true);
       setIsLoadingGuests(true);
+      
       try {
         const events = await getEventManagerEvents();
 
-        // Filter events: Clients only see their own, Admins/Organizers see everything
+        // Filter events: Clients only see their own
+        const userFullName = `${user.firstName || ''} ${user.lastName || ''}`.trim().toLowerCase();
         const userEvents =
-          user?.role === 'CLIENT' ? events.filter((e) => e.clientId === user.user_id) : events;
+          user.role === 'CLIENT' 
+            ? events.filter((e) => 
+                e.clientId === user.user_id || 
+                e.clientId === user.client_id ||
+                (e.client && e.client.toLowerCase().includes(userFullName))
+              ) 
+            : events;
 
-        // Get the first event for the current user
-        const userEvent = userEvents.length > 0 ? userEvents[0] : null;
+        const userEventBase = userEvents.length > 0 ? userEvents[0] : null;
 
-        if (userEvent) {
-          // Fetch RSVP list for this event
-          let rsvpList = await getRSVPList(userEvent.id);
-
-          // If no data, try with the EVENT# prefix just in case the backend requires it
-          if ((!rsvpList || rsvpList.length === 0) && !userEvent.id.startsWith('EVENT#')) {
+        if (userEventBase) {
+          // Fetch full event details to get specific fields
+          const fullEvent = await getEventById(userEventBase.id);
+          console.log('Full event details:', fullEvent);
+          
+          // Fetch Organizer if available (check all possible ID fields)
+          const orgId = fullEvent.organizer_id || fullEvent.organizerId || userEventBase.organizerId || userEventBase.organizer_id;
+          let organizerName = 'Assigned Organizer';
+          if (orgId) {
             try {
-              const altData = await getRSVPList(`EVENT#${userEvent.id}`);
-              if (altData && altData.length > 0) rsvpList = altData;
-            } catch (e) {
-              /* ignore fallback error */
+              const org = await getEventUser(orgId);
+              organizerName = `${org.firstName || ''} ${org.lastName || ''}`.trim() || 'Assigned Organizer';
+              console.log('Organizer found:', organizerName);
+            } catch (e) { 
+              console.error('Error fetching organizer:', e);
+              organizerName = 'Assigned Organizer'; 
             }
           }
 
-          // Map the RSVP data to guest list format
-          const mappedGuests = (Array.isArray(rsvpList) ? rsvpList : []).map((rsvp: any) => {
-            const rawStatus = (rsvp.status || '').toString().toUpperCase();
-            const isAttending =
-              rawStatus === 'ATTENDING' || rawStatus === 'CONFIRMED' || rawStatus === 'TRUE';
-            const isDeclined =
-              rawStatus === 'NOT_ATTENDING' ||
-              rawStatus === 'NOT ATTENDING' ||
-              rawStatus === 'FALSE';
+          // Dates logic
+          const endDateStr = fullEvent.endDate || fullEvent.dateEnd || fullEvent.eventDate || '';
+          let daysToGo = 0;
+          if (endDateStr) {
+            const end = new Date(endDateStr);
+            const now = new Date();
+            const diff = end.getTime() - now.getTime();
+            daysToGo = Math.max(0, Math.ceil(diff / (1000 * 60 * 60 * 24)));
+          }
 
-            const firstName = rsvp.guestfirstName || rsvp.firstName || rsvp.first_name || '';
-            const lastName = rsvp.guestlastName || rsvp.lastName || rsvp.last_name || '';
+          const formattedDate = endDateStr ? new Date(endDateStr).toLocaleDateString('en-US', {
+            month: 'long',
+            day: 'numeric',
+            year: 'numeric',
+            weekday: 'long',
+          }) : 'TBD';
 
-            return {
-              name: `${firstName} ${lastName}`.trim() || 'Guest',
-              status: isAttending ? 'Confirmed' : isDeclined ? 'Declined' : 'Pending',
-            };
+          // Extract package and pax info correctly (check both base and full details)
+          const pkgName = fullEvent.eventPackageKey || userEventBase.package || fullEvent.package?.name || fullEvent.eventPackage || 'Custom Package';
+          const paxCount = fullEvent.eventPax || userEventBase.pax || fullEvent.package?.pax || 0;
+          const costValue = fullEvent.cost || 'TBD';
+          const venueValue = fullEvent.venue || fullEvent.eventLocation || userEventBase.venue || 'Araneta';
+
+          setEventData({
+            daysToGo,
+            organizer: organizerName,
+            eventDate: formattedDate,
+            venue: venueValue,
+            packageName: pkgName,
+            eventType: fullEvent.eventType || userEventBase.type || 'Event',
+            pax: paxCount,
+            cost: costValue,
+            eventTitle: fullEvent.title || userEventBase.title || 'Your Event',
+            completion: fullEvent.status === 'Completed' ? 100 : 89,
+            eventStatus: fullEvent.status || 'Planning',
           });
 
+          // Fetch RSVP list
+          let rsvpList = await getRSVPList(userEventBase.id);
+          if ((!rsvpList || rsvpList.length === 0) && !userEventBase.id.startsWith('EVENT#')) {
+            try {
+              const alt = await getRSVPList(`EVENT#${userEventBase.id}`);
+              if (alt && alt.length > 0) rsvpList = alt;
+            } catch (e) { /* ignore */ }
+          }
+
+          // Map and Filter Guests (Show verified or Not Attending)
+          const mappedGuests = (Array.isArray(rsvpList) ? rsvpList : [])
+            .filter((rsvp: any) => {
+              const isVerified = rsvp.isVerified === true || 
+                               (rsvp.isVerified && typeof rsvp.isVerified === 'object' && 'BOOL' in rsvp.isVerified && (rsvp.isVerified as { BOOL: boolean }).BOOL === true) ||
+                               rsvp.isVerified === 'true';
+              const rawStatus = (rsvp.status || '').toString().toUpperCase();
+              // Show if verified OR if they are Not Attending (even if unverified)
+              return isVerified || rawStatus === 'NOT_ATTENDING' || rawStatus === 'NOT ATTENDING';
+            })
+            .map((rsvp: any) => {
+              const rawStatus = (rsvp.status || '').toString().toUpperCase();
+              const isAttending = rawStatus === 'ATTENDING' || rawStatus === 'CONFIRMED' || rawStatus === 'TRUE';
+              const isDeclined = rawStatus === 'NOT_ATTENDING' || rawStatus === 'NOT ATTENDING' || rawStatus === 'FALSE';
+
+              return {
+                name: `${rsvp.guestfirstName || rsvp.firstName || ''} ${rsvp.guestlastName || rsvp.lastName || ''}`.trim() || 'Guest',
+                status: isAttending ? 'Confirmed' : isDeclined ? 'Declined' : 'Pending',
+              };
+            });
+
           setGuests(mappedGuests);
-        } else {
-          setGuests([]);
         }
       } catch (error) {
-        console.error('Error fetching guest list:', error);
-        // Fallback to empty list on error
-        setGuests([]);
+        console.error('Overview Data Error:', error);
       } finally {
+        setIsLoadingEvent(false);
         setIsLoadingGuests(false);
       }
     };
 
-    if (user) {
-      fetchGuestList();
-    }
+    fetchData();
   }, [user]);
+
+  if (isLoadingEvent) {
+    return (
+      <div className="flex h-96 items-center justify-center">
+        <div className="flex flex-col items-center gap-4">
+          <LoadingSpinner size="lg" color="text-[#df2b80]" />
+          <p className="text-sm font-medium text-[#696373]">Fetching your event details...</p>
+        </div>
+      </div>
+    );
+  }
+
+  const displayEvent = eventData;
+
+  if (!displayEvent) {
+    return (
+      <div className="flex h-96 flex-col items-center justify-center rounded-xl border-2 border-dashed border-gray-200 bg-white p-8 text-center">
+        <Calendar className="mb-4 size-12 text-gray-300" />
+        <h3 className="text-lg font-bold text-gray-900">No active event found</h3>
+        <p className="mt-1 text-sm text-gray-500">
+          We couldn't find any upcoming events for your account. Please contact your organizer.
+        </p>
+      </div>
+    );
+  }
 
   return (
     <div className="relative">
@@ -144,7 +218,7 @@ export function ClientDashboardPage() {
                       WebkitTextFillColor: 'transparent',
                     }}
                   >
-                    {EVENT.daysToGo}
+                    {displayEvent.daysToGo}
                   </span>
                   <div>
                     <p
@@ -169,7 +243,7 @@ export function ClientDashboardPage() {
                     <div className="flex items-center gap-3">
                       <User className="size-5 shrink-0" style={{ color: '#FF0066' }} />
                       <span className="truncate font-medium text-[#df2b80] text-sm sm:text-base">
-                        {EVENT.organizer}
+                        {displayEvent.organizer}
                       </span>
                     </div>
                     <span className="shrink-0 text-[10px] text-[#696373] sm:text-xs">
@@ -180,7 +254,7 @@ export function ClientDashboardPage() {
                     <div className="flex items-center gap-3">
                       <Calendar className="size-5 shrink-0" style={{ color: '#700F81' }} />
                       <span className="truncate font-medium text-[#df2b80] text-sm sm:text-base">
-                        {EVENT.eventDate}
+                        {displayEvent.eventDate}
                       </span>
                     </div>
                     <span className="shrink-0 text-[10px] text-[#696373] sm:text-xs">
@@ -191,7 +265,7 @@ export function ClientDashboardPage() {
                     <div className="flex items-center gap-3">
                       <MapPin className="size-5 shrink-0" style={{ color: '#FF0066' }} />
                       <span className="truncate font-medium text-[#df2b80] text-sm sm:text-base">
-                        {EVENT.venue}
+                        {displayEvent.venue}
                       </span>
                     </div>
                     <span className="shrink-0 text-[10px] text-[#696373] sm:text-xs">
@@ -224,21 +298,21 @@ export function ClientDashboardPage() {
                       WebkitTextFillColor: 'transparent',
                     }}
                   >
-                    {EVENT.eventTitle}
+                    {displayEvent.eventTitle}
                   </h2>
                   <p className="text-xs text-[#696373] mt-1">Event Title</p>
                 </div>
                 <div className="flex flex-col gap-1 sm:flex-1">
                   <div className="group/bar flex items-center gap-3">
                     <span className="text-sm font-semibold text-[#2d2834] shrink-0">
-                      {EVENT.completion}% complete
+                      {displayEvent.completion}% complete
                     </span>
                     <div className="relative flex-1">
                       <div className="h-6 overflow-hidden rounded-full bg-gray-200 cursor-pointer">
                         <div
                           className="h-full rounded-full transition-all"
                           style={{
-                            width: `${EVENT.completion}%`,
+                            width: `${displayEvent.completion}%`,
                             backgroundImage: 'linear-gradient(to right, #FF0066 0%, #700F81 100%)',
                           }}
                         />
@@ -246,9 +320,9 @@ export function ClientDashboardPage() {
                       {/* Hover tooltip — Contract Signing */}
                       <div
                         className="pointer-events-none absolute -bottom-7 -translate-x-1/2 whitespace-nowrap rounded-full border border-gray-200 bg-white px-2 py-0.5 text-[10px] text-gray-400 shadow-sm opacity-0 scale-90 transition-all duration-200 group-hover/bar:opacity-100 group-hover/bar:scale-100"
-                        style={{ left: `${EVENT.completion}%` }}
+                        style={{ left: `${displayEvent.completion}%` }}
                       >
-                        {EVENT.eventStatus}
+                        {displayEvent.eventStatus}
                       </div>
                     </div>
                   </div>
@@ -357,17 +431,17 @@ export function ClientDashboardPage() {
                 className="text-3xl font-bold text-white"
                 style={{ fontFamily: 'Libre Baskerville, serif' }}
               >
-                {EVENT.packageName}
+                {displayEvent.packageName}
               </h2>
               <div className="mt-4 space-y-1 text-sm text-white">
                 <p>
-                  <span className="font-semibold">Event Type:</span> {EVENT.eventType}
+                  <span className="font-semibold">Event Type:</span> {displayEvent.eventType}
                 </p>
                 <p>
-                  <span className="font-semibold">Pax:</span> {EVENT.pax}
+                  <span className="font-semibold">Pax:</span> {displayEvent.pax}
                 </p>
                 <p>
-                  <span className="font-semibold">Cost:</span> {EVENT.cost}
+                  <span className="font-semibold">Cost:</span> {displayEvent.cost}
                 </p>
               </div>
             </div>

@@ -1123,10 +1123,10 @@ export function EventPlannerPage() {
             if (isMounted) {
               setCurrentClientName(
                 userData?.name ||
-                  userData?.firstName ||
-                  userData?.realName ||
-                  userData?.clientName ||
-                  ''
+                userData?.firstName ||
+                userData?.realName ||
+                userData?.clientName ||
+                ''
               );
             }
           })
@@ -1171,8 +1171,8 @@ export function EventPlannerPage() {
         if (isMounted) {
           const mappedFlows = Array.isArray(flowData)
             ? flowData
-                .map((item: any, index: number) => mapBackendFlowToUI(item, index))
-                .sort((a: any, b: any) => a.startHour - b.startHour)
+              .map((item: any, index: number) => mapBackendFlowToUI(item, index))
+              .sort((a: any, b: any) => a.startHour - b.startHour)
             : [];
           setOverviewFlows(mappedFlows);
         }
@@ -1317,9 +1317,9 @@ export function EventPlannerPage() {
         label: 'Event Pax',
         value: String(
           selectedEventDetails?.package?.pax ||
-            selectedEventDetails?.eventPax ||
-            selectedProject.eventPax ||
-            '0'
+          selectedEventDetails?.eventPax ||
+          selectedProject.eventPax ||
+          '0'
         ),
         imageSrc: '/Pictures/organizerpics/event-pax-illustration.png',
         accent: 'text-[#88511a] bg-[#fff8ef] border-[#f3e2cc]',
@@ -1719,12 +1719,12 @@ export function EventPlannerPage() {
         previousTasks.map((task) =>
           String(task.id) === String(selectedBoardTaskId)
             ? {
-                ...task,
-                id: String(newId),
-                title: payload.title,
-                details: finalDetails,
-                checklist: normalizedChecklist,
-              }
+              ...task,
+              id: String(newId),
+              title: payload.title,
+              details: finalDetails,
+              checklist: normalizedChecklist,
+            }
             : task
         )
       );
@@ -2055,7 +2055,7 @@ export function EventPlannerPage() {
                           <p>Theme: {eventAllocation.decorations.theme || 'None specified'}</p>
                           <p className="mt-1 font-semibold text-[#5a546a]">Materials</p>
                           {eventAllocation.decorations.materials &&
-                          eventAllocation.decorations.materials.length > 0 ? (
+                            eventAllocation.decorations.materials.length > 0 ? (
                             eventAllocation.decorations.materials.map(
                               (mat: string, idx: number) => (
                                 <p key={idx}>
@@ -2761,6 +2761,7 @@ export function EventPlannerPage() {
             setTaskPreviewTitle('');
             setTaskPreviewDetails('');
             setTaskPreviewChecklist([]);
+
           }
         }}
       >
