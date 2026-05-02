@@ -189,9 +189,9 @@ export function MessagePage() {
 
   /* ─── render ─────────────────────────────────────────────────────────── */
   return (
-    <div className="flex h-full flex-col">
+    <div className="flex h-[calc(100vh-140px)] flex-col overflow-hidden lg:h-[calc(100vh-160px)]">
       {/* ── Two-column grid ────────────────────────────────────────────── */}
-      <div className="mt-6 grid min-h-0 flex-1 gap-6 lg:grid-cols-3">
+      <div className="mt-4 grid min-h-0 flex-1 gap-6 pb-4 lg:mt-6 lg:grid-cols-3">
         {/* ── Left: Chat Window (col-span-2) ───────────────────────────── */}
         <div className="flex min-h-0 flex-col rounded-xl bg-white shadow-md lg:col-span-2">
           {/* Chat Header — no manual refresh button */}
