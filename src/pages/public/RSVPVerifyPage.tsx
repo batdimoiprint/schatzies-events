@@ -31,7 +31,10 @@ export function RSVPVerifyPage() {
         setQrCode(data.qrCode || '');
       } catch (err: any) {
         console.error('Verification error:', err);
-        setError(err.response?.data?.message || 'Failed to verify RSVP. The link may be expired or invalid.');
+        setError(
+          err.response?.data?.message ||
+            'Failed to verify RSVP. The link may be expired or invalid.'
+        );
       } finally {
         setLoading(false);
       }

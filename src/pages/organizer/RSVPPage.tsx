@@ -124,7 +124,12 @@ export function RSVPPage() {
           contactNumber: item.contactNumber || item.contact_number || '',
           status: isAttending ? 'Attending' : 'Not Attending',
           isScanned: scanned,
-          isVerified: item.isVerified === true || (item.isVerified && typeof item.isVerified === 'object' && item.isVerified.BOOL === true) || item.isVerified === 'true',
+          isVerified:
+            item.isVerified === true ||
+            (item.isVerified &&
+              typeof item.isVerified === 'object' &&
+              item.isVerified.BOOL === true) ||
+            item.isVerified === 'true',
           qrCode: item.qrCode?.S || item.qrCode || '', // CRITICAL: Include the Base64 data!
           message: item.message || '',
         };
@@ -620,7 +625,11 @@ export function RSVPPage() {
                         <span
                           className={`inline-flex items-center gap-1.5 rounded-full px-3 py-0.5 text-[10px] font-bold ${rsvp.isScanned ? 'bg-blue-100 text-blue-700' : rsvp.status === 'Not Attending' ? 'bg-red-100 text-red-700' : 'bg-yellow-100 text-yellow-700'}`}
                         >
-                          {rsvp.isScanned ? 'Arrived' : rsvp.status === 'Not Attending' ? 'Absent' : 'Pending'}
+                          {rsvp.isScanned
+                            ? 'Arrived'
+                            : rsvp.status === 'Not Attending'
+                              ? 'Absent'
+                              : 'Pending'}
                         </span>
                       </td>
                       <td className="px-4 py-3.5 text-center">

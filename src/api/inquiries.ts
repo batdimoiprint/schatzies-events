@@ -79,7 +79,10 @@ export const getInquiryStatusOptions = (currentStatus?: string): InquiryStatusOp
   // All possible status options
   const allOptions: InquiryStatusOption[] = [
     { value: INQUIRY_STATUS_OPTIONS.PENDING_REVIEW, label: INQUIRY_STATUS_OPTIONS.PENDING_REVIEW },
-    { value: INQUIRY_STATUS_OPTIONS.MEETING_SCHEDULED, label: INQUIRY_STATUS_OPTIONS.MEETING_SCHEDULED },
+    {
+      value: INQUIRY_STATUS_OPTIONS.MEETING_SCHEDULED,
+      label: INQUIRY_STATUS_OPTIONS.MEETING_SCHEDULED,
+    },
     {
       value: INQUIRY_STATUS_OPTIONS.REQUIRES_CLARIFICATION,
       label: INQUIRY_STATUS_OPTIONS.REQUIRES_CLARIFICATION,
@@ -209,6 +212,15 @@ export const checkUserRegistered = async (id: string): Promise<boolean> => {
   } catch (error) {
     console.error('Failed to check user registration:', error);
     return false;
+  }
+};
+
+export const deleteInquiry = async (id: string): Promise<void> => {
+  try {
+    await axiosInstance.delete(`/inquiries/${id}`);
+  } catch (error) {
+    console.error('Failed to delete inquiry:', error);
+    throw error;
   }
 };
 

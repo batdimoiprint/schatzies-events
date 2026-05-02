@@ -74,9 +74,24 @@ function parsePackageInfo(packageStr?: string): { name: string; pax: number } {
 
 const STATUS_CONFIG: Record<string, { label: string; dot: string; bg: string; text: string }> = {
   Pending: { label: 'Planning', dot: 'bg-[#e2b020]', bg: 'bg-[#fff5d3]', text: 'text-[#b68c17]' },
-  Execution: { label: 'Execution', dot: 'bg-[#df1b8b]', bg: 'bg-[#ffe6f1]', text: 'text-[#df1b8b]' },
-  Completed: { label: 'Completed', dot: 'bg-[#8637c3]', bg: 'bg-[#f4e6fc]', text: 'text-[#8637c3]' },
-  Cancelled: { label: 'Cancelled', dot: 'bg-[#c5221f]', bg: 'bg-[#fce8e6]', text: 'text-[#c5221f]' },
+  Execution: {
+    label: 'Execution',
+    dot: 'bg-[#df1b8b]',
+    bg: 'bg-[#ffe6f1]',
+    text: 'text-[#df1b8b]',
+  },
+  Completed: {
+    label: 'Completed',
+    dot: 'bg-[#8637c3]',
+    bg: 'bg-[#f4e6fc]',
+    text: 'text-[#8637c3]',
+  },
+  Cancelled: {
+    label: 'Cancelled',
+    dot: 'bg-[#c5221f]',
+    bg: 'bg-[#fce8e6]',
+    text: 'text-[#c5221f]',
+  },
 };
 
 function getStatusConfig(status: string) {
@@ -124,8 +139,10 @@ export function EventDetailsModal({
   useEffect(() => {
     if (isOpen && event) {
       // Parse start and end dates — prefer raw ISO, fall back to formatted date string
-      const startDateISO = parseISODate(event.startDate) || parseFormattedDate(event.date?.split(' – ')[0]);
-      const endDateISO = parseISODate(event.endDate) || parseFormattedDate(event.date?.split(' – ')[1]);
+      const startDateISO =
+        parseISODate(event.startDate) || parseFormattedDate(event.date?.split(' – ')[0]);
+      const endDateISO =
+        parseISODate(event.endDate) || parseFormattedDate(event.date?.split(' – ')[1]);
 
       // Parse package to extract name and pax
       const { name: packageName, pax: packagePax } = parsePackageInfo(event.package);
@@ -162,7 +179,9 @@ export function EventDetailsModal({
             const lName = String(item.lastName || item.last_name || item.guestlastName || '')
               .replace(/undefined/gi, '')
               .trim();
-            const statusStr = String(item.status || '').trim().toUpperCase();
+            const statusStr = String(item.status || '')
+              .trim()
+              .toUpperCase();
             const isAttending =
               item.isScanned === true ||
               item.isScanned === 'true' ||
@@ -224,7 +243,9 @@ export function EventDetailsModal({
                 Manage event information, RSVP, and assignments
               </p>
             </div>
-            <Badge className={`${statusCfg.bg} ${statusCfg.text} text-xs font-black tracking-wide px-3 py-1.5 shadow-none`}>
+            <Badge
+              className={`${statusCfg.bg} ${statusCfg.text} text-xs font-black tracking-wide px-3 py-1.5 shadow-none`}
+            >
               <span className={`inline-block h-2 w-2 rounded-full mr-1.5 ${statusCfg.dot}`}></span>
               {statusCfg.label}
             </Badge>
@@ -235,28 +256,38 @@ export function EventDetailsModal({
             <div className="rounded-xl border border-[#f1eef5] bg-[#faf9fc] px-3 py-3">
               <div className="flex items-center gap-2 mb-1">
                 <User className="h-3.5 w-3.5 text-[#df1b8b]" />
-                <span className="text-[10px] font-black uppercase tracking-widest text-[#8b839c]">Client</span>
+                <span className="text-[10px] font-black uppercase tracking-widest text-[#8b839c]">
+                  Client
+                </span>
               </div>
               <p className="text-sm font-bold text-[#2e2837] truncate">{event.client}</p>
             </div>
             <div className="rounded-xl border border-[#f1eef5] bg-[#faf9fc] px-3 py-3">
               <div className="flex items-center gap-2 mb-1">
                 <Briefcase className="h-3.5 w-3.5 text-[#8637c3]" />
-                <span className="text-[10px] font-black uppercase tracking-widest text-[#8b839c]">Organizer</span>
+                <span className="text-[10px] font-black uppercase tracking-widest text-[#8b839c]">
+                  Organizer
+                </span>
               </div>
-              <p className="text-sm font-bold text-[#2e2837] truncate">{event.organizerName || 'Unassigned'}</p>
+              <p className="text-sm font-bold text-[#2e2837] truncate">
+                {event.organizerName || 'Unassigned'}
+              </p>
             </div>
             <div className="rounded-xl border border-[#f1eef5] bg-[#faf9fc] px-3 py-3">
               <div className="flex items-center gap-2 mb-1">
                 <CalendarDays className="h-3.5 w-3.5 text-[#e2b020]" />
-                <span className="text-[10px] font-black uppercase tracking-widest text-[#8b839c]">Date</span>
+                <span className="text-[10px] font-black uppercase tracking-widest text-[#8b839c]">
+                  Date
+                </span>
               </div>
               <p className="text-sm font-bold text-[#2e2837] truncate">{event.date}</p>
             </div>
             <div className="rounded-xl border border-[#f1eef5] bg-[#faf9fc] px-3 py-3">
               <div className="flex items-center gap-2 mb-1">
                 <Users className="h-3.5 w-3.5 text-[#29bf4c]" />
-                <span className="text-[10px] font-black uppercase tracking-widest text-[#8b839c]">RSVP</span>
+                <span className="text-[10px] font-black uppercase tracking-widest text-[#8b839c]">
+                  RSVP
+                </span>
               </div>
               <p className="text-sm font-bold text-[#2e2837]">
                 {isLoadingRsvp ? '...' : `${attendingCount} / ${totalRsvp}`}
@@ -419,7 +450,9 @@ export function EventDetailsModal({
                     <>
                       {showDeleteConfirm ? (
                         <div className="flex items-center gap-2">
-                          <span className="text-xs font-bold text-[#c5221f]">Delete this event?</span>
+                          <span className="text-xs font-bold text-[#c5221f]">
+                            Delete this event?
+                          </span>
                           <Button
                             type="button"
                             size="sm"
@@ -516,13 +549,17 @@ export function EventDetailsModal({
             {/* RSVP Stats */}
             <div className="grid grid-cols-2 gap-2 mb-4">
               <div className="rounded-xl border border-[#e1d5eb] bg-[#F6E7FF] p-3 text-center">
-                <p className="text-[10px] font-black uppercase tracking-widest text-[#2e2837] mb-1">Attending</p>
+                <p className="text-[10px] font-black uppercase tracking-widest text-[#2e2837] mb-1">
+                  Attending
+                </p>
                 <p className="text-2xl font-black text-[#8637c3]">
                   {isLoadingRsvp ? '...' : attendingCount}
                 </p>
               </div>
               <div className="rounded-xl border border-[#f1eef5] bg-[#faf9fc] p-3 text-center">
-                <p className="text-[10px] font-black uppercase tracking-widest text-[#2e2837] mb-1">Absent</p>
+                <p className="text-[10px] font-black uppercase tracking-widest text-[#2e2837] mb-1">
+                  Absent
+                </p>
                 <p className="text-2xl font-black text-[#8b839c]">
                   {isLoadingRsvp ? '...' : totalRsvp - attendingCount}
                 </p>
@@ -545,8 +582,19 @@ export function EventDetailsModal({
                       fill="none"
                       viewBox="0 0 24 24"
                     >
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      <circle
+                        className="opacity-25"
+                        cx="12"
+                        cy="12"
+                        r="10"
+                        stroke="currentColor"
+                        strokeWidth="4"
+                      ></circle>
+                      <path
+                        className="opacity-75"
+                        fill="currentColor"
+                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                      ></path>
                     </svg>
                   </div>
                 ) : rsvpGuests.length === 0 ? (

@@ -18,8 +18,11 @@ import {
   updateInquiryStatus,
   getInquiryStatusOptions,
   INQUIRY_STATUS_OPTIONS,
+  deleteInquiry,
 } from '@/api/inquiries';
 import { createUser } from '@/api/users';
+import { useAuth } from '@/hooks/useAuth';
+import { useQueryClient, useMutation } from '@tanstack/react-query';
 
 interface InquiryMeetingDetails {
   entryId?: string;
@@ -107,25 +110,6 @@ function normalizeInquiryStatus(status?: string) {
   return String(status || '').trim();
 }
 
-function buildEventDateTime(dateValue?: string, timeValue?: string) {
-  const normalizedDate = String(dateValue || '').trim();
-  if (!normalizedDate) {
-    return '';
-  }
-
-  if (normalizedDate.includes('T')) {
-    const parsedDate = new Date(normalizedDate);
-    return Number.isNaN(parsedDate.getTime()) ? '' : parsedDate.toISOString();
-  }
-
-  const normalizedTime =
-    String(timeValue || '')
-      .trim()
-      .slice(0, 5) || '00:00';
-  const parsedDate = new Date(`${normalizedDate}T${normalizedTime}:00.000Z`);
-  return Number.isNaN(parsedDate.getTime()) ? '' : parsedDate.toISOString();
-}
-
 export function InquiryDetailsDialog({
   isDialogOpen,
   setIsDialogOpen,
@@ -139,6 +123,8 @@ export function InquiryDetailsDialog({
   const [isUpdatingMeetingOrganizer, setIsUpdatingMeetingOrganizer] = useState(false);
   const [isCreatingAccount, setIsCreatingAccount] = useState(false);
   const [accountCreateError, setAccountCreateError] = useState('');
+  const { user } = useAuth();
+  const queryClient = useQueryClient();
   const [accountCreateSuccess, setAccountCreateSuccess] = useState('');
   const [isAccountRegisteredByInquiry, setIsAccountRegisteredByInquiry] = useState<
     Record<string, boolean>
@@ -154,6 +140,16 @@ export function InquiryDetailsDialog({
   const [statusChangeError, setStatusChangeError] = useState('');
   const [isOrgConfirmOpen, setIsOrgConfirmOpen] = useState(false);
   const [pendingOrganizerId, setPendingOrganizerId] = useState('');
+  const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
+
+  const deleteInquiryMutation = useMutation({
+    mutationFn: (id: string) => deleteInquiry(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['inquiries'] });
+      setIsDialogOpen(false);
+      setIsDeleteConfirmOpen(false);
+    },
+  });
 
   const getInquiryKey = (inquiry?: InquiryRecord | null) =>
     String(inquiry?.id || inquiry?._id || inquiry?.email || '').trim();
@@ -214,9 +210,7 @@ export function InquiryDetailsDialog({
     const meetingDateSource = String(
       selectedInquiry?.meetingDetails?.date || selectedInquiry?.meetingDetails?.startDateKey || ''
     ).trim();
-    const meetingTimeSource = String(
-      selectedInquiry?.meetingDetails?.time || selectedInquiry?.meetingDetails?.startTime || ''
-    ).trim();
+
     const plannedDateSource = String(selectedInquiry.date || '').trim();
     const eventTitle = String(
       selectedInquiry?.title ||
@@ -255,16 +249,9 @@ export function InquiryDetailsDialog({
       await updateInquiryStatus(id, pendingStatus);
 
       if (canCreateApprovedEvent) {
-        const startDate = buildEventDateTime(meetingDateSource, meetingTimeSource);
-        const endDate = buildEventDateTime(plannedDateSource, '00:00');
-
-        if (!startDate) {
-          throw new Error('Unable to build a valid start date from the meeting.');
-        }
-
-        if (!endDate) {
-          throw new Error('Unable to build a valid end date from the inquiry planned date.');
-        }
+        const now = new Date().toISOString();
+        const startDate = now;
+        const endDate = now;
 
         try {
           await createEvent({
@@ -631,10 +618,7 @@ export function InquiryDetailsDialog({
                   <Label className="text-[10px] font-black uppercase text-[#857a98] mb-2 block">
                     Change State
                   </Label>
-                    <Select
-                      value={currentStatusValue}
-                      onValueChange={handleStatusChange}
-                    >
+                  <Select value={currentStatusValue} onValueChange={handleStatusChange}>
                     <SelectTrigger className="w-full h-11 border-[#e5ddee] bg-white rounded-xl font-bold text-[#4e4560]">
                       <SelectValue placeholder="Update status" />
                     </SelectTrigger>
@@ -850,6 +834,18 @@ export function InquiryDetailsDialog({
                   )}
                 </div>
               </section>
+
+              {user?.role === 'ADMIN' && (
+                <div className="mt-6 pt-6 border-t border-[#eee7f4]">
+                  <Button
+                    variant="destructive"
+                    className="w-full font-bold"
+                    onClick={() => setIsDeleteConfirmOpen(true)}
+                  >
+                    Delete Inquiry
+                  </Button>
+                </div>
+              )}
             </div>
           </div>
         )}
@@ -928,6 +924,45 @@ export function InquiryDetailsDialog({
                 className="flex-1 h-11 bg-linear-to-r from-[#2e2837] to-[#5a5368] text-white font-black rounded-xl shadow-md"
               >
                 {isUpdatingMeetingOrganizer ? 'Updating...' : 'Confirm'}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog open={isDeleteConfirmOpen} onOpenChange={setIsDeleteConfirmOpen}>
+        <DialogContent className="sm:max-w-md p-0 overflow-hidden border-none rounded-2xl">
+          <div className="p-6 text-center">
+            <h3 className="text-xl font-black text-[#2e2837] mb-2">Delete Inquiry?</h3>
+            <p className="text-sm font-medium text-[#7a708d] mb-6">
+              Are you sure you want to delete this inquiry? This action cannot be undone.
+            </p>
+            <div className="flex gap-3">
+              <Button
+                variant="outline"
+                onClick={() => setIsDeleteConfirmOpen(false)}
+                disabled={deleteInquiryMutation.isPending}
+                className="flex-1 h-11 border-[#e7dff0] text-[#5a5368] font-bold rounded-xl"
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={() =>
+                  deleteInquiryMutation.mutate(selectedInquiry?.id || selectedInquiry?._id || '')
+                }
+                disabled={deleteInquiryMutation.isPending}
+                variant="destructive"
+                className="flex-1 h-11 font-black rounded-xl shadow-md"
+              >
+                {deleteInquiryMutation.isPending ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Deleting...
+                  </>
+                ) : (
+                  'Yes, Delete'
+                )}
               </Button>
             </div>
           </div>

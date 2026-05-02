@@ -79,7 +79,9 @@ export function RSVPInvitationPage({
           Your <span className="font-bold text-[#df2b80]">MOST TRUSTED</span> team!
         </p>
         <div className="mb-5 w-3/4 h-px bg-gradient-to-r from-transparent via-pink-300 to-transparent" />
-        <p className="mb-3 text-xs sm:text-sm tracking-wide text-gray-600">The {eventTypeLabel} of</p>
+        <p className="mb-3 text-xs sm:text-sm tracking-wide text-gray-600">
+          The {eventTypeLabel} of
+        </p>
         <h2 className="font-serif text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold leading-tight text-pink-600 mb-1">
           {name1}
         </h2>
