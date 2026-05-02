@@ -212,6 +212,15 @@ export const checkUserRegistered = async (id: string): Promise<boolean> => {
   }
 };
 
+export const deleteInquiry = async (id: string): Promise<void> => {
+  try {
+    await axiosInstance.delete(`/inquiries/${id}`);
+  } catch (error) {
+    console.error('Failed to delete inquiry:', error);
+    throw error;
+  }
+};
+
 export const getBookedDates = async (): Promise<string[]> => {
   try {
     const response = await axiosInstance.get('/inquiries/booked-dates');
