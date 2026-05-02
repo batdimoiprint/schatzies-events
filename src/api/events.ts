@@ -227,22 +227,43 @@ export async function getEventNotes(eventId: string): Promise<any[]> {
   }
 }
 
-export async function createEventNote(eventId: string, payload: any): Promise<any> {
+export async function createEventNote(
+  eventId: string,
+  payload: any,
+  file?: File | null
+): Promise<any> {
   const currentNotes = await getEventNotes(eventId);
   const newNote = { ...payload, id: payload.id || `note-${Date.now()}` };
   const updatedNotes = [...currentNotes, newNote];
 
-  // Stringify the array before sending
-  await axiosInstance.put(`/events/${eventId}/notes`, { notes: JSON.stringify(updatedNotes) });
+  // Construct FormData for multer
+  const formData = new FormData();
+  formData.append('notes', JSON.stringify(updatedNotes));
+  if (file) {
+    formData.append('file', file); // Appending the actual file
+  }
+
+  await axiosInstance.put(`/events/${eventId}/notes`, formData);
   return newNote;
 }
 
-export async function updateEventNote(eventId: string, noteId: string, payload: any): Promise<any> {
+export async function updateEventNote(
+  eventId: string,
+  noteId: string,
+  payload: any,
+  file?: File | null
+): Promise<any> {
   const currentNotes = await getEventNotes(eventId);
   const updatedNotes = currentNotes.map((n: any) => (n.id === noteId ? { ...n, ...payload } : n));
 
-  // Stringify the array before sending
-  await axiosInstance.put(`/events/${eventId}/notes`, { notes: JSON.stringify(updatedNotes) });
+  // Construct FormData for multer
+  const formData = new FormData();
+  formData.append('notes', JSON.stringify(updatedNotes));
+  if (file) {
+    formData.append('file', file); // Appending the actual file
+  }
+
+  await axiosInstance.put(`/events/${eventId}/notes`, formData);
   return { ...payload, id: noteId };
 }
 
@@ -250,8 +271,10 @@ export async function deleteEventNote(eventId: string, noteId: string): Promise<
   const currentNotes = await getEventNotes(eventId);
   const filteredNotes = currentNotes.filter((n: any) => n.id !== noteId);
 
-  // Stringify the array before sending
-  await axiosInstance.put(`/events/${eventId}/notes`, { notes: JSON.stringify(filteredNotes) });
+  const formData = new FormData();
+  formData.append('notes', JSON.stringify(filteredNotes));
+
+  await axiosInstance.put(`/events/${eventId}/notes`, formData);
 }
 
 export async function getEventChecklist(eventId: string): Promise<any[]> {
@@ -281,7 +304,20 @@ export async function updateEventChecklistItem(
 }
 
 export async function addEventChecklistItem(eventId: string, label: string): Promise<any> {
-  const response = await axiosInstance.post(`/events/${eventId}/checklist`, { label });
+  // Generate a temporary ID for the frontend to pass to the backend validation
+  const tempId = `chk-${Date.now()}`;
+
+  // Pass the complete object as required by the backend schema
+  const response = await axiosInstance.post(`/events/${eventId}/checklist`, {
+    checklist: [
+      {
+        id: tempId,
+        label: label,
+        done: false,
+      },
+    ],
+  });
+
   return response.data;
 }
 
