@@ -99,7 +99,10 @@ function mapEventStatus(status?: string): EventStatus {
   return 'Pending'; // Acts as Planning
 }
 
-function mapToManagerRow(baseEvent: BackendEvent, userMap: Map<string, string>): EventManagerEvent {
+function mapToManagerRow(
+  baseEvent: BackendEvent,
+  userMap: Map<string, string>
+): EventManagerEvent {
   const rawStartDate = baseEvent.startDate || baseEvent.eventDate || '';
   const rawEndDate = baseEvent.endDate || '';
   const packageName = baseEvent.eventPackageKey || baseEvent.eventPackage || '-';
@@ -112,12 +115,8 @@ function mapToManagerRow(baseEvent: BackendEvent, userMap: Map<string, string>):
       ? `${formattedStart} – ${formattedEnd}`
       : formattedStart;
 
-  const clientName = baseEvent.clientId
-    ? userMap.get(baseEvent.clientId) || baseEvent.clientId
-    : 'Unknown client';
-  const organizerName = baseEvent.headOrganizerId
-    ? userMap.get(baseEvent.headOrganizerId) || ''
-    : '';
+  const clientName = baseEvent.clientId ? userMap.get(baseEvent.clientId) || baseEvent.clientId : 'Unknown client';
+  const organizerName = baseEvent.headOrganizerId ? userMap.get(baseEvent.headOrganizerId) || '' : '';
 
   return {
     id: baseEvent.id,
@@ -129,11 +128,7 @@ function mapToManagerRow(baseEvent: BackendEvent, userMap: Map<string, string>):
     client: clientName,
     type: baseEvent.eventType || '-',
     package: packagePax > 0 ? `${packageName} (${packagePax})` : packageName,
-    venue:
-      baseEvent.venue &&
-      !['', '-', '–', '—', 'n/a', 'tba'].includes(baseEvent.venue.trim().toLowerCase())
-        ? baseEvent.venue
-        : '',
+    venue: (baseEvent.venue && !['', '-', '–', '—', 'n/a', 'tba'].includes(baseEvent.venue.trim().toLowerCase())) ? baseEvent.venue : '',
     rsvp: 0,
     status: mapEventStatus(baseEvent.status),
     clientId: baseEvent.clientId || '',
@@ -206,29 +201,29 @@ export async function getEventAllocation(eventId: string) {
   return response.data.allocation;
 }
 
+// ==========================================
+// NOTES API (With Dynamic JSON/FormData Logic)
+// ==========================================
+
 export async function getEventNotes(eventId: string): Promise<any[]> {
   try {
     const response = await axiosInstance.get(`/events/${eventId}/notes`);
     const rawNotes = response.data?.notes || response.data;
 
-    // If the backend returns a string, parse it.
     if (typeof rawNotes === 'string') {
       try {
         const parsed = JSON.parse(rawNotes);
         return Array.isArray(parsed) ? parsed : [];
       } catch (e) {
-        // If it's a regular string but not JSON, wrap it in our object format
         return [{ id: `note-${Date.now()}`, title: 'Imported Note', body: rawNotes }];
       }
     }
-    // If it's already an array, return it
     return Array.isArray(rawNotes) ? rawNotes : [];
   } catch (error) {
     return [];
   }
 }
 
-// --- APPLIED FIX: FormData for Notes with File Upload ---
 export async function createEventNote(
   eventId: string,
   payload: any,
@@ -238,11 +233,23 @@ export async function createEventNote(
   const newNote = { ...payload, id: payload.id || `note-${Date.now()}` };
   const updatedNotes = [...currentNotes, newNote];
 
-  const formData = new FormData();
-  formData.append('notes', JSON.stringify(updatedNotes));
-  if (file) formData.append('file', file);
+  const isFormData = !!file;
+  let requestData: any;
 
-  const response = await axiosInstance.put(`/events/${eventId}/notes`, formData);
+  if (isFormData) {
+    requestData = new FormData();
+    requestData.append('notes', JSON.stringify(updatedNotes));
+    requestData.append('file', file); // Pa-check sa backend kung 'file' o 'image' ang key
+  } else {
+    requestData = { notes: JSON.stringify(updatedNotes) };
+  }
+
+  const response = await axiosInstance.put(`/events/${eventId}/notes`, requestData, {
+    headers: {
+      'Content-Type': isFormData ? 'multipart/form-data' : 'application/json',
+    },
+  });
+
   return response.data?.notes ? newNote : newNote;
 }
 
@@ -255,11 +262,23 @@ export async function updateEventNote(
   const currentNotes = await getEventNotes(eventId);
   const updatedNotes = currentNotes.map((n: any) => (n.id === noteId ? { ...n, ...payload } : n));
 
-  const formData = new FormData();
-  formData.append('notes', JSON.stringify(updatedNotes));
-  if (file) formData.append('file', file);
+  const isFormData = !!file;
+  let requestData: any;
 
-  await axiosInstance.put(`/events/${eventId}/notes`, formData);
+  if (isFormData) {
+    requestData = new FormData();
+    requestData.append('notes', JSON.stringify(updatedNotes));
+    requestData.append('file', file);
+  } else {
+    requestData = { notes: JSON.stringify(updatedNotes) };
+  }
+
+  await axiosInstance.put(`/events/${eventId}/notes`, requestData, {
+    headers: {
+      'Content-Type': isFormData ? 'multipart/form-data' : 'application/json',
+    },
+  });
+
   return { ...payload, id: noteId };
 }
 
@@ -267,12 +286,21 @@ export async function deleteEventNote(eventId: string, noteId: string): Promise<
   const currentNotes = await getEventNotes(eventId);
   const filteredNotes = currentNotes.filter((n: any) => n.id !== noteId);
 
-  const formData = new FormData();
-  formData.append('notes', JSON.stringify(filteredNotes));
-
-  await axiosInstance.put(`/events/${eventId}/notes`, formData);
+  // Deletion doesn't need file upload, so JSON is fine
+  await axiosInstance.put(
+    `/events/${eventId}/notes`,
+    { notes: JSON.stringify(filteredNotes) },
+    {
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    }
+  );
 }
-// --------------------------------------------------------
+
+// ==========================================
+// CHECKLIST & FLOW API
+// ==========================================
 
 export async function getEventChecklist(eventId: string): Promise<any[]> {
   try {
@@ -300,12 +328,9 @@ export async function updateEventChecklistItem(
   return response.data;
 }
 
-// --- RESTORED FIX: Correct Checklist Payload ---
 export async function addEventChecklistItem(eventId: string, label: string): Promise<any> {
-  // Generate a temporary ID for the frontend to pass to the backend validation
   const tempId = `chk-${Date.now()}`;
 
-  // Pass the complete object as required by the backend schema
   const response = await axiosInstance.post(`/events/${eventId}/checklist`, {
     checklist: [
       {
@@ -318,7 +343,6 @@ export async function addEventChecklistItem(eventId: string, label: string): Pro
 
   return response.data;
 }
-// ------------------------------------------------
 
 export async function deleteEventChecklistItem(eventId: string, itemId: string): Promise<void> {
   await axiosInstance.delete(`/events/${eventId}/checklist/${itemId}`);
@@ -334,21 +358,18 @@ export async function getEventFlow(eventId: string) {
     const response = await axiosInstance.get(`/events/${eventId}/program-flow`);
     let data = response.data;
 
-    // Fallback if backend returns a string instead of parsed JSON
     if (typeof data === 'string') {
       try {
         data = JSON.parse(data);
       } catch (e) {}
     }
 
-    // Direct array
     if (Array.isArray(data)) return data;
 
-    // Wrapped array scenarios
     if (data && typeof data === 'object') {
       if (Array.isArray(data.data)) return data.data;
       if (Array.isArray(data.flow)) return data.flow;
-      if (Array.isArray(data.flows)) return data.flows; // Added this line to catch the backend's key
+      if (Array.isArray(data.flows)) return data.flows;
       if (Array.isArray(data.program_flows)) return data.program_flows;
     }
 
