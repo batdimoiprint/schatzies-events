@@ -49,6 +49,8 @@ import {
   getVendorEntitiesByEventId,
   getVendors,
   updateVendor,
+  assignVendorToEvent,
+  unassignVendorFromEvent,
   getVendorWorkersList,
   getVendorEventHistory,
   createVendorWorker as createVendorWorkerApi,
@@ -968,7 +970,7 @@ export function AdminVendorPoolPage() {
 
             {/* ──── RIGHT COLUMN: Workers & Events (edit mode only) ──── */}
             {dialogMode === 'edit' && editingVendorId && (
-              <VendorSidepanel vendorId={editingVendorId} />
+              <VendorSidepanel vendorId={editingVendorId} availableEvents={events} />
             )}
           </div>
 
@@ -988,7 +990,7 @@ export function AdminVendorPoolPage() {
 
 // ─── SIDE PANEL COMPONENT: Workers + Events ─────────────────────────────────
 
-function VendorSidepanel({ vendorId }: { vendorId: string }) {
+function VendorSidepanel({ vendorId, availableEvents }: { vendorId: string, availableEvents: EventOption[] }) {
   const [workers, setWorkers] = useState<VendorWorker[]>([]);
   const [vendorEvents, setVendorEvents] = useState<VendorEvent[]>([]);
   const [isLoadingWorkers, setIsLoadingWorkers] = useState(false);
@@ -1004,6 +1006,9 @@ function VendorSidepanel({ vendorId }: { vendorId: string }) {
     contactNumber: '',
     jobTitle: '',
   });
+
+  const [isAssigningEvent, setIsAssigningEvent] = useState(false);
+  const [selectedEventToAssign, setSelectedEventToAssign] = useState<string>('');
 
   const loadWorkers = useCallback(async () => {
     setIsLoadingWorkers(true);
@@ -1066,6 +1071,30 @@ function VendorSidepanel({ vendorId }: { vendorId: string }) {
       window.alert('Failed to remove worker.');
     } finally {
       setIsDeletingWorkerId('');
+    }
+  };
+
+  const handleAssignEvent = async () => {
+    if (!selectedEventToAssign) return;
+    setIsAssigningEvent(true);
+    try {
+      await assignVendorToEvent(vendorId, selectedEventToAssign);
+      setSelectedEventToAssign('');
+      await loadEvents(); // Refresh assigned events
+    } catch {
+      window.alert('Failed to assign event.');
+    } finally {
+      setIsAssigningEvent(false);
+    }
+  };
+
+  const handleUnassignEvent = async () => {
+    if (!window.confirm('Unassign this vendor from this event?')) return;
+    try {
+      await unassignVendorFromEvent(vendorId); // Unassigns from current event
+      await loadEvents();
+    } catch {
+      window.alert('Failed to unassign event.');
     }
   };
 
@@ -1195,9 +1224,35 @@ function VendorSidepanel({ vendorId }: { vendorId: string }) {
 
       {/* ──── Assigned Events Section ──── */}
       <div>
-        <h3 className="text-sm font-black uppercase tracking-widest text-[#7c7390] border-b border-[#f1eef5] pb-2 mb-3">
-          Event History ({vendorEvents.length})
-        </h3>
+        <div className="flex items-center justify-between border-b border-[#f1eef5] pb-2 mb-3">
+          <h3 className="text-sm font-black uppercase tracking-widest text-[#7c7390]">
+            Event History ({vendorEvents.length})
+          </h3>
+        </div>
+
+        <div className="mb-3 flex items-center gap-2">
+          <Select value={selectedEventToAssign} onValueChange={setSelectedEventToAssign}>
+            <SelectTrigger className="h-8 flex-1 bg-white text-xs">
+              <SelectValue placeholder="Select event to assign..." />
+            </SelectTrigger>
+            <SelectContent>
+              {availableEvents.map((evt) => (
+                <SelectItem key={evt.id} value={evt.id} className="text-xs">
+                  {evt.title}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Button
+            type="button"
+            size="sm"
+            onClick={() => void handleAssignEvent()}
+            disabled={!selectedEventToAssign || isAssigningEvent}
+            className="h-8 bg-[#8f1fd1] text-white hover:bg-[#7918b3] text-xs font-bold whitespace-nowrap"
+          >
+            {isAssigningEvent ? 'Assigning...' : 'Assign'}
+          </Button>
+        </div>
 
         <div className="max-h-44 overflow-y-auto space-y-2 pr-1 [scrollbar-width:thin]">
           {isLoadingEvents ? (
@@ -1236,17 +1291,27 @@ function VendorSidepanel({ vendorId }: { vendorId: string }) {
                     <p className="text-sm font-bold text-[#2e2837] truncate">{evt.title}</p>
                     <p className="text-[10px] font-semibold text-[#a49db4]">{formattedDate}</p>
                   </div>
-                  <Badge
-                    className={`text-[9px] px-1.5 py-0.5 ${
-                      isCompleted
-                        ? 'bg-[#f4e6fc] text-[#8637c3]'
-                        : evt.status.toLowerCase() === 'execution'
-                          ? 'bg-[#ffe6f1] text-[#df1b8b]'
-                          : 'bg-[#fff5d3] text-[#b68c17]'
-                    }`}
-                  >
-                    {evt.status}
-                  </Badge>
+                  <div className="flex items-center gap-2">
+                    <Badge
+                      className={`text-[9px] px-1.5 py-0.5 ${
+                        isCompleted
+                          ? 'bg-[#f4e6fc] text-[#8637c3]'
+                          : evt.status.toLowerCase() === 'execution'
+                            ? 'bg-[#ffe6f1] text-[#df1b8b]'
+                            : 'bg-[#fff5d3] text-[#b68c17]'
+                      }`}
+                    >
+                      {evt.status}
+                    </Badge>
+                    <button
+                      type="button"
+                      onClick={() => void handleUnassignEvent()}
+                      className="text-[#c5221f] hover:text-[#a31b18] p-1 opacity-60 hover:opacity-100"
+                      title="Unassign Event"
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
                 </div>
               );
             })
