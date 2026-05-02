@@ -3,9 +3,8 @@ import type { AxiosError } from 'axios';
 import { useSearchParams } from 'react-router-dom';
 
 import type { EventData, RSVPResponse } from '@/types/rsvp';
-import axiosInstance from '@/api/axios-instance'; // Added for API calls
+import axiosInstance from '@/api/axios-instance';
 import { downloadQRCode } from '@/lib/qrCodeGenerator';
-import { getEventById } from '@/lib/rsvpStorage';
 import { RSVPInvitationPage } from './RSVPInvitationPage';
 import { RSVPFormPage } from './RSVPFormPage';
 import { RSVPSuccessPage } from './RSVPSuccessPage';
@@ -38,7 +37,7 @@ export function RSVPPage() {
   useEffect(() => {
     const eventIdParam = searchParams.get('eventId');
 
-    // Fetch event details from backend to ensure capacity and existence
+    // Fetch event details from backend
     const fetchEvent = async () => {
       if (!eventIdParam) return;
       try {
@@ -85,12 +84,7 @@ export function RSVPPage() {
           description: eventData.eventType || '',
         });
       } catch (error) {
-        console.error('Error fetching event from API, trying local storage:', error);
-        // Fallback to local storage for demo events like evt-001
-        const localEvent = getEventById(eventIdParam);
-        if (localEvent) {
-          setSelectedEvent(localEvent);
-        }
+        console.error('Error fetching event from API:', error);
       }
     };
 

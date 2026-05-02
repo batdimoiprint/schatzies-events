@@ -7,9 +7,9 @@ import {
   MagnifyingGlass,
   Funnel,
 } from '@phosphor-icons/react';
-import { generateRSVPQRCode, downloadQRCode } from '@/lib/qrCodeGenerator';
+import { downloadQRCode } from '@/lib/qrCodeGenerator';
 import LoadingScreen from '@/components/ui/LoadingScreen';
-import { getRSVPList, scanGuest } from '@/api/rsvp';
+import { getRSVPList, scanGuest, generateEventRsvpQr } from '@/api/rsvp';
 import { getEventManagerEvents } from '@/api/events';
 import type { RSVPResponse } from '@/types/rsvp';
 import { Html5QrcodeScanner } from 'html5-qrcode';
@@ -72,22 +72,31 @@ export function RSVPPage() {
   }, [user?.user_id]); // Only re-run if the logged-in user changes
 
   useEffect(() => {
-    // Load persisted QR code and fetch guests for the specific selected event
+    // Fetch event's RSVP QR code from backend and load guests
     if (selectedEventId) {
       fetchRSVPs(selectedEventId);
 
-      const savedQR = localStorage.getItem(`qr_code_${selectedEventId}`);
-      const savedQRId = localStorage.getItem(`qr_id_${selectedEventId}`);
-      if (savedQR && savedQRId) {
-        setQrCode(savedQR);
-        setCurrentQRId(savedQRId);
-        setState('active');
-      } else {
-        // Reset state if no QR found for this specific event
-        setQrCode('');
-        setCurrentQRId('');
-        setState('idle');
-      }
+      // Check if backend already has a QR code for this event
+      const loadQr = async () => {
+        try {
+          const data = await generateEventRsvpQr(selectedEventId);
+          if (data.qrCode) {
+            setQrCode(data.qrCode);
+            setCurrentQRId(data.s3Key || selectedEventId);
+            setState('active');
+          } else {
+            setQrCode('');
+            setCurrentQRId('');
+            setState('idle');
+          }
+        } catch {
+          // No QR yet — show idle state
+          setQrCode('');
+          setCurrentQRId('');
+          setState('idle');
+        }
+      };
+      loadQr();
     }
   }, [selectedEventId]);
 
@@ -346,13 +355,9 @@ export function RSVPPage() {
     if (!selectedEventId) return;
     setIsLoading(true);
     try {
-      const qrId = `qr-${Date.now()}`;
-      const invitationUrl = `${window.location.origin}/invitation/${selectedEventId}/${qrId}`;
-      const qrDataUrl = await generateRSVPQRCode(invitationUrl, selectedEventId);
-      setQrCode(qrDataUrl);
-      setCurrentQRId(qrId);
-      localStorage.setItem(`qr_code_${selectedEventId}`, qrDataUrl);
-      localStorage.setItem(`qr_id_${selectedEventId}`, qrId);
+      const data = await generateEventRsvpQr(selectedEventId);
+      setQrCode(data.qrCode);
+      setCurrentQRId(data.s3Key || selectedEventId);
       setState('active');
     } catch (error) {
       console.error('Error generating QR code:', error);
@@ -361,9 +366,23 @@ export function RSVPPage() {
     }
   };
 
-  const handleDownloadQR = () => qrCode && downloadQRCode(qrCode, 'wedding-invitation.png');
+  const handleDownloadQR = async () => {
+    if (!qrCode) return;
+    try {
+      // Fetch the S3 presigned URL as a blob for proper download
+      const response = await fetch(qrCode);
+      const blob = await response.blob();
+      const blobUrl = URL.createObjectURL(blob);
+      downloadQRCode(blobUrl, 'rsvp-invitation-qr.png');
+      URL.revokeObjectURL(blobUrl);
+    } catch {
+      // Fallback: direct link download
+      downloadQRCode(qrCode, 'rsvp-invitation-qr.png');
+    }
+  };
   const handleCopyLink = () => {
-    const invitationLink = `${window.location.origin}/invitation/${selectedEventId}/${currentQRId}`;
+    const baseUrl = window.location.origin;
+    const invitationLink = `${baseUrl}/rsvp?eventId=${selectedEventId}`;
     navigator.clipboard.writeText(invitationLink);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);

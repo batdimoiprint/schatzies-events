@@ -72,23 +72,22 @@ export function QrCodePage() {
           const firstEvent = userEvents[0];
           setSelectedEventId((prev) => prev || firstEvent.id);
 
-          // Set initial capacity from summary if available
-          if (firstEvent.pax) setEventPax(Number(firstEvent.pax));
+          if ((firstEvent as any).pax) setEventPax(Number((firstEvent as any).pax));
 
           // Fetch full details to get the most accurate capacity (eventPax)
           try {
             const fullDetails = await getEventById(firstEvent.id);
             const pax =
               fullDetails.eventPax ||
-              fullDetails.event_pax ||
+              (fullDetails as any).event_pax ||
               (fullDetails.package as any)?.pax ||
-              firstEvent.pax ||
+              (firstEvent as any).pax ||
               200;
             if (pax > 0) setEventPax(Number(pax));
           } catch (e) {
             console.error('Error fetching event capacity:', e);
             // Fallback to 200 if we couldn't fetch details but know it's a client event
-            if (!firstEvent.pax) setEventPax(200);
+            if (!(firstEvent as any).pax) setEventPax(200);
           }
         }
       } catch (error) {

@@ -69,10 +69,10 @@ export function ClientDashboardPage() {
 
           // Fetch Organizer if available (check all possible ID fields)
           const orgId =
-            fullEvent.organizer_id ||
-            fullEvent.organizerId ||
+            (fullEvent as any).organizer_id ||
+            (fullEvent as any).organizerId ||
             userEventBase.organizerId ||
-            userEventBase.organizer_id;
+            (userEventBase as any).organizer_id;
           let organizerName = 'Assigned Organizer';
           if (orgId) {
             try {
@@ -112,10 +112,10 @@ export function ClientDashboardPage() {
             fullEvent.package?.name ||
             fullEvent.eventPackage ||
             'Custom Package';
-          const paxCount = fullEvent.eventPax || userEventBase.pax || fullEvent.package?.pax || 0;
-          const costValue = fullEvent.cost || 'TBD';
+          const paxCount = fullEvent.eventPax || (userEventBase as any).pax || (fullEvent as any).package?.pax || 0;
+          const costValue = (fullEvent as any).cost || 'TBD';
           const venueValue =
-            fullEvent.venue || fullEvent.eventLocation || userEventBase.venue || 'Araneta';
+            fullEvent.venue || (fullEvent as any).eventLocation || userEventBase.venue || 'Araneta';
 
           setEventData({
             daysToGo,
