@@ -112,7 +112,11 @@ export function ClientDashboardPage() {
             fullEvent.package?.name ||
             fullEvent.eventPackage ||
             'Custom Package';
-          const paxCount = fullEvent.eventPax || (userEventBase as any).pax || (fullEvent as any).package?.pax || 0;
+          const paxCount =
+            fullEvent.eventPax ||
+            (userEventBase as any).pax ||
+            (fullEvent as any).package?.pax ||
+            0;
           const costValue = (fullEvent as any).cost || 'TBD';
           const venueValue =
             fullEvent.venue || (fullEvent as any).eventLocation || userEventBase.venue || 'Araneta';

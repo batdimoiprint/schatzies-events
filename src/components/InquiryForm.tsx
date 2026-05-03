@@ -553,10 +553,11 @@ export function InquiryForm({ onClose, selectedPackageId, selectedEventType }: I
                                         </svg>
                                       </span>
                                       <span
-                                        className={`text-[0.78rem] leading-snug ${isHighlight
+                                        className={`text-[0.78rem] leading-snug ${
+                                          isHighlight
                                             ? 'font-semibold text-[#e61f83]'
                                             : 'text-[#2d1a3d]'
-                                          }`}
+                                        }`}
                                       >
                                         {text}
                                       </span>

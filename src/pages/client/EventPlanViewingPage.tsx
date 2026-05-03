@@ -5,7 +5,13 @@ import { AllocationResourcesModal } from '@/components/client/AllocationResource
 import { ChecklistMeetingModal } from '@/components/client/ChecklistMeetingModal';
 import { ProgramFlowModal } from '@/components/client/ProgramFlowModal';
 
-import { getEventManagerEvents, getEventById, getEventUser, getEventAllocation, getEventFlow } from '@/api/events';
+import {
+  getEventManagerEvents,
+  getEventById,
+  getEventUser,
+  getEventAllocation,
+  getEventFlow,
+} from '@/api/events';
 import { getCalendarEntries } from '@/api/calendar';
 import { useAuth } from '@/hooks/useAuth';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
@@ -69,7 +75,7 @@ export function EventPlanViewingPage() {
       try {
         setIsLoading(true);
         const events = await getEventManagerEvents();
-        
+
         const userFullName = `${user.firstName || ''} ${user.lastName || ''}`.trim().toLowerCase();
         const userEvents =
           user.role === 'CLIENT'
@@ -85,21 +91,22 @@ export function EventPlanViewingPage() {
 
         if (userEventBase) {
           const fullEvent = await getEventById(userEventBase.id);
-          
+
           const orgId =
             (fullEvent as any).organizer_id ||
             (fullEvent as any).organizerId ||
             userEventBase.organizerId ||
             (userEventBase as any).organizer_id;
-            
+
           let organizerName = 'Assigned Organizer';
           let organizerEmail = 'contact@schatzies.com';
           let organizerContact = '-';
-          
+
           if (orgId) {
             try {
               const org = await getEventUser(orgId);
-              organizerName = `${org.firstName || ''} ${org.lastName || ''}`.trim() || 'Assigned Organizer';
+              organizerName =
+                `${org.firstName || ''} ${org.lastName || ''}`.trim() || 'Assigned Organizer';
               organizerEmail = org.email || 'contact@schatzies.com';
               organizerContact = org.contact_number || org.contactPhone || org.contactNumber || '-';
             } catch (e) {
@@ -108,7 +115,7 @@ export function EventPlanViewingPage() {
           }
 
           const endDateStr = fullEvent.endDate || fullEvent.dateEnd || fullEvent.eventDate || '';
-          
+
           const formattedDate = endDateStr
             ? new Date(endDateStr).toLocaleDateString('en-US', {
                 month: 'long',
@@ -123,8 +130,12 @@ export function EventPlanViewingPage() {
             fullEvent.package?.name ||
             fullEvent.eventPackage ||
             'Custom Package';
-            
-          const paxCount = fullEvent.eventPax || (userEventBase as any).pax || (fullEvent as any).package?.pax || 0;
+
+          const paxCount =
+            fullEvent.eventPax ||
+            (userEventBase as any).pax ||
+            (fullEvent as any).package?.pax ||
+            0;
           const costValue = (fullEvent as any).cost || 'TBD';
 
           // Fetch additional data modules
@@ -132,12 +143,12 @@ export function EventPlanViewingPage() {
             const [allocRes, flowRes, calRes] = await Promise.all([
               getEventAllocation(userEventBase.id).catch(() => null),
               getEventFlow(userEventBase.id).catch(() => []),
-              getCalendarEntries().catch(() => [])
+              getCalendarEntries().catch(() => []),
             ]);
 
             if (isMounted) {
               setAllocation(allocRes);
-              
+
               const formatDisplayTime = (val: any) => {
                 if (!val) return '00:00';
                 return val;
@@ -261,7 +272,9 @@ export function EventPlanViewingPage() {
             </div>
             <div className="text-xs text-white/80 leading-relaxed self-end text-right">
               <p>Organizer Name: {EVENT.organizer}</p>
-              <p>{EVENT.email} | {EVENT.contact}</p>
+              <p>
+                {EVENT.email} | {EVENT.contact}
+              </p>
             </div>
           </div>
         </div>
@@ -332,9 +345,7 @@ export function EventPlanViewingPage() {
                     </p>
                   )}
                   {allocation?.flow_type && (
-                    <p className="font-medium text-[#2d2834]">
-                      Flow Type: {allocation.flow_type}
-                    </p>
+                    <p className="font-medium text-[#2d2834]">Flow Type: {allocation.flow_type}</p>
                   )}
                 </>
               ) : (
@@ -361,7 +372,9 @@ export function EventPlanViewingPage() {
                 <span className="font-medium text-pink-500">• Vendors</span>
                 {allocation?.vendors && allocation.vendors.length > 0 ? (
                   allocation.vendors.map((v: any, i: number) => (
-                    <p key={i} className="pl-3 text-[#2d2834]">{v.name}</p>
+                    <p key={i} className="pl-3 text-[#2d2834]">
+                      {v.name}
+                    </p>
                   ))
                 ) : (
                   <p className="pl-3 italic text-[#8a8697]">None assigned</p>
@@ -371,7 +384,9 @@ export function EventPlanViewingPage() {
                 <span className="font-medium text-orange-400">• Manpower</span>
                 {allocation?.manpower && allocation.manpower.length > 0 ? (
                   allocation.manpower.map((m: any, i: number) => (
-                    <p key={i} className="pl-3 text-[#2d2834]">{m.role}</p>
+                    <p key={i} className="pl-3 text-[#2d2834]">
+                      {m.role}
+                    </p>
                   ))
                 ) : (
                   <p className="pl-3 italic text-[#8a8697]">None assigned</p>
@@ -401,7 +416,8 @@ export function EventPlanViewingPage() {
                     <div key={index} className="pl-3 mb-1">
                       <p className="text-[#2d2834] font-medium">{meeting.title}</p>
                       <p className="text-[#8a8697]">
-                        {meeting.startTime || meeting.time || ''} {meeting.endTime ? `- ${meeting.endTime}` : ''}
+                        {meeting.startTime || meeting.time || ''}{' '}
+                        {meeting.endTime ? `- ${meeting.endTime}` : ''}
                       </p>
                     </div>
                   ))
