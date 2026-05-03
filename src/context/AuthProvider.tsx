@@ -1,8 +1,9 @@
 import { useEffect, useState, useCallback, useRef } from 'react';
 import type { ReactNode } from 'react';
-import { login, verifyToken } from '@/api/auth';
+import { login, verifyToken, logout as logoutApi } from '@/api/auth';
 import { AuthContext } from './AuthContext';
 import type { User, LoginResult } from '@/types/auth';
+import { subscribeToPushNotifications } from '@/lib/pushNotifications';
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
@@ -59,6 +60,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       if (result.user) {
         setUser(result.user);
+        
+        // Subscribe to push notifications after successful login
+        try {
+          await subscribeToPushNotifications();
+          console.log('Push notifications enabled');
+        } catch (pushError) {
+          console.error('Failed to enable push notifications:', pushError);
+          // Don't fail login if push subscription fails
+        }
+        
         return result;
       }
 
@@ -112,12 +123,29 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
+  const handleLogout = useCallback(async () => {
+    setIsLoading(true);
+    try {
+      await logoutApi();
+      setUser(null);
+      localStorage.removeItem('auth_hint');
+    } catch (error) {
+      console.error('Logout error:', error);
+      // Clear user state even if logout API fails
+      setUser(null);
+      localStorage.removeItem('auth_hint');
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
   const value = {
     user,
     isAuthenticated: !!user,
     isLoading,
     error,
     login: handleLogin,
+    logout: handleLogout,
     setAuthenticatedUser: (nextUser: User | null) => {
       setError(null);
       setUser(nextUser);

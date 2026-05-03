@@ -14,7 +14,6 @@ import {
   LogOut,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { logout } from '@/api/auth';
 import { useAuth } from '@/hooks/useAuth';
 
 const adminNavItems = [
@@ -32,7 +31,7 @@ const adminNavItems = [
 
 export default function AdminSidebar() {
   const navigate = useNavigate();
-  const { setAuthenticatedUser } = useAuth();
+  const { logout } = useAuth();
   const [isLoggingOut, setIsLoggingOut] = useState(false);
 
   const handleLogout = async () => {
@@ -41,8 +40,9 @@ export default function AdminSidebar() {
     setIsLoggingOut(true);
     try {
       await logout();
+    } catch (error) {
+      console.error('Logout failed:', error);
     } finally {
-      setAuthenticatedUser(null);
       navigate('/login', { replace: true });
       setIsLoggingOut(false);
     }
