@@ -20,10 +20,6 @@ type StatusSlice = {
   color: string;
 };
 
-function toNonNegativeNumber(value: unknown) {
-  const numericValue = Number(value);
-  return Number.isFinite(numericValue) && numericValue > 0 ? numericValue : 0;
-}
 
 type ListEntry = {
   rank: number;
@@ -422,40 +418,64 @@ export function OrganizerDashboard() {
         const formatMoney = (val: number = 0) => `PHP ${val.toLocaleString('en-US')}`;
         const vendorCount = String(data.activeVendors?.count || 0);
 
-        // FIX: Deep merge kpi and status so that if a value is 0 in kpi,
-        // it falls back to the value in status (which has the correct counts).
+        // Helper to pick the largest valid number between kpi and status
+        const getBestValue = (kpiVal: any, statusVal: any) => {
+          const numKpi = Number(kpiVal) || 0;
+          const numStatus = Number(statusVal) || 0;
+          return Math.max(numKpi, numStatus, 0); // Always returns a non-negative number
+        };
+
         const weekData = {
-          completed: data.kpi?.week?.completed || data.status?.week?.completed || 0,
-          completedRevenue:
-            data.kpi?.week?.completedRevenue || data.status?.week?.completedRevenue || 0,
-          completedProfit:
-            data.kpi?.week?.completedProfit || data.status?.week?.completedProfit || 0,
+          completed: getBestValue(data.kpi?.week?.completed, data.status?.week?.completed),
+          completedRevenue: getBestValue(
+            data.kpi?.week?.completedRevenue,
+            data.status?.week?.completedRevenue
+          ),
+          completedProfit: getBestValue(
+            data.kpi?.week?.completedProfit,
+            data.status?.week?.completedProfit
+          ),
         };
 
         const monthData = {
-          completed: data.kpi?.month?.completed || data.status?.month?.completed || 0,
-          completedRevenue:
-            data.kpi?.month?.completedRevenue || data.status?.month?.completedRevenue || 0,
-          completedProfit:
-            data.kpi?.month?.completedProfit || data.status?.month?.completedProfit || 0,
+          completed: getBestValue(data.kpi?.month?.completed, data.status?.month?.completed),
+          execution: getBestValue(data.kpi?.month?.execution, data.status?.month?.execution),
+          planning: getBestValue(data.kpi?.month?.planning, data.status?.month?.planning),
+          completedRevenue: getBestValue(
+            data.kpi?.month?.completedRevenue,
+            data.status?.month?.completedRevenue
+          ),
+          completedProfit: getBestValue(
+            data.kpi?.month?.completedProfit,
+            data.status?.month?.completedProfit
+          ),
         };
 
         const yearData = {
-          completed: data.kpi?.year?.completed || data.status?.year?.completed || 0,
-          completedRevenue:
-            data.kpi?.year?.completedRevenue || data.status?.year?.completedRevenue || 0,
-          completedProfit:
-            data.kpi?.year?.completedProfit || data.status?.year?.completedProfit || 0,
+          completed: getBestValue(data.kpi?.year?.completed, data.status?.year?.completed),
+          completedRevenue: getBestValue(
+            data.kpi?.year?.completedRevenue,
+            data.status?.year?.completedRevenue
+          ),
+          completedProfit: getBestValue(
+            data.kpi?.year?.completedProfit,
+            data.status?.year?.completedProfit
+          ),
         };
 
         const semiData = {
-          completed: data.kpi?.semiAnnual?.completed || data.status?.semiAnnual?.completed || 0,
-          completedRevenue:
-            data.kpi?.semiAnnual?.completedRevenue ||
-            data.status?.semiAnnual?.completedRevenue ||
-            0,
-          completedProfit:
-            data.kpi?.semiAnnual?.completedProfit || data.status?.semiAnnual?.completedProfit || 0,
+          completed: getBestValue(
+            data.kpi?.semiAnnual?.completed,
+            data.status?.semiAnnual?.completed
+          ),
+          completedRevenue: getBestValue(
+            data.kpi?.semiAnnual?.completedRevenue,
+            data.status?.semiAnnual?.completedRevenue
+          ),
+          completedProfit: getBestValue(
+            data.kpi?.semiAnnual?.completedProfit,
+            data.status?.semiAnnual?.completedProfit
+          ),
         };
 
         setKpiData((prev) => ({
@@ -514,34 +534,28 @@ export function OrganizerDashboard() {
           setSemiAnnualData(mappedSemiAnnual);
         }
 
-        // 2. Map Monthly Status Donut Chart
-        if (data.status && data.status.month) {
-          const monthData = data.status.month;
-          const completedCount = toNonNegativeNumber(monthData.completed);
-          const executionCount = toNonNegativeNumber(monthData.execution);
-          const planningCount = toNonNegativeNumber(monthData.planning);
-          const total = completedCount + executionCount + planningCount || 1;
-          setMonthlyStatusData([
-            {
-              label: 'Completed',
-              value: Math.round((completedCount / total) * 100) || 0,
-              eventCount: completedCount,
-              color: '#b964ef',
-            },
-            {
-              label: 'Execution',
-              value: Math.round((executionCount / total) * 100) || 0,
-              eventCount: executionCount,
-              color: '#ef79b3',
-            },
-            {
-              label: 'Planning',
-              value: Math.round((planningCount / total) * 100) || 0,
-              eventCount: planningCount,
-              color: '#f4d03f',
-            },
-          ]);
-        }
+        // 2. Map Monthly Status Donut Chart (Using the sanitized monthData)
+        const total = monthData.completed + monthData.execution + monthData.planning || 1;
+        setMonthlyStatusData([
+          {
+            label: 'Completed',
+            value: Math.round((monthData.completed / total) * 100) || 0,
+            eventCount: monthData.completed,
+            color: '#b964ef',
+          },
+          {
+            label: 'Execution',
+            value: Math.round((monthData.execution / total) * 100) || 0,
+            eventCount: monthData.execution,
+            color: '#ef79b3',
+          },
+          {
+            label: 'Planning',
+            value: Math.round((monthData.planning / total) * 100) || 0,
+            eventCount: monthData.planning,
+            color: '#f4d03f',
+          },
+        ]);
 
         // 3. Map Upcoming Events List
         if (data.upcomingEvents && Array.isArray(data.upcomingEvents)) {
