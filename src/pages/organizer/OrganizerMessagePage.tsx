@@ -305,9 +305,7 @@ export function OrganizerMessagePage() {
 
   /* ── event details for active conversation ──────────────────────────── */
   const eventId = activeConv?.eventId;
-  const {
-    data: eventDetails,
-  } = useQuery({
+  const { data: eventDetails } = useQuery({
     queryKey: ['eventDetails', eventId],
     queryFn: () => getEventById(eventId!),
     enabled: !!eventId && !eventId.startsWith('INQUIRY#'),
@@ -360,7 +358,7 @@ export function OrganizerMessagePage() {
               </p>
             </div>
           ) : filteredConversations.length > 0 ? (
-          filteredConversations.map((conv) => {
+            filteredConversations.map((conv) => {
               const peer = getClientParticipant(conv, user?.user_id);
               const initial = peer?.initial || getInitialFromName(peer?.name);
               const color = getAvatarColor(conv.id);
@@ -370,10 +368,11 @@ export function OrganizerMessagePage() {
                 <div
                   key={conv.id}
                   onClick={() => handleSelectConversation(conv.id)}
-                  className={`flex cursor-pointer items-center gap-3 border-b border-[#f0edf4] p-4 transition-colors ${activeConvId === conv.id
+                  className={`flex cursor-pointer items-center gap-3 border-b border-[#f0edf4] p-4 transition-colors ${
+                    activeConvId === conv.id
                       ? 'border-l-4 border-l-[#df2b80] bg-[#fafafa]'
                       : 'border-l-4 border-l-transparent hover:bg-[#fafafa]'
-                    }`}
+                  }`}
                 >
                   {/* Avatar with profile pic support */}
                   <div className="relative shrink-0">
@@ -396,14 +395,18 @@ export function OrganizerMessagePage() {
                   </div>
                   <div className="min-w-0 flex-1">
                     <div className="mb-1 flex items-center justify-between">
-                      <h4 className={`truncate text-sm font-bold ${recent && activeConvId !== conv.id ? 'text-[#df2b80]' : 'text-[#2d2834]'}`}>
+                      <h4
+                        className={`truncate text-sm font-bold ${recent && activeConvId !== conv.id ? 'text-[#df2b80]' : 'text-[#2d2834]'}`}
+                      >
                         {peer?.name || 'Client'}
                       </h4>
                       <span className="ml-2 whitespace-nowrap text-[10px] font-semibold text-[#a49cb3]">
                         {formatRelativeTime(conv.lastMessageAt || conv.updatedAt)}
                       </span>
                     </div>
-                    <p className={`truncate text-xs font-medium ${recent && activeConvId !== conv.id ? 'text-[#5c546a]' : 'text-[#696373]'}`}>
+                    <p
+                      className={`truncate text-xs font-medium ${recent && activeConvId !== conv.id ? 'text-[#5c546a]' : 'text-[#696373]'}`}
+                    >
                       {conv.lastMessage || 'No messages yet'}
                     </p>
                   </div>
@@ -497,9 +500,13 @@ export function OrganizerMessagePage() {
               <div className="border-b border-[#f0edf4] bg-gradient-to-r from-[#fdf2f8] to-[#f8f5fe] px-4 lg:px-6 py-3">
                 <div className="flex items-center gap-2 mb-1.5">
                   <Sparkles className="size-3.5 text-[#df2b80]" />
-                  <span className="text-[10px] font-black uppercase tracking-widest text-[#8f1fd1]">Event Details</span>
+                  <span className="text-[10px] font-black uppercase tracking-widest text-[#8f1fd1]">
+                    Event Details
+                  </span>
                 </div>
-                <h4 className="text-sm font-bold text-[#2d2834] mb-1.5">{eventDetails.title || 'Untitled Event'}</h4>
+                <h4 className="text-sm font-bold text-[#2d2834] mb-1.5">
+                  {eventDetails.title || 'Untitled Event'}
+                </h4>
                 <div className="flex flex-wrap gap-x-4 gap-y-1 text-[11px] font-semibold text-[#5c546a]">
                   {eventDetails.eventType && (
                     <span className="flex items-center gap-1">
@@ -522,7 +529,11 @@ export function OrganizerMessagePage() {
                   {eventDetails.eventDate && (
                     <span className="flex items-center gap-1">
                       <CalendarDays className="size-3 text-[#a49cb3]" />
-                      {new Date(eventDetails.eventDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                      {new Date(eventDetails.eventDate).toLocaleDateString('en-US', {
+                        month: 'short',
+                        day: 'numeric',
+                        year: 'numeric',
+                      })}
                     </span>
                   )}
                   {eventDetails.venue && (
@@ -567,16 +578,18 @@ export function OrganizerMessagePage() {
                       >
                         <div className="flex max-w-[70%] flex-col gap-1">
                           <div
-                            className={`rounded-2xl px-4 py-3 text-sm ${outgoing
+                            className={`rounded-2xl px-4 py-3 text-sm ${
+                              outgoing
                                 ? 'rounded-br-none bg-gradient-to-r from-[#df2b80] to-[#8f1fd1] text-white'
                                 : 'rounded-bl-none border border-[#e2deea] bg-white text-[#4f4a56] shadow-sm'
-                              }`}
+                            }`}
                           >
                             {msg.body}
                           </div>
                           <span
-                            className={`text-[10px] font-semibold text-[#a49cb3] ${outgoing ? 'text-right' : 'text-left'
-                              }`}
+                            className={`text-[10px] font-semibold text-[#a49cb3] ${
+                              outgoing ? 'text-right' : 'text-left'
+                            }`}
                           >
                             {formatMessageTime(msg.createdAt)}
                           </span>
@@ -707,7 +720,9 @@ export function OrganizerMessagePage() {
                 </p>
               </div>
               <div className="rounded-xl border border-[#e2deea] bg-[#fafafa] p-4">
-                <p className="mb-2 text-sm font-bold text-[#2d2834]">{eventDetails.title || 'Untitled Event'}</p>
+                <p className="mb-2 text-sm font-bold text-[#2d2834]">
+                  {eventDetails.title || 'Untitled Event'}
+                </p>
                 <div className="flex flex-col gap-2 text-xs font-semibold text-[#5c546a]">
                   {eventDetails.eventType && (
                     <span className="flex items-center gap-2">
@@ -730,7 +745,11 @@ export function OrganizerMessagePage() {
                   {eventDetails.eventDate && (
                     <span className="flex items-center gap-2">
                       <CalendarDays className="size-3.5 text-[#a49cb3]" />
-                      {new Date(eventDetails.eventDate).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
+                      {new Date(eventDetails.eventDate).toLocaleDateString('en-US', {
+                        month: 'long',
+                        day: 'numeric',
+                        year: 'numeric',
+                      })}
                     </span>
                   )}
                   {eventDetails.venue && (
@@ -757,7 +776,8 @@ export function OrganizerMessagePage() {
               <h3 className="text-lg font-bold text-[#2d2834]">Delete Conversation</h3>
             </div>
             <p className="mb-6 text-sm font-medium text-[#696373]">
-              Are you sure you want to delete this conversation? This action cannot be undone and will permanently remove all messages.
+              Are you sure you want to delete this conversation? This action cannot be undone and
+              will permanently remove all messages.
             </p>
             <div className="flex justify-end gap-3">
               <button

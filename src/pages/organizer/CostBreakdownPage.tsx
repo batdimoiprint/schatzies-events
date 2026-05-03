@@ -340,13 +340,22 @@ export function CostBreakdownPage() {
   const fallbackAdditionalCharges = toOptionalNumber(
     selectedEvent?.additionalCharges ?? selectedEvent?.additionalCharge
   );
-  
+
   const resolvedEventPax = apiEventPax ?? fallbackEventPax ?? 0;
-  const computedPackagePrice = calculatePackagePrice(selectedEventPackage, selectedEventType, resolvedEventPax);
-  
+  const computedPackagePrice = calculatePackagePrice(
+    selectedEventPackage,
+    selectedEventType,
+    resolvedEventPax
+  );
+
   const rawApiPrice = apiPackagePrice ?? fallbackPackagePrice ?? 0;
-  const resolvedPackagePrice = computedPackagePrice > 0 ? computedPackagePrice : (rawApiPrice > 50000 ? rawApiPrice : rawApiPrice * resolvedEventPax);
-  
+  const resolvedPackagePrice =
+    computedPackagePrice > 0
+      ? computedPackagePrice
+      : rawApiPrice > 50000
+        ? rawApiPrice
+        : rawApiPrice * resolvedEventPax;
+
   const baseAdditionalCharges = apiAdditionalCharges ?? fallbackAdditionalCharges ?? 0;
   const displayedAdditionalCharges = baseAdditionalCharges + additionalItemsTotal;
   const packagePayment = resolvedPackagePrice;

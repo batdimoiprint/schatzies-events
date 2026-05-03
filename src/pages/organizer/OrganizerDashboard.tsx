@@ -417,32 +417,74 @@ export function OrganizerDashboard() {
       const data = await fetchDashboardSummary();
 
       if (data) {
-        if (data.kpi) {
-          const formatMoney = (val: number = 0) => `PHP ${val.toLocaleString('en-US')}`;
-          const vendorCount = String(data.activeVendors?.count || 0);
+        // FIX: Extract data dynamically, checking `kpi` first, then falling back to `status`.
+        // This ensures values show up even if the backend misses sending the `kpi` wrapper.
+        const formatMoney = (val: number = 0) => `PHP ${val.toLocaleString('en-US')}`;
+        const vendorCount = String(data.activeVendors?.count || 0);
 
-          setKpiData((prev) => ({
-            ...prev,
-            Weekly: [
-              { ...prev.Weekly[0], value: String(data.kpi?.week?.completed || 0) },
-              { ...prev.Weekly[1], value: formatMoney(data.kpi?.week?.completedRevenue || 0) },
-              { ...prev.Weekly[2], value: vendorCount },
-              { ...prev.Weekly[3], value: formatMoney(data.kpi?.week?.completedProfit || 0) },
-            ],
-            Monthly: [
-              { ...prev.Monthly[0], value: String(data.kpi.month?.completed || 0) },
-              { ...prev.Monthly[1], value: formatMoney(data.kpi.month?.completedRevenue || 0) },
-              { ...prev.Monthly[2], value: vendorCount },
-              { ...prev.Monthly[3], value: formatMoney(data.kpi.month?.completedProfit || 0) },
-            ],
-            Annually: [
-              { ...prev.Annually[0], value: String(data.kpi.year?.completed || 0) },
-              { ...prev.Annually[1], value: formatMoney(data.kpi.year?.completedRevenue || 0) },
-              { ...prev.Annually[2], value: vendorCount },
-              { ...prev.Annually[3], value: formatMoney(data.kpi.year?.completedProfit || 0) },
-            ],
-          }));
-        }
+        // FIX: Deep merge kpi and status so that if a value is 0 in kpi,
+        // it falls back to the value in status (which has the correct counts).
+        const weekData = {
+          completed: data.kpi?.week?.completed || data.status?.week?.completed || 0,
+          completedRevenue:
+            data.kpi?.week?.completedRevenue || data.status?.week?.completedRevenue || 0,
+          completedProfit:
+            data.kpi?.week?.completedProfit || data.status?.week?.completedProfit || 0,
+        };
+
+        const monthData = {
+          completed: data.kpi?.month?.completed || data.status?.month?.completed || 0,
+          completedRevenue:
+            data.kpi?.month?.completedRevenue || data.status?.month?.completedRevenue || 0,
+          completedProfit:
+            data.kpi?.month?.completedProfit || data.status?.month?.completedProfit || 0,
+        };
+
+        const yearData = {
+          completed: data.kpi?.year?.completed || data.status?.year?.completed || 0,
+          completedRevenue:
+            data.kpi?.year?.completedRevenue || data.status?.year?.completedRevenue || 0,
+          completedProfit:
+            data.kpi?.year?.completedProfit || data.status?.year?.completedProfit || 0,
+        };
+
+        const semiData = {
+          completed: data.kpi?.semiAnnual?.completed || data.status?.semiAnnual?.completed || 0,
+          completedRevenue:
+            data.kpi?.semiAnnual?.completedRevenue ||
+            data.status?.semiAnnual?.completedRevenue ||
+            0,
+          completedProfit:
+            data.kpi?.semiAnnual?.completedProfit || data.status?.semiAnnual?.completedProfit || 0,
+        };
+
+        setKpiData((prev) => ({
+          ...prev,
+          Weekly: [
+            { ...prev.Weekly[0], value: String(weekData.completed) },
+            { ...prev.Weekly[1], value: formatMoney(weekData.completedRevenue) },
+            { ...prev.Weekly[2], value: vendorCount },
+            { ...prev.Weekly[3], value: formatMoney(weekData.completedProfit) },
+          ],
+          Monthly: [
+            { ...prev.Monthly[0], value: String(monthData.completed) },
+            { ...prev.Monthly[1], value: formatMoney(monthData.completedRevenue) },
+            { ...prev.Monthly[2], value: vendorCount },
+            { ...prev.Monthly[3], value: formatMoney(monthData.completedProfit) },
+          ],
+          'Semi-Annually': [
+            { ...prev['Semi-Annually'][0], value: String(semiData.completed) },
+            { ...prev['Semi-Annually'][1], value: formatMoney(semiData.completedRevenue) },
+            { ...prev['Semi-Annually'][2], value: vendorCount },
+            { ...prev['Semi-Annually'][3], value: formatMoney(semiData.completedProfit) },
+          ],
+          Annually: [
+            { ...prev.Annually[0], value: String(yearData.completed) },
+            { ...prev.Annually[1], value: formatMoney(yearData.completedRevenue) },
+            { ...prev.Annually[2], value: vendorCount },
+            { ...prev.Annually[3], value: formatMoney(yearData.completedProfit) },
+          ],
+        }));
 
         // 1. Map Semi-Annual Graph
         if (data.semiAnnual && data.semiAnnual.monthlyGraph) {
