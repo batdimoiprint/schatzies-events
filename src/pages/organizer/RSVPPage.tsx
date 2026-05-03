@@ -52,7 +52,7 @@ export function RSVPPage() {
         // Filter events: Clients only see their own, Admins/Organizers see everything
         const userEvents =
           user?.role === 'CLIENT' ? data.filter((e: any) => e.clientId === user.user_id) : data;
-        
+
         setEvents(userEvents);
 
         if (userEvents.length > 0) {
@@ -432,7 +432,6 @@ export function RSVPPage() {
     },
   ];
 
-
   const activeEventsList = events.filter((e) => {
     if (!eventsSearchQuery.trim()) return true;
     const q = eventsSearchQuery.toLowerCase();
@@ -472,10 +471,11 @@ export function RSVPPage() {
               <div
                 key={evt.id}
                 onClick={() => setSelectedEventId(evt.id)}
-                className={`flex cursor-pointer items-center gap-3 border-b border-[#f0edf4] p-4 transition-colors ${selectedEventId === evt.id
+                className={`flex cursor-pointer items-center gap-3 border-b border-[#f0edf4] p-4 transition-colors ${
+                  selectedEventId === evt.id
                     ? 'border-l-4 border-l-[#df2b80] bg-[#fafafa]'
                     : 'border-l-4 border-l-transparent hover:bg-[#fafafa]'
-                  }`}
+                }`}
               >
                 <div className="min-w-0 flex-1">
                   <h4 className="truncate text-sm font-bold text-[#2d2834]">
@@ -528,249 +528,253 @@ export function RSVPPage() {
               {isEventsLoading ? (
                 <div className="flex flex-col items-center">
                   <div className="size-10 animate-spin rounded-full border-4 border-[#df2b80] border-t-transparent" />
-                  <p className="mt-4 text-sm font-semibold text-[#696373]">Checking for events...</p>
-            </div>
-          ) : !selectedEventId ? (
-            <div className="flex flex-col items-center max-w-sm">
-              <div className="mb-4 rounded-full bg-pink-50 p-4 text-[#df2b80]">
-                <PlusCircle weight="bold" size={48} />
-              </div>
-              <h3 className="text-xl font-bold text-[#2d2834]">No Events Found</h3>
-              <p className="mt-2 text-sm text-[#696373]">
-                You need to have an active event to generate an RSVP QR code. Please create or
-                select an event first!
-              </p>
-            </div>
-          ) : (
-            <button
-              onClick={generateQRCode}
-              disabled={isLoading}
-              className="flex items-center gap-2.5 rounded-xl bg-white px-8 py-4 text-lg font-bold text-[#df2b80] shadow-xl hover:shadow-2xl hover:-translate-y-1 active:scale-95 disabled:opacity-50 transition-all duration-300"
-            >
-              <PlusCircle weight="bold" size={24} /> Create QR Code
-            </button>
-          )}
-        </div>
-      )}
-
-      {state === 'active' && activeTab === 'overview' && (
-        <div className="rounded-xl border border-gray-100 bg-white p-6 sm:p-8 shadow-sm">
-          <div className="grid grid-cols-1 gap-6 sm:gap-10 lg:grid-cols-[auto_1fr]">
-            <div className="flex flex-col items-center rounded-2xl bg-white p-6 shadow-lg border border-gray-100">
-              <p className="text-base font-bold text-[#df2b80]">Schatzies Events</p>
-              {qrCode && (
-                <div className="mt-4 rounded-lg bg-white p-4 shadow-inner border border-gray-50">
-                  <img src={qrCode} alt="Generated QR Code" className="w-48 h-48" />
+                  <p className="mt-4 text-sm font-semibold text-[#696373]">
+                    Checking for events...
+                  </p>
                 </div>
-              )}
-              <p className="mt-5 text-sm font-extrabold uppercase tracking-wide text-[#2d2834]">
-                Share QR to Invite Guest!
-              </p>
-              <p className="mt-1 text-xs text-[#696373]">
-                QR CODE ID: <span className="font-semibold">{currentQRId.substring(3, 13)}</span>
-              </p>
-              <span className="mt-2 inline-block rounded-full bg-green-100 px-3 py-0.5 text-xs font-bold text-green-800">
-                Active Invitation Link
-              </span>
-              <div className="mt-5 flex flex-col sm:flex-row gap-3 w-full">
-                <button
-                  onClick={handleDownloadQR}
-                  className="flex w-full sm:w-auto items-center justify-center gap-1.5 rounded-lg border border-gray-200 bg-white px-4 py-3 text-xs font-semibold text-[#df2b80] shadow-sm hover:bg-gray-50"
-                >
-                  <Download weight="bold" size={14} /> Download QR
-                </button>
-                <button
-                  onClick={handleCopyLink}
-                  className="flex w-full sm:w-auto items-center justify-center gap-1.5 rounded-lg border border-gray-200 bg-white px-4 py-3 text-xs font-semibold text-[#df2b80] shadow-sm hover:bg-gray-50"
-                >
-                  <LinkIcon weight="bold" size={14} /> {copied ? 'Copied!' : 'Copy Link'}
-                </button>
-              </div>
-            </div>
-
-            <div className="flex flex-col">
-              <h3 className="pb-2 text-lg font-extrabold text-[#2d2834] border-b border-black">
-                Attendance Breakdown
-              </h3>
-              <div className="mt-5 rounded-xl border border-gray-100 bg-white p-5 shadow-md">
-                <div className="flex items-start justify-between">
-                  <div>
-                    <p className="text-sm font-bold text-[#2d2834]">Live Response Analytics</p>
-                    <p className="text-[11px] text-[#696373]">
-                      A visual representation of your current guest status.
-                    </p>
+              ) : !selectedEventId ? (
+                <div className="flex flex-col items-center max-w-sm">
+                  <div className="mb-4 rounded-full bg-pink-50 p-4 text-[#df2b80]">
+                    <PlusCircle weight="bold" size={48} />
                   </div>
-                  <ChartBar weight="fill" size={18} className="text-[#696373]" />
+                  <h3 className="text-xl font-bold text-[#2d2834]">No Events Found</h3>
+                  <p className="mt-2 text-sm text-[#696373]">
+                    You need to have an active event to generate an RSVP QR code. Please create or
+                    select an event first!
+                  </p>
                 </div>
-                <div className="mt-5 flex flex-col gap-4">
-                  {stats.map(({ label, pct, count, bar, text }) => (
-                    <div key={label} className="flex items-center gap-3">
-                      <span className="w-20 shrink-0 text-xs font-semibold text-[#696373]">
-                        {label}
-                      </span>
-                      <div className="flex-1 h-6 rounded bg-gray-100 overflow-hidden">
-                        <div
-                          className={`h-full rounded transition-all duration-1000 ${bar}`}
-                          style={{ width: pct }}
-                        />
+              ) : (
+                <button
+                  onClick={generateQRCode}
+                  disabled={isLoading}
+                  className="flex items-center gap-2.5 rounded-xl bg-white px-8 py-4 text-lg font-bold text-[#df2b80] shadow-xl hover:shadow-2xl hover:-translate-y-1 active:scale-95 disabled:opacity-50 transition-all duration-300"
+                >
+                  <PlusCircle weight="bold" size={24} /> Create QR Code
+                </button>
+              )}
+            </div>
+          )}
+
+          {state === 'active' && activeTab === 'overview' && (
+            <div className="rounded-xl border border-gray-100 bg-white p-6 sm:p-8 shadow-sm">
+              <div className="grid grid-cols-1 gap-6 sm:gap-10 lg:grid-cols-[auto_1fr]">
+                <div className="flex flex-col items-center rounded-2xl bg-white p-6 shadow-lg border border-gray-100">
+                  <p className="text-base font-bold text-[#df2b80]">Schatzies Events</p>
+                  {qrCode && (
+                    <div className="mt-4 rounded-lg bg-white p-4 shadow-inner border border-gray-50">
+                      <img src={qrCode} alt="Generated QR Code" className="w-48 h-48" />
+                    </div>
+                  )}
+                  <p className="mt-5 text-sm font-extrabold uppercase tracking-wide text-[#2d2834]">
+                    Share QR to Invite Guest!
+                  </p>
+                  <p className="mt-1 text-xs text-[#696373]">
+                    QR CODE ID:{' '}
+                    <span className="font-semibold">{currentQRId.substring(3, 13)}</span>
+                  </p>
+                  <span className="mt-2 inline-block rounded-full bg-green-100 px-3 py-0.5 text-xs font-bold text-green-800">
+                    Active Invitation Link
+                  </span>
+                  <div className="mt-5 flex flex-col sm:flex-row gap-3 w-full">
+                    <button
+                      onClick={handleDownloadQR}
+                      className="flex w-full sm:w-auto items-center justify-center gap-1.5 rounded-lg border border-gray-200 bg-white px-4 py-3 text-xs font-semibold text-[#df2b80] shadow-sm hover:bg-gray-50"
+                    >
+                      <Download weight="bold" size={14} /> Download QR
+                    </button>
+                    <button
+                      onClick={handleCopyLink}
+                      className="flex w-full sm:w-auto items-center justify-center gap-1.5 rounded-lg border border-gray-200 bg-white px-4 py-3 text-xs font-semibold text-[#df2b80] shadow-sm hover:bg-gray-50"
+                    >
+                      <LinkIcon weight="bold" size={14} /> {copied ? 'Copied!' : 'Copy Link'}
+                    </button>
+                  </div>
+                </div>
+
+                <div className="flex flex-col">
+                  <h3 className="pb-2 text-lg font-extrabold text-[#2d2834] border-b border-black">
+                    Attendance Breakdown
+                  </h3>
+                  <div className="mt-5 rounded-xl border border-gray-100 bg-white p-5 shadow-md">
+                    <div className="flex items-start justify-between">
+                      <div>
+                        <p className="text-sm font-bold text-[#2d2834]">Live Response Analytics</p>
+                        <p className="text-[11px] text-[#696373]">
+                          A visual representation of your current guest status.
+                        </p>
                       </div>
-                      <span className={`w-10 shrink-0 text-right text-xs font-bold ${text}`}>
-                        {count}
+                      <ChartBar weight="fill" size={18} className="text-[#696373]" />
+                    </div>
+                    <div className="mt-5 flex flex-col gap-4">
+                      {stats.map(({ label, pct, count, bar, text }) => (
+                        <div key={label} className="flex items-center gap-3">
+                          <span className="w-20 shrink-0 text-xs font-semibold text-[#696373]">
+                            {label}
+                          </span>
+                          <div className="flex-1 h-6 rounded bg-gray-100 overflow-hidden">
+                            <div
+                              className={`h-full rounded transition-all duration-1000 ${bar}`}
+                              style={{ width: pct }}
+                            />
+                          </div>
+                          <span className={`w-10 shrink-0 text-right text-xs font-bold ${text}`}>
+                            {count}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                  <div className="mt-6 flex justify-between items-center text-xs text-[#696373]">
+                    <div className="flex gap-4">
+                      <span>
+                        Capacity: <strong>150</strong>
+                      </span>
+                      <span>
+                        Arrived: <strong className="text-blue-600">{arrivedCount}</strong>
                       </span>
                     </div>
-                  ))}
+                    <span>
+                      Total Responses: <strong>{totalRSVPs}/150</strong>
+                    </span>
+                  </div>
                 </div>
-              </div>
-              <div className="mt-6 flex justify-between items-center text-xs text-[#696373]">
-                <div className="flex gap-4">
-                  <span>
-                    Capacity: <strong>150</strong>
-                  </span>
-                  <span>
-                    Arrived: <strong className="text-blue-600">{arrivedCount}</strong>
-                  </span>
-                </div>
-                <span>
-                  Total Responses: <strong>{totalRSVPs}/150</strong>
-                </span>
               </div>
             </div>
-          </div>
-        </div>
-      )}
+          )}
 
-      {state === 'active' && activeTab === 'guest-list' && (
-        <div className="animate-[fadeIn_0.3s_ease-out] rounded-xl bg-white shadow-md border border-gray-100">
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between border-b border-gray-100 px-5 py-4 sm:px-6 gap-4">
-            <div>
-              <h3 className="text-base font-bold text-[#2d2834]">Guest List Responses</h3>
-              <p className="mt-0.5 text-xs text-[#696373]">Track who's coming to your event</p>
-            </div>
-            <div className="flex flex-col md:flex-row items-center gap-3 w-full md:w-auto">
-              <div className="relative w-full md:w-[250px]">
-                <MagnifyingGlass className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-[#b2acbf]" />
-                <input
-                  type="text"
-                  placeholder="Search name or contact..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full rounded-lg border border-gray-200 bg-gray-50 py-3 pl-9 pr-4 text-xs text-[#4f4a56] outline-none focus:border-[#df2b80] focus:bg-white"
-                />
-              </div>
-              <div className="relative w-full md:w-auto">
-                <Funnel className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-[#b2acbf]" />
-                <select
-                  value={statusFilter}
-                  onChange={(e) => setStatusFilter(e.target.value)}
-                  className="w-full appearance-none rounded-lg border border-gray-200 bg-gray-50 py-3 pl-9 pr-8 text-xs font-medium text-[#4f4a56] outline-none focus:border-[#df2b80] focus:bg-white"
-                >
-                  <option value="All">All Status</option>
-                  <option value="Attending">Attending</option>
-                  <option value="Not Attending">Not Attending</option>
-                  <option value="Arrived">Arrived</option>
-                </select>
-              </div>
-            </div>
-          </div>
-          <div className="overflow-x-auto px-4 pb-4">
-            <table className="mt-2 w-full min-w-[700px] text-sm">
-              <thead>
-                <tr className="border-b border-gray-100 text-left text-xs font-semibold uppercase tracking-wider text-[#696373]">
-                  <th className="px-4 py-3 font-semibold">#</th>
-                  <th className="px-4 py-3 font-semibold">Guest Name</th>
-                  <th className="px-4 py-3 font-semibold">Contact</th>
-                  <th className="px-4 py-3 font-semibold">Arrival Status</th>
-                  <th className="px-4 py-3 text-center font-semibold">RSVP Status</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredRsvps.length === 0 ? (
-                  <tr>
-                    <td colSpan={5} className="py-10 text-center text-[#696373] italic">
-                      No guests found matching your criteria.
-                    </td>
-                  </tr>
-                ) : (
-                  filteredRsvps.map((rsvp, i) => (
-                    <tr
-                      key={rsvp.id}
-                      className="border-b border-gray-50 bg-white transition-all duration-200 hover:bg-pink-50/50"
-                      style={{ animation: `slideUp 0.35s ease-out ${i * 0.04}s both` }}
+          {state === 'active' && activeTab === 'guest-list' && (
+            <div className="animate-[fadeIn_0.3s_ease-out] rounded-xl bg-white shadow-md border border-gray-100">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between border-b border-gray-100 px-5 py-4 sm:px-6 gap-4">
+                <div>
+                  <h3 className="text-base font-bold text-[#2d2834]">Guest List Responses</h3>
+                  <p className="mt-0.5 text-xs text-[#696373]">Track who's coming to your event</p>
+                </div>
+                <div className="flex flex-col md:flex-row items-center gap-3 w-full md:w-auto">
+                  <div className="relative w-full md:w-[250px]">
+                    <MagnifyingGlass className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-[#b2acbf]" />
+                    <input
+                      type="text"
+                      placeholder="Search name or contact..."
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      className="w-full rounded-lg border border-gray-200 bg-gray-50 py-3 pl-9 pr-4 text-xs text-[#4f4a56] outline-none focus:border-[#df2b80] focus:bg-white"
+                    />
+                  </div>
+                  <div className="relative w-full md:w-auto">
+                    <Funnel className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-[#b2acbf]" />
+                    <select
+                      value={statusFilter}
+                      onChange={(e) => setStatusFilter(e.target.value)}
+                      className="w-full appearance-none rounded-lg border border-gray-200 bg-gray-50 py-3 pl-9 pr-8 text-xs font-medium text-[#4f4a56] outline-none focus:border-[#df2b80] focus:bg-white"
                     >
-                      <td className="px-4 py-3.5 text-xs font-medium text-[#696373]">{i + 1}</td>
-                      <td className="px-4 py-3.5">
-                        <div className="flex items-center gap-2.5">
-                          <div className="flex size-8 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-pink-400 to-purple-500 text-xs font-bold text-white">
-                            {rsvp.firstName.charAt(0)}
-                          </div>
-                          <span className="font-medium text-[#2d2834]">{`${rsvp.firstName} ${rsvp.middleName ? rsvp.middleName + ' ' : ''}${rsvp.lastName}`}</span>
-                        </div>
-                      </td>
-                      <td className="px-4 py-3.5 text-[#696373]">{rsvp.contactNumber}</td>
-                      <td className="px-4 py-3.5">
-                        <span
-                          className={`inline-flex items-center gap-1.5 rounded-full px-3 py-0.5 text-[10px] font-bold ${rsvp.isScanned ? 'bg-blue-100 text-blue-700' : rsvp.status === 'Not Attending' ? 'bg-red-100 text-red-700' : 'bg-yellow-100 text-yellow-700'}`}
-                        >
-                          {rsvp.isScanned
-                            ? 'Arrived'
-                            : rsvp.status === 'Not Attending'
-                              ? 'Absent'
-                              : 'Pending'}
-                        </span>
-                      </td>
-                      <td className="px-4 py-3.5 text-center">
-                        <span
-                          className={`inline-flex items-center gap-1.5 rounded-full px-3.5 py-1 text-xs font-semibold ${rsvp.status === 'Attending' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-600'}`}
-                        >
-                          <span
-                            className={`inline-block size-1.5 rounded-full ${rsvp.status === 'Attending' ? 'bg-green-500' : 'bg-red-500'}`}
-                          />{' '}
-                          {rsvp.status}
-                        </span>
-                      </td>
+                      <option value="All">All Status</option>
+                      <option value="Attending">Attending</option>
+                      <option value="Not Attending">Not Attending</option>
+                      <option value="Arrived">Arrived</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+              <div className="overflow-x-auto px-4 pb-4">
+                <table className="mt-2 w-full min-w-[700px] text-sm">
+                  <thead>
+                    <tr className="border-b border-gray-100 text-left text-xs font-semibold uppercase tracking-wider text-[#696373]">
+                      <th className="px-4 py-3 font-semibold">#</th>
+                      <th className="px-4 py-3 font-semibold">Guest Name</th>
+                      <th className="px-4 py-3 font-semibold">Contact</th>
+                      <th className="px-4 py-3 font-semibold">Arrival Status</th>
+                      <th className="px-4 py-3 text-center font-semibold">RSVP Status</th>
                     </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      )}
+                  </thead>
+                  <tbody>
+                    {filteredRsvps.length === 0 ? (
+                      <tr>
+                        <td colSpan={5} className="py-10 text-center text-[#696373] italic">
+                          No guests found matching your criteria.
+                        </td>
+                      </tr>
+                    ) : (
+                      filteredRsvps.map((rsvp, i) => (
+                        <tr
+                          key={rsvp.id}
+                          className="border-b border-gray-50 bg-white transition-all duration-200 hover:bg-pink-50/50"
+                          style={{ animation: `slideUp 0.35s ease-out ${i * 0.04}s both` }}
+                        >
+                          <td className="px-4 py-3.5 text-xs font-medium text-[#696373]">
+                            {i + 1}
+                          </td>
+                          <td className="px-4 py-3.5">
+                            <div className="flex items-center gap-2.5">
+                              <div className="flex size-8 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-pink-400 to-purple-500 text-xs font-bold text-white">
+                                {rsvp.firstName.charAt(0)}
+                              </div>
+                              <span className="font-medium text-[#2d2834]">{`${rsvp.firstName} ${rsvp.middleName ? rsvp.middleName + ' ' : ''}${rsvp.lastName}`}</span>
+                            </div>
+                          </td>
+                          <td className="px-4 py-3.5 text-[#696373]">{rsvp.contactNumber}</td>
+                          <td className="px-4 py-3.5">
+                            <span
+                              className={`inline-flex items-center gap-1.5 rounded-full px-3 py-0.5 text-[10px] font-bold ${rsvp.isScanned ? 'bg-blue-100 text-blue-700' : rsvp.status === 'Not Attending' ? 'bg-red-100 text-red-700' : 'bg-yellow-100 text-yellow-700'}`}
+                            >
+                              {rsvp.isScanned
+                                ? 'Arrived'
+                                : rsvp.status === 'Not Attending'
+                                  ? 'Absent'
+                                  : 'Pending'}
+                            </span>
+                          </td>
+                          <td className="px-4 py-3.5 text-center">
+                            <span
+                              className={`inline-flex items-center gap-1.5 rounded-full px-3.5 py-1 text-xs font-semibold ${rsvp.status === 'Attending' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-600'}`}
+                            >
+                              <span
+                                className={`inline-block size-1.5 rounded-full ${rsvp.status === 'Attending' ? 'bg-green-500' : 'bg-red-500'}`}
+                              />{' '}
+                              {rsvp.status}
+                            </span>
+                          </td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
 
-      {state === 'active' && activeTab === 'scanner' && (
-        <div className="animate-[fadeIn_0.3s_ease-out] rounded-xl bg-white p-8 shadow-md border border-gray-100">
-          <div className="mx-auto max-w-md">
-            <h3 className="mb-4 text-center text-lg font-bold text-[#2d2834]">
-              Scan Guest QR Code
-            </h3>
-            <div
-              id="reader"
-              className="overflow-hidden rounded-xl border-2 border-dashed border-gray-200 bg-gray-50 shadow-inner"
-            ></div>
-            {scanResult && (
-              <div
-                className={`mt-6 rounded-lg p-4 text-center animate-in fade-in zoom-in duration-300 border ${scanResult.type === 'success' ? 'bg-green-100 text-green-800 border-green-200' : scanResult.type === 'warning' ? 'bg-yellow-100 text-yellow-800 border-yellow-200' : 'bg-red-100 text-red-800 border-red-200'}`}
-              >
-                <p className="text-sm font-bold">{scanResult.message}</p>
-                {scanResult.guest && (
-                  <p className="mt-1 text-xs font-medium text-gray-700">
-                    Guest: {scanResult.guest.firstName} {scanResult.guest.lastName}
+          {state === 'active' && activeTab === 'scanner' && (
+            <div className="animate-[fadeIn_0.3s_ease-out] rounded-xl bg-white p-8 shadow-md border border-gray-100">
+              <div className="mx-auto max-w-md">
+                <h3 className="mb-4 text-center text-lg font-bold text-[#2d2834]">
+                  Scan Guest QR Code
+                </h3>
+                <div
+                  id="reader"
+                  className="overflow-hidden rounded-xl border-2 border-dashed border-gray-200 bg-gray-50 shadow-inner"
+                ></div>
+                {scanResult && (
+                  <div
+                    className={`mt-6 rounded-lg p-4 text-center animate-in fade-in zoom-in duration-300 border ${scanResult.type === 'success' ? 'bg-green-100 text-green-800 border-green-200' : scanResult.type === 'warning' ? 'bg-yellow-100 text-yellow-800 border-yellow-200' : 'bg-red-100 text-red-800 border-red-200'}`}
+                  >
+                    <p className="text-sm font-bold">{scanResult.message}</p>
+                    {scanResult.guest && (
+                      <p className="mt-1 text-xs font-medium text-gray-700">
+                        Guest: {scanResult.guest.firstName} {scanResult.guest.lastName}
+                      </p>
+                    )}
+                    <p className="mt-2 text-[10px] opacity-60">Resetting in 3 seconds...</p>
+                  </div>
+                )}
+                {!scanResult && (
+                  <p className="mt-6 text-center text-xs text-[#696373]">
+                    Position the QR code within the frame to scan.
                   </p>
                 )}
-                <p className="mt-2 text-[10px] opacity-60">Resetting in 3 seconds...</p>
               </div>
-            )}
-            {!scanResult && (
-              <p className="mt-6 text-center text-xs text-[#696373]">
-                Position the QR code within the frame to scan.
-              </p>
-            )}
-          </div>
+            </div>
+          )}
         </div>
-      )}
 
-        </div>
-        
         <style>{`
           @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
           @keyframes slideUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }

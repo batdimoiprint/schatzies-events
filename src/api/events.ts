@@ -99,10 +99,7 @@ function mapEventStatus(status?: string): EventStatus {
   return 'Pending'; // Acts as Planning
 }
 
-function mapToManagerRow(
-  baseEvent: BackendEvent,
-  userMap: Map<string, string>
-): EventManagerEvent {
+function mapToManagerRow(baseEvent: BackendEvent, userMap: Map<string, string>): EventManagerEvent {
   const rawStartDate = baseEvent.startDate || baseEvent.eventDate || '';
   const rawEndDate = baseEvent.endDate || '';
   const packageName = baseEvent.eventPackageKey || baseEvent.eventPackage || '-';
@@ -115,8 +112,12 @@ function mapToManagerRow(
       ? `${formattedStart} – ${formattedEnd}`
       : formattedStart;
 
-  const clientName = baseEvent.clientId ? userMap.get(baseEvent.clientId) || baseEvent.clientId : 'Unknown client';
-  const organizerName = baseEvent.headOrganizerId ? userMap.get(baseEvent.headOrganizerId) || '' : '';
+  const clientName = baseEvent.clientId
+    ? userMap.get(baseEvent.clientId) || baseEvent.clientId
+    : 'Unknown client';
+  const organizerName = baseEvent.headOrganizerId
+    ? userMap.get(baseEvent.headOrganizerId) || ''
+    : '';
 
   return {
     id: baseEvent.id,
@@ -128,7 +129,11 @@ function mapToManagerRow(
     client: clientName,
     type: baseEvent.eventType || '-',
     package: packagePax > 0 ? `${packageName} (${packagePax})` : packageName,
-    venue: (baseEvent.venue && !['', '-', '–', '—', 'n/a', 'tba'].includes(baseEvent.venue.trim().toLowerCase())) ? baseEvent.venue : '',
+    venue:
+      baseEvent.venue &&
+      !['', '-', '–', '—', 'n/a', 'tba'].includes(baseEvent.venue.trim().toLowerCase())
+        ? baseEvent.venue
+        : '',
     rsvp: 0,
     status: mapEventStatus(baseEvent.status),
     clientId: baseEvent.clientId || '',
