@@ -1,8 +1,20 @@
+import { useState } from 'react';
+import { PolicyModal } from '@/components/PolicyModal';
+import { PrivacyPolicyContent } from '@/components/policies/PrivacyPolicyContent';
+import { TermsOfServiceContent } from '@/components/policies/TermsOfServiceContent';
+import { CookiePolicyContent } from '@/components/policies/CookiePolicyContent';
+
 interface FooterProps {
   showScrollTop?: boolean;
+  onCookiePolicyOpen?: () => void;
+  cookiePolicyOpen?: boolean;
+  onCookiePolicyClose?: () => void;
 }
 
-const Footer = ({ showScrollTop = true }: FooterProps) => {
+const Footer = ({ showScrollTop = true, onCookiePolicyOpen, cookiePolicyOpen = false, onCookiePolicyClose }: FooterProps) => {
+  const [privacyOpen, setPrivacyOpen] = useState(false);
+  const [termsOpen, setTermsOpen] = useState(false);
+
   const scrollToTop = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
@@ -19,9 +31,9 @@ const Footer = ({ showScrollTop = true }: FooterProps) => {
             <img
               src="/Pictures/business-logo.png"
               alt="Schatzies Events logo"
-              className="h-16 w-auto lg:h-20"
+              className="h-14 sm:h-16 lg:h-20 w-auto"
             />
-            <p className="text-sm text-[#3d2052] leading-relaxed">
+            <p className="text-xs sm:text-sm text-[#3d2052] leading-relaxed">
               Creating unforgettable moments and turning your dream events into reality with
               precision, passion, and perfection.
             </p>
@@ -29,28 +41,33 @@ const Footer = ({ showScrollTop = true }: FooterProps) => {
 
           {/* Contact Info */}
           <div>
-            <h4 className="font-heading text-lg font-bold text-[#1a1225] mb-4">Contact Us</h4>
-            <ul className="space-y-2 text-sm text-[#3d2052]">
+            <h4 className="font-heading text-base sm:text-lg font-bold text-[#1a1225] mb-4">Contact Us</h4>
+            <ul className="space-y-2 text-xs sm:text-sm text-[#3d2052]">
               <li className="flex items-start gap-2">
-                <span>📍</span>
-                <span>Metro Manila, Philippines</span>
-              </li>
-              <li className="flex items-center gap-2">
-                <span>📞</span>
+                <span className="mt-0.5 flex-shrink-0">📍</span>
                 <a
-                  href="#"
-                  onClick={(event) => event.preventDefault()}
-                  className="hover:text-[#e61f83] transition-colors"
+                  href="https://www.google.com/maps?q=27+Novaliches+Mendoza+Village+Project+8+Quezon+City"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="hover:text-[#e61f83] transition-colors break-words"
                 >
-                  +63 933 380 7868/ 917 502 3538
+                  27 Novaliches Mendoza Village Project 8 Quezon City
                 </a>
               </li>
               <li className="flex items-center gap-2">
-                <span>✉️</span>
+                <span className="flex-shrink-0">📞</span>
                 <a
-                  href="#"
-                  onClick={(event) => event.preventDefault()}
+                  href="tel:+639333807868"
                   className="hover:text-[#e61f83] transition-colors"
+                >
+                  +63 933 380 7868 / 917 502 3538
+                </a>
+              </li>
+              <li className="flex items-center gap-2">
+                <span className="flex-shrink-0">✉️</span>
+                <a
+                  href="mailto:schatziesevents@gmail.com"
+                  className="hover:text-[#e61f83] transition-colors break-words"
                 >
                   schatziesevents@gmail.com
                 </a>
@@ -60,8 +77,8 @@ const Footer = ({ showScrollTop = true }: FooterProps) => {
 
           {/* Social Links */}
           <div>
-            <h4 className="font-heading text-lg font-bold text-[#1a1225] mb-4">Follow Us</h4>
-            <div className="flex gap-3">
+            <h4 className="font-heading text-base sm:text-lg font-bold text-[#1a1225] mb-4">Follow Us</h4>
+            <div className="flex gap-3 sm:gap-4">
               <a
                 href="https://www.facebook.com/debutandweddingpackage"
                 target="_blank"
@@ -92,23 +109,29 @@ const Footer = ({ showScrollTop = true }: FooterProps) => {
         <div className="my-8 h-px bg-gradient-to-r from-transparent via-[#c2649b]/50 to-transparent" />
 
         {/* Copyright */}
-        <div className="flex flex-col items-center justify-between gap-4 text-center text-sm text-[#3d2052] md:flex-row">
-          <p>© {currentYear} Schatzies Events Management. All rights reserved.</p>
-          <div className="flex gap-4">
-            <a
-              href="#"
-              onClick={(event) => event.preventDefault()}
-              className="hover:text-[#e61f83] transition-colors"
+        <div className="flex flex-col items-center justify-between gap-4 text-center text-xs sm:text-sm text-[#3d2052] md:flex-row">
+          <p className="order-2 md:order-1">© {currentYear} Schatzies Events Management. All rights reserved.</p>
+          <div className="order-1 md:order-2 flex flex-wrap gap-3 sm:gap-4 justify-center">
+            <button
+              onClick={() => setPrivacyOpen(true)}
+              className="hover:text-[#e61f83] transition-colors font-medium whitespace-nowrap"
             >
               Privacy Policy
-            </a>
-            <a
-              href="#"
-              onClick={(event) => event.preventDefault()}
-              className="hover:text-[#e61f83] transition-colors"
+            </button>
+            <span className="hidden sm:inline text-[#3d2052]/30">•</span>
+            <button
+              onClick={() => setTermsOpen(true)}
+              className="hover:text-[#e61f83] transition-colors font-medium whitespace-nowrap"
             >
               Terms of Service
-            </a>
+            </button>
+            <span className="hidden sm:inline text-[#3d2052]/30">•</span>
+            <button
+              onClick={() => onCookiePolicyOpen?.()}
+              className="hover:text-[#e61f83] transition-colors font-medium whitespace-nowrap"
+            >
+              Cookie Policy
+            </button>
           </div>
         </div>
       </div>
@@ -135,6 +158,31 @@ const Footer = ({ showScrollTop = true }: FooterProps) => {
           </svg>
         </button>
       )}
+
+      {/* Policy Modals */}
+      <PolicyModal
+        isOpen={privacyOpen}
+        onClose={() => setPrivacyOpen(false)}
+        title="Privacy Policy"
+      >
+        <PrivacyPolicyContent />
+      </PolicyModal>
+
+      <PolicyModal
+        isOpen={termsOpen}
+        onClose={() => setTermsOpen(false)}
+        title="Terms of Service"
+      >
+        <TermsOfServiceContent />
+      </PolicyModal>
+
+      <PolicyModal
+        isOpen={cookiePolicyOpen}
+        onClose={() => onCookiePolicyClose?.()}
+        title="Cookie Policy"
+      >
+        <CookiePolicyContent />
+      </PolicyModal>
     </footer>
   );
 };

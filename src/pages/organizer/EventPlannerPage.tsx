@@ -2737,7 +2737,7 @@ export function EventPlannerPage() {
                 </button>
               </header>
               <div className="space-y-3">
-                {eventVendors.length > 0 ? (
+                {Array.isArray(eventVendors) && eventVendors.length > 0 ? (
                   eventVendors.map((vendor) => (
                     <article
                       key={vendor.id}
@@ -3276,7 +3276,7 @@ export function EventPlannerPage() {
             <div className="space-y-3">
               {vendorPool.length > 0 ? (
                 vendorPool.map((vendor) => {
-                  const isAssigned = eventVendors.some((ev) => ev.id === vendor.id);
+                  const isAssigned = Array.isArray(eventVendors) && eventVendors.some((ev) => ev.id === vendor.id);
                   return (
                     <article
                       key={vendor.id}

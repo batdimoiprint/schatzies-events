@@ -1,4 +1,5 @@
-import { useRef, useState } from 'react';
+import { useRef, useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { ChevronLeft, ChevronRight, ChevronUp, Sparkles, Flower2, Users } from 'lucide-react';
 import { PackageCard } from '@/components/PackageCard';
@@ -82,6 +83,17 @@ export default function EventPackagesPage() {
   } | null>(null);
   const weddingRef = useRef<HTMLDivElement>(null);
   const debutRef = useRef<HTMLDivElement>(null);
+  const [searchParams] = useSearchParams();
+
+  // Auto-scroll to section based on query parameter
+  useEffect(() => {
+    const type = searchParams.get('type');
+    if (type === 'wedding') {
+      setTimeout(() => weddingRef.current?.scrollIntoView({ behavior: 'smooth' }), 100);
+    } else if (type === 'debut') {
+      setTimeout(() => debutRef.current?.scrollIntoView({ behavior: 'smooth' }), 100);
+    }
+  }, [searchParams]);
 
   const scrollToWedding = () => {
     weddingRef.current?.scrollIntoView({ behavior: 'smooth' });

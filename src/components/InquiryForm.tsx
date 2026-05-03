@@ -22,7 +22,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 
-const eventTypes = ['Wedding', 'Debut'];
+const eventTypes = ['Wedding', 'Debut', 'Others'];
 
 const defaultPaxOptions = ['100', '150', '200'];
 const bloomsPaxOptions = ['50', '100', '150', '200'];
@@ -76,6 +76,7 @@ interface IInquiryForm {
   contactNumber: string;
   eventDate: string;
   eventType: string;
+  customEventType?: string;
   eventPackage: string;
   eventPax: string;
   message: string;
@@ -135,6 +136,7 @@ export function InquiryForm({ onClose, selectedPackageId, selectedEventType }: I
       contactNumber: '',
       eventDate: '',
       eventType: selectedEventType || '',
+      customEventType: '',
       eventPackage: selectedPackage?.name || '',
       eventPax: '',
       message: '',
@@ -908,7 +910,10 @@ export function InquiryForm({ onClose, selectedPackageId, selectedEventType }: I
 
                                       // 2. Must not be in bookedDates
                                       const dateStr = date.toISOString().split('T')[0];
-                                      return bookedDates.some((d) => d.split('T')[0] === dateStr);
+                                      return (
+                                        Array.isArray(bookedDates) &&
+                                        bookedDates.some((d) => d.split('T')[0] === dateStr)
+                                      );
                                     }}
                                     initialFocus
                                   />
@@ -939,24 +944,44 @@ export function InquiryForm({ onClose, selectedPackageId, selectedEventType }: I
                           />
                         </Field>
                       </div>
+                      {watchedEventType === 'Others' && (
+                        <div className="grid grid-cols-1 gap-2.5">
+                          <Field required error={errors.customEventType?.message}>
+                            <Input
+                              type="text"
+                              placeholder="Please specify your event type"
+                              {...register('customEventType', {
+                                required: 'Please specify your event type',
+                                minLength: { value: 2, message: 'Minimum 2 characters' },
+                                maxLength: { value: 100, message: 'Maximum 100 characters' },
+                              })}
+                              className={fieldBase}
+                            />
+                          </Field>
+                        </div>
+                      )}
                       <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2">
                         <Field error={errors.eventPackage?.message}>
                           <div className="flex items-center gap-1.5">
                             <Controller
                               control={control}
                               name="eventPackage"
-                              rules={{ required: 'Event package is required' }}
+                              rules={{
+                                required: watchedEventType !== 'Others' ? 'Event package is required' : false,
+                              }}
                               render={({ field }) => (
                                 <Select
                                   onValueChange={field.onChange}
                                   value={field.value}
-                                  disabled={!watchedEventType}
+                                  disabled={!watchedEventType || watchedEventType === 'Others'}
                                 >
                                   <SelectTrigger className={fieldBase}>
                                     <SelectValue
                                       placeholder={
                                         !watchedEventType
                                           ? 'Select Event Type First'
+                                          : watchedEventType === 'Others'
+                                          ? 'Not needed for custom events'
                                           : 'Event Package'
                                       }
                                     />
@@ -977,18 +1002,22 @@ export function InquiryForm({ onClose, selectedPackageId, selectedEventType }: I
                           <Controller
                             control={control}
                             name="eventPax"
-                            rules={{ required: 'Number of pax is required' }}
+                            rules={{
+                              required: watchedEventType !== 'Others' ? 'Number of pax is required' : false,
+                            }}
                             render={({ field }) => (
                               <Select
                                 onValueChange={field.onChange}
                                 value={field.value}
-                                disabled={!watchedEventPackage}
+                                disabled={!watchedEventPackage || watchedEventType === 'Others'}
                               >
                                 <SelectTrigger className={fieldBase}>
                                   <SelectValue
                                     placeholder={
                                       !watchedEventPackage
                                         ? 'Select Event Package First'
+                                        : watchedEventType === 'Others'
+                                        ? 'Not needed for custom events'
                                         : 'Event Pax'
                                     }
                                   />
