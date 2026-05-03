@@ -990,7 +990,13 @@ export function AdminVendorPoolPage() {
 
 // ─── SIDE PANEL COMPONENT: Workers + Events ─────────────────────────────────
 
-function VendorSidepanel({ vendorId, availableEvents }: { vendorId: string, availableEvents: EventOption[] }) {
+function VendorSidepanel({
+  vendorId,
+  availableEvents,
+}: {
+  vendorId: string;
+  availableEvents: EventOption[];
+}) {
   const [workers, setWorkers] = useState<VendorWorker[]>([]);
   const [vendorEvents, setVendorEvents] = useState<VendorEvent[]>([]);
   const [isLoadingWorkers, setIsLoadingWorkers] = useState(false);

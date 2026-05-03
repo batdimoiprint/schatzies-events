@@ -45,7 +45,14 @@ import {
   getEventById,
 } from '@/api/events';
 import { getCalendarEntries } from '@/api/calendar';
-import { getVendorsByEventId, getVendors, assignVendorToEvent, unassignVendorFromEvent, type EventManagerVendor, type Vendor } from '@/api/vendors';
+import {
+  getVendorsByEventId,
+  getVendors,
+  assignVendorToEvent,
+  unassignVendorFromEvent,
+  type EventManagerVendor,
+  type Vendor,
+} from '@/api/vendors';
 
 type PlannerTab = 'overview' | 'task' | 'notes' | 'flow' | 'checklist' | 'vendors';
 
@@ -1255,7 +1262,7 @@ export function EventPlannerPage() {
     setIsAssigningVendor(true);
     try {
       const allVendors = await getVendors();
-      setVendorPool(allVendors.filter(v => normalizeStatus(v.status) === 'active'));
+      setVendorPool(allVendors.filter((v) => normalizeStatus(v.status) === 'active'));
       setIsAssignVendorModalOpen(true);
     } catch (error) {
       console.error('Failed to load vendors pool:', error);
@@ -3251,9 +3258,7 @@ export function EventPlannerPage() {
           <DialogTitle className="sr-only">Assign Vendor</DialogTitle>
           <header className="flex items-center justify-between border-b border-[#eee9f2] bg-white px-5 py-4">
             <div>
-              <h3 className="text-lg font-black tracking-tight text-[#1f1f21]">
-                Assign Vendor
-              </h3>
+              <h3 className="text-lg font-black tracking-tight text-[#1f1f21]">Assign Vendor</h3>
               <p className="text-[11px] font-semibold text-[#8b84a0]">
                 Select a vendor from the active pool
               </p>

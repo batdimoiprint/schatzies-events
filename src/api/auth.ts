@@ -60,6 +60,17 @@ export const verifyToken = async (): Promise<User | null> => {
 };
 
 export const logout = async (): Promise<void> => {
+  // Unsubscribe from push notifications before logging out
+  try {
+    const { unsubscribeFromPushNotifications } = await import('@/lib/pushNotifications');
+    await unsubscribeFromPushNotifications();
+    console.log('Unsubscribed from push notifications');
+  } catch (pushError) {
+    console.error('Failed to unsubscribe from push notifications:', pushError);
+    // Continue with logout even if unsubscribe fails
+  }
+
+  // Clear session
   try {
     await axiosInstance.post('/auth/logout');
   } catch {
