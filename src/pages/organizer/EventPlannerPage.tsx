@@ -3276,7 +3276,8 @@ export function EventPlannerPage() {
             <div className="space-y-3">
               {vendorPool.length > 0 ? (
                 vendorPool.map((vendor) => {
-                  const isAssigned = Array.isArray(eventVendors) && eventVendors.some((ev) => ev.id === vendor.id);
+                  const isAssigned =
+                    Array.isArray(eventVendors) && eventVendors.some((ev) => ev.id === vendor.id);
                   return (
                     <article
                       key={vendor.id}

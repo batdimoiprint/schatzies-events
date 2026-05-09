@@ -11,7 +11,12 @@ interface FooterProps {
   onCookiePolicyClose?: () => void;
 }
 
-const Footer = ({ showScrollTop = true, onCookiePolicyOpen, cookiePolicyOpen = false, onCookiePolicyClose }: FooterProps) => {
+const Footer = ({
+  showScrollTop = true,
+  onCookiePolicyOpen,
+  cookiePolicyOpen = false,
+  onCookiePolicyClose,
+}: FooterProps) => {
   const [privacyOpen, setPrivacyOpen] = useState(false);
   const [termsOpen, setTermsOpen] = useState(false);
 
@@ -41,7 +46,9 @@ const Footer = ({ showScrollTop = true, onCookiePolicyOpen, cookiePolicyOpen = f
 
           {/* Contact Info */}
           <div>
-            <h4 className="font-heading text-base sm:text-lg font-bold text-[#1a1225] mb-4">Contact Us</h4>
+            <h4 className="font-heading text-base sm:text-lg font-bold text-[#1a1225] mb-4">
+              Contact Us
+            </h4>
             <ul className="space-y-2 text-xs sm:text-sm text-[#3d2052]">
               <li className="flex items-start gap-2">
                 <span className="mt-0.5 flex-shrink-0">📍</span>
@@ -56,10 +63,7 @@ const Footer = ({ showScrollTop = true, onCookiePolicyOpen, cookiePolicyOpen = f
               </li>
               <li className="flex items-center gap-2">
                 <span className="flex-shrink-0">📞</span>
-                <a
-                  href="tel:+639333807868"
-                  className="hover:text-[#e61f83] transition-colors"
-                >
+                <a href="tel:+639333807868" className="hover:text-[#e61f83] transition-colors">
                   +63 933 380 7868 / 917 502 3538
                 </a>
               </li>
@@ -77,7 +81,9 @@ const Footer = ({ showScrollTop = true, onCookiePolicyOpen, cookiePolicyOpen = f
 
           {/* Social Links */}
           <div>
-            <h4 className="font-heading text-base sm:text-lg font-bold text-[#1a1225] mb-4">Follow Us</h4>
+            <h4 className="font-heading text-base sm:text-lg font-bold text-[#1a1225] mb-4">
+              Follow Us
+            </h4>
             <div className="flex gap-3 sm:gap-4">
               <a
                 href="https://www.facebook.com/debutandweddingpackage"
@@ -110,7 +116,9 @@ const Footer = ({ showScrollTop = true, onCookiePolicyOpen, cookiePolicyOpen = f
 
         {/* Copyright */}
         <div className="flex flex-col items-center justify-between gap-4 text-center text-xs sm:text-sm text-[#3d2052] md:flex-row">
-          <p className="order-2 md:order-1">© {currentYear} Schatzies Events Management. All rights reserved.</p>
+          <p className="order-2 md:order-1">
+            © {currentYear} Schatzies Events Management. All rights reserved.
+          </p>
           <div className="order-1 md:order-2 flex flex-wrap gap-3 sm:gap-4 justify-center">
             <button
               onClick={() => setPrivacyOpen(true)}
@@ -168,11 +176,7 @@ const Footer = ({ showScrollTop = true, onCookiePolicyOpen, cookiePolicyOpen = f
         <PrivacyPolicyContent />
       </PolicyModal>
 
-      <PolicyModal
-        isOpen={termsOpen}
-        onClose={() => setTermsOpen(false)}
-        title="Terms of Service"
-      >
+      <PolicyModal isOpen={termsOpen} onClose={() => setTermsOpen(false)} title="Terms of Service">
         <TermsOfServiceContent />
       </PolicyModal>
 

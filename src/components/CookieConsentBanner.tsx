@@ -38,7 +38,9 @@ export function CookieConsentBanner({ onOpenCookiePolicy }: CookieConsentBannerP
                 We Use Cookies
               </p>
               <p className="text-[0.75rem] sm:text-xs md:text-sm leading-relaxed text-[#3d2052]">
-                We use cookies to enhance your browsing experience, analyze website traffic, and understand where our visitors are coming from. By clicking "Accept", you agree to our use of cookies.
+                We use cookies to enhance your browsing experience, analyze website traffic, and
+                understand where our visitors are coming from. By clicking "Accept", you agree to
+                our use of cookies.
               </p>
               <button
                 onClick={onOpenCookiePolicy}

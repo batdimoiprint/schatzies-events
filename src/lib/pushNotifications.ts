@@ -2,7 +2,8 @@
 // Handles service worker registration and push subscription management
 
 // VAPID Public Key (hardcoded - this is safe as it's a public key)
-const VAPID_PUBLIC_KEY = 'BAVi75QDhcGZY_NeGrFiWo3PKOGSEZMNQuOF-zP-1uarQfIwGwt2EnqGosQ0WWutMMAbSrybvjqWKLlvBIQJMOo';
+const VAPID_PUBLIC_KEY =
+  'BAVi75QDhcGZY_NeGrFiWo3PKOGSEZMNQuOF-zP-1uarQfIwGwt2EnqGosQ0WWutMMAbSrybvjqWKLlvBIQJMOo';
 
 /**
  * Resolve the backend API base URL.
@@ -35,11 +36,7 @@ function urlBase64ToUint8Array(base64String: string): Uint8Array {
  * Check if the browser supports push notifications
  */
 export function isPushNotificationSupported(): boolean {
-  return (
-    'serviceWorker' in navigator &&
-    'PushManager' in window &&
-    'Notification' in window
-  );
+  return 'serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window;
 }
 
 /**
@@ -61,10 +58,10 @@ async function registerServiceWorker(): Promise<ServiceWorkerRegistration> {
       scope: '/',
     });
     console.log('Service Worker registered successfully:', registration);
-    
+
     // Wait for the service worker to be ready
     await navigator.serviceWorker.ready;
-    
+
     return registration;
   } catch (error) {
     console.error('Service Worker registration failed:', error);
@@ -82,7 +79,7 @@ async function requestNotificationPermission(): Promise<NotificationPermission> 
 
   const permission = await Notification.requestPermission();
   console.log('Notification permission:', permission);
-  
+
   return permission;
 }
 
@@ -111,7 +108,7 @@ export async function subscribeToPushNotifications(): Promise<PushSubscription |
 
     // Check if already subscribed
     let subscription = await registration.pushManager.getSubscription();
-    
+
     if (subscription) {
       console.log('Already subscribed to push notifications');
       // Send existing subscription to backend (in case it's not saved)
@@ -142,9 +139,7 @@ export async function subscribeToPushNotifications(): Promise<PushSubscription |
  * Send subscription to backend
  * Uses cookies for authentication (withCredentials)
  */
-async function sendSubscriptionToBackend(
-  subscription: PushSubscription
-): Promise<void> {
+async function sendSubscriptionToBackend(subscription: PushSubscription): Promise<void> {
   try {
     const apiUrl = getApiUrl();
     const response = await fetch(`${apiUrl}/push/subscribe`, {

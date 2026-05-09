@@ -62,9 +62,7 @@ export function Navbar() {
               return (
                 <Popover key={item.label} open={dropdownOpen} onOpenChange={setDropdownOpen}>
                   <PopoverTrigger asChild>
-                    <button className={classes}>
-                      {item.label}
-                    </button>
+                    <button className={classes}>{item.label}</button>
                   </PopoverTrigger>
                   <PopoverContent className="w-56 p-0">
                     <div className="flex flex-col">
@@ -101,7 +99,8 @@ export function Navbar() {
                           <span
                             className="transition-all duration-300"
                             style={{
-                              backgroundImage: 'linear-gradient(to right, #FF0066 0%, #4A1053 100%)',
+                              backgroundImage:
+                                'linear-gradient(to right, #FF0066 0%, #4A1053 100%)',
                               backgroundClip: 'text',
                               WebkitBackgroundClip: 'text',
                               color: 'transparent',
