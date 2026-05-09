@@ -39,17 +39,12 @@ jobs:
 
       - name: Get Stack Outputs and Set Target
         id: target
+        env:
+          STACK_NAME: schatzies-events-stack
         run: |
-          STACK_NAME=$(aws cloudformation describe-stacks --query "Stacks[?Outputs[?OutputKey=='DeploymentBucketName']].StackName | [0]" --output text)
-          
-          if [ "$STACK_NAME" = "None" ] || [ -z "$STACK_NAME" ]; then
-            echo "Error: Could not find CloudFormation stack with DeploymentBucketName output"
-            exit 1
-          fi
-          
           BUCKET_NAME=$(aws cloudformation describe-stacks --stack-name $STACK_NAME --query "Stacks[0].Outputs[?OutputKey=='DeploymentBucketName'].OutputValue" --output text)
           CF_DIST_ID=$(aws cloudformation describe-stacks --stack-name $STACK_NAME --query "Stacks[0].Outputs[?OutputKey=='CloudFrontDistributionId'].OutputValue" --output text)
-          
+
           if [ "${{ github.ref_name }}" = "master" ]; then
             echo "s3_prefix=s3://${BUCKET_NAME}" >> $GITHUB_OUTPUT
             echo "cf_path=/*" >> $GITHUB_OUTPUT
@@ -57,7 +52,7 @@ jobs:
             echo "s3_prefix=s3://${BUCKET_NAME}/dev" >> $GITHUB_OUTPUT
             echo "cf_path=/dev/*" >> $GITHUB_OUTPUT
           fi
-          
+
           echo "cf_dist_id=${CF_DIST_ID}" >> $GITHUB_OUTPUT
 
       - name: Deploy to S3
