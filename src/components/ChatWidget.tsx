@@ -380,9 +380,6 @@ export function ChatWidget() {
               <path d="M12 3a9 9 0 1 0 9 9c0-.46-.04-.92-.1-1.36a5.389 5.389 0 0 1-4.4 2.26 5.403 5.403 0 0 1-3.14-9.8c-.44-.06-.9-.1-1.36-.1z" />
               <path d="M17.5 2l.41 1.26L19.17 4l-1.26.74L17.5 6l-.41-1.26L15.83 4l1.26-.74z" />
             </svg>
-            <span className="absolute -right-1 -top-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[8px] font-bold text-white shadow sm:h-5 sm:w-5 sm:text-[10px]">
-              1
-            </span>
           </div>
         )}
       </button>
