@@ -967,7 +967,10 @@ export function InquiryForm({ onClose, selectedPackageId, selectedEventType }: I
                               control={control}
                               name="eventPackage"
                               rules={{
-                                required: watchedEventType !== 'Others' ? 'Event package is required' : false,
+                                required:
+                                  watchedEventType !== 'Others'
+                                    ? 'Event package is required'
+                                    : false,
                               }}
                               render={({ field }) => (
                                 <Select
@@ -981,8 +984,8 @@ export function InquiryForm({ onClose, selectedPackageId, selectedEventType }: I
                                         !watchedEventType
                                           ? 'Select Event Type First'
                                           : watchedEventType === 'Others'
-                                          ? 'Not needed for custom events'
-                                          : 'Event Package'
+                                            ? 'Not needed for custom events'
+                                            : 'Event Package'
                                       }
                                     />
                                   </SelectTrigger>
@@ -1003,7 +1006,8 @@ export function InquiryForm({ onClose, selectedPackageId, selectedEventType }: I
                             control={control}
                             name="eventPax"
                             rules={{
-                              required: watchedEventType !== 'Others' ? 'Number of pax is required' : false,
+                              required:
+                                watchedEventType !== 'Others' ? 'Number of pax is required' : false,
                             }}
                             render={({ field }) => (
                               <Select
@@ -1017,8 +1021,8 @@ export function InquiryForm({ onClose, selectedPackageId, selectedEventType }: I
                                       !watchedEventPackage
                                         ? 'Select Event Package First'
                                         : watchedEventType === 'Others'
-                                        ? 'Not needed for custom events'
-                                        : 'Event Pax'
+                                          ? 'Not needed for custom events'
+                                          : 'Event Pax'
                                     }
                                   />
                                 </SelectTrigger>
