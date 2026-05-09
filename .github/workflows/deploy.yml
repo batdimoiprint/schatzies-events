@@ -40,7 +40,7 @@ jobs:
       - name: Get Stack Outputs and Set Target
         id: target
         env:
-          STACK_NAME: schatzies-events-stack
+          STACK_NAME: schatzies-events
         run: |
           BUCKET_NAME=$(aws cloudformation describe-stacks --stack-name $STACK_NAME --query "Stacks[0].Outputs[?OutputKey=='DeploymentBucketName'].OutputValue" --output text)
           CF_DIST_ID=$(aws cloudformation describe-stacks --stack-name $STACK_NAME --query "Stacks[0].Outputs[?OutputKey=='CloudFrontDistributionId'].OutputValue" --output text)
