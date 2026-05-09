@@ -107,3 +107,14 @@ export const resetPassword = async (
   });
   return response.data;
 };
+
+export const forceChangePassword = async (
+  resetToken: string,
+  password: string
+): Promise<{ message: string; user: User | null }> => {
+  const response = await axiosInstance.post('/auth/force-change-password', {
+    resetToken,
+    password,
+  });
+  return response.data;
+};
