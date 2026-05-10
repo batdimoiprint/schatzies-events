@@ -17,72 +17,7 @@ const ICON_MAP: Record<string, typeof Bell> = {
   message: MessageSquare,
 };
 
-const INITIAL_NOTIFICATIONS = [
-  {
-    id: 1,
-    type: 'event',
-    title: 'Event Plan Updated',
-    message: 'Your organizer updated the program flow for "Kring and Dave Wedding".',
-    time: '2 hours ago',
-    unread: true,
-  },
-  {
-    id: 2,
-    type: 'event',
-    title: 'Meeting Scheduled',
-    message: 'A meeting has been set for May 3 at Zus Coffee. Please confirm your attendance.',
-    time: 'Yesterday',
-    unread: true,
-  },
-  {
-    id: 3,
-    type: 'task',
-    title: 'Task Completed',
-    message: 'Technicals manpower has been confirmed by the organizer.',
-    time: '2 days ago',
-    unread: false,
-  },
-  {
-    id: 4,
-    type: 'rsvp',
-    title: 'New RSVP Response',
-    message: 'Sofia B. Villanueva confirmed attendance to your event.',
-    time: '3 days ago',
-    unread: false,
-  },
-  {
-    id: 5,
-    type: 'message',
-    title: 'New Message from Organizer',
-    message: 'John Errol Sebial sent you a message about the venue setup.',
-    time: '4 days ago',
-    unread: false,
-  },
-  {
-    id: 6,
-    type: 'rsvp',
-    title: 'New RSVP Response',
-    message: 'Beatriz "Bea" Lopez declined the invitation.',
-    time: '5 days ago',
-    unread: false,
-  },
-  {
-    id: 7,
-    type: 'event',
-    title: 'Vendor Confirmed',
-    message: 'McUsine catering has confirmed for August 22, 2026.',
-    time: '1 week ago',
-    unread: false,
-  },
-  {
-    id: 8,
-    type: 'task',
-    title: 'Checklist Updated',
-    message: 'Fresh flowers delivery has been scheduled for the day before the event.',
-    time: '1 week ago',
-    unread: false,
-  },
-];
+const INITIAL_NOTIFICATIONS: Array<{ id: number; type: string; title: string; message: string; time: string; unread: boolean; }> = [];
 
 type FilterType = 'all' | 'event' | 'task' | 'rsvp' | 'message';
 

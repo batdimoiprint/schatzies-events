@@ -24,6 +24,7 @@ export function RSVPPage() {
   const [currentQRId, setCurrentQRId] = useState<string>('');
   const [isLoading, setIsLoading] = useState(false);
   const [selectedEventId, setSelectedEventId] = useState<string>('');
+  const [selectedEvent, setSelectedEvent] = useState<any>(null);
   const [copied, setCopied] = useState(false);
 
   // RSVP Data state
@@ -57,7 +58,9 @@ export function RSVPPage() {
 
         if (userEvents.length > 0) {
           // Only set the initial event if one isn't already selected
-          setSelectedEventId((prev) => prev || userEvents[0].id);
+          const initialEvent = userEvents[0];
+          setSelectedEventId((prev) => prev || initialEvent.id);
+          setSelectedEvent((prev: any) => prev || initialEvent);
         }
       } catch (error) {
         console.error('Error fetching events for QR Management:', error);
@@ -85,9 +88,18 @@ export function RSVPPage() {
             setCurrentQRId(data.s3Key || selectedEventId);
             setState('active');
           } else {
-            setQrCode('');
-            setCurrentQRId('');
-            setState('idle');
+            // Also check localStorage as fallback
+            const savedQR = localStorage.getItem(`qr_code_${selectedEventId}`);
+            const savedQRId = localStorage.getItem(`qr_id_${selectedEventId}`);
+            if (savedQR && savedQRId) {
+              setQrCode(savedQR);
+              setCurrentQRId(savedQRId);
+              setState('active');
+            } else {
+              setQrCode('');
+              setCurrentQRId('');
+              setState('idle');
+            }
           }
         } catch {
           // No QR yet — show idle state
@@ -96,6 +108,12 @@ export function RSVPPage() {
           setState('idle');
         }
       };
+      
+      getEventManagerEvents().then(data => {
+        const ev = data.find(e => e.id === selectedEventId);
+        if (ev) setSelectedEvent(ev);
+      });
+
       loadQr();
     }
   }, [selectedEventId]);
@@ -236,67 +254,21 @@ export function RSVPPage() {
         }
 
         // Send the scan to the backend
-        let response: any = { success: false };
         try {
-          // Try every possible variation of the data
+          // Now that the backend stores the URL, we can just send the decodedText
+          const result = await scanGuest(selectedEventId, decodedText);
+          
+          const isResultSuccess =
+            result.success ||
+            result.id ||
+            result.guest ||
+            result.SK ||
+            result.guestName ||
+            (result.message || '').toLowerCase().includes('checked in') ||
+            (result.message || '').toLowerCase().includes('already');
 
-          const rawBase64 = matchedGuest?.qrCode?.includes('base64,')
-            ? matchedGuest.qrCode.split('base64,')[1]
-            : matchedGuest?.qrCode;
-
-          // NEW: Repair corrupted Base64 headers (tVBOR -> iVBOR)
-          const repairedBase64 = matchedGuest?.qrCode?.replace('tVBOR', 'iVBOR');
-
-          const scanAttempts = [
-            { name: 'Repaired Base64', eid: eventId, qrc: repairedBase64 },
-            { name: 'Exact DB qrCode', eid: eventId, qrc: matchedGuest?.qrCode },
-            { name: 'Base64 (No Prefix)', eid: eventId, qrc: rawBase64 },
-            { name: 'Guest UUID', eid: eventId, qrc: guestId },
-            { name: 'Full URL', eid: eventId, qrc: decodedText },
-          ];
-
-          for (const attempt of scanAttempts) {
-            if (!attempt.qrc) {
-              console.log(`DEBUG - SKIPPING ATTEMPT ${attempt.name} (Value is empty)`);
-              continue;
-            }
-            console.log(`DEBUG - TRYING SCAN ATTEMPT: ${attempt.name}`, {
-              eid: attempt.eid,
-              qrc: attempt.qrc.substring(0, 50) + '...',
-            });
-            try {
-              const result = await scanGuest(attempt.eid, attempt.qrc);
-              const isResultSuccess =
-                result.success ||
-                result.id ||
-                result.guest ||
-                result.SK ||
-                result.guestName ||
-                (result.message || '').toLowerCase().includes('checked in') ||
-                (result.message || '').toLowerCase().includes('already');
-
-              if (isResultSuccess) {
-                response = result;
-                break;
-              }
-              response = result;
-            } catch (e: any) {
-              if (e.response?.status !== 400) throw e;
-              response = e.response?.data || { success: false, message: e.message };
-            }
-          }
-
-          const isFinalSuccess =
-            response.success ||
-            response.id ||
-            response.guest ||
-            response.SK ||
-            response.guestName ||
-            (response.message || '').toLowerCase().includes('checked in') ||
-            (response.message || '').toLowerCase().includes('already');
-
-          if (isFinalSuccess) {
-            const guest = response.guest || response;
+          if (isResultSuccess) {
+            const guest = result.guest || result;
             const firstName =
               guest.guestName ||
               guest.guestfirstName ||
@@ -307,8 +279,8 @@ export function RSVPPage() {
 
             setScanResult({
               success: true,
-              message: response.message || 'Guest checked in successfully',
-              type: (response.message || '').toLowerCase().includes('already')
+              message: result.message || 'Guest checked in successfully',
+              type: (result.message || '').toLowerCase().includes('already')
                 ? 'warning'
                 : 'success',
               guest: { firstName, lastName, isScanned: true },
@@ -317,7 +289,7 @@ export function RSVPPage() {
           } else {
             setScanResult({
               success: false,
-              message: response.message || response.error || 'Scan failed (Invalid QR)',
+              message: result.message || result.error || 'Scan failed (Invalid QR)',
               type: 'error',
             });
           }
@@ -639,6 +611,19 @@ export function RSVPPage() {
                   </div>
                 </div>
               </div>
+                  <div className="mt-6 flex justify-between items-center text-xs text-[#696373]">
+                    <div className="flex gap-4">
+                      <span>
+                        Capacity: <strong>{selectedEvent?.pax || 'TBA'}</strong>
+                      </span>
+                      <span>
+                        Arrived: <strong className="text-blue-600">{arrivedCount}</strong>
+                      </span>
+                    </div>
+                    <span>
+                      Total Responses: <strong>{totalRSVPs}/{selectedEvent?.pax || 'TBA'}</strong>
+                    </span>
+                  </div>
             </div>
           )}
 

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import {
   useEffect,
   useMemo,
@@ -1036,10 +1037,10 @@ export function EventPlannerPage() {
   const [checklistItems, setChecklistItems] = useState<any[]>([]);
   const [boardTasks, setBoardTasks] = useState<PlannerBoardTask[]>([]);
   const [currentClientName, setCurrentClientName] = useState('');
-  const [eventAllocation, setEventAllocation] = useState<any>(null);
+  const [eventAllocation, setEventAllocation] = useState<any | null>(null);
   const [eventMeetings, setEventMeetings] = useState<any[]>([]);
   const [overviewFlows, setOverviewFlows] = useState<any[]>([]);
-  const [selectedEventDetails, setSelectedEventDetails] = useState<any>(null);
+  const [selectedEventDetails, setSelectedEventDetails] = useState<any | null>(null);
   const [eventVendors, setEventVendors] = useState<EventManagerVendor[]>([]);
   const [vendorPool, setVendorPool] = useState<Vendor[]>([]);
   const [isAssignVendorModalOpen, setIsAssignVendorModalOpen] = useState(false);

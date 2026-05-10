@@ -25,6 +25,7 @@ export interface EventManagerEvent {
 interface BackendEvent {
   id: string;
   clientId?: string;
+  organizer_id?: string;
   headOrganizerId?: string;
   title?: string;
   startDate?: string;
@@ -112,12 +113,11 @@ function mapToManagerRow(baseEvent: BackendEvent, userMap: Map<string, string>):
       ? `${formattedStart} – ${formattedEnd}`
       : formattedStart;
 
+  const orgId = baseEvent.organizer_id || baseEvent.headOrganizerId;
   const clientName = baseEvent.clientId
     ? userMap.get(baseEvent.clientId) || baseEvent.clientId
     : 'Unknown client';
-  const organizerName = baseEvent.headOrganizerId
-    ? userMap.get(baseEvent.headOrganizerId) || ''
-    : '';
+  const organizerName = orgId ? userMap.get(orgId) || '' : '';
 
   return {
     id: baseEvent.id,
@@ -137,7 +137,7 @@ function mapToManagerRow(baseEvent: BackendEvent, userMap: Map<string, string>):
     rsvp: 0,
     status: mapEventStatus(baseEvent.status),
     clientId: baseEvent.clientId || '',
-    organizerId: baseEvent.headOrganizerId || '',
+    organizerId: orgId || '',
     organizerName,
     createdAt: baseEvent.createdAt || '',
   };
@@ -198,7 +198,7 @@ export async function getEventVendors(eventId: string) {
 
 export async function getEventUser(userId: string) {
   const response = await axiosInstance.get(`/users/${userId}`);
-  return response.data;
+  return response.data.user || response.data;
 }
 
 export async function getEventAllocation(eventId: string) {

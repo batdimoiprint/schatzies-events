@@ -15,6 +15,10 @@ import {
 import { getCalendarEntries } from '@/api/calendar';
 import { useAuth } from '@/hooks/useAuth';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
+
+
+
+// ── Illustration placeholders (img tags) ─────────────────────────────────────
 function PackageIllustration() {
   return (
     <img
@@ -87,7 +91,16 @@ export function EventPlanViewingPage() {
               )
             : events;
 
-        const userEventBase = userEvents.length > 0 ? userEvents[0] : null;
+        // Sort events: Newest first, and prioritize events that aren't "Meetings"
+        const sortedEvents = userEvents.sort((a, b) => {
+          const aIsMeeting = a.title.toLowerCase().includes('meeting');
+          const bIsMeeting = b.title.toLowerCase().includes('meeting');
+          if (aIsMeeting && !bIsMeeting) return 1;
+          if (!aIsMeeting && bIsMeeting) return -1;
+          return new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime();
+        });
+
+        const userEventBase = sortedEvents.length > 0 ? sortedEvents[0] : null;
 
         if (userEventBase) {
           const fullEvent = await getEventById(userEventBase.id);
@@ -98,7 +111,7 @@ export function EventPlanViewingPage() {
             userEventBase.organizerId ||
             (userEventBase as any).organizer_id;
 
-          let organizerName = 'Assigned Organizer';
+          let organizerName = userEventBase.organizerName || 'Assigned Organizer';
           let organizerEmail = 'contact@schatzies.com';
           let organizerContact = '-';
 
@@ -106,9 +119,15 @@ export function EventPlanViewingPage() {
             try {
               const org = await getEventUser(orgId);
               organizerName =
-                `${org.firstName || ''} ${org.lastName || ''}`.trim() || 'Assigned Organizer';
-              organizerEmail = org.email || 'contact@schatzies.com';
-              organizerContact = org.contact_number || org.contactPhone || org.contactNumber || '-';
+                `${org.firstName || org.user?.firstName || ''} ${org.lastName || org.user?.lastName || ''}`.trim() ||
+                organizerName;
+              organizerEmail = org.email || org.user?.email || 'contact@schatzies.com';
+              organizerContact =
+                org.contact_number ||
+                org.user?.contact_number ||
+                org.contactPhone ||
+                org.contactNumber ||
+                '-';
             } catch (e) {
               console.error('Error fetching organizer:', e);
             }

@@ -22,8 +22,8 @@ export function ClientLayout() {
   const needsPasswordChange = user.isPasswordChanged === false;
 
   return (
-    <div className="min-h-screen bg-[#fbf8fd]">
-      <div className="flex h-full flex-col md:flex-row">
+    <div className="flex h-screen w-full overflow-hidden bg-[#fbf8fd]">
+      <div className="flex h-full w-full flex-col md:flex-row">
         <ClientSidebar />
 
         <div className="flex min-h-0 flex-1 flex-col">
