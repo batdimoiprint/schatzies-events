@@ -213,6 +213,18 @@ export function EventPlanViewingPage() {
           }
 
           if (isMounted) {
+            const formatTime12Hour = (val: any) => {
+              if (!val) return '';
+              if (typeof val === 'string' && val.includes(':')) {
+                const [h, m] = val.split(':');
+                let hours = parseInt(h, 10);
+                const ampm = hours >= 12 ? 'PM' : 'AM';
+                hours = hours % 12 || 12;
+                return `${hours}:${m} ${ampm}`;
+              }
+              return val;
+            };
+
             setEventData({
               title: fullEvent.title || userEventBase.title || 'Your Event',
               date: formattedDate,
@@ -224,6 +236,12 @@ export function EventPlanViewingPage() {
               pax: paxCount,
               eventType: currentEventType,
               cost: costValue,
+              startTime: formatTime12Hour(
+                fullEvent.startTime || (fullEvent as any).eventTime || ''
+              ),
+              endTime: formatTime12Hour(
+                fullEvent.endTime || (fullEvent as any).eventTimeEnd || ''
+              ),
             });
           }
         }
@@ -284,10 +302,14 @@ export function EventPlanViewingPage() {
                 <Calendar className="size-3.5" />
                 {EVENT.date}
               </span>
-              <span className="flex items-center gap-1.5">
-                <Clock className="size-3.5" />
-                Start Date – End Date
-              </span>
+              {(EVENT.startTime || EVENT.endTime) && (
+                <span className="flex items-center gap-1.5">
+                  <Clock className="size-3.5" />
+                  {EVENT.startTime}
+                  {EVENT.startTime && EVENT.endTime && ' – '}
+                  {EVENT.endTime}
+                </span>
+              )}
             </div>
           </div>
 
