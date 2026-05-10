@@ -352,10 +352,17 @@ export function InquiryDetailsDialog({
         return;
       }
 
-      const isOthersPackage = String(selectedInquiry.eventPackage || '').trim().toLowerCase() === 'others';
-      const hasCustomPackageAmount = Number.isFinite(Number(selectedInquiry.packageInitialAmount)) && Number(selectedInquiry.packageInitialAmount) > 0;
+      const isOthersPackage =
+        String(selectedInquiry.eventPackage || '')
+          .trim()
+          .toLowerCase() === 'others';
+      const hasCustomPackageAmount =
+        Number.isFinite(Number(selectedInquiry.packageInitialAmount)) &&
+        Number(selectedInquiry.packageInitialAmount) > 0;
       if (isOthersPackage && !hasCustomPackageAmount) {
-        setStatusChangeError('A custom package amount must be added before approving this inquiry.');
+        setStatusChangeError(
+          'A custom package amount must be added before approving this inquiry.'
+        );
         return;
       }
 
@@ -778,7 +785,9 @@ export function InquiryDetailsDialog({
 
                     {(selectedInquiry.eventPackage ||
                       selectedInquiry.packageInitialAmount !== undefined) &&
-                      String(selectedInquiry.eventPackage || '').trim().toLowerCase() !== 'others' &&
+                      String(selectedInquiry.eventPackage || '')
+                        .trim()
+                        .toLowerCase() !== 'others' &&
                       (() => {
                         const displayAmount =
                           Number.isFinite(Number(selectedInquiry.packageInitialAmount)) &&
@@ -1029,8 +1038,13 @@ export function InquiryDetailsDialog({
                       const hasVenue = Boolean(
                         String(selectedInquiry?.venue || selectedInquiry?.location || '').trim()
                       );
-                      const isOthersPackage = String(selectedInquiry?.eventPackage || '').trim().toLowerCase() === 'others';
-                      const hasCustomPackageAmount = Number.isFinite(Number(selectedInquiry?.packageInitialAmount)) && Number(selectedInquiry?.packageInitialAmount) > 0;
+                      const isOthersPackage =
+                        String(selectedInquiry?.eventPackage || '')
+                          .trim()
+                          .toLowerCase() === 'others';
+                      const hasCustomPackageAmount =
+                        Number.isFinite(Number(selectedInquiry?.packageInitialAmount)) &&
+                        Number(selectedInquiry?.packageInitialAmount) > 0;
 
                       const isOptionDisabled = isApprovedBtn
                         ? !hasAccount ||
@@ -1049,14 +1063,22 @@ export function InquiryDetailsDialog({
                                   <Label className="text-[10px] font-black uppercase text-[#857a98] mb-2 block">
                                     Package Amount (Required for Approval)
                                   </Label>
-                                  {(!Number.isFinite(Number(selectedInquiry.packageInitialAmount)) || Number(selectedInquiry.packageInitialAmount) <= 0) && selectedInquiry.status !== 'Approved' ? (
+                                  {(!Number.isFinite(
+                                    Number(selectedInquiry.packageInitialAmount)
+                                  ) ||
+                                    Number(selectedInquiry.packageInitialAmount) <= 0) &&
+                                  selectedInquiry.status !== 'Approved' ? (
                                     <div className="flex gap-2 items-center">
                                       <Input
                                         type="number"
                                         placeholder="Enter custom amount"
                                         value={customPackageAmountInput}
-                                        onChange={(e) => setCustomPackageAmountInput(e.target.value)}
-                                        disabled={currentStatusValue === INQUIRY_STATUS_OPTIONS.DECLINED}
+                                        onChange={(e) =>
+                                          setCustomPackageAmountInput(e.target.value)
+                                        }
+                                        disabled={
+                                          currentStatusValue === INQUIRY_STATUS_OPTIONS.DECLINED
+                                        }
                                         className="h-9 flex-1 bg-white border-[#ebe3f5] focus-visible:ring-[#8C6bB1] text-xs font-bold disabled:opacity-50"
                                       />
                                       <Button

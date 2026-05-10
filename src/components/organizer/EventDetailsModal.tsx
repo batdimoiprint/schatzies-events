@@ -22,6 +22,7 @@ interface EventDetailsModalProps {
   onClose: () => void;
   onUpdate: (eventId: string, data: EventFormData) => Promise<void>;
   onDelete?: (eventId: string) => Promise<void>;
+  onViewPlanner?: (eventId: string) => void;
   isUpdating: boolean;
   isDeleting?: boolean;
   isAdmin?: boolean;
@@ -115,6 +116,7 @@ export function EventDetailsModal({
   onClose,
   onUpdate,
   onDelete,
+  onViewPlanner,
   isUpdating,
   isDeleting = false,
   isAdmin = false,
@@ -530,6 +532,15 @@ export function EventDetailsModal({
                 </div>
 
                 <div className="flex gap-3">
+                  {onViewPlanner && (
+                    <Button
+                      type="button"
+                      onClick={() => onViewPlanner(event.id)}
+                      className="bg-purple-100 text-purple-700 hover:bg-purple-200 font-bold px-4"
+                    >
+                      View Event Planner
+                    </Button>
+                  )}
                   <Button
                     type="button"
                     onClick={onClose}
