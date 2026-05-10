@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { ChevronDown, Download, RefreshCw } from 'lucide-react';
 import { getEvents } from '@/api/events';
-import { getVendors, getVendorEntitiesByEventId, type Vendor } from '@/api/vendors';
+import { getVendorEntitiesByEventId, type Vendor } from '@/api/vendors';
 import {
   getCostBreakdown,
   createCostBreakdown,
@@ -44,7 +44,6 @@ interface CostBreakdownTabProps {
 export function CostBreakdownTab({ selectedEventId }: CostBreakdownTabProps) {
   const [apiEvents, setApiEvents] = useState<any[]>([]);
   const [eventVendors, setEventVendors] = useState<Vendor[]>([]);
-  const [allVendors, setAllVendors] = useState<Vendor[]>([]);
   const [breakdown, setBreakdown] = useState<CostBreakdownResponse | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [exportOpen, setExportOpen] = useState(false);
@@ -58,22 +57,11 @@ export function CostBreakdownTab({ selectedEventId }: CostBreakdownTabProps) {
   const computedPkg = calcPkgPrice(evPkg, evType, evPax);
   const packagePrice = pkgInitial > 0 ? pkgInitial : computedPkg;
 
-  // Use backend breakdown if available, else compute locally
   const organizerShare = breakdown?.organizerShare ?? packagePrice * 0.2;
   const vendorBudget = breakdown?.vendorBudget ?? packagePrice * 0.8;
   const totalVendorCost = breakdown?.totalVendorCost ?? eventVendors.reduce((s, v) => s + (v.price ?? 0), 0);
   const vendorBalance = vendorBudget - totalVendorCost;
   const organizerTotal = organizerShare + Math.max(0, vendorBalance);
-
-  const poolByType = useMemo(() => {
-    const m: Record<string, Vendor[]> = {};
-    for (const t of SERVICE_TYPES) m[t] = [];
-    for (const v of allVendors) {
-      const n = SERVICE_TYPES.find((t) => t.toLowerCase() === (v.serviceType || '').toLowerCase());
-      if (n) m[n].push(v);
-    }
-    return m;
-  }, [allVendors]);
 
   const chartSegments = useMemo(() => {
     const total = totalVendorCost || 1;
@@ -93,7 +81,6 @@ export function CostBreakdownTab({ selectedEventId }: CostBreakdownTabProps) {
 
   useEffect(() => {
     getEvents().then((r) => { const a = Array.isArray(r) ? r : []; setApiEvents(a); }).catch(() => setApiEvents([]));
-    getVendors().then((v) => setAllVendors(v)).catch(() => setAllVendors([]));
   }, []);
 
   useEffect(() => {
@@ -290,45 +277,6 @@ export function CostBreakdownTab({ selectedEventId }: CostBreakdownTabProps) {
             </div>
           </CardContent>
         </Card>
-      </div>
-
-      {/* Available Vendors Pool */}
-      <div className="space-y-3">
-        <h2 className="text-xl font-bold tracking-tight text-[#4a4157]">
-          Available Vendors <span className="text-sm font-semibold text-[#8b8199]">(prices may vary)</span>
-        </h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          {SERVICE_TYPES.map((type) => {
-            const vendors = poolByType[type] || [];
-            const color = SERVICE_COLORS[type];
-            return (
-              <Card key={type} className="border-[#e7dfef] bg-white py-0 shadow-sm overflow-hidden">
-                <div className="px-4 py-3 border-b border-[#ece6f3]" style={{ borderLeftWidth: 4, borderLeftColor: color }}>
-                  <p className="text-sm font-black uppercase tracking-widest" style={{ color }}>{type}</p>
-                  <p className="text-xs text-[#8b8199]">{vendors.length} vendor{vendors.length !== 1 ? 's' : ''}</p>
-                </div>
-                <CardContent className="px-0 py-0">
-                  <div className="max-h-[280px] overflow-y-auto">
-                    {vendors.length === 0 ? (
-                      <div className="px-4 py-6 text-center text-xs font-semibold text-[#b0a8be]">No vendors in this category</div>
-                    ) : vendors.map((v, i) => {
-                      const assigned = eventVendors.some((ev) => ev.id === v.id);
-                      return (
-                        <div key={v.id} className={`flex items-center justify-between px-4 py-2.5 text-sm border-b border-[#f6f2fa] last:border-b-0 ${assigned ? 'bg-[#f0fdf4]' : i % 2 === 0 ? 'bg-white' : 'bg-[#fcf9ff]'}`}>
-                          <div className="min-w-0 flex-1">
-                            <p className="font-semibold text-[#2f2939] truncate">{v.name}</p>
-                            {assigned && <span className="text-[10px] font-bold text-[#29bf4c] uppercase">Assigned</span>}
-                          </div>
-                          <span className="shrink-0 font-bold text-[#2f2939]">{v.price != null ? peso(v.price) : '—'}</span>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </CardContent>
-              </Card>
-            );
-          })}
-        </div>
       </div>
     </section>
   );

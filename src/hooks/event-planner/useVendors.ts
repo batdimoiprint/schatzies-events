@@ -24,7 +24,14 @@ export function useVendors(selectedEventId: string) {
     }
   };
 
-  const handleOpenAssignVendorModal = async () => {
+  const handleOpenAssignVendorModal = async (vendorIdOrServiceType?: string) => {
+    // If a vendor ID is passed directly (from the VendorsTab category pool), assign directly
+    if (vendorIdOrServiceType && !['catering', 'styling', 'media', 'venue'].includes(vendorIdOrServiceType.toLowerCase())) {
+      await handleAssignVendor(vendorIdOrServiceType);
+      return;
+    }
+
+    // Legacy: open modal for general assignment
     setIsAssigningVendor(true);
     try {
       const allVendors = await getVendors();

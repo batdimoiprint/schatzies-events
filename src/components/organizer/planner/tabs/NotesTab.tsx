@@ -1,4 +1,4 @@
-import { ImagePlus, ListChecks, Pencil, X } from 'lucide-react';
+import { ListChecks, Pencil, X } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { noteTileThemes } from '@/constants/planner';
 import type { PlannerQuickNote } from '@/types/planner';
@@ -26,7 +26,7 @@ interface NotesTabProps {
 export function NotesTab({
   isInlineNoteOpen, setIsInlineNoteOpen, noteDraftError, noteDraftTitle, setNoteDraftTitle,
   noteDraftBody, setNoteDraftBody, noteDraftImageDataUrl, setNoteDraftImageDataUrl,
-  handleCloseInlineNote, handlePlannerNoteImageChange, plannerNotes, draggedNoteId,
+  handleCloseInlineNote, plannerNotes, draggedNoteId,
   handleNoteDragStart, handleNoteDragEnd, handleNoteDrop, handleEditPlannerNote
 }: NotesTabProps) {
   return (
@@ -35,7 +35,7 @@ export function NotesTab({
         {!isInlineNoteOpen ? (
           <div onClick={() => { setIsInlineNoteOpen(true); }} className="flex cursor-text items-center justify-between rounded-xl border border-[#e3ddea] bg-white px-5 py-3.5 shadow-[0_2px_8px_rgba(27,16,45,0.04)] transition hover:shadow-md">
             <span className="text-[14px] font-semibold text-[#8a8399]">Take a note...</span>
-            <div className="flex gap-4 text-[#aba3b9]"><ListChecks className="size-5" /><Pencil className="size-5" /><ImagePlus className="size-5" /></div>
+            <div className="flex gap-4 text-[#aba3b9]"><ListChecks className="size-5" /><Pencil className="size-5" /></div>
           </div>
         ) : (
           <div className="flex flex-col gap-2 rounded-xl border border-[#e3ddea] bg-white p-4 shadow-lg">
@@ -43,8 +43,7 @@ export function NotesTab({
             <Input value={noteDraftTitle} onChange={(e) => setNoteDraftTitle(e.target.value)} placeholder="Title" className="h-auto border-none bg-transparent px-1 text-[16px] font-bold text-[#1f1f21] shadow-none focus-visible:ring-0 placeholder:text-[#8a8399]" />
             <textarea autoFocus value={noteDraftBody} onChange={(e) => { setNoteDraftBody(e.target.value); e.target.style.height = 'auto'; e.target.style.height = `${e.target.scrollHeight}px`; }} placeholder="Take a note..." className="min-h-[60px] max-h-[50vh] w-full resize-none overflow-y-auto break-words whitespace-pre-wrap px-1 bg-transparent text-[14px] leading-relaxed text-[#4d4858] outline-none placeholder:text-[#aba3b9]" />
             {noteDraftImageDataUrl && (<div className="relative mt-2 overflow-hidden rounded-lg border border-[#e0dbe6]"><img src={noteDraftImageDataUrl} alt="Attached" className="max-h-48 w-full object-cover" /><button type="button" onClick={() => setNoteDraftImageDataUrl(undefined)} className="absolute right-2 top-2 rounded-full bg-black/50 p-1.5 text-white hover:bg-black/70"><X className="size-4" /></button></div>)}
-            <div className="mt-2 flex items-center justify-between pt-1">
-              <div className="flex gap-1"><label className="cursor-pointer rounded-full p-2 text-[#8a8399] transition hover:bg-[#f3eff8] hover:text-[#5d5670]"><ImagePlus className="size-5" /><input type="file" accept="image/*" className="hidden" onChange={handlePlannerNoteImageChange} /></label></div>
+            <div className="mt-2 flex items-center justify-end pt-1">
               <button type="button" onClick={handleCloseInlineNote} className="rounded-md px-4 py-2 text-[13px] font-bold text-[#302c39] transition hover:bg-[#f3eff8]">Close</button>
             </div>
           </div>

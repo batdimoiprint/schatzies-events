@@ -252,9 +252,7 @@ export function EventDetailsModal({
   const totalRsvp = rsvpGuests.length;
   const eventPrice = Number.isFinite(Number(event.packageInitialAmount))
     ? Number(event.packageInitialAmount)
-    : Number.isFinite(Number(event.packagePrice))
-      ? Number(event.packagePrice)
-      : null;
+    : null;
   const downpaymentAmount = Number.isFinite(Number(event.downpaymentAmount))
     ? Number(event.downpaymentAmount)
     : null;
@@ -371,8 +369,6 @@ export function EventDetailsModal({
                             // don't touch downpayment
                           });
                           event.packageInitialAmount = parsedPrice;
-                          const currentDownpayment = Number(event.downpaymentAmount) || 0;
-                          event.packagePrice = Math.max(0, parsedPrice - currentDownpayment);
                           setIsEditingEventPrice(false);
                         } catch (err: any) {
                           setEventPriceError(err?.response?.data?.error || 'Failed to save price');
@@ -466,8 +462,6 @@ export function EventDetailsModal({
                             // don't touch initial amount
                           });
                           event.downpaymentAmount = parsedDown;
-                          const currentPrice = Number(event.packageInitialAmount) || 0;
-                          event.packagePrice = Math.max(0, currentPrice - parsedDown);
                           setIsEditingDownpayment(false);
                         } catch (err: any) {
                           setDownpaymentError(err?.response?.data?.error || 'Failed to save downpayment');
@@ -561,11 +555,14 @@ export function EventDetailsModal({
                     id="startDate"
                     type="date"
                     {...register('startDate', { required: 'Start date is required' })}
-                    className="border-[#e1d5eb] focus:border-[#df1b8b] focus:ring-[#df1b8b]"
+                    className={`border-[#e1d5eb] focus:border-[#df1b8b] focus:ring-[#df1b8b] ${!watch('startDate') ? 'border-red-500 ring-1 ring-red-500 bg-red-50' : ''}`}
                     disabled={isUpdating}
                   />
                   {errors.startDate && (
                     <p className="text-xs text-red-500">{errors.startDate.message}</p>
+                  )}
+                  {!watch('startDate') && !errors.startDate && (
+                    <p className="text-[10px] font-bold text-red-600">Start date is required</p>
                   )}
                 </div>
                 <div className="space-y-2">
@@ -592,9 +589,12 @@ export function EventDetailsModal({
                     id="startTime"
                     type="time"
                     {...register('startTime')}
-                    className="border-[#e1d5eb] focus:border-[#df1b8b] focus:ring-[#df1b8b]"
+                    className={`border-[#e1d5eb] focus:border-[#df1b8b] focus:ring-[#df1b8b] ${!watch('startTime') ? 'border-red-500 ring-1 ring-red-500 bg-red-50' : ''}`}
                     disabled={isUpdating}
                   />
+                  {!watch('startTime') && (
+                    <p className="text-[10px] font-bold text-red-600">Start time is required</p>
+                  )}
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="endTime" className="text-sm font-bold text-[#2e2837]">
@@ -604,9 +604,12 @@ export function EventDetailsModal({
                     id="endTime"
                     type="time"
                     {...register('endTime')}
-                    className="border-[#e1d5eb] focus:border-[#df1b8b] focus:ring-[#df1b8b]"
+                    className={`border-[#e1d5eb] focus:border-[#df1b8b] focus:ring-[#df1b8b] ${!watch('endTime') ? 'border-red-500 ring-1 ring-red-500 bg-red-50' : ''}`}
                     disabled={isUpdating}
                   />
+                  {!watch('endTime') && (
+                    <p className="text-[10px] font-bold text-red-600">End time is required</p>
+                  )}
                 </div>
               </div>
 

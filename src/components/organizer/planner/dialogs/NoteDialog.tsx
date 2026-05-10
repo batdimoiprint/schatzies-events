@@ -1,4 +1,4 @@
-import { ImagePlus, Trash2 } from 'lucide-react';
+import { Trash2 } from 'lucide-react';
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 
@@ -20,7 +20,7 @@ interface NoteDialogProps {
 export function NoteDialog({
   isOpen, onOpenChange, noteDraftError, noteDraftTitle, setNoteDraftTitle,
   noteDraftBody, setNoteDraftBody, noteDraftImageDataUrl, handleCloseInlineNote,
-  handlePlannerNoteImageChange, editingPlannerNoteId, handleDeletePlannerNote
+  editingPlannerNoteId, handleDeletePlannerNote
 }: NoteDialogProps) {
   return (
     <Dialog open={isOpen} onOpenChange={(open) => { onOpenChange(open); if (!open) handleCloseInlineNote(); }}>
@@ -37,7 +37,7 @@ export function NoteDialog({
           </div>
           <div className="flex items-center justify-between border-t border-[#f1f3f4] px-4 py-3 bg-white">
             <div className="flex items-center gap-2 text-[#5f6368]">
-              <label className="cursor-pointer rounded-full p-2 hover:bg-[#f1f3f4] transition"><ImagePlus className="size-5" /><input type="file" accept="image/*" className="hidden" onChange={handlePlannerNoteImageChange} /></label>
+              {/* Removed image attachment */}
               {editingPlannerNoteId && (<button type="button" onClick={() => { handleDeletePlannerNote(editingPlannerNoteId); onOpenChange(false); }} className="cursor-pointer rounded-full p-2 hover:bg-[#ffeef5] hover:text-[#d22067] transition" aria-label="Delete note"><Trash2 className="size-5" /></button>)}
             </div>
             <button type="button" onClick={handleCloseInlineNote} className="rounded-md px-6 py-2 text-[14px] font-semibold text-[#3c4043] hover:bg-[#f1f3f4] transition">Close</button>

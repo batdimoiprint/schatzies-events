@@ -188,7 +188,7 @@ export function EventManagerPage() {
         event.client,
         event.type,
         event.package,
-        String(event.packagePrice ?? event.packageInitialAmount ?? ''),
+        String(event.packageInitialAmount ?? event.packagePrice ?? ''),
         event.venue && !['', '-', '–', '—', 'n/a', 'tba'].includes(event.venue.trim().toLowerCase())
           ? event.venue
           : 'Venue Required',
@@ -226,8 +226,8 @@ export function EventManagerPage() {
             bVal = b.package.toLowerCase();
             break;
           case 'amount':
-            aVal = a.packagePrice ?? a.packageInitialAmount ?? 0;
-            bVal = b.packagePrice ?? b.packageInitialAmount ?? 0;
+            aVal = a.packageInitialAmount ?? a.packagePrice ?? 0;
+            bVal = b.packageInitialAmount ?? b.packagePrice ?? 0;
             break;
           case 'venue':
             aVal = a.venue.toLowerCase();
@@ -373,7 +373,9 @@ export function EventManagerPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {paginatedEvents.map((event) => (
+              {paginatedEvents.map((event) => {
+                const isMissingDateTime = !event.startDate || !event.startTime || !event.endTime;
+                return (
                 <TableRow
                   key={event.id}
                   onClick={() => {
@@ -382,12 +384,23 @@ export function EventManagerPage() {
                     setIsEventDetailsModalOpen(true);
                   }}
                   className={`group transition-all cursor-pointer border-b border-[#f6f4f9] ${
-                    selectedEventId === event.id
-                      ? 'bg-[#fdf2f8] border-l-4 border-l-[#df1b8b] shadow-sm'
-                      : 'hover:bg-[#faf9fc] border-l-4 border-l-transparent'
+                    isMissingDateTime
+                      ? 'bg-[#fff5f5] hover:bg-[#ffebeb] border-l-4 border-l-red-500 shadow-sm'
+                      : selectedEventId === event.id
+                        ? 'bg-[#fdf2f8] border-l-4 border-l-[#df1b8b] shadow-sm'
+                        : 'hover:bg-[#faf9fc] border-l-4 border-l-transparent'
                   }`}
                 >
-                  <TableCell className="py-4 font-bold text-[#5c546a]">{event.title}</TableCell>
+                  <TableCell className="py-4 font-bold text-[#5c546a]">
+                    <div className="flex items-center gap-2">
+                      {event.title}
+                      {isMissingDateTime && (
+                        <span className="inline-flex items-center rounded-full bg-red-100 px-1.5 py-0.5 text-[9px] font-bold text-red-600 uppercase tracking-wider">
+                          Action Required
+                        </span>
+                      )}
+                    </div>
+                  </TableCell>
                   <TableCell className="py-4 font-semibold text-[#5c546a]">{event.date}</TableCell>
                   <TableCell className="py-4 font-semibold text-[#5c546a] hidden md:table-cell">
                     {event.client}
@@ -481,7 +494,8 @@ export function EventManagerPage() {
                     </div>
                   </TableCell>
                 </TableRow>
-              ))}
+              );
+              })}
               {paginatedEvents.length === 0 && (
                 <TableRow>
                   <TableCell colSpan={9} className="py-12 text-center text-sm text-[#8f879f]">
