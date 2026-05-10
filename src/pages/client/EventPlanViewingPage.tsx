@@ -141,19 +141,29 @@ export function EventPlanViewingPage() {
               })
             : 'TBD';
 
-          const pkgName =
+          const rawPkgName =
             fullEvent.eventPackageKey ||
             userEventBase.package ||
             fullEvent.package?.name ||
             fullEvent.eventPackage ||
             'Custom Package';
 
+          const currentEventType = fullEvent.eventType || userEventBase.type || 'Event';
+
+          // If package is "Others", use eventType as the display name
+          const displayPkgName = rawPkgName === 'Others' ? currentEventType : rawPkgName;
+
           const paxCount =
             fullEvent.eventPax ||
             (userEventBase as any).pax ||
             (fullEvent as any).package?.pax ||
             0;
-          const costValue = (fullEvent as any).cost || 'TBD';
+
+          // Cost logic: Use packageInitialAmount for custom events ("Others")
+          let costValue = (fullEvent as any).cost || 'TBD';
+          if (rawPkgName === 'Others' && (fullEvent as any).packageInitialAmount) {
+            costValue = `₱${Number((fullEvent as any).packageInitialAmount).toLocaleString()}`;
+          }
 
           // Fetch additional data modules
           try {
@@ -203,9 +213,9 @@ export function EventPlanViewingPage() {
               organizer: organizerName,
               email: organizerEmail,
               contact: organizerContact,
-              packageName: pkgName,
+              packageName: displayPkgName,
               pax: paxCount,
-              eventType: fullEvent.eventType || userEventBase.type || 'Event',
+              eventType: currentEventType,
               cost: costValue,
             });
           }
