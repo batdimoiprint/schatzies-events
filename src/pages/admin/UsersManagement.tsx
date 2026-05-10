@@ -304,7 +304,9 @@ export function UsersManagement() {
     return verifiedEmails.filter((v) => v.email.toLowerCase().includes(q));
   }, [verifiedEmails, veSearch]);
 
-  useEffect(() => { setVePage(1); }, [veSearch]);
+  useEffect(() => {
+    setVePage(1);
+  }, [veSearch]);
 
   const veTotalPages = Math.max(1, Math.ceil(filteredVe.length / vePerPage));
   const paginatedVe = filteredVe.slice((vePage - 1) * vePerPage, vePage * vePerPage);
@@ -505,9 +507,13 @@ export function UsersManagement() {
         >
           <Users className="h-4 w-4" />
           Users
-          <span className={`rounded-full px-2 py-0.5 text-xs font-bold ${
-            activeTab === 'users' ? 'bg-[#f0e8f7] text-[#8f1fd1]' : 'bg-[#e8e0f0] text-[#7c7390]'
-          }`}>{totalUsers}</span>
+          <span
+            className={`rounded-full px-2 py-0.5 text-xs font-bold ${
+              activeTab === 'users' ? 'bg-[#f0e8f7] text-[#8f1fd1]' : 'bg-[#e8e0f0] text-[#7c7390]'
+            }`}
+          >
+            {totalUsers}
+          </span>
         </button>
         <button
           onClick={() => setActiveTab('verified-emails')}
@@ -519,255 +525,263 @@ export function UsersManagement() {
         >
           <BadgeCheck className="h-4 w-4" />
           Verified Emails
-          <span className={`rounded-full px-2 py-0.5 text-xs font-bold ${
-            activeTab === 'verified-emails' ? 'bg-emerald-100 text-emerald-700' : 'bg-[#e8e0f0] text-[#7c7390]'
-          }`}>{verifiedEmails.length}</span>
+          <span
+            className={`rounded-full px-2 py-0.5 text-xs font-bold ${
+              activeTab === 'verified-emails'
+                ? 'bg-emerald-100 text-emerald-700'
+                : 'bg-[#e8e0f0] text-[#7c7390]'
+            }`}
+          >
+            {verifiedEmails.length}
+          </span>
         </button>
       </div>
 
-      {activeTab === 'users' && (<>
-
-      <div className="grid gap-4 md:grid-cols-4">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Users</CardTitle>
-            <Users className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{totalUsers}</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Clients</CardTitle>
-            <UserCircle className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{totalClients}</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Organizers</CardTitle>
-            <Briefcase className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{totalOrganizers}</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Admins</CardTitle>
-            <Shield className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{totalAdmins}</div>
-          </CardContent>
-        </Card>
-      </div>
-
-      <div className="overflow-hidden rounded-2xl border border-[#eee7f4] bg-white shadow-[0_8px_30px_rgba(53,36,71,0.06)]">
-        {/* Search bar */}
-        <div className="flex items-center gap-3 border-b border-[#f1eaf7] bg-[#fcf9ff] px-4 py-3">
-          <div className="relative w-full max-w-md">
-            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-[#8a7ca3]" />
-            <Input
-              placeholder="Search name, email, role…"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="h-9 border-[#e5ddee] bg-white pl-8"
-            />
+      {activeTab === 'users' && (
+        <>
+          <div className="grid gap-4 md:grid-cols-4">
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Total Users</CardTitle>
+                <Users className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{totalUsers}</div>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Total Clients</CardTitle>
+                <UserCircle className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{totalClients}</div>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Organizers</CardTitle>
+                <Briefcase className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{totalOrganizers}</div>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Admins</CardTitle>
+                <Shield className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{totalAdmins}</div>
+              </CardContent>
+            </Card>
           </div>
-        </div>
 
-        <Table>
-          <TableHeader className="bg-[#faf7fd]">
-            <TableRow className="border-b border-[#efe7f6]">
-              <TableHead
-                className="h-11 cursor-pointer text-xs font-black uppercase tracking-[0.06em] text-[#7c7390] transition-colors hover:text-[#8f1fd1]"
-                onClick={() => toggleSort('name')}
-              >
-                <div className="flex items-center">
-                  Name
-                  <SortIcon field="name" />
-                </div>
-              </TableHead>
-              <TableHead
-                className="h-11 cursor-pointer text-xs font-black uppercase tracking-[0.06em] text-[#7c7390] transition-colors hover:text-[#8f1fd1]"
-                onClick={() => toggleSort('email')}
-              >
-                <div className="flex items-center">
-                  Email
-                  <SortIcon field="email" />
-                </div>
-              </TableHead>
-              <TableHead
-                className="h-11 cursor-pointer text-xs font-black uppercase tracking-[0.06em] text-[#7c7390] transition-colors hover:text-[#8f1fd1]"
-                onClick={() => toggleSort('role')}
-              >
-                <div className="flex items-center">
-                  Role
-                  <SortIcon field="role" />
-                </div>
-              </TableHead>
-              <TableHead
-                className="h-11 cursor-pointer text-xs font-black uppercase tracking-[0.06em] text-[#7c7390] transition-colors hover:text-[#8f1fd1]"
-                onClick={() => toggleSort('contact')}
-              >
-                <div className="flex items-center">
-                  Contact
-                  <SortIcon field="contact" />
-                </div>
-              </TableHead>
-              <TableHead
-                className="h-11 cursor-pointer text-xs font-black uppercase tracking-[0.06em] text-[#7c7390] transition-colors hover:text-[#8f1fd1]"
-                onClick={() => toggleSort('created')}
-              >
-                <div className="flex items-center">
-                  Created
-                  <SortIcon field="created" />
-                </div>
-              </TableHead>
-              <TableHead className="h-11 w-[100px] text-right text-xs font-black uppercase tracking-[0.06em] text-[#7c7390]">
-                Actions
-              </TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {paginatedUsers.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={6} className="text-center py-8 text-gray-500">
-                  {users.length > 0 ? 'No users match your search.' : 'No users found'}
-                </TableCell>
-              </TableRow>
-            ) : (
-              paginatedUsers.map((user) => (
-                <UserDetailsPopover key={user.user_id} user={user} onUpdate={fetchUsers}>
-                  <TableRow className="cursor-pointer border-b border-[#f3edf8] hover:bg-[#fcf9ff]">
-                    <TableCell className="py-3 font-semibold text-[#2e2837]">
-                      {user.firstName} {user.middleName} {user.lastName}
-                    </TableCell>
-                    <TableCell className="text-sm text-[#635a73]">{user.email}</TableCell>
-                    <TableCell>
-                      <div onClick={(e) => e.stopPropagation()}>
-                        <Select
-                          value={user.role}
-                          onValueChange={(value) =>
-                            handleRoleChange(
-                              user.user_id,
-                              `${user.firstName} ${user.lastName}`,
-                              user.role,
-                              value
-                            )
-                          }
-                        >
-                          <SelectTrigger className="h-7 w-[110px] text-xs">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="CLIENT">CLIENT</SelectItem>
-                            <SelectItem value="ORGANIZER">ORGANIZER</SelectItem>
-                            <SelectItem value="ADMIN">ADMIN</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                    </TableCell>
-                    <TableCell className="text-sm text-[#635a73]">
-                      {user.contactNumber || '-'}
-                    </TableCell>
-                    <TableCell className="text-sm text-[#4e4560]">
-                      {user.created_at ? new Date(user.created_at).toLocaleDateString() : '-'}
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleDelete(user.user_id, `${user.firstName} ${user.lastName}`);
-                        }}
-                        className="text-red-600 hover:text-red-800"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
+          <div className="overflow-hidden rounded-2xl border border-[#eee7f4] bg-white shadow-[0_8px_30px_rgba(53,36,71,0.06)]">
+            {/* Search bar */}
+            <div className="flex items-center gap-3 border-b border-[#f1eaf7] bg-[#fcf9ff] px-4 py-3">
+              <div className="relative w-full max-w-md">
+                <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-[#8a7ca3]" />
+                <Input
+                  placeholder="Search name, email, role…"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="h-9 border-[#e5ddee] bg-white pl-8"
+                />
+              </div>
+            </div>
+
+            <Table>
+              <TableHeader className="bg-[#faf7fd]">
+                <TableRow className="border-b border-[#efe7f6]">
+                  <TableHead
+                    className="h-11 cursor-pointer text-xs font-black uppercase tracking-[0.06em] text-[#7c7390] transition-colors hover:text-[#8f1fd1]"
+                    onClick={() => toggleSort('name')}
+                  >
+                    <div className="flex items-center">
+                      Name
+                      <SortIcon field="name" />
+                    </div>
+                  </TableHead>
+                  <TableHead
+                    className="h-11 cursor-pointer text-xs font-black uppercase tracking-[0.06em] text-[#7c7390] transition-colors hover:text-[#8f1fd1]"
+                    onClick={() => toggleSort('email')}
+                  >
+                    <div className="flex items-center">
+                      Email
+                      <SortIcon field="email" />
+                    </div>
+                  </TableHead>
+                  <TableHead
+                    className="h-11 cursor-pointer text-xs font-black uppercase tracking-[0.06em] text-[#7c7390] transition-colors hover:text-[#8f1fd1]"
+                    onClick={() => toggleSort('role')}
+                  >
+                    <div className="flex items-center">
+                      Role
+                      <SortIcon field="role" />
+                    </div>
+                  </TableHead>
+                  <TableHead
+                    className="h-11 cursor-pointer text-xs font-black uppercase tracking-[0.06em] text-[#7c7390] transition-colors hover:text-[#8f1fd1]"
+                    onClick={() => toggleSort('contact')}
+                  >
+                    <div className="flex items-center">
+                      Contact
+                      <SortIcon field="contact" />
+                    </div>
+                  </TableHead>
+                  <TableHead
+                    className="h-11 cursor-pointer text-xs font-black uppercase tracking-[0.06em] text-[#7c7390] transition-colors hover:text-[#8f1fd1]"
+                    onClick={() => toggleSort('created')}
+                  >
+                    <div className="flex items-center">
+                      Created
+                      <SortIcon field="created" />
+                    </div>
+                  </TableHead>
+                  <TableHead className="h-11 w-[100px] text-right text-xs font-black uppercase tracking-[0.06em] text-[#7c7390]">
+                    Actions
+                  </TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {paginatedUsers.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={6} className="text-center py-8 text-gray-500">
+                      {users.length > 0 ? 'No users match your search.' : 'No users found'}
                     </TableCell>
                   </TableRow>
-                </UserDetailsPopover>
-              ))
+                ) : (
+                  paginatedUsers.map((user) => (
+                    <UserDetailsPopover key={user.user_id} user={user} onUpdate={fetchUsers}>
+                      <TableRow className="cursor-pointer border-b border-[#f3edf8] hover:bg-[#fcf9ff]">
+                        <TableCell className="py-3 font-semibold text-[#2e2837]">
+                          {user.firstName} {user.middleName} {user.lastName}
+                        </TableCell>
+                        <TableCell className="text-sm text-[#635a73]">{user.email}</TableCell>
+                        <TableCell>
+                          <div onClick={(e) => e.stopPropagation()}>
+                            <Select
+                              value={user.role}
+                              onValueChange={(value) =>
+                                handleRoleChange(
+                                  user.user_id,
+                                  `${user.firstName} ${user.lastName}`,
+                                  user.role,
+                                  value
+                                )
+                              }
+                            >
+                              <SelectTrigger className="h-7 w-[110px] text-xs">
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="CLIENT">CLIENT</SelectItem>
+                                <SelectItem value="ORGANIZER">ORGANIZER</SelectItem>
+                                <SelectItem value="ADMIN">ADMIN</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+                        </TableCell>
+                        <TableCell className="text-sm text-[#635a73]">
+                          {user.contactNumber || '-'}
+                        </TableCell>
+                        <TableCell className="text-sm text-[#4e4560]">
+                          {user.created_at ? new Date(user.created_at).toLocaleDateString() : '-'}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleDelete(user.user_id, `${user.firstName} ${user.lastName}`);
+                            }}
+                            className="text-red-600 hover:text-red-800"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    </UserDetailsPopover>
+                  ))
+                )}
+              </TableBody>
+            </Table>
+
+            {/* Pagination Bar */}
+            {sortedUsers.length > 0 && (
+              <div className="flex flex-col gap-3 border-t border-[#f1eaf7] bg-[#fcf9ff] px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+                <div className="flex items-center gap-2 text-sm text-[#7c7390]">
+                  <span className="font-semibold">Rows per page:</span>
+                  <select
+                    value={rowsPerPage}
+                    onChange={(e) => {
+                      setRowsPerPage(Number(e.target.value));
+                      setCurrentPage(1);
+                    }}
+                    className="rounded-md border border-[#e5ddee] bg-white px-2 py-1 text-sm font-semibold text-[#2e2837] outline-none focus:ring-2 focus:ring-[#8f1fd1]/30"
+                  >
+                    {[5, 10, 25, 50].map((n) => (
+                      <option key={n} value={n}>
+                        {n}
+                      </option>
+                    ))}
+                  </select>
+                  <span className="ml-2 text-[#8a7ca3]">
+                    {(currentPage - 1) * rowsPerPage + 1}–
+                    {Math.min(currentPage * rowsPerPage, sortedUsers.length)} of{' '}
+                    {sortedUsers.length}
+                  </span>
+                </div>
+
+                <div className="flex items-center gap-1">
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    className="h-8 w-8 border-[#e5ddee] disabled:opacity-40"
+                    onClick={() => setCurrentPage(1)}
+                    disabled={currentPage === 1}
+                  >
+                    <ChevronsLeft className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    className="h-8 w-8 border-[#e5ddee] disabled:opacity-40"
+                    onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                    disabled={currentPage === 1}
+                  >
+                    <ChevronLeft className="h-4 w-4" />
+                  </Button>
+                  <span className="mx-2 text-sm font-bold text-[#2e2837]">
+                    Page {currentPage} of {totalPages}
+                  </span>
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    className="h-8 w-8 border-[#e5ddee] disabled:opacity-40"
+                    onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                    disabled={currentPage === totalPages}
+                  >
+                    <ChevronRight className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    className="h-8 w-8 border-[#e5ddee] disabled:opacity-40"
+                    onClick={() => setCurrentPage(totalPages)}
+                    disabled={currentPage === totalPages}
+                  >
+                    <ChevronsRight className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
             )}
-          </TableBody>
-        </Table>
-
-        {/* Pagination Bar */}
-        {sortedUsers.length > 0 && (
-          <div className="flex flex-col gap-3 border-t border-[#f1eaf7] bg-[#fcf9ff] px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
-            <div className="flex items-center gap-2 text-sm text-[#7c7390]">
-              <span className="font-semibold">Rows per page:</span>
-              <select
-                value={rowsPerPage}
-                onChange={(e) => {
-                  setRowsPerPage(Number(e.target.value));
-                  setCurrentPage(1);
-                }}
-                className="rounded-md border border-[#e5ddee] bg-white px-2 py-1 text-sm font-semibold text-[#2e2837] outline-none focus:ring-2 focus:ring-[#8f1fd1]/30"
-              >
-                {[5, 10, 25, 50].map((n) => (
-                  <option key={n} value={n}>
-                    {n}
-                  </option>
-                ))}
-              </select>
-              <span className="ml-2 text-[#8a7ca3]">
-                {(currentPage - 1) * rowsPerPage + 1}–
-                {Math.min(currentPage * rowsPerPage, sortedUsers.length)} of {sortedUsers.length}
-              </span>
-            </div>
-
-            <div className="flex items-center gap-1">
-              <Button
-                variant="outline"
-                size="icon"
-                className="h-8 w-8 border-[#e5ddee] disabled:opacity-40"
-                onClick={() => setCurrentPage(1)}
-                disabled={currentPage === 1}
-              >
-                <ChevronsLeft className="h-4 w-4" />
-              </Button>
-              <Button
-                variant="outline"
-                size="icon"
-                className="h-8 w-8 border-[#e5ddee] disabled:opacity-40"
-                onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-                disabled={currentPage === 1}
-              >
-                <ChevronLeft className="h-4 w-4" />
-              </Button>
-              <span className="mx-2 text-sm font-bold text-[#2e2837]">
-                Page {currentPage} of {totalPages}
-              </span>
-              <Button
-                variant="outline"
-                size="icon"
-                className="h-8 w-8 border-[#e5ddee] disabled:opacity-40"
-                onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-                disabled={currentPage === totalPages}
-              >
-                <ChevronRight className="h-4 w-4" />
-              </Button>
-              <Button
-                variant="outline"
-                size="icon"
-                className="h-8 w-8 border-[#e5ddee] disabled:opacity-40"
-                onClick={() => setCurrentPage(totalPages)}
-                disabled={currentPage === totalPages}
-              >
-                <ChevronsRight className="h-4 w-4" />
-              </Button>
-            </div>
           </div>
-        )}
-      </div>
-      </>)}
+        </>
+      )}
 
       {/* ── Verified Emails Tab ── */}
       {activeTab === 'verified-emails' && (
@@ -816,18 +830,21 @@ export function UsersManagement() {
                 {paginatedVe.length === 0 ? (
                   <TableRow>
                     <TableCell colSpan={4} className="text-center py-8 text-gray-500">
-                      {verifiedEmails.length > 0 ? 'No emails match your search.' : 'No verified emails found.'}
+                      {verifiedEmails.length > 0
+                        ? 'No emails match your search.'
+                        : 'No verified emails found.'}
                     </TableCell>
                   </TableRow>
                 ) : (
                   paginatedVe.map((ve, idx) => (
-                    <TableRow key={ve.email} className="border-b border-[#f3edf8] hover:bg-[#fcf9ff]">
+                    <TableRow
+                      key={ve.email}
+                      className="border-b border-[#f3edf8] hover:bg-[#fcf9ff]"
+                    >
                       <TableCell className="text-center text-sm text-[#8a7ca3]">
                         {(vePage - 1) * vePerPage + idx + 1}
                       </TableCell>
-                      <TableCell className="font-semibold text-[#2e2837]">
-                        {ve.email}
-                      </TableCell>
+                      <TableCell className="font-semibold text-[#2e2837]">{ve.email}</TableCell>
                       <TableCell>
                         <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-0.5 text-xs font-bold text-emerald-700">
                           <BadgeCheck className="h-3 w-3" />
@@ -855,20 +872,47 @@ export function UsersManagement() {
           {filteredVe.length > vePerPage && (
             <div className="flex items-center justify-between border-t border-[#f1eaf7] bg-[#fcf9ff] px-4 py-3">
               <span className="text-sm text-[#7c7390]">
-                {(vePage - 1) * vePerPage + 1}–{Math.min(vePage * vePerPage, filteredVe.length)} of {filteredVe.length}
+                {(vePage - 1) * vePerPage + 1}–{Math.min(vePage * vePerPage, filteredVe.length)} of{' '}
+                {filteredVe.length}
               </span>
               <div className="flex items-center gap-1">
-                <Button variant="outline" size="icon" className="h-8 w-8 border-[#e5ddee] disabled:opacity-40" onClick={() => setVePage(1)} disabled={vePage === 1}>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  className="h-8 w-8 border-[#e5ddee] disabled:opacity-40"
+                  onClick={() => setVePage(1)}
+                  disabled={vePage === 1}
+                >
                   <ChevronsLeft className="h-4 w-4" />
                 </Button>
-                <Button variant="outline" size="icon" className="h-8 w-8 border-[#e5ddee] disabled:opacity-40" onClick={() => setVePage((p) => Math.max(1, p - 1))} disabled={vePage === 1}>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  className="h-8 w-8 border-[#e5ddee] disabled:opacity-40"
+                  onClick={() => setVePage((p) => Math.max(1, p - 1))}
+                  disabled={vePage === 1}
+                >
                   <ChevronLeft className="h-4 w-4" />
                 </Button>
-                <span className="mx-2 text-sm font-bold text-[#2e2837]">Page {vePage} of {veTotalPages}</span>
-                <Button variant="outline" size="icon" className="h-8 w-8 border-[#e5ddee] disabled:opacity-40" onClick={() => setVePage((p) => Math.min(veTotalPages, p + 1))} disabled={vePage === veTotalPages}>
+                <span className="mx-2 text-sm font-bold text-[#2e2837]">
+                  Page {vePage} of {veTotalPages}
+                </span>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  className="h-8 w-8 border-[#e5ddee] disabled:opacity-40"
+                  onClick={() => setVePage((p) => Math.min(veTotalPages, p + 1))}
+                  disabled={vePage === veTotalPages}
+                >
                   <ChevronRight className="h-4 w-4" />
                 </Button>
-                <Button variant="outline" size="icon" className="h-8 w-8 border-[#e5ddee] disabled:opacity-40" onClick={() => setVePage(veTotalPages)} disabled={vePage === veTotalPages}>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  className="h-8 w-8 border-[#e5ddee] disabled:opacity-40"
+                  onClick={() => setVePage(veTotalPages)}
+                  disabled={vePage === veTotalPages}
+                >
                   <ChevronsRight className="h-4 w-4" />
                 </Button>
               </div>

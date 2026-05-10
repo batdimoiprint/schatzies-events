@@ -39,19 +39,13 @@ export async function createBackup(): Promise<Backup> {
 }
 
 /** Get backup details */
-export async function getBackupDetails(
-  backupKey: string
-): Promise<BackupDetails> {
-  const { data } = await axiosInstance.get(
-    `/backups/details/${encodeURIComponent(backupKey)}`
-  );
+export async function getBackupDetails(backupKey: string): Promise<BackupDetails> {
+  const { data } = await axiosInstance.get(`/backups/details/${encodeURIComponent(backupKey)}`);
   return data.backup;
 }
 
 /** Restore a backup into DynamoDB */
-export async function restoreBackup(
-  backupKey: string
-): Promise<RestoreResult> {
+export async function restoreBackup(backupKey: string): Promise<RestoreResult> {
   const { data } = await axiosInstance.post('/backups/restore', { backupKey });
   return data.result;
 }

@@ -113,7 +113,8 @@ export function LandingPage() {
             </div>
             <h3 className="mt-5 text-[1.4rem] font-bold text-[#1a1225]">Inquiry Submitted!</h3>
             <p className="mt-2 text-center text-[0.88rem] leading-[1.6] text-gray-500">
-              Your inquiry has been confirmed and submitted successfully! Our team will review it and get back to you within 2-3 business days.
+              Your inquiry has been confirmed and submitted successfully! Our team will review it
+              and get back to you within 2-3 business days.
             </p>
             <button
               onClick={() => setShowInquiryConfirmed(false)}

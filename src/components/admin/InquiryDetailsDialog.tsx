@@ -504,371 +504,383 @@ export function InquiryDetailsDialog({
             <div className="grid gap-8 xl:grid-cols-[minmax(0,1.45fr)_minmax(280px,0.95fr)_minmax(320px,1fr)]">
               {/* First Column - Core Info */}
               <div className="space-y-6">
-              <section className="space-y-3">
-                <h3 className="text-xs font-black uppercase tracking-widest text-[#b0a4c5] flex items-center gap-2">
-                  <span className="h-px w-4 bg-[#d5c9e4]"></span>
-                  Client Information
-                </h3>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div className="rounded-2xl border border-[#efe8f6] bg-[#fcfaff] p-4 transition-all hover:border-[#e2d5f0]">
-                    <h4 className="text-[10px] font-black uppercase tracking-wider text-[#857a98] mb-1">
-                      Full Name
-                    </h4>
-                    <p className="text-[#2e2837] font-bold text-lg">
-                      {selectedInquiry.firstName} {selectedInquiry.lastName}
-                    </p>
-                  </div>
-                  <div className="rounded-2xl border border-[#efe8f6] bg-[#fcfaff] p-4 transition-all hover:border-[#e2d5f0]">
-                    <h4 className="text-[10px] font-black uppercase tracking-wider text-[#857a98] mb-1">
-                      Contact Details
-                    </h4>
-                    <p className="text-sm font-bold text-[#5a5368]">{selectedInquiry.email}</p>
-                    {selectedInquiry.contactNumber && (
-                      <p className="text-sm font-medium text-[#7a708d] mt-0.5">
-                        {selectedInquiry.contactNumber}
+                <section className="space-y-3">
+                  <h3 className="text-xs font-black uppercase tracking-widest text-[#b0a4c5] flex items-center gap-2">
+                    <span className="h-px w-4 bg-[#d5c9e4]"></span>
+                    Client Information
+                  </h3>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="rounded-2xl border border-[#efe8f6] bg-[#fcfaff] p-4 transition-all hover:border-[#e2d5f0]">
+                      <h4 className="text-[10px] font-black uppercase tracking-wider text-[#857a98] mb-1">
+                        Full Name
+                      </h4>
+                      <p className="text-[#2e2837] font-bold text-lg">
+                        {selectedInquiry.firstName} {selectedInquiry.lastName}
                       </p>
+                    </div>
+                    <div className="rounded-2xl border border-[#efe8f6] bg-[#fcfaff] p-4 transition-all hover:border-[#e2d5f0]">
+                      <h4 className="text-[10px] font-black uppercase tracking-wider text-[#857a98] mb-1">
+                        Contact Details
+                      </h4>
+                      <p className="text-sm font-bold text-[#5a5368]">{selectedInquiry.email}</p>
+                      {selectedInquiry.contactNumber && (
+                        <p className="text-sm font-medium text-[#7a708d] mt-0.5">
+                          {selectedInquiry.contactNumber}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                </section>
+
+                <section className="space-y-3">
+                  <h3 className="text-xs font-black uppercase tracking-widest text-[#b0a4c5] flex items-center gap-2">
+                    <span className="h-px w-4 bg-[#d5c9e4]"></span>
+                    Event Requirements
+                  </h3>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="px-4 py-3 rounded-xl bg-[#f7ebff]/50 border-2 border-[#eadcf7] backdrop-blur-sm shadow-sm flex flex-col justify-center">
+                      <p className="text-[10px] font-black uppercase tracking-widest text-[#857a98] mb-0.5">
+                        Current Status
+                      </p>
+                      <p className="text-sm font-bold text-[#6f2ea8]">
+                        {selectedInquiry?.status || 'New'}
+                      </p>
+                    </div>
+                    <div className="rounded-xl border border-[#f1eaf7] bg-white p-3 shadow-sm">
+                      <h4 className="text-[10px] font-black uppercase tracking-wider text-[#a094b8] mb-1">
+                        Event Format
+                      </h4>
+                      <p className="text-[#4e4560] font-bold text-sm">
+                        {selectedInquiry.eventType || selectedInquiry.subject || 'N/A'}
+                      </p>
+                    </div>
+                    <div className="rounded-xl border border-[#f1eaf7] bg-white p-3 shadow-sm">
+                      <h4 className="text-[10px] font-black uppercase tracking-wider text-[#a094b8] mb-1">
+                        Planned Date
+                      </h4>
+                      <p className="text-[#4e4560] font-bold text-sm">
+                        {new Date(
+                          selectedInquiry.date || selectedInquiry.createdAt || Date.now()
+                        ).toLocaleDateString()}
+                      </p>
+                    </div>
+                    <div className="rounded-xl border border-[#f1eaf7] bg-white p-3 shadow-sm">
+                      <h4 className="text-[10px] font-black uppercase tracking-wider text-[#a094b8] mb-1">
+                        Submitted Date
+                      </h4>
+                      <p className="text-[#4e4560] font-bold text-sm">
+                        {new Date(
+                          selectedInquiry.createdAt || selectedInquiry.created_at || Date.now()
+                        ).toLocaleDateString('en-US', {
+                          month: 'short',
+                          day: 'numeric',
+                          year: 'numeric',
+                        })}
+                      </p>
+                    </div>
+                    {selectedInquiry.eventPackage && (
+                      <div className="rounded-xl border border-[#f1eaf7] bg-white p-3 shadow-sm">
+                        <h4 className="text-[10px] font-black uppercase tracking-wider text-[#a094b8] mb-1">
+                          Package Choice
+                        </h4>
+                        <p className="text-[#4e4560] font-bold text-sm">
+                          {selectedInquiry.eventPackage}
+                        </p>
+                      </div>
+                    )}
+                    {selectedInquiry.eventPax && (
+                      <div className="rounded-xl border border-[#f1eaf7] bg-white p-3 shadow-sm">
+                        <h4 className="text-[10px] font-black uppercase tracking-wider text-[#a094b8] mb-1">
+                          Guest Count
+                        </h4>
+                        <p className="text-[#4e4560] font-bold text-sm">
+                          {selectedInquiry.eventPax} Pax
+                        </p>
+                      </div>
                     )}
                   </div>
-                </div>
-              </section>
+                </section>
 
-              <section className="space-y-3">
-                <h3 className="text-xs font-black uppercase tracking-widest text-[#b0a4c5] flex items-center gap-2">
-                  <span className="h-px w-4 bg-[#d5c9e4]"></span>
-                  Event Requirements
-                </h3>
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="px-4 py-3 rounded-xl bg-[#f7ebff]/50 border-2 border-[#eadcf7] backdrop-blur-sm shadow-sm flex flex-col justify-center">
-                    <p className="text-[10px] font-black uppercase tracking-widest text-[#857a98] mb-0.5">
-                      Current Status
-                    </p>
-                    <p className="text-sm font-bold text-[#6f2ea8]">
-                      {selectedInquiry?.status || 'New'}
-                    </p>
+                <section className="space-y-3">
+                  <h3 className="text-xs font-black uppercase tracking-widest text-[#b0a4c5] flex items-center gap-2">
+                    <span className="h-px w-4 bg-[#d5c9e4]"></span>
+                    Client Message
+                  </h3>
+                  <div className="min-h-30 whitespace-pre-wrap rounded-2xl border border-[#ece4f5] bg-[#faf7ff] p-5 text-sm text-[#4e4560] leading-relaxed italic shadow-inner">
+                    "{selectedInquiry.message || 'No additional message provided.'}"
                   </div>
-                  <div className="rounded-xl border border-[#f1eaf7] bg-white p-3 shadow-sm">
-                    <h4 className="text-[10px] font-black uppercase tracking-wider text-[#a094b8] mb-1">
-                      Event Format
-                    </h4>
-                    <p className="text-[#4e4560] font-bold text-sm">
-                      {selectedInquiry.eventType || selectedInquiry.subject || 'N/A'}
-                    </p>
-                  </div>
-                  <div className="rounded-xl border border-[#f1eaf7] bg-white p-3 shadow-sm">
-                    <h4 className="text-[10px] font-black uppercase tracking-wider text-[#a094b8] mb-1">
-                      Planned Date
-                    </h4>
-                    <p className="text-[#4e4560] font-bold text-sm">
-                      {new Date(
-                        selectedInquiry.date || selectedInquiry.createdAt || Date.now()
-                      ).toLocaleDateString()}
-                    </p>
-                  </div>
-                  <div className="rounded-xl border border-[#f1eaf7] bg-white p-3 shadow-sm">
-                    <h4 className="text-[10px] font-black uppercase tracking-wider text-[#a094b8] mb-1">
-                      Submitted Date
-                    </h4>
-                    <p className="text-[#4e4560] font-bold text-sm">
-                      {new Date(
-                        selectedInquiry.createdAt || selectedInquiry.created_at || Date.now()
-                      ).toLocaleDateString('en-US', {
-                        month: 'short',
-                        day: 'numeric',
-                        year: 'numeric',
-                      })}
-                    </p>
-                  </div>
-                  {selectedInquiry.eventPackage && (
-                    <div className="rounded-xl border border-[#f1eaf7] bg-white p-3 shadow-sm">
-                      <h4 className="text-[10px] font-black uppercase tracking-wider text-[#a094b8] mb-1">
-                        Package Choice
-                      </h4>
-                      <p className="text-[#4e4560] font-bold text-sm">
-                        {selectedInquiry.eventPackage}
-                      </p>
-                    </div>
-                  )}
-                  {selectedInquiry.eventPax && (
-                    <div className="rounded-xl border border-[#f1eaf7] bg-white p-3 shadow-sm">
-                      <h4 className="text-[10px] font-black uppercase tracking-wider text-[#a094b8] mb-1">
-                        Guest Count
-                      </h4>
-                      <p className="text-[#4e4560] font-bold text-sm">
-                        {selectedInquiry.eventPax} Pax
-                      </p>
-                    </div>
-                  )}
-                </div>
-              </section>
-
-              <section className="space-y-3">
-                <h3 className="text-xs font-black uppercase tracking-widest text-[#b0a4c5] flex items-center gap-2">
-                  <span className="h-px w-4 bg-[#d5c9e4]"></span>
-                  Client Message
-                </h3>
-                <div className="min-h-30 whitespace-pre-wrap rounded-2xl border border-[#ece4f5] bg-[#faf7ff] p-5 text-sm text-[#4e4560] leading-relaxed italic shadow-inner">
-                  "{selectedInquiry.message || 'No additional message provided.'}"
-                </div>
-              </section>
+                </section>
               </div>
 
               {/* Second Column - Status & Meetings */}
               <div className="space-y-6">
-              <section className="space-y-3">
-                <h4 className="text-xs font-black uppercase tracking-widest text-[#b0a4c5] mb-2">
-                  Inquiry Status
-                </h4>
-                <div className="p-4 rounded-2xl border border-[#eadcf7] bg-white shadow-sm flex flex-col gap-2">
-                  <Label className="text-[10px] font-black uppercase text-[#857a98] mb-1 block">
-                    Change State
-                  </Label>
-                  {statusOptions.map((option, index) => {
-                    const isMeetingBtn = option.value === INQUIRY_STATUS_OPTIONS.MEETING_SCHEDULED;
-                    const isActive = currentStatusValue === option.value;
-                    const currentIndex = statusOptions.findIndex(o => o.value === currentStatusValue);
-                    const isCompleted = index < currentIndex;
-                    
-                    return (
-                      <Button
-                        key={option.value}
-                        variant={isActive ? "default" : "outline"}
-                        disabled={option.disabled && !isActive}
-                        className={`w-full justify-start h-11 rounded-xl font-bold transition-all ${
-                          isActive 
-                            ? 'bg-linear-to-r from-[#f347a5] to-[#8f1fd1] text-white border-none shadow-md' 
-                            : isCompleted
-                              ? 'bg-[#f7f5fa] border-[#e5ddee] text-[#8f879f]'
-                              : 'bg-white border-[#e5ddee] text-[#5a5368] hover:border-[#d5c9e4] hover:bg-[#faf7ff]'
-                        }`}
-                        onClick={() => {
-                          if (isActive) return;
-                          if (isMeetingBtn && !selectedInquiry?.meetingDetails) {
-                            setIsScheduleModalOpen(true);
-                          } else {
-                            handleStatusChange(option.value);
-                          }
-                        }}
-                      >
-                        <span className={`mr-3 flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[11px] font-black ${
-                          isActive ? 'bg-white/20 text-white' : isCompleted ? 'bg-[#e5ddee] text-[#a094b8]' : 'bg-[#f3edfa] text-[#8f1fd1]'
-                        }`}>
-                          {index + 1}
-                        </span>
-                        {option.label}
-                        {isMeetingBtn && !selectedInquiry?.meetingDetails && !option.disabled && !isActive && (
-                          <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                        )}
-                      </Button>
-                    );
-                  })}
-                  {statusChangeError && (
-                    <p className="mt-2 text-[11px] font-semibold text-red-600">
-                      {statusChangeError}
-                    </p>
-                  )}
-                </div>
-              </section>
+                <section className="space-y-3">
+                  <h4 className="text-xs font-black uppercase tracking-widest text-[#b0a4c5] mb-2">
+                    Inquiry Status
+                  </h4>
+                  <div className="p-4 rounded-2xl border border-[#eadcf7] bg-white shadow-sm flex flex-col gap-2">
+                    <Label className="text-[10px] font-black uppercase text-[#857a98] mb-1 block">
+                      Change State
+                    </Label>
+                    {statusOptions.map((option, index) => {
+                      const isMeetingBtn =
+                        option.value === INQUIRY_STATUS_OPTIONS.MEETING_SCHEDULED;
+                      const isActive = currentStatusValue === option.value;
+                      const currentIndex = statusOptions.findIndex(
+                        (o) => o.value === currentStatusValue
+                      );
+                      const isCompleted = index < currentIndex;
 
-              <section className="space-y-3">
-                <h4 className="text-xs font-black uppercase tracking-widest text-[#b0a4c5] mb-2">
-                  Meetings
-                </h4>
-                {selectedInquiry.meetingDetails ? (
-                  <div className="w-full space-y-4">
-                    <div className="rounded-2xl border border-[#eadcf7] bg-linear-to-br from-[#fbf6ff] to-[#f5f0ff] p-4 shadow-sm">
-                      <div className="flex items-center gap-3 mb-3">
-                        <div className="h-10 w-10 rounded-xl bg-white flex items-center justify-center border border-[#eadcf7] text-[#8f1fd1] shadow-xs">
-                          <CalendarIcon className="h-5 w-5" />
-                        </div>
-                        <div>
-                          <p className="text-sm font-black text-[#5f4f7a]">
-                            {new Date(
-                              selectedInquiry.meetingDetails.date || Date.now()
-                            ).toLocaleDateString('en-US', {
-                              month: 'short',
-                              day: 'numeric',
-                              year: 'numeric',
-                            })}
-                          </p>
-                          <p className="text-xs font-bold text-[#8f1fd1]">
-                            at {selectedInquiry.meetingDetails.time || 'TBD'}
-                          </p>
-                        </div>
-                      </div>
-                      <div className="space-y-3 text-[11px] font-semibold">
-                        <p className="flex justify-between border-b border-[#eee7f4] pb-1.5">
-                          <span className="text-[#a094b8]">Meeting Location</span>
-                          <span className="text-[#5f4f7a]">
-                            {selectedInquiry.meetingDetails.location || 'TBA'}
+                      return (
+                        <Button
+                          key={option.value}
+                          variant={isActive ? 'default' : 'outline'}
+                          disabled={option.disabled && !isActive}
+                          className={`w-full justify-start h-11 rounded-xl font-bold transition-all ${
+                            isActive
+                              ? 'bg-linear-to-r from-[#f347a5] to-[#8f1fd1] text-white border-none shadow-md'
+                              : isCompleted
+                                ? 'bg-[#f7f5fa] border-[#e5ddee] text-[#8f879f]'
+                                : 'bg-white border-[#e5ddee] text-[#5a5368] hover:border-[#d5c9e4] hover:bg-[#faf7ff]'
+                          }`}
+                          onClick={() => {
+                            if (isActive) return;
+                            if (isMeetingBtn && !selectedInquiry?.meetingDetails) {
+                              setIsScheduleModalOpen(true);
+                            } else {
+                              handleStatusChange(option.value);
+                            }
+                          }}
+                        >
+                          <span
+                            className={`mr-3 flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[11px] font-black ${
+                              isActive
+                                ? 'bg-white/20 text-white'
+                                : isCompleted
+                                  ? 'bg-[#e5ddee] text-[#a094b8]'
+                                  : 'bg-[#f3edfa] text-[#8f1fd1]'
+                            }`}
+                          >
+                            {index + 1}
                           </span>
-                        </p>
-                        <div className="space-y-2">
-                          <p className="flex justify-between">
-                            <span className="text-[#a094b8]">Current Organizer</span>
-                            <span className="text-[#5f4f7a] text-right">
-                              {getOrganizerLabel(selectedInquiry.meetingDetails.organizerId || '')}
+                          {option.label}
+                          {isMeetingBtn &&
+                            !selectedInquiry?.meetingDetails &&
+                            !option.disabled &&
+                            !isActive && <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />}
+                        </Button>
+                      );
+                    })}
+                    {statusChangeError && (
+                      <p className="mt-2 text-[11px] font-semibold text-red-600">
+                        {statusChangeError}
+                      </p>
+                    )}
+                  </div>
+                </section>
+
+                <section className="space-y-3">
+                  <h4 className="text-xs font-black uppercase tracking-widest text-[#b0a4c5] mb-2">
+                    Meetings
+                  </h4>
+                  {selectedInquiry.meetingDetails ? (
+                    <div className="w-full space-y-4">
+                      <div className="rounded-2xl border border-[#eadcf7] bg-linear-to-br from-[#fbf6ff] to-[#f5f0ff] p-4 shadow-sm">
+                        <div className="flex items-center gap-3 mb-3">
+                          <div className="h-10 w-10 rounded-xl bg-white flex items-center justify-center border border-[#eadcf7] text-[#8f1fd1] shadow-xs">
+                            <CalendarIcon className="h-5 w-5" />
+                          </div>
+                          <div>
+                            <p className="text-sm font-black text-[#5f4f7a]">
+                              {new Date(
+                                selectedInquiry.meetingDetails.date || Date.now()
+                              ).toLocaleDateString('en-US', {
+                                month: 'short',
+                                day: 'numeric',
+                                year: 'numeric',
+                              })}
+                            </p>
+                            <p className="text-xs font-bold text-[#8f1fd1]">
+                              at {selectedInquiry.meetingDetails.time || 'TBD'}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="space-y-3 text-[11px] font-semibold">
+                          <p className="flex justify-between border-b border-[#eee7f4] pb-1.5">
+                            <span className="text-[#a094b8]">Meeting Location</span>
+                            <span className="text-[#5f4f7a]">
+                              {selectedInquiry.meetingDetails.location || 'TBA'}
                             </span>
                           </p>
-                          <div className="pt-1">
-                            <Label className="text-[9px] font-black uppercase text-[#857a98] mb-1.5 block">
-                              Reassign Expert
-                            </Label>
-                            <Select
-                              value={selectedMeetingOrganizerId}
-                              onValueChange={handleOrganizerChange}
-                              disabled={isUpdatingMeetingOrganizer}
-                            >
-                              <SelectTrigger className="h-9 w-full rounded-xl border-[#eadcf7] bg-white/80 px-3 text-[11px] font-bold text-[#4c455e] transition-all">
-                                <SelectValue placeholder="Change organizer..." />
-                              </SelectTrigger>
-                              <SelectContent className="rounded-xl border-[#e5ddee]">
-                                {organizers.map((organizer) => (
-                                  <SelectItem key={organizer.user_id} value={organizer.user_id}>
-                                    {[organizer.firstName, organizer.lastName]
-                                      .filter(Boolean)
-                                      .join(' ')}
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
+                          <div className="space-y-2">
+                            <p className="flex justify-between">
+                              <span className="text-[#a094b8]">Current Organizer</span>
+                              <span className="text-[#5f4f7a] text-right">
+                                {getOrganizerLabel(
+                                  selectedInquiry.meetingDetails.organizerId || ''
+                                )}
+                              </span>
+                            </p>
+                            <div className="pt-1">
+                              <Label className="text-[9px] font-black uppercase text-[#857a98] mb-1.5 block">
+                                Reassign Expert
+                              </Label>
+                              <Select
+                                value={selectedMeetingOrganizerId}
+                                onValueChange={handleOrganizerChange}
+                                disabled={isUpdatingMeetingOrganizer}
+                              >
+                                <SelectTrigger className="h-9 w-full rounded-xl border-[#eadcf7] bg-white/80 px-3 text-[11px] font-bold text-[#4c455e] transition-all">
+                                  <SelectValue placeholder="Change organizer..." />
+                                </SelectTrigger>
+                                <SelectContent className="rounded-xl border-[#e5ddee]">
+                                  {organizers.map((organizer) => (
+                                    <SelectItem key={organizer.user_id} value={organizer.user_id}>
+                                      {[organizer.firstName, organizer.lastName]
+                                        .filter(Boolean)
+                                        .join(' ')}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            </div>
                           </div>
                         </div>
                       </div>
                     </div>
-                  </div>
-                ) : (
-                  <div className="space-y-3">
-                    <div className="rounded-2xl border border-dashed border-[#eadcf7] bg-[#fbf6ff] p-6 text-center">
-                      <CalendarIcon className="h-8 w-8 text-[#d5c9e4] mx-auto mb-2" />
-                      <p className="text-sm font-bold text-[#6a5a83]">No meeting scheduled</p>
-                      <p className="text-[11px] text-[#9a8fb0] mt-1">
-                        Use the status options above to schedule a discovery call
-                      </p>
+                  ) : (
+                    <div className="space-y-3">
+                      <div className="rounded-2xl border border-dashed border-[#eadcf7] bg-[#fbf6ff] p-6 text-center">
+                        <CalendarIcon className="h-8 w-8 text-[#d5c9e4] mx-auto mb-2" />
+                        <p className="text-sm font-bold text-[#6a5a83]">No meeting scheduled</p>
+                        <p className="text-[11px] text-[#9a8fb0] mt-1">
+                          Use the status options above to schedule a discovery call
+                        </p>
+                      </div>
                     </div>
-                  </div>
-                )}
-              </section>
+                  )}
+                </section>
               </div>
 
               {/* Third Column - Portal Access */}
               <div className="space-y-6">
-              <section className="space-y-3">
-                <h4 className="text-xs font-black uppercase tracking-widest text-[#b0a4c5] mb-2">
-                  Portal Access
-                </h4>
-                <div className="rounded-2xl border border-[#eadcf7] bg-white p-4 shadow-sm overflow-hidden relative">
-                  {!selectedInquiry.meetingDetails && !isAlreadyRegistered && !createdAccount && (
-                    <div className="absolute inset-0 z-10 bg-white/60 backdrop-blur-[1px] flex items-center justify-center p-6 text-center">
-                      <p className="text-[11px] font-bold text-amber-700 bg-amber-50 p-2 rounded-lg border border-amber-100 shadow-sm">
-                        Schedule a meeting first to enable account creation.
-                      </p>
-                    </div>
-                  )}
+                <section className="space-y-3">
+                  <h4 className="text-xs font-black uppercase tracking-widest text-[#b0a4c5] mb-2">
+                    Portal Access
+                  </h4>
+                  <div className="rounded-2xl border border-[#eadcf7] bg-white p-4 shadow-sm overflow-hidden relative">
+                    {!selectedInquiry.meetingDetails && !isAlreadyRegistered && !createdAccount && (
+                      <div className="absolute inset-0 z-10 bg-white/60 backdrop-blur-[1px] flex items-center justify-center p-6 text-center">
+                        <p className="text-[11px] font-bold text-amber-700 bg-amber-50 p-2 rounded-lg border border-amber-100 shadow-sm">
+                          Schedule a meeting first to enable account creation.
+                        </p>
+                      </div>
+                    )}
 
-                  <div className="flex items-start gap-3 mb-4">
-                    <div className="h-8 w-8 rounded-lg bg-[#f7ebff] flex items-center justify-center text-[#8f1fd1]">
-                      <Check className="h-4 w-4" />
-                    </div>
-                    <div>
-                      <p className="text-sm font-black text-[#5f4f7a]">Client Account</p>
-                      <p className="text-[10px] font-semibold text-[#8f879f]">
-                        Enable portal access for this client
-                      </p>
-                    </div>
-                  </div>
-
-                  <Button
-                    type="button"
-                    onClick={handleCreateUserAccount}
-                    disabled={
-                      isCreatingAccount ||
-                      !selectedInquiry?.email ||
-                      Boolean(createdAccount) ||
-                      isAlreadyRegistered ||
-                      !selectedInquiry.meetingDetails
-                    }
-                    className="w-full h-11 bg-linear-to-r from-[#2e2837] to-[#5a5368] text-white font-black rounded-xl"
-                  >
-                    {isCreatingAccount
-                      ? 'Processing...'
-                      : createdAccount || isAlreadyRegistered
-                        ? 'Account Ready'
-                        : 'Create User Account'}
-                  </Button>
-
-                  {createdAccount && (
-                    <div className="mt-4 space-y-2 rounded-xl border border-[#e5dbef] bg-[#faf7ff] p-3 animate-in fade-in slide-in-from-top-2">
-                      <p className="text-[10px] font-black uppercase text-[#6f2ea8]">
-                        Temporary Access Key
-                      </p>
-                      <div className="flex items-center gap-2">
-                        <div className="relative flex-1">
-                          <Input
-                            readOnly
-                            value={isPasswordVisible ? createdAccount.password : '••••••••••••'}
-                            className="h-10 border-[#ddd8e8] bg-white text-xs font-bold text-[#4c455e] rounded-lg pr-10"
-                          />
-                          <button
-                            type="button"
-                            onClick={() =>
-                              setShowPasswordByInquiry((prev) => ({
-                                ...prev,
-                                [selectedInquiryKey]: !isPasswordVisible,
-                              }))
-                            }
-                            className="absolute right-3 top-1/2 -translate-y-1/2 text-[#8f879f] hover:text-[#8f1fd1]"
-                          >
-                            {isPasswordVisible ? (
-                              <EyeOff className="h-4 w-4" />
-                            ) : (
-                              <Eye className="h-4 w-4" />
-                            )}
-                          </button>
-                        </div>
-                        <Button
-                          type="button"
-                          variant="outline"
-                          onClick={() =>
-                            handleCopyPassword(selectedInquiryKey, createdAccount.password)
-                          }
-                          className="h-10 w-10 p-0 border-[#ddd8e8] rounded-lg bg-white"
-                        >
-                          {isCopied ? (
-                            <Check className="h-4 w-4 text-emerald-600" />
-                          ) : (
-                            <Copy className="h-4 w-4" />
-                          )}
-                        </Button>
+                    <div className="flex items-start gap-3 mb-4">
+                      <div className="h-8 w-8 rounded-lg bg-[#f7ebff] flex items-center justify-center text-[#8f1fd1]">
+                        <Check className="h-4 w-4" />
+                      </div>
+                      <div>
+                        <p className="text-sm font-black text-[#5f4f7a]">Client Account</p>
+                        <p className="text-[10px] font-semibold text-[#8f879f]">
+                          Enable portal access for this client
+                        </p>
                       </div>
                     </div>
-                  )}
 
-                  {accountCreateError && (
-                    <div className="mt-3 p-2 rounded-lg bg-red-50 border border-red-100">
-                      <p className="text-[10px] font-bold text-red-600">{accountCreateError}</p>
-                    </div>
-                  )}
-                  {accountCreateSuccess && (
-                    <div className="mt-3 p-2 rounded-lg bg-emerald-50 border border-emerald-100">
-                      <p className="text-[10px] font-bold text-emerald-700">
-                        {accountCreateSuccess}
-                      </p>
-                    </div>
-                  )}
-                </div>
-              </section>
+                    <Button
+                      type="button"
+                      onClick={handleCreateUserAccount}
+                      disabled={
+                        isCreatingAccount ||
+                        !selectedInquiry?.email ||
+                        Boolean(createdAccount) ||
+                        isAlreadyRegistered ||
+                        !selectedInquiry.meetingDetails
+                      }
+                      className="w-full h-11 bg-linear-to-r from-[#2e2837] to-[#5a5368] text-white font-black rounded-xl"
+                    >
+                      {isCreatingAccount
+                        ? 'Processing...'
+                        : createdAccount || isAlreadyRegistered
+                          ? 'Account Ready'
+                          : 'Create User Account'}
+                    </Button>
 
-              {user?.role === 'ADMIN' && (
-                <div className="border-t border-[#eee7f4] pt-6">
-                  <Button
-                    variant="destructive"
-                    className="w-full font-bold"
-                    onClick={() => setIsDeleteConfirmOpen(true)}
-                  >
-                    Delete Inquiry
-                  </Button>
-                </div>
-              )}
+                    {createdAccount && (
+                      <div className="mt-4 space-y-2 rounded-xl border border-[#e5dbef] bg-[#faf7ff] p-3 animate-in fade-in slide-in-from-top-2">
+                        <p className="text-[10px] font-black uppercase text-[#6f2ea8]">
+                          Temporary Access Key
+                        </p>
+                        <div className="flex items-center gap-2">
+                          <div className="relative flex-1">
+                            <Input
+                              readOnly
+                              value={isPasswordVisible ? createdAccount.password : '••••••••••••'}
+                              className="h-10 border-[#ddd8e8] bg-white text-xs font-bold text-[#4c455e] rounded-lg pr-10"
+                            />
+                            <button
+                              type="button"
+                              onClick={() =>
+                                setShowPasswordByInquiry((prev) => ({
+                                  ...prev,
+                                  [selectedInquiryKey]: !isPasswordVisible,
+                                }))
+                              }
+                              className="absolute right-3 top-1/2 -translate-y-1/2 text-[#8f879f] hover:text-[#8f1fd1]"
+                            >
+                              {isPasswordVisible ? (
+                                <EyeOff className="h-4 w-4" />
+                              ) : (
+                                <Eye className="h-4 w-4" />
+                              )}
+                            </button>
+                          </div>
+                          <Button
+                            type="button"
+                            variant="outline"
+                            onClick={() =>
+                              handleCopyPassword(selectedInquiryKey, createdAccount.password)
+                            }
+                            className="h-10 w-10 p-0 border-[#ddd8e8] rounded-lg bg-white"
+                          >
+                            {isCopied ? (
+                              <Check className="h-4 w-4 text-emerald-600" />
+                            ) : (
+                              <Copy className="h-4 w-4" />
+                            )}
+                          </Button>
+                        </div>
+                      </div>
+                    )}
+
+                    {accountCreateError && (
+                      <div className="mt-3 p-2 rounded-lg bg-red-50 border border-red-100">
+                        <p className="text-[10px] font-bold text-red-600">{accountCreateError}</p>
+                      </div>
+                    )}
+                    {accountCreateSuccess && (
+                      <div className="mt-3 p-2 rounded-lg bg-emerald-50 border border-emerald-100">
+                        <p className="text-[10px] font-bold text-emerald-700">
+                          {accountCreateSuccess}
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                </section>
+
+                {user?.role === 'ADMIN' && (
+                  <div className="border-t border-[#eee7f4] pt-6">
+                    <Button
+                      variant="destructive"
+                      className="w-full font-bold"
+                      onClick={() => setIsDeleteConfirmOpen(true)}
+                    >
+                      Delete Inquiry
+                    </Button>
+                  </div>
+                )}
               </div>
             </div>
           </div>
