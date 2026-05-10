@@ -1,11 +1,11 @@
 import { useEffect, useMemo, useState } from 'react';
-import { ChevronDown, Download, RefreshCw } from 'lucide-react';
+import { FileText } from 'lucide-react';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 import { getEvents } from '@/api/events';
 import { getVendors, getVendorEntitiesByEventId, type Vendor } from '@/api/vendors';
 import {
   getCostBreakdown,
-  createCostBreakdown,
-  updateCostBreakdown,
   type CostBreakdownResponse,
 } from '@/api/cost-breakdown';
 import { Button } from '@/components/ui/button';
@@ -19,8 +19,8 @@ const SERVICE_COLORS: Record<string, string> = {
   Catering: '#7a0bc0', Styling: '#ec89be', Media: '#5dbac0', Venue: '#f39c12',
 };
 
-const fmt = new Intl.NumberFormat('en-PH', { style: 'currency', currency: 'PHP', maximumFractionDigits: 0 });
-const peso = (v: number) => fmt.format(v);
+const fmt = new Intl.NumberFormat('en-US', { maximumFractionDigits: 0 });
+const peso = (v: number) => `Php ${fmt.format(v)}`;
 
 function calcPkgPrice(pkg: string, type: string, pax: number): number {
   const p = pkg.trim().toLowerCase(), t = type.trim().toLowerCase();
@@ -46,8 +46,6 @@ export function CostBreakdownPage() {
   const [eventVendors, setEventVendors] = useState<Vendor[]>([]);
   const [allVendors, setAllVendors] = useState<Vendor[]>([]);
   const [breakdown, setBreakdown] = useState<CostBreakdownResponse | null>(null);
-  const [isSaving, setIsSaving] = useState(false);
-  const [exportOpen, setExportOpen] = useState(false);
 
   const ev = useMemo(() => apiEvents.find((e) => String(e?.id) === selectedEventId) ?? null, [apiEvents, selectedEventId]);
   const evName = String(ev?.title ?? 'Unknown Event');
@@ -102,43 +100,62 @@ export function CostBreakdownPage() {
     getCostBreakdown(selectedEventId).then(setBreakdown).catch(() => setBreakdown(null));
   }, [selectedEventId]);
 
-  const handleSave = async () => {
-    if (!selectedEventId || packagePrice <= 0) return;
-    setIsSaving(true);
-    const payload = { packagePrice, eventPax: evPax, additionalCharges: 0 };
-    try {
-      if (breakdown) { await updateCostBreakdown(selectedEventId, payload); }
-      else { await createCostBreakdown(selectedEventId, payload); }
-      const fresh = await getCostBreakdown(selectedEventId);
-      setBreakdown(fresh);
-    } catch (e: any) {
-      if (e.response?.status === 404) { await createCostBreakdown(selectedEventId, payload); const fresh = await getCostBreakdown(selectedEventId); setBreakdown(fresh); }
-    } finally { setIsSaving(false); }
-  };
 
-  const handleRefresh = async () => {
+
+  const handlePdf = () => {
     if (!selectedEventId) return;
-    const [v, b] = await Promise.all([
-      getVendorEntitiesByEventId(selectedEventId).catch(() => []),
-      getCostBreakdown(selectedEventId).catch(() => null),
-    ]);
-    setEventVendors(v); setBreakdown(b);
-  };
+    const doc = new jsPDF();
+    
+    // Header
+    doc.setFontSize(22);
+    doc.setTextColor('#8f1fd1');
+    doc.text('SCHATZIES EVENTS', 14, 22);
+    
+    doc.setFontSize(16);
+    doc.setTextColor('#333333');
+    doc.text('Cost Breakdown Report', 14, 32);
+    
+    doc.setFontSize(11);
+    doc.text(`Event: ${evName}`, 14, 42);
+    doc.text(`Event Type: ${evType}`, 14, 48);
+    doc.text(`Pax: ${evPax}`, 14, 54);
+    
+    // Summary
+    autoTable(doc, {
+      startY: 62,
+      head: [['Summary', 'Amount']],
+      body: [
+        ['Package Price', peso(packagePrice)],
+        ['Organizer Share (20%)', peso(organizerShare)],
+        ['Vendor Budget (80%)', peso(vendorBudget)],
+      ],
+      theme: 'grid',
+      headStyles: { fillColor: [143, 31, 209] }
+    });
 
-  const handleCsv = () => {
-    const rows = [
-      ['Cost Breakdown', evName], ['Package Price', String(packagePrice)],
-      ['Organizer 20%', String(organizerShare)], ['Vendor Budget 80%', String(vendorBudget)],
-      [], ['Assigned Vendors'], ['Service Type', 'Vendor Name', 'Price'],
-      ...eventVendors.map((v) => [v.serviceType, v.name, String(v.price ?? 0)]),
-      [], ['Total Vendor Cost', String(totalVendorCost)], ['Remaining', String(vendorBalance)],
-      ['Organizer Total', String(organizerTotal)],
-    ];
-    const csv = rows.map((r) => r.map((c) => `"${c}"`).join(',')).join('\n');
-    const a = document.createElement('a');
-    a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv' }));
-    a.download = `${evName.toLowerCase().replace(/\s+/g, '-')}-cost-breakdown.csv`;
-    a.click(); setExportOpen(false);
+    // Vendors
+    autoTable(doc, {
+      startY: (doc as any).lastAutoTable.finalY + 10,
+      head: [['Service Type', 'Vendor Name', 'Price']],
+      body: eventVendors.map(v => [v.serviceType || '-', v.name, peso(v.price ?? 0)]),
+      theme: 'grid',
+      headStyles: { fillColor: [243, 77, 167] }
+    });
+    
+    // Totals
+    autoTable(doc, {
+      startY: (doc as any).lastAutoTable.finalY + 10,
+      body: [
+        ['Total Vendor Cost', peso(totalVendorCost)],
+        ['Remaining Budget', peso(vendorBalance)],
+        ['Organizer Total Earnings', peso(organizerTotal)],
+      ],
+      theme: 'grid',
+      styles: { fontStyle: 'bold' },
+      columnStyles: { 0: { cellWidth: 100 } }
+    });
+
+    doc.save(`${evName.toLowerCase().replace(/\s+/g, '-')}-cost-breakdown.pdf`);
   };
 
   return (
@@ -155,29 +172,13 @@ export function CostBreakdownPage() {
             </SelectContent>
           </Select>
           <div>
-            <p className="text-sm font-semibold text-[#4d4454]">{evPkg}</p>
             <span className="rounded-full border border-[#eadcf6] bg-[#f8f1fd] px-3 py-0.5 text-xs font-bold uppercase tracking-wide text-[#8f23cf]">{evType}</span>
           </div>
         </div>
         <div className="flex items-center gap-2">
-          <Button onClick={handleRefresh} variant="outline" className="rounded-full border-[#e4d9ef] px-4 font-bold text-[#8f1fd1] hover:bg-[#faf6fd]">
-            <RefreshCw className="size-4 mr-1" /> Refresh
+          <Button onClick={handlePdf} className="rounded-full bg-gradient-to-r from-[#f34da7] to-[#8f1fd1] px-6 text-white hover:opacity-95 font-bold shadow-[0_4px_14px_rgba(165,44,180,0.2)]">
+            <FileText className="size-4 mr-2" /> Export PDF Report
           </Button>
-          <Button onClick={handleSave} disabled={isSaving} className="rounded-full bg-white border border-[#e4d9ef] text-[#8f1fd1] px-5 font-bold shadow-sm hover:bg-[#faf6fd] disabled:opacity-50">
-            {isSaving ? 'Saving...' : 'Save'}
-          </Button>
-          <div className="relative">
-            <Button onClick={() => setExportOpen((o) => !o)} className="rounded-full bg-gradient-to-r from-[#f34da7] to-[#8f1fd1] px-5 text-white hover:opacity-95">
-              Export <ChevronDown className="size-4" />
-            </Button>
-            {exportOpen && (
-              <div className="absolute right-0 top-full z-20 mt-2 w-44 rounded-2xl border border-[#eadfec] bg-white shadow-lg">
-                <button type="button" onClick={handleCsv} className="flex w-full items-center gap-2 px-4 py-3 text-sm font-semibold text-[#4a4157] hover:bg-[#faf6fd]">
-                  <Download className="size-4 text-[#8f1fd1]" /> Export CSV
-                </button>
-              </div>
-            )}
-          </div>
         </div>
       </div>
 

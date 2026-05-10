@@ -1,4 +1,4 @@
-export type PlannerTab = 'overview' | 'task' | 'notes' | 'flow' | 'checklist' | 'vendors' | 'costs';
+export type PlannerTab = 'overview' | 'task' | 'notes' | 'flow' | 'checklist' | 'vendors' | 'costs' | 'venue';
 
 export type ProjectSlot = {
   id: string;
@@ -15,6 +15,7 @@ export type ProjectSlot = {
   clientId?: string;
   clientRealName?: string;
   eventCost?: string | number;
+  venue?: string;
 };
 
 export type TaskLane = 'todo' | 'in-progress' | 'completed';

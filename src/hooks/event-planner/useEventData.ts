@@ -47,6 +47,7 @@ export function useEventData() {
             clientId: rawClientId,
             clientRealName: e.clientRealName,
             eventCost: e.eventCost || e.cost,
+            venue: e.venue || '',
           };
         });
         setProjectSlots(mapped);

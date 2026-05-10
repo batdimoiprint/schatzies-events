@@ -103,15 +103,14 @@ function getStatusConfig(status: string) {
   return STATUS_CONFIG[status] || STATUS_CONFIG.Pending;
 }
 
-const pesoFormatter = new Intl.NumberFormat('en-PH', {
-  style: 'currency',
-  currency: 'PHP',
+const pesoFormatter = new Intl.NumberFormat('en-US', {
   maximumFractionDigits: 0,
 });
+const peso = (val: number) => `Php ${pesoFormatter.format(val)}`;
 
 function formatMoney(value?: number | null) {
   if (value === undefined || value === null || Number.isNaN(Number(value))) return '—';
-  return pesoFormatter.format(Number(value));
+  return peso(Number(value));
 }
 
 export function EventDetailsModal({

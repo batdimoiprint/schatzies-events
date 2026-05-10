@@ -14,6 +14,7 @@ import { NotesTab } from '@/components/organizer/planner/tabs/NotesTab';
 import { ChecklistTab } from '@/components/organizer/planner/tabs/ChecklistTab';
 import { VendorsTab } from '@/components/organizer/planner/tabs/VendorsTab';
 import { CostBreakdownTab } from '@/components/organizer/planner/tabs/CostBreakdownTab';
+import { VenueTab } from '@/components/organizer/planner/tabs/VenueTab';
 import { NoteDialog } from '@/components/organizer/planner/dialogs/NoteDialog';
 import { TaskPreviewDialog } from '@/components/organizer/planner/dialogs/TaskPreviewDialog';
 import { ChecklistDeleteDialog } from '@/components/organizer/planner/dialogs/ChecklistDeleteDialog';
@@ -111,6 +112,9 @@ export function AdminEventPlannerPage() {
                 handleOpenAssignVendorModal={vendors.handleOpenAssignVendorModal}
                 handleUnassignVendor={vendors.handleUnassignVendor}
               />
+            )}
+            {activeTab === 'venue' && (
+              <VenueTab venue={selectedEventDetails?.venue || selectedProject.venue || ''} />
             )}
             {activeTab === 'flow' && (
               <FlowNotesBoard
