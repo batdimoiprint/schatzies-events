@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { X, Trash2 } from 'lucide-react';
+import { X, Trash2, Pencil, Check } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -14,6 +14,7 @@ import {
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import type { EventManagerEvent } from '@/api/events';
+import { updateEventPricing } from '@/api/events';
 import { getRSVPList } from '@/api/rsvp';
 
 interface EventDetailsModalProps {
@@ -149,6 +150,13 @@ export function EventDetailsModal({
   const [isLoadingRsvp, setIsLoadingRsvp] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
+  // Admin pricing edit state
+  const [isEditingPricing, setIsEditingPricing] = useState(false);
+  const [editPrice, setEditPrice] = useState<string>('');
+  const [editDownpayment, setEditDownpayment] = useState<string>('');
+  const [isSavingPricing, setIsSavingPricing] = useState(false);
+  const [pricingError, setPricingError] = useState<string>('');
+
   useEffect(() => {
     if (isOpen && event) {
       // Parse start and end dates — prefer raw ISO, fall back to formatted date string
@@ -173,6 +181,8 @@ export function EventDetailsModal({
       });
 
       setShowDeleteConfirm(false);
+      setIsEditingPricing(false);
+      setPricingError('');
 
       // Fetch RSVP guests
       setIsLoadingRsvp(true);
@@ -294,19 +304,135 @@ export function EventDetailsModal({
               </span>
               <p className="text-sm font-bold text-[#2e2837] truncate">{event.date}</p>
             </div>
-            <div className="rounded-xl border border-[#f1eef5] bg-[#faf9fc] px-3 py-3">
-              <span className="text-[10px] font-black uppercase tracking-widest text-[#8b839c] mb-1 block">
-                Event Price
-              </span>
-              <p className="text-sm font-bold text-[#2e2837] truncate">{formatMoney(eventPrice)}</p>
+            <div className={`rounded-xl border px-3 py-3 ${
+              isEditingPricing
+                ? 'border-[#df1b8b]/30 bg-[#fdf2f8]'
+                : 'border-[#f1eef5] bg-[#faf9fc]'
+            }`}>
+              <div className="flex items-center justify-between mb-1">
+                <span className="text-[10px] font-black uppercase tracking-widest text-[#8b839c]">
+                  Event Price
+                </span>
+                {isAdmin && !isEditingPricing && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsEditingPricing(true);
+                      setEditPrice(String(eventPrice ?? ''));
+                      setEditDownpayment(String(downpaymentAmount ?? ''));
+                      setPricingError('');
+                    }}
+                    className="text-[#a69eb5] hover:text-[#df1b8b] transition-colors"
+                    title="Edit pricing"
+                  >
+                    <Pencil className="size-3" />
+                  </button>
+                )}
+              </div>
+              {isEditingPricing ? (
+                <input
+                  type="number"
+                  min="0"
+                  step="1000"
+                  value={editPrice}
+                  onChange={(e) => setEditPrice(e.target.value)}
+                  disabled={isSavingPricing}
+                  className="w-full rounded-md border border-[#e1d5eb] bg-white px-2 py-1 text-sm font-bold text-[#2e2837] outline-none focus:border-[#df1b8b] focus:ring-1 focus:ring-[#df1b8b] disabled:opacity-50"
+                  placeholder="0"
+                />
+              ) : (
+                <p className="text-sm font-bold text-[#2e2837] truncate">{formatMoney(eventPrice)}</p>
+              )}
             </div>
-            <div className="rounded-xl border border-[#f1eef5] bg-[#faf9fc] px-3 py-3">
-              <span className="text-[10px] font-black uppercase tracking-widest text-[#8b839c] mb-1 block">
-                Downpayment
-              </span>
-              <p className="text-sm font-bold text-[#2e2837] truncate">
-                {formatMoney(downpaymentAmount)}
-              </p>
+            <div className={`rounded-xl border px-3 py-3 ${
+              isEditingPricing
+                ? 'border-[#df1b8b]/30 bg-[#fdf2f8]'
+                : 'border-[#f1eef5] bg-[#faf9fc]'
+            }`}>
+              <div className="flex items-center justify-between mb-1">
+                <span className="text-[10px] font-black uppercase tracking-widest text-[#8b839c]">
+                  Downpayment
+                </span>
+                {isAdmin && isEditingPricing && (
+                  <div className="flex items-center gap-1">
+                    <button
+                      type="button"
+                      disabled={isSavingPricing}
+                      onClick={async () => {
+                        setPricingError('');
+                        const parsedPrice = Number(editPrice);
+                        const parsedDown = Number(editDownpayment);
+                        if (!Number.isFinite(parsedPrice) || parsedPrice < 0) {
+                          setPricingError('Invalid event price');
+                          return;
+                        }
+                        if (!Number.isFinite(parsedDown) || parsedDown < 0) {
+                          setPricingError('Invalid downpayment');
+                          return;
+                        }
+                        setIsSavingPricing(true);
+                        try {
+                          await updateEventPricing(event.id, {
+                            packageInitialAmount: parsedPrice,
+                            downpaymentAmount: parsedDown,
+                          });
+                          // Update the displayed values immediately
+                          event.packageInitialAmount = parsedPrice;
+                          event.downpaymentAmount = parsedDown;
+                          event.packagePrice = Math.max(0, parsedPrice - parsedDown);
+                          setIsEditingPricing(false);
+                        } catch (err: any) {
+                          setPricingError(err?.response?.data?.error || 'Failed to save pricing');
+                        } finally {
+                          setIsSavingPricing(false);
+                        }
+                      }}
+                      className="text-emerald-600 hover:text-emerald-700 transition-colors disabled:opacity-50"
+                      title="Save pricing"
+                    >
+                      {isSavingPricing ? (
+                        <svg className="animate-spin size-3.5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                      ) : (
+                        <Check className="size-3.5" />
+                      )}
+                    </button>
+                    <button
+                      type="button"
+                      disabled={isSavingPricing}
+                      onClick={() => {
+                        setIsEditingPricing(false);
+                        setPricingError('');
+                      }}
+                      className="text-[#c5221f] hover:text-[#a31b18] transition-colors disabled:opacity-50"
+                      title="Cancel"
+                    >
+                      <X className="size-3.5" />
+                    </button>
+                  </div>
+                )}
+              </div>
+              {isEditingPricing ? (
+                <input
+                  type="number"
+                  min="0"
+                  step="1000"
+                  value={editDownpayment}
+                  onChange={(e) => setEditDownpayment(e.target.value)}
+                  disabled={isSavingPricing}
+                  className="w-full rounded-md border border-[#e1d5eb] bg-white px-2 py-1 text-sm font-bold text-[#2e2837] outline-none focus:border-[#df1b8b] focus:ring-1 focus:ring-[#df1b8b] disabled:opacity-50"
+                  placeholder="0"
+                />
+              ) : (
+                <p className="text-sm font-bold text-[#2e2837] truncate">
+                  {formatMoney(downpaymentAmount)}
+                </p>
+              )}
+              {pricingError && (
+                <p className="text-[10px] font-bold text-[#c5221f] mt-1">{pricingError}</p>
+              )}
             </div>
             <div className="rounded-xl border border-[#f1eef5] bg-[#faf9fc] px-3 py-3">
               <span className="text-[10px] font-black uppercase tracking-widest text-[#8b839c] mb-1 block">

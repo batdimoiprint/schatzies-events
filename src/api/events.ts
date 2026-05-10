@@ -207,6 +207,14 @@ export async function deleteEvent(eventId: string): Promise<void> {
   await axiosInstance.delete(`/events/${eventId}`);
 }
 
+export async function updateEventPricing(
+  eventId: string,
+  pricing: { packageInitialAmount?: number; downpaymentAmount?: number }
+): Promise<BackendEvent> {
+  const response = await axiosInstance.patch(`/events/${eventId}/pricing`, pricing);
+  return response.data.event;
+}
+
 export async function getEventVendors(eventId: string) {
   const response = await axiosInstance.get(`/events/${eventId}/vendors`);
   return response.data;
