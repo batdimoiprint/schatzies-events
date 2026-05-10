@@ -11,6 +11,7 @@ import {
   type Conversation,
   type ConversationParticipant,
 } from '@/api/messages';
+import { getEventManagerEvents, getEventById, getEventUser } from '@/api/events';
 
 /* ─── helpers ──────────────────────────────────────────────────────────── */
 
@@ -118,10 +119,56 @@ export function MessagePage() {
   // Deduplicate and sort messages to prevent duplicates from optimistic updates
   const messages = useMemo(() => dedupeAndSort(rawMessages), [rawMessages]);
 
-  const organizer = useMemo(
-    () => getOrganizerParticipant(activeConversation),
-    [activeConversation]
-  );
+  /* ── TanStack Query: fetch assigned organizer if no conversation exists ── */
+  const { data: fallbackOrganizer } = useQuery<ConversationParticipant | null>({
+    queryKey: ['assigned-organizer', user?.user_id],
+    queryFn: async () => {
+      if (!user || user.role !== 'CLIENT') return null;
+      try {
+        const events = await getEventManagerEvents();
+        const userFullName = `${user.firstName || ''} ${user.lastName || ''}`.trim().toLowerCase();
+        const userEvents = events.filter(
+          (e) =>
+            e.clientId === user.user_id ||
+            e.clientId === user.client_id ||
+            (e.client && e.client.toLowerCase().includes(userFullName))
+        );
+
+        if (userEvents.length === 0) return null;
+
+        const fullEvent = await getEventById(userEvents[0].id);
+        const orgId =
+          (fullEvent as any).organizer_id ||
+          (fullEvent as any).organizerId ||
+          userEvents[0].organizerId ||
+          (userEvents[0] as any).organizer_id;
+
+        if (!orgId) return null;
+
+        const org = await getEventUser(orgId);
+        return {
+          id: orgId,
+          name:
+            `${org.firstName || org.user?.firstName || ''} ${org.lastName || org.user?.lastName || ''}`.trim() ||
+            'Organizer',
+          email: org.email || org.user?.email || '-',
+          contactNumber: org.contactNumber || org.user?.contactNumber || '-',
+          role: 'organizer',
+          initial: getInitialFromName(org.firstName || org.user?.firstName),
+        };
+      } catch (error) {
+        console.error('Error fetching assigned organizer:', error);
+        return null;
+      }
+    },
+    enabled: !!user && !activeConversation, // Only fetch if we don't have an active conversation organizer yet
+  });
+
+  const organizer = useMemo(() => {
+    const fromConversation = getOrganizerParticipant(activeConversation);
+    if (fromConversation) return fromConversation;
+    return fallbackOrganizer ?? null;
+  }, [activeConversation, fallbackOrganizer]);
 
   const isLoading = isLoadingConversations || (!!activeConversationId && isLoadingMessages);
   const isError = isConversationsError || isMessagesError;
@@ -197,7 +244,7 @@ export function MessagePage() {
           {/* Chat Header — no manual refresh button */}
           <div className="flex shrink-0 items-center justify-between rounded-t-xl bg-pink-400 px-4 py-3 sm:p-4">
             <div>
-              <p className="text-xl font-bold text-white">{organizer?.name || 'Your Organizer'}</p>
+              <p className="text-xl font-bold text-white">{organizer?.name || ''}</p>
               <div className="mt-0.5 flex items-center gap-1.5">
                 <span className="h-2 w-2 rounded-full bg-green-400" />
                 <span className="text-sm text-white">Active</span>
@@ -309,7 +356,7 @@ export function MessagePage() {
           </div>
 
           {/* Name + badge */}
-          <p className="mt-4 text-2xl font-bold text-[#2d2834]">{organizer?.name || 'Organizer'}</p>
+          <p className="mt-4 text-2xl font-bold text-[#2d2834]">{organizer?.name || ''}</p>
           <span className="mt-2 rounded-full bg-pink-400 px-4 py-1 text-sm text-white">
             Assigned Organizer
           </span>

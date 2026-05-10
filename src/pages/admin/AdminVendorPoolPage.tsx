@@ -813,175 +813,357 @@ export function AdminVendorPoolPage() {
       ) : null}
 
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="max-w-7xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>{dialogMode === 'create' ? 'Add Vendor' : 'Edit Vendor'}</DialogTitle>
-            <DialogDescription>
-              {dialogMode === 'create'
-                ? 'Create a vendor and assign it to an event.'
-                : 'Update vendor details, manage workers, and view event assignments.'}
-            </DialogDescription>
-          </DialogHeader>
-
-          <div className={`grid gap-6 ${dialogMode === 'edit' ? 'md:grid-cols-2' : 'grid-cols-1'}`}>
-            {/* ──── LEFT COLUMN: Vendor Form ──── */}
-            <div className="space-y-3">
-              <h3 className="text-sm font-black uppercase tracking-widest text-[#7c7390] border-b border-[#f1eef5] pb-2">
-                Vendor Details
-              </h3>
-
-              <Input
-                placeholder="Vendor name *"
-                value={vendorForm.vendorName}
-                onChange={(event) =>
-                  setVendorForm((current) => ({ ...current, vendorName: event.target.value }))
-                }
-              />
-
-              <Input
-                placeholder="Service type *"
-                value={vendorForm.serviceType}
-                onChange={(event) =>
-                  setVendorForm((current) => ({ ...current, serviceType: event.target.value }))
-                }
-              />
-
-              <Input
-                placeholder="Contact person"
-                value={vendorForm.contactPerson || ''}
-                onChange={(event) =>
-                  setVendorForm((current) => ({ ...current, contactPerson: event.target.value }))
-                }
-              />
-
-              <Select
-                value={vendorForm.eventId || 'none'}
-                onValueChange={(value) =>
-                  setVendorForm((current) => ({
-                    ...current,
-                    eventId: value === 'none' ? '' : value,
-                  }))
-                }
-              >
-                <SelectTrigger className="h-10 w-full">
-                  <SelectValue placeholder="Assign event (optional)" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="none">No event for now</SelectItem>
-                  {events.map((event) => (
-                    <SelectItem key={event.id} value={event.id}>
-                      {event.title}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-
-              <div className="grid grid-cols-2 gap-3">
-                <Input
-                  placeholder="Contact email"
-                  value={vendorForm.email || ''}
-                  onChange={(event) =>
-                    setVendorForm((current) => ({ ...current, email: event.target.value }))
-                  }
-                />
-                <Input
-                  placeholder="Contact phone"
-                  value={vendorForm.contactNumber || ''}
-                  onChange={(event) =>
-                    setVendorForm((current) => ({ ...current, contactNumber: event.target.value }))
-                  }
-                />
-              </div>
-
-              <Input
-                placeholder="Type of supply"
-                value={vendorForm.typeOfSupply || ''}
-                onChange={(event) =>
-                  setVendorForm((current) => ({ ...current, typeOfSupply: event.target.value }))
-                }
-              />
-
-              <Input
-                placeholder="Services offered"
-                value={vendorForm.servicesOffered || ''}
-                onChange={(event) =>
-                  setVendorForm((current) => ({ ...current, servicesOffered: event.target.value }))
-                }
-              />
-
-              <div className="grid grid-cols-2 gap-3">
-                <Input
-                  placeholder="Pricing"
-                  value={vendorForm.pricing || ''}
-                  onChange={(event) =>
-                    setVendorForm((current) => ({ ...current, pricing: event.target.value }))
-                  }
-                />
-                <Input
-                  type="number"
-                  min="0"
-                  step="0.01"
-                  placeholder="Price"
-                  value={vendorForm.price ?? ''}
-                  onChange={(event) => {
-                    const nextValue = event.target.value;
-                    setVendorForm((current) => ({
-                      ...current,
-                      price: nextValue === '' ? null : Number(nextValue),
-                    }));
-                  }}
-                />
-              </div>
-
-              <Input
-                placeholder="Last event handled"
-                value={vendorForm.lastEventHandled || ''}
-                onChange={(event) =>
-                  setVendorForm((current) => ({ ...current, lastEventHandled: event.target.value }))
-                }
-              />
-
-              <Input
-                placeholder="Notes"
-                value={vendorForm.notes || ''}
-                onChange={(event) =>
-                  setVendorForm((current) => ({ ...current, notes: event.target.value }))
-                }
-              />
-
-              <Select
-                value={normalizeStatus(vendorForm.availabilityStatus || 'inactive')}
-                onValueChange={(value) =>
-                  setVendorForm((current) => ({
-                    ...current,
-                    availabilityStatus: normalizeStatus(value),
-                  }))
-                }
-              >
-                <SelectTrigger className="h-10 w-full">
-                  <SelectValue placeholder="Select status" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="active">Active</SelectItem>
-                  <SelectItem value="inactive">Inactive</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            {/* ──── RIGHT COLUMN: Workers & Events (edit mode only) ──── */}
-            {dialogMode === 'edit' && editingVendorId && (
-              <VendorSidepanel vendorId={editingVendorId} availableEvents={events} />
-            )}
+        <DialogContent className="max-w-7xl max-h-[90vh] overflow-y-auto p-0">
+          {/* Dialog Header */}
+          <div className="bg-gradient-to-r from-[#fdfbff] to-[#f5f1ff] p-6 border-b border-[#eee7f4]">
+            <DialogHeader>
+              <DialogTitle className="text-2xl font-black text-[#2e2837]">
+                {dialogMode === 'create' ? 'Add New Vendor' : 'Edit Vendor'}
+              </DialogTitle>
+              <DialogDescription className="text-sm font-semibold text-[#8f879f] mt-1">
+                {dialogMode === 'create'
+                  ? 'Fill in the vendor details below. Fields marked with * are required.'
+                  : 'Update vendor details, manage workers, and view event assignments.'}
+              </DialogDescription>
+            </DialogHeader>
           </div>
 
-          <DialogFooter>
-            <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>
+          <div className="p-6">
+            <div
+              className={`grid gap-8 ${dialogMode === 'edit' ? 'md:grid-cols-[1.2fr_1fr]' : 'grid-cols-1 max-w-2xl mx-auto'}`}
+            >
+              {/* ──── LEFT COLUMN: Vendor Form ──── */}
+              <div className="space-y-6">
+                {/* Basic Information */}
+                <section>
+                  <h3 className="text-xs font-black uppercase tracking-widest text-[#b0a4c5] flex items-center gap-2 mb-4">
+                    <span className="h-px w-4 bg-[#d5c9e4]" />
+                    Basic Information
+                  </h3>
+                  <div className="space-y-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div className="space-y-1.5">
+                        <label className="text-[10px] font-black uppercase tracking-wider text-[#857a98]">
+                          Vendor Name <span className="text-[#df1b8b]">*</span>
+                        </label>
+                        <Input
+                          placeholder="e.g. Bloom Studio"
+                          value={vendorForm.vendorName}
+                          onChange={(event) =>
+                            setVendorForm((current) => ({
+                              ...current,
+                              vendorName: event.target.value,
+                            }))
+                          }
+                          className="h-10 bg-white border-[#ebe3f5] focus-visible:ring-[#8C6bB1] font-semibold text-[#2e2837]"
+                        />
+                      </div>
+                      <div className="space-y-1.5">
+                        <label className="text-[10px] font-black uppercase tracking-wider text-[#857a98]">
+                          Service Type <span className="text-[#df1b8b]">*</span>
+                        </label>
+                        <Input
+                          placeholder="e.g. Photography, Catering"
+                          value={vendorForm.serviceType}
+                          onChange={(event) =>
+                            setVendorForm((current) => ({
+                              ...current,
+                              serviceType: event.target.value,
+                            }))
+                          }
+                          className="h-10 bg-white border-[#ebe3f5] focus-visible:ring-[#8C6bB1] font-semibold text-[#2e2837]"
+                        />
+                      </div>
+                    </div>
+                    <div className="space-y-1.5">
+                      <label className="text-[10px] font-black uppercase tracking-wider text-[#857a98]">
+                        Contact Person
+                      </label>
+                      <Input
+                        placeholder="e.g. Maria Santos"
+                        value={vendorForm.contactPerson || ''}
+                        onChange={(event) =>
+                          setVendorForm((current) => ({
+                            ...current,
+                            contactPerson: event.target.value,
+                          }))
+                        }
+                        className="h-10 bg-white border-[#ebe3f5] focus-visible:ring-[#8C6bB1] font-semibold text-[#2e2837]"
+                      />
+                    </div>
+                  </div>
+                </section>
+
+                {/* Contact Details */}
+                <section>
+                  <h3 className="text-xs font-black uppercase tracking-widest text-[#b0a4c5] flex items-center gap-2 mb-4">
+                    <span className="h-px w-4 bg-[#d5c9e4]" />
+                    Contact Details
+                  </h3>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="space-y-1.5">
+                      <label className="text-[10px] font-black uppercase tracking-wider text-[#857a98]">
+                        Email Address
+                      </label>
+                      <Input
+                        type="email"
+                        placeholder="vendor@email.com"
+                        value={vendorForm.email || ''}
+                        onChange={(event) =>
+                          setVendorForm((current) => ({ ...current, email: event.target.value }))
+                        }
+                        className="h-10 bg-white border-[#ebe3f5] focus-visible:ring-[#8C6bB1] font-semibold text-[#2e2837]"
+                      />
+                    </div>
+                    <div className="space-y-1.5">
+                      <label className="text-[10px] font-black uppercase tracking-wider text-[#857a98]">
+                        Phone Number
+                      </label>
+                      <Input
+                        placeholder="+63 912 345 6789"
+                        value={vendorForm.contactNumber || ''}
+                        onChange={(event) =>
+                          setVendorForm((current) => ({
+                            ...current,
+                            contactNumber: event.target.value,
+                          }))
+                        }
+                        className="h-10 bg-white border-[#ebe3f5] focus-visible:ring-[#8C6bB1] font-semibold text-[#2e2837]"
+                      />
+                    </div>
+                  </div>
+                </section>
+
+                {/* Supply & Services */}
+                <section>
+                  <h3 className="text-xs font-black uppercase tracking-widest text-[#b0a4c5] flex items-center gap-2 mb-4">
+                    <span className="h-px w-4 bg-[#d5c9e4]" />
+                    Supply & Services
+                  </h3>
+                  <div className="space-y-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div className="space-y-1.5">
+                        <label className="text-[10px] font-black uppercase tracking-wider text-[#857a98]">
+                          Type of Supply
+                        </label>
+                        <Input
+                          placeholder="e.g. Flowers, Equipment"
+                          value={vendorForm.typeOfSupply || ''}
+                          onChange={(event) =>
+                            setVendorForm((current) => ({
+                              ...current,
+                              typeOfSupply: event.target.value,
+                            }))
+                          }
+                          className="h-10 bg-white border-[#ebe3f5] focus-visible:ring-[#8C6bB1] font-semibold text-[#2e2837]"
+                        />
+                      </div>
+                      <div className="space-y-1.5">
+                        <label className="text-[10px] font-black uppercase tracking-wider text-[#857a98]">
+                          Services Offered
+                        </label>
+                        <Input
+                          placeholder="e.g. Full coverage, Setup & teardown"
+                          value={vendorForm.servicesOffered || ''}
+                          onChange={(event) =>
+                            setVendorForm((current) => ({
+                              ...current,
+                              servicesOffered: event.target.value,
+                            }))
+                          }
+                          className="h-10 bg-white border-[#ebe3f5] focus-visible:ring-[#8C6bB1] font-semibold text-[#2e2837]"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </section>
+
+                {/* Pricing & Status */}
+                <section>
+                  <h3 className="text-xs font-black uppercase tracking-widest text-[#b0a4c5] flex items-center gap-2 mb-4">
+                    <span className="h-px w-4 bg-[#d5c9e4]" />
+                    Pricing & Status
+                  </h3>
+                  <div className="space-y-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div className="space-y-1.5">
+                        <label className="text-[10px] font-black uppercase tracking-wider text-[#857a98]">
+                          Pricing Model
+                        </label>
+                        <Input
+                          placeholder="e.g. Per event, Hourly"
+                          value={vendorForm.pricing || ''}
+                          onChange={(event) =>
+                            setVendorForm((current) => ({
+                              ...current,
+                              pricing: event.target.value,
+                            }))
+                          }
+                          className="h-10 bg-white border-[#ebe3f5] focus-visible:ring-[#8C6bB1] font-semibold text-[#2e2837]"
+                        />
+                      </div>
+                      <div className="space-y-1.5">
+                        <label className="text-[10px] font-black uppercase tracking-wider text-[#857a98]">
+                          Price (₱)
+                        </label>
+                        <Input
+                          type="number"
+                          min="0"
+                          step="0.01"
+                          placeholder="0.00"
+                          value={vendorForm.price ?? ''}
+                          onChange={(event) => {
+                            const nextValue = event.target.value;
+                            setVendorForm((current) => ({
+                              ...current,
+                              price: nextValue === '' ? null : Number(nextValue),
+                            }));
+                          }}
+                          className="h-10 bg-white border-[#ebe3f5] focus-visible:ring-[#8C6bB1] font-semibold text-[#2e2837]"
+                        />
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div className="space-y-1.5">
+                        <label className="text-[10px] font-black uppercase tracking-wider text-[#857a98]">
+                          Availability Status
+                        </label>
+                        <Select
+                          value={normalizeStatus(vendorForm.availabilityStatus || 'inactive')}
+                          onValueChange={(value) =>
+                            setVendorForm((current) => ({
+                              ...current,
+                              availabilityStatus: normalizeStatus(value),
+                            }))
+                          }
+                        >
+                          <SelectTrigger className="h-10 w-full bg-white border-[#ebe3f5] font-semibold text-[#2e2837]">
+                            <SelectValue placeholder="Select status" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="active">
+                              <span className="flex items-center gap-2">
+                                <span className="h-2 w-2 rounded-full bg-[#29bf4c]" />
+                                Active
+                              </span>
+                            </SelectItem>
+                            <SelectItem value="inactive">
+                              <span className="flex items-center gap-2">
+                                <span className="h-2 w-2 rounded-full bg-[#d3d3d3]" />
+                                Inactive
+                              </span>
+                            </SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="space-y-1.5">
+                        <label className="text-[10px] font-black uppercase tracking-wider text-[#857a98]">
+                          Last Event Handled
+                        </label>
+                        <Input
+                          placeholder="e.g. Santos-Reyes Wedding"
+                          value={vendorForm.lastEventHandled || ''}
+                          onChange={(event) =>
+                            setVendorForm((current) => ({
+                              ...current,
+                              lastEventHandled: event.target.value,
+                            }))
+                          }
+                          className="h-10 bg-white border-[#ebe3f5] focus-visible:ring-[#8C6bB1] font-semibold text-[#2e2837]"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </section>
+
+                {/* Event Assignment (create mode) */}
+                <section>
+                  <h3 className="text-xs font-black uppercase tracking-widest text-[#b0a4c5] flex items-center gap-2 mb-4">
+                    <span className="h-px w-4 bg-[#d5c9e4]" />
+                    Event Assignment
+                  </h3>
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] font-black uppercase tracking-wider text-[#857a98]">
+                      Assign to Event <span className="text-[#8f879f]">(optional)</span>
+                    </label>
+                    <Select
+                      value={vendorForm.eventId || 'none'}
+                      onValueChange={(value) =>
+                        setVendorForm((current) => ({
+                          ...current,
+                          eventId: value === 'none' ? '' : value,
+                        }))
+                      }
+                    >
+                      <SelectTrigger className="h-10 w-full bg-white border-[#ebe3f5] font-semibold text-[#2e2837]">
+                        <SelectValue placeholder="Select an event..." />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="none">
+                          <span className="text-[#8f879f]">No event for now</span>
+                        </SelectItem>
+                        {events.map((event) => (
+                          <SelectItem key={event.id} value={event.id}>
+                            <span className="flex items-center gap-2">
+                              <CalendarDays className="h-3.5 w-3.5 text-[#8f1fd1]" />
+                              {event.title}
+                            </span>
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </section>
+
+                {/* Notes */}
+                <section>
+                  <h3 className="text-xs font-black uppercase tracking-widest text-[#b0a4c5] flex items-center gap-2 mb-4">
+                    <span className="h-px w-4 bg-[#d5c9e4]" />
+                    Additional Notes
+                  </h3>
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] font-black uppercase tracking-wider text-[#857a98]">
+                      Notes
+                    </label>
+                    <textarea
+                      placeholder="Any additional notes or comments about this vendor..."
+                      value={vendorForm.notes || ''}
+                      onChange={(event) =>
+                        setVendorForm((current) => ({ ...current, notes: event.target.value }))
+                      }
+                      rows={3}
+                      className="flex w-full rounded-md border border-[#ebe3f5] bg-white px-3 py-2 text-sm font-semibold text-[#2e2837] placeholder:text-[#b5aec3] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#8C6bB1] focus-visible:ring-offset-2 resize-none"
+                    />
+                  </div>
+                </section>
+              </div>
+
+              {/* ──── RIGHT COLUMN: Workers & Events (edit mode only) ──── */}
+              {dialogMode === 'edit' && editingVendorId && (
+                <VendorSidepanel vendorId={editingVendorId} availableEvents={events} />
+              )}
+            </div>
+          </div>
+
+          {/* Dialog Footer */}
+          <div className="flex items-center justify-end gap-3 border-t border-[#eee7f4] bg-[#fdfbff] px-6 py-4">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setIsDialogOpen(false)}
+              className="h-10 px-5 border-[#e5ddee] text-[#5f5472] font-bold hover:bg-[#f8f2fd]"
+            >
               Cancel
             </Button>
-            <Button type="button" onClick={() => void handleSaveVendor()} disabled={isSaving}>
+            <Button
+              type="button"
+              onClick={() => void handleSaveVendor()}
+              disabled={isSaving}
+              className="h-10 px-6 bg-[#ff7eb3] text-white hover:bg-[#ff6aa5] font-bold shadow-sm"
+            >
               {isSaving ? 'Saving...' : dialogMode === 'create' ? 'Create Vendor' : 'Update Vendor'}
             </Button>
-          </DialogFooter>
+          </div>
         </DialogContent>
       </Dialog>
     </div>
@@ -1105,17 +1287,18 @@ function VendorSidepanel({
   };
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-6">
       {/* ──── Workers Section ──── */}
-      <div>
-        <div className="flex items-center justify-between border-b border-[#f1eef5] pb-2 mb-3">
-          <h3 className="text-sm font-black uppercase tracking-widest text-[#7c7390]">
+      <section>
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-xs font-black uppercase tracking-widest text-[#b0a4c5] flex items-center gap-2">
+            <span className="h-px w-4 bg-[#d5c9e4]" />
             Workers ({workers.length})
           </h3>
           <button
             type="button"
             onClick={() => setShowAddForm(!showAddForm)}
-            className="text-xs font-bold text-[#df1b8b] hover:text-[#c11776] transition-colors"
+            className="text-xs font-bold text-[#df1b8b] hover:text-[#c11776] transition-colors px-2 py-1 rounded-md hover:bg-[#fff0f6]"
           >
             {showAddForm ? '✕ Cancel' : '+ Add Worker'}
           </button>
@@ -1123,47 +1306,74 @@ function VendorSidepanel({
 
         {/* Add Worker Form */}
         {showAddForm && (
-          <div className="mb-3 rounded-xl border border-[#e1d5eb] bg-[#faf7fd] p-3 space-y-2">
-            <Input
-              placeholder="Worker name *"
-              value={newWorkerForm.workerName}
-              onChange={(e) => setNewWorkerForm((f) => ({ ...f, workerName: e.target.value }))}
-              className="h-8 text-sm bg-white"
-            />
-            <div className="grid grid-cols-2 gap-2">
+          <div className="mb-4 rounded-2xl border border-[#eadcf7] bg-gradient-to-b from-[#faf7ff] to-white p-4 space-y-3 shadow-sm">
+            <div className="space-y-1.5">
+              <label className="text-[10px] font-black uppercase tracking-wider text-[#857a98]">
+                Worker Name <span className="text-[#df1b8b]">*</span>
+              </label>
               <Input
-                placeholder="Role"
-                value={newWorkerForm.role}
-                onChange={(e) => setNewWorkerForm((f) => ({ ...f, role: e.target.value }))}
-                className="h-8 text-sm bg-white"
-              />
-              <Input
-                placeholder="Job Title"
-                value={newWorkerForm.jobTitle}
-                onChange={(e) => setNewWorkerForm((f) => ({ ...f, jobTitle: e.target.value }))}
-                className="h-8 text-sm bg-white"
+                placeholder="e.g. Juan Dela Cruz"
+                value={newWorkerForm.workerName}
+                onChange={(e) => setNewWorkerForm((f) => ({ ...f, workerName: e.target.value }))}
+                className="h-9 text-sm bg-white border-[#ebe3f5] focus-visible:ring-[#8C6bB1] font-semibold"
               />
             </div>
-            <div className="grid grid-cols-2 gap-2">
-              <Input
-                placeholder="Email"
-                value={newWorkerForm.email}
-                onChange={(e) => setNewWorkerForm((f) => ({ ...f, email: e.target.value }))}
-                className="h-8 text-sm bg-white"
-              />
-              <Input
-                placeholder="Phone"
-                value={newWorkerForm.contactNumber}
-                onChange={(e) => setNewWorkerForm((f) => ({ ...f, contactNumber: e.target.value }))}
-                className="h-8 text-sm bg-white"
-              />
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-black uppercase tracking-wider text-[#857a98]">
+                  Role
+                </label>
+                <Input
+                  placeholder="e.g. Lead"
+                  value={newWorkerForm.role}
+                  onChange={(e) => setNewWorkerForm((f) => ({ ...f, role: e.target.value }))}
+                  className="h-9 text-sm bg-white border-[#ebe3f5] focus-visible:ring-[#8C6bB1] font-semibold"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-black uppercase tracking-wider text-[#857a98]">
+                  Job Title
+                </label>
+                <Input
+                  placeholder="e.g. Photographer"
+                  value={newWorkerForm.jobTitle}
+                  onChange={(e) => setNewWorkerForm((f) => ({ ...f, jobTitle: e.target.value }))}
+                  className="h-9 text-sm bg-white border-[#ebe3f5] focus-visible:ring-[#8C6bB1] font-semibold"
+                />
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-black uppercase tracking-wider text-[#857a98]">
+                  Email
+                </label>
+                <Input
+                  placeholder="worker@email.com"
+                  value={newWorkerForm.email}
+                  onChange={(e) => setNewWorkerForm((f) => ({ ...f, email: e.target.value }))}
+                  className="h-9 text-sm bg-white border-[#ebe3f5] focus-visible:ring-[#8C6bB1] font-semibold"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-black uppercase tracking-wider text-[#857a98]">
+                  Phone
+                </label>
+                <Input
+                  placeholder="+63 912 345 6789"
+                  value={newWorkerForm.contactNumber}
+                  onChange={(e) =>
+                    setNewWorkerForm((f) => ({ ...f, contactNumber: e.target.value }))
+                  }
+                  className="h-9 text-sm bg-white border-[#ebe3f5] focus-visible:ring-[#8C6bB1] font-semibold"
+                />
+              </div>
             </div>
             <Button
               type="button"
               size="sm"
               onClick={() => void handleAddWorker()}
               disabled={isAddingWorker || !newWorkerForm.workerName.trim()}
-              className="w-full h-8 bg-[#df1b8b] hover:bg-[#c11776] text-white text-xs font-bold"
+              className="w-full h-9 bg-[#df1b8b] hover:bg-[#c11776] text-white text-xs font-bold rounded-lg shadow-sm transition-all"
             >
               {isAddingWorker ? 'Adding...' : 'Add Worker'}
             </Button>
@@ -1177,21 +1387,24 @@ function VendorSidepanel({
               Loading workers...
             </p>
           ) : workers.length === 0 ? (
-            <div className="rounded-xl border border-dashed border-[#e1d5eb] bg-[#faf9fc] py-6 text-center">
-              <Briefcase className="mx-auto mb-1.5 h-5 w-5 text-[#d4c5e3]" />
+            <div className="rounded-2xl border border-dashed border-[#e1d5eb] bg-[#faf9fc] py-8 text-center">
+              <Briefcase className="mx-auto mb-2 h-6 w-6 text-[#d4c5e3]" />
               <p className="text-xs font-semibold text-[#8b839c]">No workers yet</p>
+              <p className="text-[10px] text-[#b5aec3] mt-0.5">
+                Click "+ Add Worker" to get started
+              </p>
             </div>
           ) : (
             workers.map((worker) => (
               <div
                 key={worker.id}
-                className="flex items-center justify-between rounded-lg border border-[#f1eef5] bg-white px-3 py-2.5 transition-all hover:border-[#df1b8b]/30 hover:shadow-sm group"
+                className="flex items-center justify-between rounded-xl border border-[#f1eef5] bg-white px-3.5 py-3 transition-all hover:border-[#df1b8b]/25 hover:shadow-sm group"
               >
                 <div className="min-w-0 flex-1">
                   <p className="text-sm font-bold text-[#2e2837] truncate">{worker.workerName}</p>
-                  <div className="flex items-center gap-2 mt-0.5">
+                  <div className="flex items-center gap-2 mt-0.5 flex-wrap">
                     {worker.role && (
-                      <span className="text-[10px] font-semibold text-[#8b839c]">
+                      <span className="text-[10px] font-semibold text-[#8b839c] bg-[#f5f1fa] px-1.5 py-0.5 rounded">
                         {worker.role}
                       </span>
                     )}
@@ -1202,21 +1415,26 @@ function VendorSidepanel({
                     )}
                   </div>
                 </div>
-                <div className="flex items-center gap-1.5 ml-2">
-                  <Badge
-                    className={`text-[9px] px-1.5 py-0.5 ${
+                <div className="flex items-center gap-2 ml-2">
+                  <span
+                    className={`flex items-center gap-1 text-[9px] font-bold px-2 py-0.5 rounded-full ${
                       worker.status.toLowerCase() === 'active'
-                        ? 'bg-[#e6f4ea] text-[#1e7e34]'
+                        ? 'bg-[#e6f9ec] text-[#1e7e34]'
                         : 'bg-[#f3f0f7] text-[#7c7390]'
                     }`}
                   >
+                    <span
+                      className={`h-1.5 w-1.5 rounded-full ${
+                        worker.status.toLowerCase() === 'active' ? 'bg-[#29bf4c]' : 'bg-[#b5aec3]'
+                      }`}
+                    />
                     {worker.status}
-                  </Badge>
+                  </span>
                   <button
                     type="button"
                     onClick={() => void handleDeleteWorker(worker.id)}
                     disabled={isDeletingWorkerId === worker.id}
-                    className="opacity-0 group-hover:opacity-100 transition-opacity text-[#c5221f] hover:text-[#a31b18] disabled:opacity-50"
+                    className="opacity-0 group-hover:opacity-100 transition-opacity text-[#c5221f] hover:text-[#a31b18] disabled:opacity-50 p-1 rounded hover:bg-red-50"
                     title="Remove worker"
                   >
                     <Trash2 className="h-3.5 w-3.5" />
@@ -1226,58 +1444,77 @@ function VendorSidepanel({
             ))
           )}
         </div>
-      </div>
+      </section>
 
-      {/* ──── Assigned Events Section ──── */}
-      <div>
-        <div className="flex items-center justify-between border-b border-[#f1eef5] pb-2 mb-3">
-          <h3 className="text-sm font-black uppercase tracking-widest text-[#7c7390]">
+      {/* ──── Event Assignment Section ──── */}
+      <section>
+        <h3 className="text-xs font-black uppercase tracking-widest text-[#b0a4c5] flex items-center gap-2 mb-4">
+          <span className="h-px w-4 bg-[#d5c9e4]" />
+          Event Assignment
+        </h3>
+
+        {/* Assign to Event Card */}
+        <div className="rounded-2xl border border-[#eadcf7] bg-gradient-to-b from-[#faf7ff] to-white p-4 mb-4 shadow-sm">
+          <label className="text-[10px] font-black uppercase tracking-wider text-[#857a98] mb-2 block">
+            Assign to Event
+          </label>
+          <div className="flex items-center gap-2">
+            <Select value={selectedEventToAssign} onValueChange={setSelectedEventToAssign}>
+              <SelectTrigger className="h-9 flex-1 bg-white text-xs border-[#ebe3f5] font-semibold">
+                <SelectValue placeholder="Select event to assign..." />
+              </SelectTrigger>
+              <SelectContent>
+                {availableEvents.map((evt) => (
+                  <SelectItem key={evt.id} value={evt.id} className="text-xs">
+                    <span className="flex items-center gap-2">
+                      <CalendarDays className="h-3 w-3 text-[#8f1fd1]" />
+                      {evt.title}
+                    </span>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Button
+              type="button"
+              size="sm"
+              onClick={() => void handleAssignEvent()}
+              disabled={!selectedEventToAssign || isAssigningEvent}
+              className="h-9 px-4 bg-[#8f1fd1] text-white hover:bg-[#7918b3] text-xs font-bold whitespace-nowrap rounded-lg shadow-sm transition-all disabled:opacity-50"
+            >
+              {isAssigningEvent ? 'Assigning...' : 'Assign'}
+            </Button>
+          </div>
+        </div>
+
+        {/* Event History */}
+        <div className="space-y-1.5 mb-2">
+          <label className="text-[10px] font-black uppercase tracking-wider text-[#857a98]">
             Event History ({vendorEvents.length})
-          </h3>
+          </label>
         </div>
-
-        <div className="mb-3 flex items-center gap-2">
-          <Select value={selectedEventToAssign} onValueChange={setSelectedEventToAssign}>
-            <SelectTrigger className="h-8 flex-1 bg-white text-xs">
-              <SelectValue placeholder="Select event to assign..." />
-            </SelectTrigger>
-            <SelectContent>
-              {availableEvents.map((evt) => (
-                <SelectItem key={evt.id} value={evt.id} className="text-xs">
-                  {evt.title}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <Button
-            type="button"
-            size="sm"
-            onClick={() => void handleAssignEvent()}
-            disabled={!selectedEventToAssign || isAssigningEvent}
-            className="h-8 bg-[#8f1fd1] text-white hover:bg-[#7918b3] text-xs font-bold whitespace-nowrap"
-          >
-            {isAssigningEvent ? 'Assigning...' : 'Assign'}
-          </Button>
-        </div>
-
         <div className="max-h-44 overflow-y-auto space-y-2 pr-1 [scrollbar-width:thin]">
           {isLoadingEvents ? (
             <p className="text-xs font-semibold text-[#a49db4] text-center py-4">
               Loading events...
             </p>
           ) : vendorEvents.length === 0 ? (
-            <div className="rounded-xl border border-dashed border-[#e1d5eb] bg-[#faf9fc] py-6 text-center">
-              <CalendarDays className="mx-auto mb-1.5 h-5 w-5 text-[#d4c5e3]" />
+            <div className="rounded-2xl border border-dashed border-[#e1d5eb] bg-[#faf9fc] py-8 text-center">
+              <CalendarDays className="mx-auto mb-2 h-6 w-6 text-[#d4c5e3]" />
               <p className="text-xs font-semibold text-[#8b839c]">No events assigned yet</p>
+              <p className="text-[10px] text-[#b5aec3] mt-0.5">
+                Use the selector above to assign an event
+              </p>
             </div>
           ) : (
             vendorEvents.map((evt) => {
+              const isExecution = evt.status.toLowerCase() === 'execution';
               const isCompleted =
                 evt.status.toLowerCase() === 'completed' ||
                 evt.status.toLowerCase() === 'confirmed';
               const dateStr = evt.startDate || evt.eventDate;
               const formattedDate = dateStr
                 ? new Date(dateStr).toLocaleDateString('en-US', {
+                    timeZone: 'UTC',
                     month: 'short',
                     day: 'numeric',
                     year: 'numeric',
@@ -1287,32 +1524,46 @@ function VendorSidepanel({
               return (
                 <div
                   key={evt.eventId}
-                  className={`flex items-center justify-between rounded-lg border px-3 py-2.5 transition-all ${
-                    isCompleted
-                      ? 'border-[#f1eef5] bg-[#faf9fc] opacity-70'
-                      : 'border-[#f1eef5] bg-white hover:border-[#df1b8b]/30 hover:shadow-sm'
+                  className={`flex items-center justify-between rounded-xl border px-3.5 py-3 transition-all ${
+                    isExecution
+                      ? 'border-[#df1b8b]/20 bg-[#fff8fb] shadow-sm'
+                      : isCompleted
+                        ? 'border-[#f1eef5] bg-[#faf9fc] opacity-70'
+                        : 'border-[#f1eef5] bg-white hover:border-[#df1b8b]/25 hover:shadow-sm'
                   }`}
                 >
                   <div className="min-w-0 flex-1">
                     <p className="text-sm font-bold text-[#2e2837] truncate">{evt.title}</p>
-                    <p className="text-[10px] font-semibold text-[#a49db4]">{formattedDate}</p>
+                    <div className="flex items-center gap-2 mt-0.5">
+                      <CalendarDays className="h-3 w-3 text-[#b5aec3]" />
+                      <p className="text-[10px] font-semibold text-[#a49db4]">{formattedDate}</p>
+                    </div>
                   </div>
                   <div className="flex items-center gap-2">
-                    <Badge
-                      className={`text-[9px] px-1.5 py-0.5 ${
-                        isCompleted
-                          ? 'bg-[#f4e6fc] text-[#8637c3]'
-                          : evt.status.toLowerCase() === 'execution'
-                            ? 'bg-[#ffe6f1] text-[#df1b8b]'
+                    <span
+                      className={`flex items-center gap-1 text-[9px] font-bold px-2 py-0.5 rounded-full ${
+                        isExecution
+                          ? 'bg-[#ffe6f1] text-[#df1b8b]'
+                          : isCompleted
+                            ? 'bg-[#f4e6fc] text-[#8637c3]'
                             : 'bg-[#fff5d3] text-[#b68c17]'
                       }`}
                     >
+                      <span
+                        className={`h-1.5 w-1.5 rounded-full ${
+                          isExecution
+                            ? 'bg-[#df1b8b]'
+                            : isCompleted
+                              ? 'bg-[#8637c3]'
+                              : 'bg-[#b68c17]'
+                        }`}
+                      />
                       {evt.status}
-                    </Badge>
+                    </span>
                     <button
                       type="button"
                       onClick={() => void handleUnassignEvent()}
-                      className="text-[#c5221f] hover:text-[#a31b18] p-1 opacity-60 hover:opacity-100"
+                      className="text-[#c5221f] hover:text-[#a31b18] p-1 rounded hover:bg-red-50 opacity-60 hover:opacity-100 transition-all"
                       title="Unassign Event"
                     >
                       <Trash2 className="h-3.5 w-3.5" />
@@ -1323,7 +1574,7 @@ function VendorSidepanel({
             })
           )}
         </div>
-      </div>
+      </section>
     </div>
   );
 }

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { X, Trash2, Users, CalendarDays, User, Briefcase } from 'lucide-react';
+import { X, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -245,7 +245,7 @@ export function EventDetailsModal({
 
   return (
     <div className="fixed inset-0 z-1000 flex min-h-full items-center justify-center bg-[#1a1423]/60 backdrop-blur-md p-4 overflow-auto">
-      <div className="relative w-full max-w-4xl animate-in zoom-in-95 fade-in rounded-3xl bg-white shadow-2xl max-h-[90vh] overflow-y-auto">
+      <div className="relative w-full max-w-2xl animate-in zoom-in-95 fade-in rounded-3xl bg-white shadow-2xl max-h-[90vh] overflow-y-auto">
         <button
           type="button"
           onClick={onClose}
@@ -273,63 +273,45 @@ export function EventDetailsModal({
           </div>
 
           {/* ──── Info Cards ──── */}
-          <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3 mt-4 mb-6">
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mt-4 mb-6">
             <div className="rounded-xl border border-[#f1eef5] bg-[#faf9fc] px-3 py-3">
-              <div className="flex items-center gap-2 mb-1">
-                <User className="h-3.5 w-3.5 text-[#df1b8b]" />
-                <span className="text-[10px] font-black uppercase tracking-widest text-[#8b839c]">
-                  Client
-                </span>
-              </div>
+              <span className="text-[10px] font-black uppercase tracking-widest text-[#8b839c] mb-1 block">
+                Client
+              </span>
               <p className="text-sm font-bold text-[#2e2837] truncate">{event.client}</p>
             </div>
             <div className="rounded-xl border border-[#f1eef5] bg-[#faf9fc] px-3 py-3">
-              <div className="flex items-center gap-2 mb-1">
-                <Briefcase className="h-3.5 w-3.5 text-[#8637c3]" />
-                <span className="text-[10px] font-black uppercase tracking-widest text-[#8b839c]">
-                  Organizer
-                </span>
-              </div>
+              <span className="text-[10px] font-black uppercase tracking-widest text-[#8b839c] mb-1 block">
+                Organizer
+              </span>
               <p className="text-sm font-bold text-[#2e2837] truncate">
                 {event.organizerName || 'Unassigned'}
               </p>
             </div>
             <div className="rounded-xl border border-[#f1eef5] bg-[#faf9fc] px-3 py-3">
-              <div className="flex items-center gap-2 mb-1">
-                <CalendarDays className="h-3.5 w-3.5 text-[#e2b020]" />
-                <span className="text-[10px] font-black uppercase tracking-widest text-[#8b839c]">
-                  Date
-                </span>
-              </div>
+              <span className="text-[10px] font-black uppercase tracking-widest text-[#8b839c] mb-1 block">
+                Date
+              </span>
               <p className="text-sm font-bold text-[#2e2837] truncate">{event.date}</p>
             </div>
             <div className="rounded-xl border border-[#f1eef5] bg-[#faf9fc] px-3 py-3">
-              <div className="flex items-center gap-2 mb-1">
-                <Briefcase className="h-3.5 w-3.5 text-[#8637c3]" />
-                <span className="text-[10px] font-black uppercase tracking-widest text-[#8b839c]">
-                  Event Price
-                </span>
-              </div>
+              <span className="text-[10px] font-black uppercase tracking-widest text-[#8b839c] mb-1 block">
+                Event Price
+              </span>
               <p className="text-sm font-bold text-[#2e2837] truncate">{formatMoney(eventPrice)}</p>
             </div>
             <div className="rounded-xl border border-[#f1eef5] bg-[#faf9fc] px-3 py-3">
-              <div className="flex items-center gap-2 mb-1">
-                <Briefcase className="h-3.5 w-3.5 text-[#df1b8b]" />
-                <span className="text-[10px] font-black uppercase tracking-widest text-[#8b839c]">
-                  Downpayment
-                </span>
-              </div>
+              <span className="text-[10px] font-black uppercase tracking-widest text-[#8b839c] mb-1 block">
+                Downpayment
+              </span>
               <p className="text-sm font-bold text-[#2e2837] truncate">
                 {formatMoney(downpaymentAmount)}
               </p>
             </div>
             <div className="rounded-xl border border-[#f1eef5] bg-[#faf9fc] px-3 py-3">
-              <div className="flex items-center gap-2 mb-1">
-                <Users className="h-3.5 w-3.5 text-[#29bf4c]" />
-                <span className="text-[10px] font-black uppercase tracking-widest text-[#8b839c]">
-                  RSVP
-                </span>
-              </div>
+              <span className="text-[10px] font-black uppercase tracking-widest text-[#8b839c] mb-1 block">
+                RSVP
+              </span>
               <p className="text-sm font-bold text-[#2e2837]">
                 {isLoadingRsvp ? '...' : `${attendingCount} / ${totalRsvp}`}
               </p>
@@ -337,10 +319,9 @@ export function EventDetailsModal({
           </div>
         </div>
 
-        {/* ──── Two Column Layout ──── */}
-        <div className="grid grid-cols-1 md:grid-cols-5 gap-0">
-          {/* ──── Left: Edit Form (3 cols) ──── */}
-          <div className="md:col-span-3 px-8 pb-8 md:border-r border-[#f1eef5]">
+        {/* ──── Form Section ──── */}
+        <div>
+          <div className="px-8 pb-8">
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
               {/* Title */}
               <div className="space-y-2">
@@ -586,104 +567,6 @@ export function EventDetailsModal({
                 </div>
               </div>
             </form>
-          </div>
-
-          {/* ──── Right: RSVP Panel (2 cols) ──── */}
-          <div className="md:col-span-2 px-6 py-6">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-sm font-black uppercase tracking-widest text-[#7c7390]">
-                RSVP Guests ({totalRsvp})
-              </h3>
-            </div>
-
-            {/* RSVP Stats */}
-            <div className="grid grid-cols-2 gap-2 mb-4">
-              <div className="rounded-xl border border-[#e1d5eb] bg-[#F6E7FF] p-3 text-center">
-                <p className="text-[10px] font-black uppercase tracking-widest text-[#2e2837] mb-1">
-                  Attending
-                </p>
-                <p className="text-2xl font-black text-[#8637c3]">
-                  {isLoadingRsvp ? '...' : attendingCount}
-                </p>
-              </div>
-              <div className="rounded-xl border border-[#f1eef5] bg-[#faf9fc] p-3 text-center">
-                <p className="text-[10px] font-black uppercase tracking-widest text-[#2e2837] mb-1">
-                  Absent
-                </p>
-                <p className="text-2xl font-black text-[#8b839c]">
-                  {isLoadingRsvp ? '...' : totalRsvp - attendingCount}
-                </p>
-              </div>
-            </div>
-
-            {/* Guest List */}
-            <div className="overflow-hidden rounded-xl border border-[#eae4f1]">
-              <div className="border-b border-[#eae4f1] bg-[#faf9fc] px-3 py-2">
-                <p className="text-[10px] font-black uppercase tracking-widest text-[#2e2837]">
-                  Guest List
-                </p>
-              </div>
-              <div className="max-h-[300px] overflow-y-auto bg-white [scrollbar-width:thin]">
-                {isLoadingRsvp ? (
-                  <div className="flex items-center justify-center py-8">
-                    <svg
-                      className="animate-spin h-5 w-5 text-[#df1b8b]"
-                      xmlns="http://www.w3.org/2000/svg"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                    >
-                      <circle
-                        className="opacity-25"
-                        cx="12"
-                        cy="12"
-                        r="10"
-                        stroke="currentColor"
-                        strokeWidth="4"
-                      ></circle>
-                      <path
-                        className="opacity-75"
-                        fill="currentColor"
-                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                      ></path>
-                    </svg>
-                  </div>
-                ) : rsvpGuests.length === 0 ? (
-                  <div className="flex flex-col items-center justify-center py-8 text-center">
-                    <Users className="mb-2 h-6 w-6 text-[#d4c5e3]" />
-                    <p className="text-xs font-semibold text-[#8b839c]">No RSVP guests yet</p>
-                  </div>
-                ) : (
-                  <div className="divide-y divide-[#f9f7fb]">
-                    {rsvpGuests.map((guest, i) => (
-                      <div
-                        key={guest.id}
-                        className="flex items-center justify-between px-3 py-2.5 hover:bg-[#faf9fc] transition-colors"
-                      >
-                        <div className="min-w-0 flex-1">
-                          <p className="text-sm font-bold text-[#2e2837] truncate">
-                            {i + 1}. {guest.firstName} {guest.lastName}
-                          </p>
-                          {guest.contactNumber && (
-                            <p className="text-[10px] font-semibold text-[#a49db4] truncate">
-                              {guest.contactNumber}
-                            </p>
-                          )}
-                        </div>
-                        <Badge
-                          className={`text-[9px] px-1.5 py-0.5 shadow-none ${
-                            guest.isScanned
-                              ? 'bg-[#e6f4ea] text-[#1e7e34]'
-                              : 'bg-[#f3f0f7] text-[#7c7390]'
-                          }`}
-                        >
-                          {guest.isScanned ? 'Present' : 'Absent'}
-                        </Badge>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </div>
           </div>
         </div>
       </div>

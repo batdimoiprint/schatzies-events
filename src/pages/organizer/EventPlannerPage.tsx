@@ -6,7 +6,7 @@ import {
   type DragEvent,
   type FormEvent,
 } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useSearchParams } from 'react-router-dom';
 import {
   ChevronLeft,
   Download,
@@ -116,31 +116,31 @@ const taskLaneConfig: Array<{
   cardOuterClassName: string;
   cardTitleClassName: string;
 }> = [
-  {
-    id: 'todo',
-    label: 'To Do',
-    dotClassName: 'bg-[#e6d81d]',
-    panelClassName: 'border-[#e4e4d0] bg-[#fafaf4]',
-    cardOuterClassName: 'border-[#cae4cb] bg-[#dff0e0]',
-    cardTitleClassName: 'text-[#4f8759]',
-  },
-  {
-    id: 'in-progress',
-    label: 'In Progress',
-    dotClassName: 'bg-[#2ea4ff]',
-    panelClassName: 'border-[#d3e7f7] bg-[#f4f9ff]',
-    cardOuterClassName: 'border-[#ead4e9] bg-[#f0ddf0]',
-    cardTitleClassName: 'text-[#712466]',
-  },
-  {
-    id: 'completed',
-    label: 'Completed',
-    dotClassName: 'bg-[#2ec24f]',
-    panelClassName: 'border-[#d8eddc] bg-[#f5fcf7]',
-    cardOuterClassName: 'border-[#d4dfec] bg-[#deebf8]',
-    cardTitleClassName: 'text-[#1f4c82]',
-  },
-];
+    {
+      id: 'todo',
+      label: 'To Do',
+      dotClassName: 'bg-[#e6d81d]',
+      panelClassName: 'border-[#e4e4d0] bg-[#fafaf4]',
+      cardOuterClassName: 'border-[#cae4cb] bg-[#dff0e0]',
+      cardTitleClassName: 'text-[#4f8759]',
+    },
+    {
+      id: 'in-progress',
+      label: 'In Progress',
+      dotClassName: 'bg-[#2ea4ff]',
+      panelClassName: 'border-[#d3e7f7] bg-[#f4f9ff]',
+      cardOuterClassName: 'border-[#ead4e9] bg-[#f0ddf0]',
+      cardTitleClassName: 'text-[#712466]',
+    },
+    {
+      id: 'completed',
+      label: 'Completed',
+      dotClassName: 'bg-[#2ec24f]',
+      panelClassName: 'border-[#d8eddc] bg-[#f5fcf7]',
+      cardOuterClassName: 'border-[#d4dfec] bg-[#deebf8]',
+      cardTitleClassName: 'text-[#1f4c82]',
+    },
+  ];
 
 // Utility functions moved outside component to avoid recreating on every render
 const formatTimeInput = (hour: number, minute = 0) => {
@@ -659,10 +659,10 @@ function FlowNotesBoard({
                 <h4 className="text-[16px] font-black leading-tight text-[#2f2b39] uppercase">
                   {eventDate
                     ? new Date(eventDate).toLocaleDateString('en-US', {
-                        month: 'long',
-                        day: 'numeric',
-                        year: 'numeric',
-                      })
+                      month: 'long',
+                      day: 'numeric',
+                      year: 'numeric',
+                    })
                     : 'No Date Set'}
                 </h4>
                 <div className="flex items-center gap-2 mt-0.5">
@@ -1058,7 +1058,8 @@ const noteTileThemes = [
 
 export function EventPlannerPage() {
   const location = useLocation();
-  const passedEventId = location.state?.eventId;
+  const [searchParams] = useSearchParams();
+  const passedEventId = searchParams.get('eventId') || location.state?.eventId;
   const [selectedEventId, setSelectedEventId] = useState('');
   const [projectSlots, setProjectSlots] = useState<ProjectSlot[]>([]);
   const [activeTab, setActiveTab] = useState<PlannerTab>('overview');
@@ -1166,10 +1167,10 @@ export function EventPlannerPage() {
             if (isMounted) {
               setCurrentClientName(
                 userData?.name ||
-                  userData?.firstName ||
-                  userData?.realName ||
-                  userData?.clientName ||
-                  ''
+                userData?.firstName ||
+                userData?.realName ||
+                userData?.clientName ||
+                ''
               );
             }
           })
@@ -1214,8 +1215,8 @@ export function EventPlannerPage() {
         if (isMounted) {
           const mappedFlows = Array.isArray(flowData)
             ? flowData
-                .map((item: any, index: number) => mapBackendFlowToUI(item, index))
-                .sort((a: any, b: any) => a.startHour - b.startHour)
+              .map((item: any, index: number) => mapBackendFlowToUI(item, index))
+              .sort((a: any, b: any) => a.startHour - b.startHour)
             : [];
           setOverviewFlows(mappedFlows);
         }
@@ -1451,9 +1452,9 @@ export function EventPlannerPage() {
         label: 'Event Pax',
         value: String(
           selectedEventDetails?.package?.pax ||
-            selectedEventDetails?.eventPax ||
-            selectedProject.eventPax ||
-            '0'
+          selectedEventDetails?.eventPax ||
+          selectedProject.eventPax ||
+          '0'
         ),
         imageSrc: '/Pictures/organizerpics/event-pax-illustration.png',
         accent: 'text-[#88511a] bg-[#fff8ef] border-[#f3e2cc]',
@@ -1744,26 +1745,26 @@ export function EventPlannerPage() {
             Array.isArray(task.checklist) && task.checklist.length > 0
               ? task.checklist
               : task.details
-                  .split('\n')
-                  .map((s) => s.trim())
-                  .filter(Boolean)
-                  .map((line, idx) => ({ id: `${task.id}-chk-${idx}`, label: line, done: false }));
+                .split('\n')
+                .map((s) => s.trim())
+                .filter(Boolean)
+                .map((line, idx) => ({ id: `${task.id}-chk-${idx}`, label: line, done: false }));
 
           const checklist =
             checklistSource.length > 0
               ? checklistSource.map((item) => ({
-                  ...item,
-                  done: true,
-                  doneAt: (item as any).doneAt ?? timestamp,
-                }))
+                ...item,
+                done: true,
+                doneAt: (item as any).doneAt ?? timestamp,
+              }))
               : [
-                  {
-                    id: `${task.id}-chk-0`,
-                    label: 'Task completed',
-                    done: true,
-                    doneAt: timestamp,
-                  },
-                ];
+                {
+                  id: `${task.id}-chk-0`,
+                  label: 'Task completed',
+                  done: true,
+                  doneAt: timestamp,
+                },
+              ];
 
           return { ...task, lane, checklist };
         }
@@ -1801,18 +1802,18 @@ export function EventPlannerPage() {
         ? selectedTask?.checklist?.length
           ? selectedTask.checklist
           : (selectedTask?.details ?? '')
-              .split('\n')
-              .map((line) => line.trim())
-              .filter(Boolean)
-              .map((line, index) => ({
-                id: `${selectedTask?.id ?? taskId}-chk-${index}`,
-                label: line,
-                done: false,
-              }))
+            .split('\n')
+            .map((line) => line.trim())
+            .filter(Boolean)
+            .map((line, index) => ({
+              id: `${selectedTask?.id ?? taskId}-chk-${index}`,
+              label: line,
+              done: false,
+            }))
         : (selectedTask?.checklist ?? []).map((item) => ({
-            ...item,
-            doneAt: item.doneAt,
-          }))
+          ...item,
+          doneAt: item.doneAt,
+        }))
     );
     setTaskActionMessage(`Editing ${selectedTask?.title || 'task'}.`);
     setTaskActionTone('info');
@@ -1852,12 +1853,12 @@ export function EventPlannerPage() {
         previousTasks.map((task) =>
           String(task.id) === String(selectedBoardTaskId)
             ? {
-                ...task,
-                id: String(newId),
-                title: payload.title,
-                details: finalDetails,
-                checklist: normalizedChecklist,
-              }
+              ...task,
+              id: String(newId),
+              title: payload.title,
+              details: finalDetails,
+              checklist: normalizedChecklist,
+            }
             : task
         )
       );
@@ -2036,8 +2037,8 @@ export function EventPlannerPage() {
                   <span>
                     {selectedProject.startDate || 'No Date Set'}
                     {selectedProject.endDate &&
-                    selectedProject.endDate !== 'TBD' &&
-                    selectedProject.endDate !== selectedProject.startDate
+                      selectedProject.endDate !== 'TBD' &&
+                      selectedProject.endDate !== selectedProject.startDate
                       ? ` - ${selectedProject.endDate}`
                       : ''}
                   </span>
@@ -2045,23 +2046,23 @@ export function EventPlannerPage() {
                   {(selectedProject.eventTime ||
                     (selectedProject.rawStartDate &&
                       selectedProject.rawStartDate.includes('T'))) && (
-                    <>
-                      <span className="opacity-50">•</span>
-                      <span className="font-medium text-white">
-                        {selectedProject.eventTime
-                          ? formatTo12Hour(selectedProject.eventTime)
-                          : formatTo12Hour(
+                      <>
+                        <span className="opacity-50">•</span>
+                        <span className="font-medium text-white">
+                          {selectedProject.eventTime
+                            ? formatTo12Hour(selectedProject.eventTime)
+                            : formatTo12Hour(
                               selectedProject.rawStartDate?.split('T')[1]?.substring(0, 5)
                             )}
 
-                        {selectedProject.rawEndDate &&
-                          selectedProject.rawEndDate.includes('T') &&
-                          ` - ${formatTo12Hour(
-                            selectedProject.rawEndDate.split('T')[1]?.substring(0, 5)
-                          )}`}
-                      </span>
-                    </>
-                  )}
+                          {selectedProject.rawEndDate &&
+                            selectedProject.rawEndDate.includes('T') &&
+                            ` - ${formatTo12Hour(
+                              selectedProject.rawEndDate.split('T')[1]?.substring(0, 5)
+                            )}`}
+                        </span>
+                      </>
+                    )}
                 </p>
               </div>
               <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 text-[10px] font-semibold text-white/90">
@@ -2117,7 +2118,7 @@ export function EventPlannerPage() {
                           className={[
                             'min-w-0 flex-1 whitespace-pre-line',
                             card.valueClassName ??
-                              'text-[24px] font-black leading-none tracking-tight text-[#2f2b39]',
+                            'text-[24px] font-black leading-none tracking-tight text-[#2f2b39]',
                           ].join(' ')}
                         >
                           {card.value}
@@ -2133,124 +2134,53 @@ export function EventPlannerPage() {
                   ))}
                 </div>
 
-                <div className="mt-2 grid grid-cols-1 gap-2 xl:grid-cols-[0.95fr_1fr_0.92fr_0.98fr]">
-                  <div className="space-y-2">
-                    <article className="min-h-[166px] rounded-lg border border-[#ded9e7] bg-white p-3 shadow-[0_2px_6px_rgba(31,18,54,0.05)]">
-                      <p className="text-[12px] font-bold text-[#5e586d]">Service Requirements</p>
-                      <div className="mt-2 space-y-1 text-[11px] leading-snug text-[#6f687f]">
-                        {eventAllocation?.food_package || eventAllocation?.flow_type ? (
-                          <>
-                            {eventAllocation?.food_package && (
-                              <p className="font-semibold text-[#5a546a]">
-                                Food Package: {eventAllocation.food_package}
-                              </p>
-                            )}
-                            {eventAllocation?.flow_type && (
-                              <p className="font-semibold text-[#5a546a]">
-                                Flow Type: {eventAllocation.flow_type}
-                              </p>
-                            )}
-                          </>
-                        ) : (
-                          <p className="italic text-[#8b84a0]">
-                            No service requirements specified.
-                          </p>
-                        )}
-                      </div>
-                    </article>
-
-                    <article className="min-h-[112px] rounded-lg border border-[#ded9e7] bg-white p-3 shadow-[0_2px_6px_rgba(31,18,54,0.05)]">
-                      <p className="text-[12px] font-bold text-[#5e586d]">Decorations</p>
-                      <div className="mt-2 text-[10px] leading-snug text-[#6f687f]">
-                        {eventAllocation?.decorations ? (
-                          <>
-                            <p>Theme: {eventAllocation.decorations.theme || 'None specified'}</p>
-                            <p className="mt-1 font-semibold text-[#5a546a]">Materials</p>
-                            {eventAllocation.decorations.materials &&
-                            eventAllocation.decorations.materials.length > 0 ? (
-                              eventAllocation.decorations.materials.map(
-                                (mat: string, idx: number) => (
-                                  <p key={idx}>
-                                    {idx + 1}. {mat}
-                                  </p>
-                                )
-                              )
-                            ) : (
-                              <p className="italic text-[#8b84a0]">No materials specified.</p>
-                            )}
-                          </>
-                        ) : (
-                          <p className="italic text-[#8b84a0]">
-                            No decorations specified for this event.
-                          </p>
-                        )}
-                      </div>
-                    </article>
-                  </div>
-
-                  <article className="min-h-[286px] rounded-lg border border-[#ded9e7] bg-white p-3 shadow-[0_2px_6px_rgba(31,18,54,0.05)]">
-                    <p className="text-[12px] font-bold text-[#5e586d]">Allocation Resources</p>
-                    <div className="mt-2 space-y-2">
-                      <div className="rounded-md border border-[#ece8f0] bg-[#fbf9fe] p-2.5 text-[10px] leading-snug text-[#6f687f]">
-                        <p className="text-[11px] font-black text-[#3a3442]">Vendors</p>
-                        <p className="mt-0.5 whitespace-pre-line break-words">
-                          {Array.isArray(eventAllocation?.vendors) &&
-                          eventAllocation.vendors.length > 0 ? (
-                            eventAllocation.vendors
-                              .map((v: any) => String(v?.name || v?.['name'] || ''))
-                              .filter(Boolean)
-                              .join('\n')
-                          ) : (
-                            <span className="italic text-[#8b84a0]">None assigned</span>
-                          )}
-                        </p>
-                      </div>
-                      <div className="rounded-md border border-[#ece8f0] bg-[#fbf9fe] p-2.5 text-[10px] leading-snug text-[#6f687f]">
-                        <p className="text-[11px] font-black text-[#3a3442]">Manpower</p>
-                        <p className="mt-0.5 whitespace-pre-line break-words">
-                          {Array.isArray(eventAllocation?.manpower) &&
-                          eventAllocation.manpower.length > 0 ? (
-                            eventAllocation.manpower
-                              .map((m: any) => String(m?.role || m?.['role'] || ''))
-                              .filter(Boolean)
-                              .join('\n')
-                          ) : (
-                            <span className="italic text-[#8b84a0]">None assigned</span>
-                          )}
-                        </p>
-                      </div>
-                      <div className="rounded-md border border-[#ece8f0] bg-[#fbf9fe] p-2.5 text-[10px] leading-snug text-[#6f687f]">
-                        <p className="text-[11px] font-black text-[#3a3442]">Supplies</p>
-                        <p className="mt-0.5 whitespace-pre-line break-words">
-                          {Array.isArray(eventAllocation?.supplies) &&
-                          eventAllocation.supplies.length > 0 ? (
-                            eventAllocation.supplies
-                              .map((s: any) => {
-                                const item = String(s?.item || s?.['item'] || '');
-                                const qty = String(s?.quantity || s?.['quantity'] || '');
-                                return item ? `${item} (${qty})` : '';
-                              })
-                              .filter(Boolean)
-                              .join('\n')
-                          ) : (
-                            <span className="italic text-[#8b84a0]">None assigned</span>
-                          )}
-                        </p>
-                      </div>
+                <div className="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-3">
+                  <article className="min-h-[400px] flex flex-col rounded-lg border border-[#ded9e7] bg-white p-4 shadow-[0_2px_6px_rgba(31,18,54,0.05)]">
+                    <p className="text-[14px] font-bold text-[#5e586d] border-b border-[#f0ecf4] pb-2 mb-3">
+                      Assigned Vendors
+                    </p>
+                    <div className="flex-1 overflow-y-auto pr-2 [scrollbar-width:thin] space-y-2">
+                      {Array.isArray(eventAllocation?.vendors) &&
+                        eventAllocation.vendors.length > 0 ? (
+                        eventAllocation.vendors.map((v: any, index: number) => {
+                          const vendorName = String(v?.name || v?.['name'] || '');
+                          if (!vendorName) return null;
+                          return (
+                            <div
+                              key={index}
+                              className="rounded-md border border-[#ece8f0] bg-[#fbf9fe] p-3 text-[12px] leading-snug text-[#6f687f] flex items-center gap-3"
+                            >
+                              <span className="size-2 shrink-0 rounded-full bg-[#8f1fd1]"></span>
+                              <span className="font-bold text-[#3a3442]">{vendorName}</span>
+                            </div>
+                          );
+                        })
+                      ) : (
+                        <div className="h-full flex items-center justify-center">
+                          <span className="italic text-[#8b84a0] text-[12px]">
+                            No vendors assigned yet.
+                          </span>
+                        </div>
+                      )}
                     </div>
                   </article>
 
-                  <article className="min-h-[286px] rounded-lg border border-[#ded9e7] bg-white p-3 shadow-[0_2px_6px_rgba(31,18,54,0.05)]">
-                    <p className="text-[12px] font-bold text-[#5e586d]">Checklist &amp; Meeting</p>
-                    <div className="mt-2 space-y-2 text-[11px] leading-snug text-[#6f687f]">
-                      <div className="min-h-[82px] rounded-md border border-[#ece8f0] bg-[#fbf9fe] p-2">
-                        <p className="text-[11px] font-black text-[#3a3442]">Meetings</p>
+                  <article className="min-h-[400px] flex flex-col rounded-lg border border-[#ded9e7] bg-white p-4 shadow-[0_2px_6px_rgba(31,18,54,0.05)]">
+                    <p className="text-[14px] font-bold text-[#5e586d] border-b border-[#f0ecf4] pb-2 mb-3">
+                      Checklist &amp; Meeting
+                    </p>
+                    <div className="flex-1 space-y-3 text-[12px] leading-snug text-[#6f687f] overflow-y-auto pr-1 [scrollbar-width:thin]">
+                      <div className="min-h-[120px] rounded-md border border-[#ece8f0] bg-[#fbf9fe] p-3">
+                        <p className="text-[12px] font-black text-[#3a3442] mb-2">Meetings</p>
                         {eventMeetings.length > 0 ? (
-                          <div className="mt-1 space-y-1">
+                          <div className="space-y-2">
                             {eventMeetings.map((meeting, index) => (
-                              <div key={meeting.id || meeting._id || `meeting-${index}`}>
+                              <div
+                                key={meeting.id || meeting._id || `meeting-${index}`}
+                                className="flex justify-between items-start border-b border-[#f0ecf4] pb-2 last:border-0 last:pb-0"
+                              >
                                 <p className="font-semibold text-[#5a546a]">{meeting.title}</p>
-                                <p className="text-[10px] text-[#8c8498]">
+                                <p className="text-[11px] font-bold text-[#8c8498] bg-white px-2 py-0.5 rounded border border-[#ece8f0]">
                                   {meeting.startTime || meeting.time || ''}{' '}
                                   {meeting.endTime ? `- ${meeting.endTime}` : ''}
                                 </p>
@@ -2261,44 +2191,66 @@ export function EventPlannerPage() {
                           <p className="italic text-[#8b84a0]">No scheduled meetings yet.</p>
                         )}
                       </div>
-                      <div className="min-h-[162px] rounded-md border border-[#ece8f0] bg-[#fbf9fe] p-2">
-                        <p className="text-[11px] font-black text-[#3a3442]">Checked</p>
-                        {checklistItems.filter((item) => item.done).length > 0 ? (
-                          checklistItems
-                            .filter((item) => item.done)
-                            .map((item) => <p key={item.id}>• {item.label}</p>)
-                        ) : (
-                          <p className="italic text-[#8b84a0]">No completed checklist items.</p>
-                        )}
+                      <div className="rounded-md border border-[#ece8f0] bg-[#fbf9fe] p-3">
+                        <p className="text-[12px] font-black text-[#3a3442] mb-2 flex items-center justify-between">
+                          <span>Checked Items</span>
+                          <span className="text-[10px] bg-[#e4f6e6] text-[#2ba045] px-2 py-0.5 rounded-full">
+                            {checklistItems.filter((item) => item.done).length} completed
+                          </span>
+                        </p>
+                        <div className="space-y-1.5">
+                          {checklistItems.filter((item) => item.done).length > 0 ? (
+                            checklistItems
+                              .filter((item) => item.done)
+                              .map((item) => (
+                                <div
+                                  key={item.id}
+                                  className="flex items-center gap-2 text-[#5a546a]"
+                                >
+                                  <span className="text-[#2ec24f] text-[14px]">✓</span>
+                                  <span>{item.label}</span>
+                                </div>
+                              ))
+                          ) : (
+                            <p className="italic text-[#8b84a0]">No completed checklist items.</p>
+                          )}
+                        </div>
                       </div>
                     </div>
                   </article>
 
-                  <article className="min-h-[286px] rounded-lg border border-[#ded9e7] bg-white p-3 shadow-[0_2px_6px_rgba(31,18,54,0.05)]">
-                    <p className="text-[12px] font-bold text-[#5e586d]">Program Flow</p>
-                    <div className="mt-2 space-y-2">
+                  <article className="min-h-[400px] flex flex-col rounded-lg border border-[#ded9e7] bg-white p-4 shadow-[0_2px_6px_rgba(31,18,54,0.05)]">
+                    <p className="text-[14px] font-bold text-[#5e586d] border-b border-[#f0ecf4] pb-2 mb-3">
+                      Program Flow
+                    </p>
+                    <div className="flex-1 space-y-3 overflow-y-auto pr-2 [scrollbar-width:thin]">
                       {overviewFlows.length > 0 ? (
                         overviewFlows.map((flow) => (
                           <div
                             key={flow.id}
-                            className="grid grid-cols-[76px_1fr] gap-2 text-[10px] leading-snug text-[#6f687f]"
+                            className="grid grid-cols-[90px_1fr] gap-3 text-[11px] leading-snug text-[#6f687f] bg-[#fbf9fe] p-3 rounded-md border border-[#ece8f0]"
                           >
-                            <p>
-                              {formatDisplayTime(flow.from, flow.startHour)} -{' '}
-                              {formatDisplayTime(flow.to, flow.endHour)}
+                            <p className="font-bold text-[#8a8495] pt-0.5">
+                              {formatDisplayTime(flow.from, flow.startHour)}
+                              <br />
+                              <span className="text-[9px] opacity-70">
+                                to {formatDisplayTime(flow.to, flow.endHour)}
+                              </span>
                             </p>
-                            <div className="border-l border-[#ebe6f0] pl-2">
-                              <p className="text-[11px] font-black text-[#3a3442]">{flow.title}</p>
-                              <p className="mt-0.5 line-clamp-3 text-[10px] italic text-[#8a8495]">
+                            <div className="border-l-2 border-[#e4dcea] pl-3">
+                              <p className="text-[13px] font-black text-[#3a3442]">{flow.title}</p>
+                              <p className="mt-1 text-[11.5px] italic text-[#70687e] leading-relaxed">
                                 {flow.description || 'No description provided.'}
                               </p>
                             </div>
                           </div>
                         ))
                       ) : (
-                        <p className="text-[11px] italic text-[#8b84a0]">
-                          No program flow scheduled yet.
-                        </p>
+                        <div className="h-full flex items-center justify-center">
+                          <p className="text-[12px] italic text-[#8b84a0]">
+                            No program flow scheduled yet.
+                          </p>
+                        </div>
                       )}
                     </div>
                   </article>
@@ -2464,7 +2416,7 @@ export function EventPlannerPage() {
                                 </div>
 
                                 {task.lane === 'in-progress' &&
-                                (task.checklist ?? []).length > 0 ? (
+                                  (task.checklist ?? []).length > 0 ? (
                                   <div className="mt-3 max-h-32 space-y-1 overflow-y-auto rounded-lg border border-[#ede9f4] bg-[#faf8fc] p-2 [scrollbar-width:thin]">
                                     {(task.checklist ?? []).map((item) => {
                                       const palette = [
@@ -2496,11 +2448,10 @@ export function EventPlannerPage() {
                                             }}
                                           />
                                           <span
-                                            className={`min-w-0 flex-1 truncate text-[11px] font-medium ${
-                                              item.done
+                                            className={`min-w-0 flex-1 truncate text-[11px] font-medium ${item.done
                                                 ? 'text-[#a29faf] line-through'
                                                 : 'text-[#5a546a]'
-                                            }`}
+                                              }`}
                                           >
                                             {item.label}
                                           </span>
@@ -2818,11 +2769,10 @@ export function EventPlannerPage() {
                         <div className="flex items-center gap-4">
                           <div className="text-right">
                             <span
-                              className={`inline-flex rounded-full px-2 py-0.5 text-[10px] font-bold ${
-                                vendor.status === 'Active'
+                              className={`inline-flex rounded-full px-2 py-0.5 text-[10px] font-bold ${vendor.status === 'Active'
                                   ? 'bg-[#e6f4e8] text-[#2e6b37]'
                                   : 'bg-[#f4e6e6] text-[#b53e3e]'
-                              }`}
+                                }`}
                             >
                               {vendor.status}
                             </span>
@@ -3366,11 +3316,10 @@ export function EventPlannerPage() {
                         type="button"
                         onClick={() => handleAssignVendor(vendor.id)}
                         disabled={isAssigned || isAssigningVendor}
-                        className={`inline-flex h-8 items-center justify-center rounded-lg px-3 text-[11px] font-bold transition ${
-                          isAssigned
+                        className={`inline-flex h-8 items-center justify-center rounded-lg px-3 text-[11px] font-bold transition ${isAssigned
                             ? 'bg-[#f4f1f8] text-[#9f97ad] cursor-not-allowed'
                             : 'bg-[#eef5ff] text-[#2a6fb0] hover:bg-[#e0efff] border border-[#d6e8ff]'
-                        }`}
+                          }`}
                       >
                         {isAssigned ? 'Assigned' : 'Assign'}
                       </button>
