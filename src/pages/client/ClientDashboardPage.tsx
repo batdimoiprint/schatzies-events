@@ -354,38 +354,13 @@ export function ClientDashboardPage() {
                   </h2>
                   <p className="text-xs text-[#696373] mt-1">Event Title</p>
                 </div>
-                <div className="flex flex-col gap-1 sm:flex-1">
-                  <div className="group/bar flex items-center gap-3">
-                    <span className="text-sm font-semibold text-[#2d2834] shrink-0">
-                      {displayEvent.completion}% complete
-                    </span>
-                    <div className="relative flex-1">
-                      <div className="h-6 overflow-hidden rounded-full bg-gray-200 cursor-pointer">
-                        <div
-                          className="h-full rounded-full transition-all"
-                          style={{
-                            width: `${displayEvent.completion}%`,
-                            backgroundImage: 'linear-gradient(to right, #FF0066 0%, #700F81 100%)',
-                          }}
-                        />
-                      </div>
-                      {/* Hover tooltip — Contract Signing */}
-                      <div
-                        className="pointer-events-none absolute -bottom-7 -translate-x-1/2 whitespace-nowrap rounded-full border border-gray-200 bg-white px-2 py-0.5 text-[10px] text-gray-400 shadow-sm opacity-0 scale-90 transition-all duration-200 group-hover/bar:opacity-100 group-hover/bar:scale-100"
-                        style={{ left: `${displayEvent.completion}%` }}
-                      >
-                        {displayEvent.eventStatus}
-                      </div>
-                    </div>
-                  </div>
-                  <div className="flex justify-end mt-6">
-                    <button
-                      onClick={() => navigate('/client/event-plan')}
-                      className="bg-pink-400 text-white rounded-full px-6 py-2.5 text-xs font-bold shadow-sm hover:bg-pink-500 transition-colors"
-                    >
-                      View Event Plan
-                    </button>
-                  </div>
+                <div className="flex flex-col justify-end">
+                  <button
+                    onClick={() => navigate('/client/event-plan')}
+                    className="bg-pink-400 text-white rounded-full px-6 py-2.5 text-xs font-bold shadow-sm hover:bg-pink-500 transition-colors"
+                  >
+                    View Event Plan
+                  </button>
                 </div>
               </div>
 
