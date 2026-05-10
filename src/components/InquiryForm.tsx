@@ -276,6 +276,7 @@ export function InquiryForm({ onClose, selectedPackageId, selectedEventType }: I
   const onFormSubmit = async (data: IInquiryForm) => {
     setError(null);
 
+    const isOthers = data.eventType === 'Others';
     const inquiryData = {
       firstName: data.firstName.trim(),
       lastName: data.lastName.trim(),
@@ -283,8 +284,8 @@ export function InquiryForm({ onClose, selectedPackageId, selectedEventType }: I
       email: data.email.trim(),
       contactNumber: `+63${data.contactNumber.trim()}`,
       date: data.eventDate,
-      eventType: data.eventType,
-      eventPackage: data.eventPackage,
+      eventType: isOthers ? data.customEventType?.trim() || 'Others' : data.eventType,
+      eventPackage: isOthers ? 'Others' : data.eventPackage,
       eventPax: Number.parseInt(data.eventPax, 10),
       message: data.message.trim() || undefined,
     };
@@ -991,15 +992,15 @@ export function InquiryForm({ onClose, selectedPackageId, selectedEventType }: I
                                   disabled={!watchedEventType || watchedEventType === 'Others'}
                                 >
                                   <SelectTrigger className={fieldBase}>
-                                    <SelectValue
-                                      placeholder={
-                                        !watchedEventType
-                                          ? 'Select Event Type First'
-                                          : watchedEventType === 'Others'
-                                            ? 'Not needed for custom events'
-                                            : 'Event Package'
-                                      }
-                                    />
+                                  <SelectValue
+                                    placeholder={
+                                      !watchedEventType
+                                        ? 'Select Event Type First'
+                                        : watchedEventType === 'Others'
+                                          ? 'Custom Package (Others)'
+                                          : 'Event Package'
+                                    }
+                                  />
                                   </SelectTrigger>
                                   <SelectContent className={overlayPopupLayer}>
                                     {packageOptions.map((p) => (
@@ -1014,40 +1015,66 @@ export function InquiryForm({ onClose, selectedPackageId, selectedEventType }: I
                           </div>
                         </Field>
                         <Field error={errors.eventPax?.message}>
-                          <Controller
-                            control={control}
-                            name="eventPax"
-                            rules={{
-                              required:
-                                watchedEventType !== 'Others' ? 'Number of pax is required' : false,
-                            }}
-                            render={({ field }) => (
-                              <Select
-                                onValueChange={field.onChange}
-                                value={field.value}
-                                disabled={!watchedEventPackage || watchedEventType === 'Others'}
-                              >
-                                <SelectTrigger className={fieldBase}>
-                                  <SelectValue
-                                    placeholder={
-                                      !watchedEventPackage
-                                        ? 'Select Event Package First'
-                                        : watchedEventType === 'Others'
-                                          ? 'Not needed for custom events'
+                          {watchedEventType === 'Others' ? (
+                            <Input
+                              type="number"
+                              min="1"
+                              max="200"
+                              placeholder="Guest Count (Headcount)"
+                              {...register('eventPax', {
+                                required: 'Guest count is required',
+                                min: { value: 1, message: 'Minimum 1 guest' },
+                                max: { value: 200, message: 'Maximum 200 guests' },
+                              })}
+                              onChange={(e) => {
+                                // Prevent typing/pasting negative numbers or non-numeric chars
+                                let val = e.target.value.replace(/[^0-9]/g, '');
+                                // Cap at 200
+                                if (val && Number.parseInt(val, 10) > 200) {
+                                  val = '200';
+                                }
+                                e.target.value = val;
+                                // Call standard react-hook-form onChange
+                                register('eventPax').onChange(e);
+                              }}
+                              className={fieldBase}
+                            />
+                          ) : (
+                            <Controller
+                              control={control}
+                              name="eventPax"
+                              rules={{
+                                required:
+                                  watchedEventType !== 'Others'
+                                    ? 'Number of pax is required'
+                                    : false,
+                              }}
+                              render={({ field }) => (
+                                <Select
+                                  onValueChange={field.onChange}
+                                  value={field.value}
+                                  disabled={!watchedEventPackage}
+                                >
+                                  <SelectTrigger className={fieldBase}>
+                                    <SelectValue
+                                      placeholder={
+                                        !watchedEventPackage
+                                          ? 'Select Event Package First'
                                           : 'Event Pax'
-                                    }
-                                  />
-                                </SelectTrigger>
-                                <SelectContent className={overlayPopupLayer}>
-                                  {selectedPaxOptions.map((p) => (
-                                    <SelectItem key={p} value={p}>
-                                      {p}
-                                    </SelectItem>
-                                  ))}
-                                </SelectContent>
-                              </Select>
-                            )}
-                          />
+                                      }
+                                    />
+                                  </SelectTrigger>
+                                  <SelectContent className={overlayPopupLayer}>
+                                    {selectedPaxOptions.map((p) => (
+                                      <SelectItem key={p} value={p}>
+                                        {p}
+                                      </SelectItem>
+                                    ))}
+                                  </SelectContent>
+                                </Select>
+                              )}
+                            />
+                          )}
                         </Field>
                       </div>
 
