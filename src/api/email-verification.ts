@@ -48,3 +48,38 @@ export async function checkEmailVerified(
   }>('/auth/check-email-verified', { params: { email } });
   return data;
 }
+
+export interface VerifiedEmail {
+  email: string;
+  verified: boolean;
+  verifiedAt: string;
+}
+
+/**
+ * Get all verified email addresses (admin).
+ * Backend: GET /api/auth/verified-emails
+ */
+export async function getVerifiedEmails(): Promise<{
+  emails: VerifiedEmail[];
+  total: number;
+}> {
+  const { data } = await axiosInstance.get<{
+    emails: VerifiedEmail[];
+    total: number;
+  }>('/auth/verified-emails');
+  return data;
+}
+
+/**
+ * Delete a verified email record (admin).
+ * Backend: DELETE /api/auth/verified-emails/:email
+ */
+export async function deleteVerifiedEmail(
+  email: string
+): Promise<{ email: string; deleted: boolean }> {
+  const { data } = await axiosInstance.delete<{
+    email: string;
+    deleted: boolean;
+  }>(`/auth/verified-emails/${encodeURIComponent(email)}`);
+  return data;
+}

@@ -45,14 +45,16 @@ function Req() {
 function Field({
   required,
   error,
+  className,
   children,
 }: {
   required?: boolean;
   error?: string;
+  className?: string;
   children: React.ReactNode;
 }) {
   return (
-    <div className="flex flex-col">
+    <div className={cn('flex flex-col', className)}>
       <div className="relative">
         {children}
         {required && <Req />}
@@ -95,10 +97,8 @@ export function InquiryForm({ onClose, selectedPackageId, selectedEventType }: I
   const [verificationSending, setVerificationSending] = useState(false);
   const [verificationSent, setVerificationSent] = useState(false);
   const [verificationError, setVerificationError] = useState<string | null>(null);
-  const [shouldAutoSubmit, setShouldAutoSubmit] = useState(false);
   const [verificationCooldown, setVerificationCooldown] = useState(0);
   const [bookedDates, setBookedDates] = useState<string[]>([]);
-  const pollingRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const cooldownRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   // Fetch booked dates on mount
@@ -178,31 +178,6 @@ export function InquiryForm({ onClose, selectedPackageId, selectedEventType }: I
       // If check fails, we just don't show the verified status
     }
   };
-
-  // Poll backend for verification while waiting
-  useEffect(() => {
-    if (verificationSent && !emailVerified && watchedEmail) {
-      pollingRef.current = setInterval(async () => {
-        // Ask backend
-        try {
-          const { verified } = await checkEmailVerified(watchedEmail);
-          if (verified) {
-            setEmailVerified(true);
-            setVerificationSent(false);
-            if (pollingRef.current) clearInterval(pollingRef.current);
-
-            // Trigger automatic submit since verification is complete
-            setShouldAutoSubmit(true);
-          }
-        } catch {
-          /* ignore polling errors */
-        }
-      }, 4000);
-    }
-    return () => {
-      if (pollingRef.current) clearInterval(pollingRef.current);
-    };
-  }, [verificationSent, emailVerified, watchedEmail]);
 
   // Cooldown timer to prevent spamming verification emails
   useEffect(() => {
@@ -303,6 +278,7 @@ export function InquiryForm({ onClose, selectedPackageId, selectedEventType }: I
   const onFormSubmit = async (data: IInquiryForm) => {
     setError(null);
 
+    const isOthers = data.eventType === 'Others';
     const inquiryData = {
       firstName: data.firstName.trim(),
       lastName: data.lastName.trim(),
@@ -310,8 +286,8 @@ export function InquiryForm({ onClose, selectedPackageId, selectedEventType }: I
       email: data.email.trim(),
       contactNumber: `+63${data.contactNumber.trim()}`,
       date: data.eventDate,
-      eventType: data.eventType,
-      eventPackage: data.eventPackage,
+      eventType: isOthers ? data.customEventType?.trim() || 'Others' : data.eventType,
+      eventPackage: isOthers ? 'Others' : data.eventPackage,
       eventPax: Number.parseInt(data.eventPax, 10),
       message: data.message.trim() || undefined,
     };
@@ -336,14 +312,6 @@ export function InquiryForm({ onClose, selectedPackageId, selectedEventType }: I
       setIsLoading(false);
     }
   };
-
-  // Handle auto-submit after verification
-  useEffect(() => {
-    if (shouldAutoSubmit) {
-      setShouldAutoSubmit(false);
-      handleSubmit(onFormSubmit)();
-    }
-  }, [shouldAutoSubmit, handleSubmit]);
 
   return (
     <>
@@ -594,6 +562,54 @@ export function InquiryForm({ onClose, selectedPackageId, selectedEventType }: I
         className="fixed inset-0 z-[9998] flex items-center justify-center bg-black/60 px-4 backdrop-blur-sm [scrollbar-gutter:stable]"
         onClick={onClose}
       >
+        {/* ── "Check your email" dialog when verification sent ── */}
+        {verificationSent && !emailVerified && !submitted && !isLoading && (
+          <div
+            className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50 backdrop-blur-sm"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div
+              className="flex w-[380px] flex-col items-center rounded-2xl bg-white px-8 py-10 shadow-2xl animate-in fade-in zoom-in-95 duration-300"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Mail icon */}
+              <div className="flex h-20 w-20 items-center justify-center rounded-full bg-gradient-to-br from-[#FF0066] to-[#700F81] shadow-lg shadow-[#700F81]/30">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="white"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  className="h-10 w-10"
+                >
+                  <rect width="20" height="16" x="2" y="4" rx="2" />
+                  <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" />
+                </svg>
+              </div>
+              <h3 className="mt-5 text-[1.3rem] font-bold text-[#1a1225]">Check Your Email</h3>
+              <p className="mt-2 text-center text-[0.88rem] leading-[1.6] text-gray-500">
+                We've sent a confirmation link to your email address. Please open your email and
+                click <span className="font-semibold text-[#700F81]">"Confirm Inquiry"</span> to
+                complete your submission.
+              </p>
+              <p className="mt-3 text-center text-[0.75rem] leading-[1.5] text-gray-400">
+                The link will expire in 15 minutes. Check your spam folder if you don't see it.
+              </p>
+              <button
+                onClick={() => {
+                  setVerificationSent(false);
+                  setVerificationCooldown(0);
+                }}
+                className="mt-6 h-10 rounded-full bg-gradient-to-r from-[#FF0066] to-[#700F81] px-8 text-[0.88rem] font-bold text-white shadow-lg transition hover:brightness-110"
+              >
+                Got it
+              </button>
+            </div>
+          </div>
+        )}
+
         {/* ── Success confirmation overlay ── */}
         {submitted && !isLoading && (
           <div
@@ -804,14 +820,6 @@ export function InquiryForm({ onClose, selectedPackageId, selectedEventType }: I
                               />
                             </div>
                           </Field>
-
-                          {verificationSent && !emailVerified && (
-                            <div className="flex items-center gap-1 px-2 py-1 rounded bg-amber-50 border border-amber-100 mt-1">
-                              <span className="text-[0.65rem] font-medium text-amber-600 animate-pulse">
-                                Verification link sent. Please check your email before submitting.
-                              </span>
-                            </div>
-                          )}
                         </div>
 
                         {/* ── Contact number ── */}
@@ -896,7 +904,9 @@ export function InquiryForm({ onClose, selectedPackageId, selectedEventType }: I
                                     defaultMonth={
                                       field.value ? new Date(field.value) : getMinDate()
                                     }
-                                    onSelect={(date) => field.onChange(date?.toISOString())}
+                                    onSelect={(date) =>
+                                      field.onChange(date ? format(date, 'yyyy-MM-dd') : undefined)
+                                    }
                                     disabled={(date) => {
                                       // 1. Must be at least 1 month in advance
                                       if (date < getMinDate()) return true;
@@ -966,36 +976,100 @@ export function InquiryForm({ onClose, selectedPackageId, selectedEventType }: I
                         </div>
                       )}
                       <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2">
-                        <Field error={errors.eventPackage?.message}>
-                          <div className="flex items-center gap-1.5">
+                        {watchedEventType !== 'Others' && (
+                          <Field error={errors.eventPackage?.message}>
+                            <div className="flex items-center gap-1.5">
+                              <Controller
+                                control={control}
+                                name="eventPackage"
+                                rules={{
+                                  required:
+                                    watchedEventType !== 'Others'
+                                      ? 'Event package is required'
+                                      : false,
+                                }}
+                                render={({ field }) => (
+                                  <Select
+                                    onValueChange={field.onChange}
+                                    value={field.value}
+                                    disabled={!watchedEventType}
+                                  >
+                                    <SelectTrigger className={fieldBase}>
+                                      <SelectValue
+                                        placeholder={
+                                          !watchedEventType
+                                            ? 'Select Event Type First'
+                                            : 'Event Package'
+                                        }
+                                      />
+                                    </SelectTrigger>
+                                    <SelectContent className={overlayPopupLayer}>
+                                      {packageOptions.map((p) => (
+                                        <SelectItem key={p} value={p}>
+                                          {p}
+                                        </SelectItem>
+                                      ))}
+                                    </SelectContent>
+                                  </Select>
+                                )}
+                              />
+                            </div>
+                          </Field>
+                        )}
+                        <Field
+                          error={errors.eventPax?.message}
+                          className={watchedEventType === 'Others' ? 'col-span-full' : ''}
+                        >
+                          {watchedEventType === 'Others' ? (
+                            <Input
+                              type="number"
+                              max="200"
+                              placeholder="Guest Count (Headcount)"
+                              {...register('eventPax', {
+                                required: 'Guest count is required',
+                                min: { value: 50, message: 'Minimum 50 guests' },
+                                max: { value: 200, message: 'Maximum 200 guests' },
+                              })}
+                              onChange={(e) => {
+                                // Prevent typing/pasting negative numbers or non-numeric chars
+                                let val = e.target.value.replace(/[^0-9]/g, '');
+                                // Cap at 200
+                                if (val && Number.parseInt(val, 10) > 200) {
+                                  val = '200';
+                                }
+                                e.target.value = val;
+                                // Call standard react-hook-form onChange
+                                register('eventPax').onChange(e);
+                              }}
+                              className={fieldBase}
+                            />
+                          ) : (
                             <Controller
                               control={control}
-                              name="eventPackage"
+                              name="eventPax"
                               rules={{
                                 required:
                                   watchedEventType !== 'Others'
-                                    ? 'Event package is required'
+                                    ? 'Number of pax is required'
                                     : false,
                               }}
                               render={({ field }) => (
                                 <Select
                                   onValueChange={field.onChange}
                                   value={field.value}
-                                  disabled={!watchedEventType || watchedEventType === 'Others'}
+                                  disabled={!watchedEventPackage}
                                 >
                                   <SelectTrigger className={fieldBase}>
                                     <SelectValue
                                       placeholder={
-                                        !watchedEventType
-                                          ? 'Select Event Type First'
-                                          : watchedEventType === 'Others'
-                                            ? 'Not needed for custom events'
-                                            : 'Event Package'
+                                        !watchedEventPackage
+                                          ? 'Select Event Package First'
+                                          : 'Event Pax'
                                       }
                                     />
                                   </SelectTrigger>
                                   <SelectContent className={overlayPopupLayer}>
-                                    {packageOptions.map((p) => (
+                                    {selectedPaxOptions.map((p) => (
                                       <SelectItem key={p} value={p}>
                                         {p}
                                       </SelectItem>
@@ -1004,43 +1078,7 @@ export function InquiryForm({ onClose, selectedPackageId, selectedEventType }: I
                                 </Select>
                               )}
                             />
-                          </div>
-                        </Field>
-                        <Field error={errors.eventPax?.message}>
-                          <Controller
-                            control={control}
-                            name="eventPax"
-                            rules={{
-                              required:
-                                watchedEventType !== 'Others' ? 'Number of pax is required' : false,
-                            }}
-                            render={({ field }) => (
-                              <Select
-                                onValueChange={field.onChange}
-                                value={field.value}
-                                disabled={!watchedEventPackage || watchedEventType === 'Others'}
-                              >
-                                <SelectTrigger className={fieldBase}>
-                                  <SelectValue
-                                    placeholder={
-                                      !watchedEventPackage
-                                        ? 'Select Event Package First'
-                                        : watchedEventType === 'Others'
-                                          ? 'Not needed for custom events'
-                                          : 'Event Pax'
-                                    }
-                                  />
-                                </SelectTrigger>
-                                <SelectContent className={overlayPopupLayer}>
-                                  {selectedPaxOptions.map((p) => (
-                                    <SelectItem key={p} value={p}>
-                                      {p}
-                                    </SelectItem>
-                                  ))}
-                                </SelectContent>
-                              </Select>
-                            )}
-                          />
+                          )}
                         </Field>
                       </div>
 
@@ -1072,13 +1110,16 @@ export function InquiryForm({ onClose, selectedPackageId, selectedEventType }: I
                       )}
 
                       {/* Show "No package selected" message when form is open without a package */}
-                      {!(currentSelectedPackage || selectedPackage) && watchedEventType && (
-                        <div className="mt-3 rounded-lg bg-blue-50/50 p-3 border border-blue-200/50">
-                          <p className="text-[0.8rem] text-blue-600">
-                            💡 Select a package from the dropdown to see its details and inclusions
-                          </p>
-                        </div>
-                      )}
+                      {!(currentSelectedPackage || selectedPackage) &&
+                        watchedEventType &&
+                        watchedEventType !== 'Others' && (
+                          <div className="mt-3 rounded-lg bg-blue-50/50 p-3 border border-blue-200/50">
+                            <p className="text-[0.8rem] text-blue-600">
+                              💡 Select a package from the dropdown to see its details and
+                              inclusions
+                            </p>
+                          </div>
+                        )}
                     </div>
                   </section>
 

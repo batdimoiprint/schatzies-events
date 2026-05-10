@@ -9,10 +9,15 @@ export interface EventManagerEvent {
   date: string;
   startDate: string;
   endDate: string;
+  startTime: string;
+  endTime: string;
   timeSlot: string;
   client: string;
   type: string;
   package: string;
+  packageInitialAmount?: number | null;
+  downpaymentAmount?: number | null;
+  packagePrice?: number | null;
   venue: string;
   rsvp: number;
   status: EventStatus;
@@ -25,6 +30,7 @@ export interface EventManagerEvent {
 interface BackendEvent {
   id: string;
   clientId?: string;
+  organizer_id?: string;
   headOrganizerId?: string;
   title?: string;
   startDate?: string;
@@ -34,8 +40,13 @@ interface BackendEvent {
   eventPackage?: string;
   eventPackageKey?: string;
   eventPax?: number | null;
+  packageInitialAmount?: number | null;
+  downpaymentAmount?: number | null;
+  packagePrice?: number | null;
   venue?: string;
   status?: string;
+  startTime?: string;
+  endTime?: string;
   createdAt?: string;
 }
 
@@ -59,6 +70,8 @@ export interface CreateEventPayload {
   clientId?: string;
   organizer_id?: string;
   organizerId?: string;
+  inquiryId?: string;
+  inquiry_id?: string;
   eventPackageKey?: string;
   eventLocation?: string;
   eventDate?: string;
@@ -69,6 +82,9 @@ export interface CreateEventPayload {
   eventPax?: number;
   venue?: string;
   status?: string;
+  packageInitialAmount?: number;
+  downpaymentAmount?: number;
+  packagePrice?: number;
 }
 
 export interface UpdateEventPayload extends Partial<CreateEventPayload> {
@@ -112,12 +128,11 @@ function mapToManagerRow(baseEvent: BackendEvent, userMap: Map<string, string>):
       ? `${formattedStart} – ${formattedEnd}`
       : formattedStart;
 
+  const orgId = baseEvent.organizer_id || baseEvent.headOrganizerId;
   const clientName = baseEvent.clientId
     ? userMap.get(baseEvent.clientId) || baseEvent.clientId
     : 'Unknown client';
-  const organizerName = baseEvent.headOrganizerId
-    ? userMap.get(baseEvent.headOrganizerId) || ''
-    : '';
+  const organizerName = orgId ? userMap.get(orgId) || '' : '';
 
   return {
     id: baseEvent.id,
@@ -125,10 +140,15 @@ function mapToManagerRow(baseEvent: BackendEvent, userMap: Map<string, string>):
     date: dateDisplay,
     startDate: rawStartDate,
     endDate: rawEndDate,
+    startTime: baseEvent.startTime || '',
+    endTime: baseEvent.endTime || '',
     timeSlot: '-',
     client: clientName,
     type: baseEvent.eventType || '-',
     package: packagePax > 0 ? `${packageName} (${packagePax})` : packageName,
+    packageInitialAmount: baseEvent.packageInitialAmount ?? null,
+    downpaymentAmount: baseEvent.downpaymentAmount ?? null,
+    packagePrice: baseEvent.packagePrice ?? null,
     venue:
       baseEvent.venue &&
       !['', '-', '–', '—', 'n/a', 'tba'].includes(baseEvent.venue.trim().toLowerCase())
@@ -137,7 +157,7 @@ function mapToManagerRow(baseEvent: BackendEvent, userMap: Map<string, string>):
     rsvp: 0,
     status: mapEventStatus(baseEvent.status),
     clientId: baseEvent.clientId || '',
-    organizerId: baseEvent.headOrganizerId || '',
+    organizerId: orgId || '',
     organizerName,
     createdAt: baseEvent.createdAt || '',
   };
@@ -191,6 +211,14 @@ export async function deleteEvent(eventId: string): Promise<void> {
   await axiosInstance.delete(`/events/${eventId}`);
 }
 
+export async function updateEventPricing(
+  eventId: string,
+  pricing: { packageInitialAmount?: number; downpaymentAmount?: number }
+): Promise<BackendEvent> {
+  const response = await axiosInstance.patch(`/events/${eventId}/pricing`, pricing);
+  return response.data.event;
+}
+
 export async function getEventVendors(eventId: string) {
   const response = await axiosInstance.get(`/events/${eventId}/vendors`);
   return response.data;
@@ -198,7 +226,7 @@ export async function getEventVendors(eventId: string) {
 
 export async function getEventUser(userId: string) {
   const response = await axiosInstance.get(`/users/${userId}`);
-  return response.data;
+  return response.data.user || response.data;
 }
 
 export async function getEventAllocation(eventId: string) {
@@ -232,28 +260,15 @@ export async function getEventNotes(eventId: string): Promise<any[]> {
 export async function createEventNote(
   eventId: string,
   payload: any,
-  file?: File | null
+  _file?: File | null
 ): Promise<any> {
   const currentNotes = await getEventNotes(eventId);
   const newNote = { ...payload, id: payload.id || `note-${Date.now()}` };
   const updatedNotes = [...currentNotes, newNote];
 
-  const isFormData = !!file;
-  let requestData: any;
+  const requestData = { notes: JSON.stringify(updatedNotes) };
 
-  if (isFormData) {
-    requestData = new FormData();
-    requestData.append('notes', JSON.stringify(updatedNotes));
-    requestData.append('file', file); // Pa-check sa backend kung 'file' o 'image' ang key
-  } else {
-    requestData = { notes: JSON.stringify(updatedNotes) };
-  }
-
-  const response = await axiosInstance.put(`/events/${eventId}/notes`, requestData, {
-    headers: {
-      'Content-Type': isFormData ? 'multipart/form-data' : 'application/json',
-    },
-  });
+  const response = await axiosInstance.put(`/events/${eventId}/notes`, requestData);
 
   return response.data?.notes ? newNote : newNote;
 }
@@ -262,27 +277,14 @@ export async function updateEventNote(
   eventId: string,
   noteId: string,
   payload: any,
-  file?: File | null
+  _file?: File | null
 ): Promise<any> {
   const currentNotes = await getEventNotes(eventId);
   const updatedNotes = currentNotes.map((n: any) => (n.id === noteId ? { ...n, ...payload } : n));
 
-  const isFormData = !!file;
-  let requestData: any;
+  const requestData = { notes: JSON.stringify(updatedNotes) };
 
-  if (isFormData) {
-    requestData = new FormData();
-    requestData.append('notes', JSON.stringify(updatedNotes));
-    requestData.append('file', file);
-  } else {
-    requestData = { notes: JSON.stringify(updatedNotes) };
-  }
-
-  await axiosInstance.put(`/events/${eventId}/notes`, requestData, {
-    headers: {
-      'Content-Type': isFormData ? 'multipart/form-data' : 'application/json',
-    },
-  });
+  await axiosInstance.put(`/events/${eventId}/notes`, requestData);
 
   return { ...payload, id: noteId };
 }

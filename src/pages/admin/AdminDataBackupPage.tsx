@@ -34,12 +34,7 @@ import {
   XCircle,
   Info,
 } from 'lucide-react';
-import {
-  listBackups,
-  createBackup,
-  restoreBackup,
-  deleteBackup,
-} from '@/api/backups';
+import { listBackups, createBackup, restoreBackup, deleteBackup } from '@/api/backups';
 import type { Backup } from '@/api/backups';
 
 function formatBytes(bytes: number): string {
@@ -243,11 +238,7 @@ export function AdminDataBackupPage() {
             disabled={creating}
             className="gap-2 rounded-xl bg-gradient-to-r from-[#f347a5] to-[#8f1fd1] text-white shadow-lg shadow-purple-200 hover:shadow-xl hover:shadow-purple-300"
           >
-            {creating ? (
-              <Loader2 className="size-4 animate-spin" />
-            ) : (
-              <Upload className="size-4" />
-            )}
+            {creating ? <Loader2 className="size-4 animate-spin" /> : <Upload className="size-4" />}
             {creating ? 'Creating Backup...' : 'Save Backup Now'}
           </Button>
         </div>
@@ -316,9 +307,7 @@ export function AdminDataBackupPage() {
               <DatabaseBackup className="size-5 text-[#9a1eb9]" />
               Backup History
             </CardTitle>
-            <Badge className="border-none bg-[#f0e3f7] text-[#9a1eb9]">
-              S3 Archival Storage
-            </Badge>
+            <Badge className="border-none bg-[#f0e3f7] text-[#9a1eb9]">S3 Archival Storage</Badge>
           </div>
         </CardHeader>
         <CardContent className="p-0">
@@ -476,15 +465,14 @@ export function AdminDataBackupPage() {
             <Info className="size-5 text-blue-600" />
           </div>
           <div className="space-y-1">
-            <p className="text-sm font-bold text-[#2e2837]">
-              How Backups Work
-            </p>
+            <p className="text-sm font-bold text-[#2e2837]">How Backups Work</p>
             <p className="text-xs leading-relaxed text-[#6b5f7b]">
-              Backups are automatically created <strong>every Sunday at midnight (UTC)</strong> via AWS EventBridge.
-              You can also create manual backups at any time. Each backup is a full snapshot of all DynamoDB items
-              stored as JSON in S3. Backups older than 90 days are automatically transitioned to{' '}
-              <strong>S3 Glacier</strong> for cost-effective long-term archival. To recover from data corruption,
-              click <strong>Restore</strong> on any backup to replace all current DynamoDB data with that snapshot.
+              Backups are automatically created <strong>every Sunday at midnight (UTC)</strong> via
+              AWS EventBridge. You can also create manual backups at any time. Each backup is a full
+              snapshot of all DynamoDB items stored as JSON in S3. Backups older than 90 days are
+              automatically transitioned to <strong>S3 Glacier</strong> for cost-effective long-term
+              archival. To recover from data corruption, click <strong>Restore</strong> on any
+              backup to replace all current DynamoDB data with that snapshot.
             </p>
           </div>
         </CardContent>
@@ -494,9 +482,7 @@ export function AdminDataBackupPage() {
       <Dialog
         open={confirmDialog.open}
         onOpenChange={(open) =>
-          !restoring &&
-          !deleting &&
-          setConfirmDialog((prev) => ({ ...prev, open }))
+          !restoring && !deleting && setConfirmDialog((prev) => ({ ...prev, open }))
         }
       >
         <DialogContent className="max-w-md rounded-2xl">
@@ -504,9 +490,7 @@ export function AdminDataBackupPage() {
             <div className="flex items-center gap-3">
               <div
                 className={`flex size-11 items-center justify-center rounded-xl ${
-                  confirmDialog.type === 'restore'
-                    ? 'bg-amber-100'
-                    : 'bg-red-100'
+                  confirmDialog.type === 'restore' ? 'bg-amber-100' : 'bg-red-100'
                 }`}
               >
                 {confirmDialog.type === 'restore' ? (
@@ -516,20 +500,16 @@ export function AdminDataBackupPage() {
                 )}
               </div>
               <DialogTitle className="text-xl font-bold text-[#2e2837]">
-                {confirmDialog.type === 'restore'
-                  ? 'Confirm Restore'
-                  : 'Confirm Delete'}
+                {confirmDialog.type === 'restore' ? 'Confirm Restore' : 'Confirm Delete'}
               </DialogTitle>
             </div>
             <DialogDescription className="mt-3 text-sm text-[#6b5f7b]">
               {confirmDialog.type === 'restore' ? (
                 <>
-                  This will <strong className="text-red-600">replace ALL current data</strong>{' '}
-                  in DynamoDB with the backup from{' '}
+                  This will <strong className="text-red-600">replace ALL current data</strong> in
+                  DynamoDB with the backup from{' '}
                   <strong>
-                    {confirmDialog.backup
-                      ? formatDate(confirmDialog.backup.timestamp)
-                      : ''}
+                    {confirmDialog.backup ? formatDate(confirmDialog.backup.timestamp) : ''}
                   </strong>
                   . This action cannot be undone. Make sure to create a new backup of the current
                   data first if needed.
@@ -538,9 +518,7 @@ export function AdminDataBackupPage() {
                 <>
                   This will permanently delete the backup from{' '}
                   <strong>
-                    {confirmDialog.backup
-                      ? formatDate(confirmDialog.backup.timestamp)
-                      : ''}
+                    {confirmDialog.backup ? formatDate(confirmDialog.backup.timestamp) : ''}
                   </strong>
                   . This action cannot be undone.
                 </>
@@ -551,9 +529,7 @@ export function AdminDataBackupPage() {
           <DialogFooter className="mt-4 gap-2">
             <Button
               variant="outline"
-              onClick={() =>
-                setConfirmDialog({ open: false, type: 'restore', backup: null })
-              }
+              onClick={() => setConfirmDialog({ open: false, type: 'restore', backup: null })}
               disabled={!!restoring || !!deleting}
               className="rounded-xl"
             >

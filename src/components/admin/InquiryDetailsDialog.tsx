@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, Fragment } from 'react';
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import {
   Select,
@@ -12,10 +12,13 @@ import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Calendar as CalendarIcon, Check, Copy, Eye, EyeOff, Loader2 } from 'lucide-react';
 import { createEvent } from '@/api/events';
+import { getVendors } from '@/api/vendors';
 import { updateCalendarEntry } from '@/api/calendar';
+import { calculatePackagePrice } from '@/utils/package-pricing';
 import {
   checkUserRegistered,
   updateInquiryStatus,
+  updateInquiry,
   getInquiryStatusOptions,
   INQUIRY_STATUS_OPTIONS,
   deleteInquiry,
@@ -58,6 +61,9 @@ interface InquiryRecord {
   eventPackage?: string;
   eventPackageKey?: string;
   eventPax?: number;
+  packageInitialAmount?: number;
+  downpaymentAmount?: number;
+  currency?: string;
   message?: string;
   userId?: string;
   user_id?: string;
@@ -141,6 +147,23 @@ export function InquiryDetailsDialog({
   const [isOrgConfirmOpen, setIsOrgConfirmOpen] = useState(false);
   const [pendingOrganizerId, setPendingOrganizerId] = useState('');
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
+  const [downpaymentInput, setDownpaymentInput] = useState('');
+  const [isSavingDownpayment, setIsSavingDownpayment] = useState(false);
+  const [customPackageAmountInput, setCustomPackageAmountInput] = useState('');
+  const [isSavingCustomPackageAmount, setIsSavingCustomPackageAmount] = useState(false);
+  const [venueInput, setVenueInput] = useState('');
+  const [isSavingVenue, setIsSavingVenue] = useState(false);
+  const [venueVendors, setVenueVendors] = useState<{name: string; price: number | null}[]>([]);
+  const [isLoadingVenues, setIsLoadingVenues] = useState(false);
+
+  const formatMoney = (amount?: number | null) => {
+    if (amount === undefined || amount === null || Number.isNaN(Number(amount))) return '—';
+    return new Intl.NumberFormat('en-PH', {
+      style: 'currency',
+      currency: String(selectedInquiry?.currency || 'PHP'),
+      maximumFractionDigits: 0,
+    }).format(Number(amount));
+  };
 
   const deleteInquiryMutation = useMutation({
     mutationFn: (id: string) => deleteInquiry(id),
@@ -150,6 +173,72 @@ export function InquiryDetailsDialog({
       setIsDeleteConfirmOpen(false);
     },
   });
+
+  const saveDownpaymentMutation = useMutation({
+    mutationFn: async ({ id, downpayment }: { id: string; downpayment: number }) => {
+      return await updateInquiry(id, { downpaymentAmount: downpayment });
+    },
+    onSuccess: (updatedInquiry) => {
+      queryClient.invalidateQueries({ queryKey: ['inquiries'] });
+      onInquiryUpdated(updatedInquiry as InquiryRecord);
+      setDownpaymentInput(
+        updatedInquiry?.downpaymentAmount ? String(updatedInquiry.downpaymentAmount) : ''
+      );
+      setIsSavingDownpayment(false);
+    },
+    onError: () => {
+      setIsSavingDownpayment(false);
+      // Optional: Add error feedback here
+    },
+  });
+
+  const saveCustomPackageAmountMutation = useMutation({
+    mutationFn: async ({ id, amount }: { id: string; amount: number }) => {
+      return await updateInquiry(id, { packageInitialAmount: amount });
+    },
+    onSuccess: (updatedInquiry) => {
+      queryClient.invalidateQueries({ queryKey: ['inquiries'] });
+      onInquiryUpdated(updatedInquiry as InquiryRecord);
+      setCustomPackageAmountInput(
+        updatedInquiry?.packageInitialAmount ? String(updatedInquiry.packageInitialAmount) : ''
+      );
+      setIsSavingCustomPackageAmount(false);
+    },
+    onError: () => {
+      setIsSavingCustomPackageAmount(false);
+    },
+  });
+
+  const saveVenueMutation = useMutation({
+    mutationFn: async ({ id, venue }: { id: string; venue: string }) => {
+      return await updateInquiry(id, { venue } as Partial<InquiryRecord>);
+    },
+    onSuccess: (updatedInquiry) => {
+      queryClient.invalidateQueries({ queryKey: ['inquiries'] });
+      onInquiryUpdated(updatedInquiry as InquiryRecord);
+      setVenueInput(String((updatedInquiry as InquiryRecord)?.venue || ''));
+      setIsSavingVenue(false);
+    },
+    onError: () => {
+      setIsSavingVenue(false);
+    },
+  });
+
+  const handleSaveDownpayment = () => {
+    if (!selectedInquiry || !downpaymentInput) return;
+    const id = String(selectedInquiry.id || selectedInquiry._id || '').trim();
+    if (!id) return;
+    setIsSavingDownpayment(true);
+    saveDownpaymentMutation.mutate({ id, downpayment: Number(downpaymentInput) });
+  };
+
+  const handleSaveCustomPackageAmount = () => {
+    if (!selectedInquiry || !customPackageAmountInput) return;
+    const id = String(selectedInquiry.id || selectedInquiry._id || '').trim();
+    if (!id) return;
+    setIsSavingCustomPackageAmount(true);
+    saveCustomPackageAmountMutation.mutate({ id, amount: Number(customPackageAmountInput) });
+  };
 
   const getInquiryKey = (inquiry?: InquiryRecord | null) =>
     String(inquiry?.id || inquiry?._id || inquiry?.email || '').trim();
@@ -163,6 +252,9 @@ export function InquiryDetailsDialog({
   const isAlreadyRegistered = selectedInquiryKey
     ? isAccountRegisteredByInquiry[selectedInquiryKey]
     : false;
+  const hasAccountForInquiry = Boolean(
+    selectedInquiry?.userId || selectedInquiry?.user_id || isAlreadyRegistered || createdAccount
+  );
 
   useEffect(() => {
     if (!selectedInquiry) return;
@@ -171,6 +263,13 @@ export function InquiryDetailsDialog({
     setAccountCreateError('');
     setAccountCreateSuccess('');
     setCopiedInquiryId('');
+    setDownpaymentInput(
+      selectedInquiry?.downpaymentAmount ? String(selectedInquiry.downpaymentAmount) : ''
+    );
+    setCustomPackageAmountInput(
+      selectedInquiry?.packageInitialAmount ? String(selectedInquiry.packageInitialAmount) : ''
+    );
+    setVenueInput(selectedInquiry?.venue || selectedInquiry?.location || '');
 
     const inquiryKey = getInquiryKey(selectedInquiry);
     if (!inquiryKey) return;
@@ -185,6 +284,25 @@ export function InquiryDetailsDialog({
     };
 
     checkRegistered();
+
+    // Fetch venue vendors for the dropdown
+    setIsLoadingVenues(true);
+    getVendors()
+      .then((allVendors) => {
+        const venues = allVendors
+          .filter(
+            (v) =>
+              v.serviceType.toLowerCase() === 'venue' &&
+              v.name &&
+              v.name !== 'Unnamed vendor'
+          )
+          .map((v) => ({ name: v.name, price: v.price }));
+        // Deduplicate by name
+        const uniqueVenues = Array.from(new Map(venues.map((v) => [v.name, v])).values());
+        setVenueVendors(uniqueVenues);
+      })
+      .catch(() => setVenueVendors([]))
+      .finally(() => setIsLoadingVenues(false));
   }, [selectedInquiry]);
 
   const handleStatusChange = (newStatus: string) => {
@@ -237,6 +355,31 @@ export function InquiryDetailsDialog({
         return;
       }
 
+      if (!selectedInquiry.downpaymentAmount) {
+        setStatusChangeError('A downpayment must be added before approving this inquiry.');
+        return;
+      }
+
+      const inquiryVenue = String(selectedInquiry.venue || selectedInquiry.location || '').trim();
+      if (!inquiryVenue) {
+        setStatusChangeError('A venue must be added before approving this inquiry.');
+        return;
+      }
+
+      const isOthersPackage =
+        String(selectedInquiry.eventPackage || '')
+          .trim()
+          .toLowerCase() === 'others';
+      const hasCustomPackageAmount =
+        Number.isFinite(Number(selectedInquiry.packageInitialAmount)) &&
+        Number(selectedInquiry.packageInitialAmount) > 0;
+      if (isOthersPackage && !hasCustomPackageAmount) {
+        setStatusChangeError(
+          'A custom package amount must be added before approving this inquiry.'
+        );
+        return;
+      }
+
       if (!plannedDateSource) {
         setStatusChangeError('Inquiry planned date is required before creating the event.');
         return;
@@ -249,15 +392,40 @@ export function InquiryDetailsDialog({
       await updateInquiryStatus(id, pendingStatus);
 
       if (canCreateApprovedEvent) {
-        const now = new Date().toISOString();
-        const startDate = now;
-        const endDate = now;
+        const startDate = meetingDateSource
+          ? new Date(meetingDateSource).toISOString()
+          : new Date().toISOString();
+        const endDate = plannedDateSource
+          ? new Date(plannedDateSource).toISOString()
+          : new Date().toISOString();
+
+        // Compute event price from package + event type + pax if not already set
+        const eventTypeStr = String(selectedInquiry.eventType || '').trim();
+        const eventPackageStr = String(selectedInquiry.eventPackage || '').trim();
+        const eventPaxNum = Number(selectedInquiry.eventPax) || 0;
+
+        const computedPrice = calculatePackagePrice(eventPackageStr, eventTypeStr, eventPaxNum);
+        const rawPackageInitialAmount = Number(selectedInquiry.packageInitialAmount);
+        const packageInitialAmount =
+          Number.isFinite(rawPackageInitialAmount) && rawPackageInitialAmount > 0
+            ? rawPackageInitialAmount
+            : computedPrice > 0
+              ? computedPrice
+              : undefined;
+
+        const downpaymentAmount = Number(selectedInquiry.downpaymentAmount);
+        const hasPackageInitialAmount = packageInitialAmount !== undefined;
+        const hasDownpaymentAmount = Number.isFinite(downpaymentAmount);
+        const packagePrice = hasPackageInitialAmount
+          ? Math.max(0, packageInitialAmount - (hasDownpaymentAmount ? downpaymentAmount : 0))
+          : undefined;
 
         try {
           await createEvent({
             title: eventTitle,
             startDate,
             endDate,
+            inquiryId: id,
             client_id: clientId,
             organizer_id: organizerId,
             eventType: String(selectedInquiry.eventType || '').trim() || 'General',
@@ -269,9 +437,12 @@ export function InquiryDetailsDialog({
               selectedInquiry.eventPax !== undefined && selectedInquiry.eventPax !== null
                 ? Number(selectedInquiry.eventPax)
                 : undefined,
+            packageInitialAmount: hasPackageInitialAmount ? packageInitialAmount : undefined,
+            downpaymentAmount: hasDownpaymentAmount ? downpaymentAmount : undefined,
+            packagePrice,
             eventDate: endDate,
-            eventLocation: '',
-            venue: '',
+            eventLocation: String(selectedInquiry.venue || selectedInquiry.location || '').trim(),
+            venue: String(selectedInquiry.venue || selectedInquiry.location || '').trim(),
             status: 'Planning',
           });
         } catch (createError) {
@@ -466,13 +637,14 @@ export function InquiryDetailsDialog({
   const currentStatusValue = normalizeInquiryStatus(selectedInquiry?.status);
   const statusOptions = getInquiryStatusOptions(selectedInquiry?.status).filter(
     (opt) =>
-      opt.value !== INQUIRY_STATUS_OPTIONS.REQUIRES_CLARIFICATION ||
-      opt.value === currentStatusValue
+      (opt.value !== INQUIRY_STATUS_OPTIONS.REQUIRES_CLARIFICATION ||
+        opt.value === currentStatusValue) &&
+      opt.value !== INQUIRY_STATUS_OPTIONS.DECLINED
   );
 
   return (
     <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-      <DialogContent className="sm:max-w-6xl">
+      <DialogContent className="sm:max-w-7xl max-h-[90vh] overflow-y-auto p-0">
         <div className="bg-linear-to-r from-[#fdfbff] to-[#f5f7ff] p-6 border-b border-[#eee7f4]">
           <div className="flex items-center justify-between">
             <div>
@@ -484,6 +656,7 @@ export function InquiryDetailsDialog({
                 {new Date(
                   selectedInquiry?.createdAt || selectedInquiry?.created_at || Date.now()
                 ).toLocaleDateString('en-US', {
+                  timeZone: 'UTC',
                   month: 'long',
                   day: 'numeric',
                   year: 'numeric',
@@ -492,360 +665,606 @@ export function InquiryDetailsDialog({
                 })}
               </p>
             </div>
-            <div className="hidden md:block"></div>
+            <div className="flex items-center gap-2">
+              {selectedInquiry && (
+                <Button
+                  variant="outline"
+                  className="font-bold border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700"
+                  disabled={currentStatusValue === INQUIRY_STATUS_OPTIONS.DECLINED}
+                  onClick={() => handleStatusChange(INQUIRY_STATUS_OPTIONS.DECLINED)}
+                >
+                  {currentStatusValue === INQUIRY_STATUS_OPTIONS.DECLINED
+                    ? 'Declined'
+                    : 'Decline Inquiry'}
+                </Button>
+              )}
+              {user?.role === 'ADMIN' && selectedInquiry && (
+                <Button
+                  variant="destructive"
+                  className="font-bold"
+                  onClick={() => setIsDeleteConfirmOpen(true)}
+                >
+                  Delete Inquiry
+                </Button>
+              )}
+            </div>
           </div>
         </div>
 
         {selectedInquiry && (
-          <div className="p-6 md:flex md:gap-8 max-h-[80vh] overflow-y-auto">
-            {/* Left Column - Core Info */}
-            <div className="space-y-6 md:w-3/5">
-              <section className="space-y-3">
-                <h3 className="text-xs font-black uppercase tracking-widest text-[#b0a4c5] flex items-center gap-2">
-                  <span className="h-px w-4 bg-[#d5c9e4]"></span>
-                  Client Information
-                </h3>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div className="rounded-2xl border border-[#efe8f6] bg-[#fcfaff] p-4 transition-all hover:border-[#e2d5f0]">
-                    <h4 className="text-[10px] font-black uppercase tracking-wider text-[#857a98] mb-1">
-                      Full Name
-                    </h4>
-                    <p className="text-[#2e2837] font-bold text-lg">
-                      {selectedInquiry.firstName} {selectedInquiry.lastName}
-                    </p>
-                  </div>
-                  <div className="rounded-2xl border border-[#efe8f6] bg-[#fcfaff] p-4 transition-all hover:border-[#e2d5f0]">
-                    <h4 className="text-[10px] font-black uppercase tracking-wider text-[#857a98] mb-1">
-                      Contact Details
-                    </h4>
-                    <p className="text-sm font-bold text-[#5a5368]">{selectedInquiry.email}</p>
-                    {selectedInquiry.contactNumber && (
-                      <p className="text-sm font-medium text-[#7a708d] mt-0.5">
-                        {selectedInquiry.contactNumber}
-                      </p>
-                    )}
-                  </div>
-                </div>
-              </section>
-
-              <section className="space-y-3">
-                <h3 className="text-xs font-black uppercase tracking-widest text-[#b0a4c5] flex items-center gap-2">
-                  <span className="h-px w-4 bg-[#d5c9e4]"></span>
-                  Event Requirements
-                </h3>
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="px-4 py-3 rounded-xl bg-[#f7ebff]/50 border-2 border-[#eadcf7] backdrop-blur-sm shadow-sm flex flex-col justify-center">
-                    <p className="text-[10px] font-black uppercase tracking-widest text-[#857a98] mb-0.5">
-                      Current Status
-                    </p>
-                    <p className="text-sm font-bold text-[#6f2ea8]">
-                      {selectedInquiry?.status || 'New'}
-                    </p>
-                  </div>
-                  <div className="rounded-xl border border-[#f1eaf7] bg-white p-3 shadow-sm">
-                    <h4 className="text-[10px] font-black uppercase tracking-wider text-[#a094b8] mb-1">
-                      Event Format
-                    </h4>
-                    <p className="text-[#4e4560] font-bold text-sm">
-                      {selectedInquiry.eventType || selectedInquiry.subject || 'N/A'}
-                    </p>
-                  </div>
-                  <div className="rounded-xl border border-[#f1eaf7] bg-white p-3 shadow-sm">
-                    <h4 className="text-[10px] font-black uppercase tracking-wider text-[#a094b8] mb-1">
-                      Planned Date
-                    </h4>
-                    <p className="text-[#4e4560] font-bold text-sm">
-                      {new Date(
-                        selectedInquiry.date || selectedInquiry.createdAt || Date.now()
-                      ).toLocaleDateString()}
-                    </p>
-                  </div>
-                  <div className="rounded-xl border border-[#f1eaf7] bg-white p-3 shadow-sm">
-                    <h4 className="text-[10px] font-black uppercase tracking-wider text-[#a094b8] mb-1">
-                      Submitted Date
-                    </h4>
-                    <p className="text-[#4e4560] font-bold text-sm">
-                      {new Date(
-                        selectedInquiry.createdAt || selectedInquiry.created_at || Date.now()
-                      ).toLocaleDateString('en-US', {
-                        month: 'short',
-                        day: 'numeric',
-                        year: 'numeric',
-                      })}
-                    </p>
-                  </div>
-                  {selectedInquiry.eventPackage && (
-                    <div className="rounded-xl border border-[#f1eaf7] bg-white p-3 shadow-sm">
-                      <h4 className="text-[10px] font-black uppercase tracking-wider text-[#a094b8] mb-1">
-                        Package Choice
+          <div className="p-6">
+            <div className="grid gap-8 xl:grid-cols-[minmax(0,1.45fr)_minmax(280px,0.95fr)_minmax(320px,1fr)]">
+              {/* First Column - Core Info */}
+              <div className="space-y-6">
+                <section className="space-y-3">
+                  <h3 className="text-xs font-black uppercase tracking-widest text-[#b0a4c5] flex items-center gap-2">
+                    <span className="h-px w-4 bg-[#d5c9e4]"></span>
+                    Client Information
+                  </h3>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="rounded-2xl border border-[#efe8f6] bg-[#fcfaff] p-4 transition-all hover:border-[#e2d5f0]">
+                      <h4 className="text-[10px] font-black uppercase tracking-wider text-[#857a98] mb-1">
+                        Full Name
                       </h4>
-                      <p className="text-[#4e4560] font-bold text-sm">
-                        {selectedInquiry.eventPackage}
+                      <p className="text-[#2e2837] font-bold text-lg">
+                        {selectedInquiry.firstName} {selectedInquiry.lastName}
                       </p>
                     </div>
-                  )}
-                  {selectedInquiry.eventPax && (
-                    <div className="rounded-xl border border-[#f1eaf7] bg-white p-3 shadow-sm">
-                      <h4 className="text-[10px] font-black uppercase tracking-wider text-[#a094b8] mb-1">
-                        Guest Count
+                    <div className="rounded-2xl border border-[#efe8f6] bg-[#fcfaff] p-4 transition-all hover:border-[#e2d5f0]">
+                      <h4 className="text-[10px] font-black uppercase tracking-wider text-[#857a98] mb-1">
+                        Contact Details
                       </h4>
-                      <p className="text-[#4e4560] font-bold text-sm">
-                        {selectedInquiry.eventPax} Pax
-                      </p>
-                    </div>
-                  )}
-                </div>
-              </section>
-
-              <section className="space-y-3">
-                <h3 className="text-xs font-black uppercase tracking-widest text-[#b0a4c5] flex items-center gap-2">
-                  <span className="h-px w-4 bg-[#d5c9e4]"></span>
-                  Client Message
-                </h3>
-                <div className="min-h-30 whitespace-pre-wrap rounded-2xl border border-[#ece4f5] bg-[#faf7ff] p-5 text-sm text-[#4e4560] leading-relaxed italic shadow-inner">
-                  "{selectedInquiry.message || 'No additional message provided.'}"
-                </div>
-              </section>
-            </div>
-
-            {/* Right Column - Actions & Status */}
-            <div className="mt-8 border-t border-[#efe8f6] pt-8 md:mt-0 md:w-2/5 md:border-l md:border-t-0 md:pl-8 md:pt-0 space-y-6">
-              <section className="space-y-3">
-                <h4 className="text-xs font-black uppercase tracking-widest text-[#b0a4c5] mb-2">
-                  Inquiry Status
-                </h4>
-                <div className="p-4 rounded-2xl border border-[#eadcf7] bg-white shadow-sm">
-                  <Label className="text-[10px] font-black uppercase text-[#857a98] mb-2 block">
-                    Change State
-                  </Label>
-                  <Select value={currentStatusValue} onValueChange={handleStatusChange}>
-                    <SelectTrigger className="w-full h-11 border-[#e5ddee] bg-white rounded-xl font-bold text-[#4e4560]">
-                      <SelectValue placeholder="Update status" />
-                    </SelectTrigger>
-                    <SelectContent className="rounded-xl border-[#e5ddee]">
-                      {statusOptions.map((option) => (
-                        <SelectItem
-                          key={option.value}
-                          value={option.value}
-                          disabled={option.disabled}
-                        >
-                          {option.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  {statusChangeError && (
-                    <p className="mt-2 text-[11px] font-semibold text-red-600">
-                      {statusChangeError}
-                    </p>
-                  )}
-                </div>
-              </section>
-
-              <section className="space-y-3">
-                <h4 className="text-xs font-black uppercase tracking-widest text-[#b0a4c5] mb-2">
-                  Meetings
-                </h4>
-                {selectedInquiry.meetingDetails ? (
-                  <div className="w-full space-y-4">
-                    <div className="rounded-2xl border border-[#eadcf7] bg-linear-to-br from-[#fbf6ff] to-[#f5f0ff] p-4 shadow-sm">
-                      <div className="flex items-center gap-3 mb-3">
-                        <div className="h-10 w-10 rounded-xl bg-white flex items-center justify-center border border-[#eadcf7] text-[#8f1fd1] shadow-xs">
-                          <CalendarIcon className="h-5 w-5" />
-                        </div>
-                        <div>
-                          <p className="text-sm font-black text-[#5f4f7a]">
-                            {new Date(
-                              selectedInquiry.meetingDetails.date || Date.now()
-                            ).toLocaleDateString('en-US', {
-                              month: 'short',
-                              day: 'numeric',
-                              year: 'numeric',
-                            })}
-                          </p>
-                          <p className="text-xs font-bold text-[#8f1fd1]">
-                            at {selectedInquiry.meetingDetails.time || 'TBD'}
-                          </p>
-                        </div>
-                      </div>
-                      <div className="space-y-3 text-[11px] font-semibold">
-                        <p className="flex justify-between border-b border-[#eee7f4] pb-1.5">
-                          <span className="text-[#a094b8]">Meeting Location</span>
-                          <span className="text-[#5f4f7a]">
-                            {selectedInquiry.meetingDetails.location || 'TBA'}
-                          </span>
+                      <p className="text-sm font-bold text-[#5a5368]">{selectedInquiry.email}</p>
+                      {selectedInquiry.contactNumber && (
+                        <p className="text-sm font-medium text-[#7a708d] mt-0.5">
+                          {selectedInquiry.contactNumber}
                         </p>
-                        <div className="space-y-2">
-                          <p className="flex justify-between">
-                            <span className="text-[#a094b8]">Current Organizer</span>
-                            <span className="text-[#5f4f7a] text-right">
-                              {getOrganizerLabel(selectedInquiry.meetingDetails.organizerId || '')}
+                      )}
+                    </div>
+                  </div>
+                </section>
+
+                <section className="space-y-3">
+                  <h3 className="text-xs font-black uppercase tracking-widest text-[#b0a4c5] flex items-center gap-2">
+                    <span className="h-px w-4 bg-[#d5c9e4]"></span>
+                    Event Requirements
+                  </h3>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="px-4 py-3 rounded-xl bg-[#f7ebff]/50 border-2 border-[#eadcf7] backdrop-blur-sm shadow-sm flex flex-col justify-center">
+                      <p className="text-[10px] font-black uppercase tracking-widest text-[#857a98] mb-0.5">
+                        Current Status
+                      </p>
+                      <p className="text-sm font-bold text-[#6f2ea8]">
+                        {selectedInquiry?.status || 'New'}
+                      </p>
+                    </div>
+                    <div className="rounded-xl border border-[#f1eaf7] bg-white p-3 shadow-sm">
+                      <h4 className="text-[10px] font-black uppercase tracking-wider text-[#a094b8] mb-1">
+                        Event Format
+                      </h4>
+                      <p className="text-[#4e4560] font-bold text-sm">
+                        {selectedInquiry.eventType || selectedInquiry.subject || 'N/A'}
+                      </p>
+                    </div>
+                    <div className="rounded-xl border border-[#f1eaf7] bg-white p-3 shadow-sm">
+                      <h4 className="text-[10px] font-black uppercase tracking-wider text-[#a094b8] mb-1">
+                        Planned Date
+                      </h4>
+                      <p className="text-[#4e4560] font-bold text-sm">
+                        {new Date(
+                          selectedInquiry.date || selectedInquiry.createdAt || Date.now()
+                        ).toLocaleDateString('en-US', {
+                          timeZone: 'UTC',
+                          month: 'long',
+                          day: 'numeric',
+                          year: 'numeric',
+                        })}
+                      </p>
+                    </div>
+                    <div className="rounded-xl border border-[#f1eaf7] bg-white p-3 shadow-sm">
+                      <h4 className="text-[10px] font-black uppercase tracking-wider text-[#a094b8] mb-1">
+                        Submitted Date
+                      </h4>
+                      <p className="text-[#4e4560] font-bold text-sm">
+                        {new Date(
+                          selectedInquiry.createdAt || selectedInquiry.created_at || Date.now()
+                        ).toLocaleDateString('en-US', {
+                          timeZone: 'UTC',
+                          month: 'short',
+                          day: 'numeric',
+                          year: 'numeric',
+                        })}
+                      </p>
+                    </div>
+                    {selectedInquiry.eventPackage && (
+                      <div className="rounded-xl border border-[#f1eaf7] bg-white p-3 shadow-sm">
+                        <h4 className="text-[10px] font-black uppercase tracking-wider text-[#a094b8] mb-1">
+                          Package Choice
+                        </h4>
+                        <p className="text-[#4e4560] font-bold text-sm">
+                          {selectedInquiry.eventPackage}
+                        </p>
+                      </div>
+                    )}
+                    {selectedInquiry.eventPax && (
+                      <div className="rounded-xl border border-[#f1eaf7] bg-white p-3 shadow-sm">
+                        <h4 className="text-[10px] font-black uppercase tracking-wider text-[#a094b8] mb-1">
+                          Guest Count
+                        </h4>
+                        <p className="text-[#4e4560] font-bold text-sm">
+                          {selectedInquiry.eventPax} Pax
+                        </p>
+                      </div>
+                    )}
+
+                    {(selectedInquiry.eventPackage ||
+                      selectedInquiry.packageInitialAmount !== undefined) &&
+                      String(selectedInquiry.eventPackage || '')
+                        .trim()
+                        .toLowerCase() !== 'others' &&
+                      (() => {
+                        const displayAmount =
+                          Number.isFinite(Number(selectedInquiry.packageInitialAmount)) &&
+                          Number(selectedInquiry.packageInitialAmount) > 0
+                            ? Number(selectedInquiry.packageInitialAmount)
+                            : calculatePackagePrice(
+                                String(selectedInquiry.eventPackage || '').trim(),
+                                String(selectedInquiry.eventType || '').trim(),
+                                Number(selectedInquiry.eventPax) || 0
+                              );
+                        return (
+                          <div className="rounded-xl border border-[#f1eaf7] bg-white p-3 shadow-sm col-span-2">
+                            <h4 className="text-[10px] font-black uppercase tracking-wider text-[#a094b8] mb-1">
+                              Package Amount
+                            </h4>
+                            <p className="text-[#4e4560] font-bold text-sm">
+                              {displayAmount > 0 ? formatMoney(displayAmount) : '—'}
+                            </p>
+                          </div>
+                        );
+                      })()}
+                  </div>
+                </section>
+
+                <section className="space-y-3">
+                  <h3 className="text-xs font-black uppercase tracking-widest text-[#b0a4c5] flex items-center gap-2">
+                    <span className="h-px w-4 bg-[#d5c9e4]"></span>
+                    Client Message
+                  </h3>
+                  <div className="min-h-20 whitespace-pre-wrap rounded-2xl border border-[#ece4f5] bg-[#faf7ff] p-5 text-sm text-[#4e4560] leading-relaxed italic shadow-inner">
+                    "{selectedInquiry.message || 'No additional message provided.'}"
+                  </div>
+                </section>
+              </div>
+
+              {/* Second Column - Meetings & Account Details */}
+              <div className="space-y-6">
+                <section className="space-y-3">
+                  <h4 className="text-xs font-black uppercase tracking-widest text-[#b0a4c5] mb-2">
+                    Meetings
+                  </h4>
+                  {selectedInquiry.meetingDetails ? (
+                    <div className="w-full space-y-4">
+                      <div className="rounded-2xl border border-[#eadcf7] bg-linear-to-br from-[#fbf6ff] to-[#f5f0ff] p-4 shadow-sm">
+                        <div className="flex items-center gap-3 mb-3">
+                          <div className="h-10 w-10 rounded-xl bg-white flex items-center justify-center border border-[#eadcf7] text-[#8f1fd1] shadow-xs">
+                            <CalendarIcon className="h-5 w-5" />
+                          </div>
+                          <div>
+                            <p className="text-sm font-black text-[#5f4f7a]">
+                              {new Date(
+                                selectedInquiry.meetingDetails.date || Date.now()
+                              ).toLocaleDateString('en-US', {
+                                timeZone: 'UTC',
+                                month: 'short',
+                                day: 'numeric',
+                                year: 'numeric',
+                              })}
+                            </p>
+                            <p className="text-xs font-bold text-[#8f1fd1]">
+                              at {selectedInquiry.meetingDetails.time || 'TBD'}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="space-y-3 text-[11px] font-semibold">
+                          <p className="flex justify-between border-b border-[#eee7f4] pb-1.5">
+                            <span className="text-[#a094b8]">Meeting Location</span>
+                            <span className="text-[#5f4f7a]">
+                              {selectedInquiry.meetingDetails.location || 'TBA'}
                             </span>
                           </p>
-                          <div className="pt-1">
-                            <Label className="text-[9px] font-black uppercase text-[#857a98] mb-1.5 block">
-                              Reassign Expert
-                            </Label>
-                            <Select
-                              value={selectedMeetingOrganizerId}
-                              onValueChange={handleOrganizerChange}
-                              disabled={isUpdatingMeetingOrganizer}
-                            >
-                              <SelectTrigger className="h-9 w-full rounded-xl border-[#eadcf7] bg-white/80 px-3 text-[11px] font-bold text-[#4c455e] transition-all">
-                                <SelectValue placeholder="Change organizer..." />
-                              </SelectTrigger>
-                              <SelectContent className="rounded-xl border-[#e5ddee]">
-                                {organizers.map((organizer) => (
-                                  <SelectItem key={organizer.user_id} value={organizer.user_id}>
-                                    {[organizer.firstName, organizer.lastName]
-                                      .filter(Boolean)
-                                      .join(' ')}
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
+                          <div className="space-y-2">
+                            <p className="flex justify-between">
+                              <span className="text-[#a094b8]">Current Organizer</span>
+                              <span className="text-[#5f4f7a] text-right">
+                                {getOrganizerLabel(
+                                  selectedInquiry.meetingDetails.organizerId || ''
+                                )}
+                              </span>
+                            </p>
+                            <div className="pt-1">
+                              <Label className="text-[9px] font-black uppercase text-[#857a98] mb-1.5 block">
+                                Reassign Expert
+                              </Label>
+                              <Select
+                                value={selectedMeetingOrganizerId}
+                                onValueChange={handleOrganizerChange}
+                                disabled={isUpdatingMeetingOrganizer}
+                              >
+                                <SelectTrigger className="h-9 w-full rounded-xl border-[#eadcf7] bg-white/80 px-3 text-[11px] font-bold text-[#4c455e] transition-all">
+                                  <SelectValue placeholder="Change organizer..." />
+                                </SelectTrigger>
+                                <SelectContent className="rounded-xl border-[#e5ddee]">
+                                  {organizers.map((organizer) => (
+                                    <SelectItem key={organizer.user_id} value={organizer.user_id}>
+                                      {[organizer.firstName, organizer.lastName]
+                                        .filter(Boolean)
+                                        .join(' ')}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            </div>
                           </div>
                         </div>
                       </div>
                     </div>
-                  </div>
-                ) : (
-                  <div className="space-y-3">
-                    <div className="rounded-2xl border border-dashed border-[#eadcf7] bg-[#fbf6ff] p-6 text-center">
-                      <CalendarIcon className="h-8 w-8 text-[#d5c9e4] mx-auto mb-2" />
-                      <p className="text-sm font-bold text-[#6a5a83]">No meeting scheduled</p>
-                      <p className="text-[11px] text-[#9a8fb0] mt-1">
-                        Schedule a discovery call to proceed
-                      </p>
-                    </div>
-                    <Button
-                      className="w-full h-12 bg-linear-to-r from-[#f347a5] to-[#8f1fd1] text-white font-black rounded-xl shadow-md hover:shadow-lg transition-all"
-                      onClick={() => setIsScheduleModalOpen(true)}
-                    >
-                      <CalendarIcon className="mr-2 h-4 w-4" />
-                      Schedule Meeting
-                    </Button>
-                  </div>
-                )}
-              </section>
-
-              <section className="space-y-3">
-                <h4 className="text-xs font-black uppercase tracking-widest text-[#b0a4c5] mb-2">
-                  Portal Access
-                </h4>
-                <div className="rounded-2xl border border-[#eadcf7] bg-white p-4 shadow-sm overflow-hidden relative">
-                  {!selectedInquiry.meetingDetails && !isAlreadyRegistered && !createdAccount && (
-                    <div className="absolute inset-0 z-10 bg-white/60 backdrop-blur-[1px] flex items-center justify-center p-6 text-center">
-                      <p className="text-[11px] font-bold text-amber-700 bg-amber-50 p-2 rounded-lg border border-amber-100 shadow-sm">
-                        Schedule a meeting first to enable account creation.
-                      </p>
-                    </div>
-                  )}
-
-                  <div className="flex items-start gap-3 mb-4">
-                    <div className="h-8 w-8 rounded-lg bg-[#f7ebff] flex items-center justify-center text-[#8f1fd1]">
-                      <Check className="h-4 w-4" />
-                    </div>
-                    <div>
-                      <p className="text-sm font-black text-[#5f4f7a]">Client Account</p>
-                      <p className="text-[10px] font-semibold text-[#8f879f]">
-                        Enable portal access for this client
-                      </p>
-                    </div>
-                  </div>
-
-                  <Button
-                    type="button"
-                    onClick={handleCreateUserAccount}
-                    disabled={
-                      isCreatingAccount ||
-                      !selectedInquiry?.email ||
-                      Boolean(createdAccount) ||
-                      isAlreadyRegistered ||
-                      !selectedInquiry.meetingDetails
-                    }
-                    className="w-full h-11 bg-linear-to-r from-[#2e2837] to-[#5a5368] text-white font-black rounded-xl"
-                  >
-                    {isCreatingAccount
-                      ? 'Processing...'
-                      : createdAccount || isAlreadyRegistered
-                        ? 'Account Ready'
-                        : 'Create User Account'}
-                  </Button>
-
-                  {createdAccount && (
-                    <div className="mt-4 space-y-2 rounded-xl border border-[#e5dbef] bg-[#faf7ff] p-3 animate-in fade-in slide-in-from-top-2">
-                      <p className="text-[10px] font-black uppercase text-[#6f2ea8]">
-                        Temporary Access Key
-                      </p>
-                      <div className="flex items-center gap-2">
-                        <div className="relative flex-1">
-                          <Input
-                            readOnly
-                            value={isPasswordVisible ? createdAccount.password : '••••••••••••'}
-                            className="h-10 border-[#ddd8e8] bg-white text-xs font-bold text-[#4c455e] rounded-lg pr-10"
-                          />
-                          <button
-                            type="button"
-                            onClick={() =>
-                              setShowPasswordByInquiry((prev) => ({
-                                ...prev,
-                                [selectedInquiryKey]: !isPasswordVisible,
-                              }))
-                            }
-                            className="absolute right-3 top-1/2 -translate-y-1/2 text-[#8f879f] hover:text-[#8f1fd1]"
-                          >
-                            {isPasswordVisible ? (
-                              <EyeOff className="h-4 w-4" />
-                            ) : (
-                              <Eye className="h-4 w-4" />
-                            )}
-                          </button>
-                        </div>
-                        <Button
-                          type="button"
-                          variant="outline"
-                          onClick={() =>
-                            handleCopyPassword(selectedInquiryKey, createdAccount.password)
-                          }
-                          className="h-10 w-10 p-0 border-[#ddd8e8] rounded-lg bg-white"
-                        >
-                          {isCopied ? (
-                            <Check className="h-4 w-4 text-emerald-600" />
-                          ) : (
-                            <Copy className="h-4 w-4" />
-                          )}
-                        </Button>
+                  ) : (
+                    <div className="space-y-3">
+                      <div className="rounded-2xl border border-dashed border-[#eadcf7] bg-[#fbf6ff] p-6 text-center">
+                        <CalendarIcon className="h-8 w-8 text-[#d5c9e4] mx-auto mb-2" />
+                        <p className="text-sm font-bold text-[#6a5a83]">No meeting scheduled</p>
+                        <p className="text-[11px] text-[#9a8fb0] mt-1">
+                          Use the status options above to schedule a discovery call
+                        </p>
                       </div>
                     </div>
                   )}
+                </section>
 
-                  {accountCreateError && (
-                    <div className="mt-3 p-2 rounded-lg bg-red-50 border border-red-100">
-                      <p className="text-[10px] font-bold text-red-600">{accountCreateError}</p>
-                    </div>
-                  )}
-                  {accountCreateSuccess && (
-                    <div className="mt-3 p-2 rounded-lg bg-emerald-50 border border-emerald-100">
-                      <p className="text-[10px] font-bold text-emerald-700">
-                        {accountCreateSuccess}
+                <section className="space-y-3">
+                  <h4 className="text-xs font-black uppercase tracking-widest text-[#b0a4c5] mb-2">
+                    Account Details
+                  </h4>
+                  <div className="rounded-2xl border border-[#eadcf7] bg-white p-4 shadow-sm">
+                    {createdAccount && (
+                      <div className="space-y-2 rounded-lg border border-[#e5dbef] bg-[#faf7ff] p-2 animate-in fade-in slide-in-from-top-2">
+                        <p className="text-[9px] font-black uppercase text-[#6f2ea8]">
+                          Temporary Access Key
+                        </p>
+                        <div className="flex items-center gap-2">
+                          <div className="relative flex-1">
+                            <Input
+                              readOnly
+                              value={isPasswordVisible ? createdAccount.password : '••••••••••••'}
+                              className="h-8 text-[11px] font-bold pr-8"
+                            />
+                            <button
+                              type="button"
+                              onClick={() =>
+                                setShowPasswordByInquiry((prev) => ({
+                                  ...prev,
+                                  [selectedInquiryKey]: !isPasswordVisible,
+                                }))
+                              }
+                              className="absolute right-2 top-1/2 -translate-y-1/2 text-[#8f879f] hover:text-[#8f1fd1]"
+                            >
+                              {isPasswordVisible ? (
+                                <EyeOff className="h-3 w-3" />
+                              ) : (
+                                <Eye className="h-3 w-3" />
+                              )}
+                            </button>
+                          </div>
+                          <Button
+                            type="button"
+                            variant="outline"
+                            onClick={() =>
+                              handleCopyPassword(selectedInquiryKey, createdAccount.password)
+                            }
+                            className="h-8 w-8 p-0 bg-white"
+                          >
+                            {isCopied ? (
+                              <Check className="h-3 w-3 text-emerald-600" />
+                            ) : (
+                              <Copy className="h-3 w-3" />
+                            )}
+                          </Button>
+                        </div>
+                      </div>
+                    )}
+
+                    {!createdAccount && hasAccountForInquiry && (
+                      <div className="space-y-2 rounded-lg border border-emerald-100 bg-emerald-50 p-3 animate-in fade-in slide-in-from-top-2">
+                        <p className="text-[9px] font-black uppercase text-emerald-700">
+                          Account Ready
+                        </p>
+                        <div className="space-y-1 text-[11px] font-semibold text-emerald-900">
+                          {selectedInquiry?.email && (
+                            <p className="flex justify-between gap-3">
+                              <span className="text-emerald-700/80">Email</span>
+                              <span className="text-right break-all">{selectedInquiry.email}</span>
+                            </p>
+                          )}
+                        </div>
+                        <p className="text-[10px] font-bold text-emerald-700/80">
+                          Temporary password is sent to the email.
+                        </p>
+                      </div>
+                    )}
+
+                    {accountCreateError && (
+                      <div className="mt-2 p-1.5 rounded bg-red-50 border border-red-100">
+                        <p className="text-[9px] font-bold text-red-600">{accountCreateError}</p>
+                      </div>
+                    )}
+                    {accountCreateSuccess && (
+                      <div className="mt-2 p-1.5 rounded bg-emerald-50 border border-emerald-100">
+                        <p className="text-[9px] font-bold text-emerald-700">
+                          {accountCreateSuccess}
+                        </p>
+                      </div>
+                    )}
+                    {!createdAccount &&
+                      !hasAccountForInquiry &&
+                      !accountCreateError &&
+                      !accountCreateSuccess && (
+                        <p className="text-[11px] text-[#9a8fb0] text-center italic py-2">
+                          No account details generated yet.
+                        </p>
+                      )}
+                  </div>
+                </section>
+              </div>
+
+              {/* Third Column - Inquiry Status */}
+              <div className="space-y-6">
+                <section className="space-y-3">
+                  <h4 className="text-xs font-black uppercase tracking-widest text-[#b0a4c5] mb-2">
+                    Inquiry Status
+                  </h4>
+                  <div className="p-4 rounded-2xl border border-[#eadcf7] bg-white shadow-sm flex flex-col gap-2">
+                    <Label className="text-[10px] font-black uppercase text-[#857a98] mb-1 block">
+                      Change State
+                    </Label>
+                    {statusOptions.map((option, index) => {
+                      const isMeetingBtn =
+                        option.value === INQUIRY_STATUS_OPTIONS.MEETING_SCHEDULED;
+                      const isApprovedBtn = option.value === INQUIRY_STATUS_OPTIONS.APPROVED;
+                      const hasAccount = Boolean(
+                        selectedInquiry?.userId || isAlreadyRegistered || createdAccount
+                      );
+                      const isActive = currentStatusValue === option.value;
+                      const currentIndex = statusOptions.findIndex(
+                        (o) => o.value === currentStatusValue
+                      );
+                      const isCompleted = index < currentIndex;
+
+                      let displayLabel = option.label;
+                      if (isMeetingBtn && (isActive || isCompleted)) {
+                        displayLabel = 'Meeting Scheduled';
+                      }
+
+                      const hasMeetingScheduled = Boolean(selectedInquiry?.meetingDetails);
+
+                      // Override "Approved" gating: enable once account is ready AND meeting is scheduled.
+                      // Other statuses keep their default disabled behavior.
+                      const hasVenue = Boolean(
+                        String(selectedInquiry?.venue || selectedInquiry?.location || '').trim()
+                      );
+                      const isOthersPackage =
+                        String(selectedInquiry?.eventPackage || '')
+                          .trim()
+                          .toLowerCase() === 'others';
+                      const hasCustomPackageAmount =
+                        Number.isFinite(Number(selectedInquiry?.packageInitialAmount)) &&
+                        Number(selectedInquiry?.packageInitialAmount) > 0;
+
+                      const isOptionDisabled = isApprovedBtn
+                        ? !hasAccount ||
+                          !hasMeetingScheduled ||
+                          !selectedInquiry?.downpaymentAmount ||
+                          !hasVenue ||
+                          (isOthersPackage && !hasCustomPackageAmount)
+                        : option.disabled;
+
+                      return (
+                        <Fragment key={option.value}>
+                          {isApprovedBtn && (
+                            <>
+                              {isOthersPackage && (
+                                <div className="relative my-2 rounded-xl border border-[#eadcf7] bg-[#faf7ff] p-3">
+                                  <Label className="text-[10px] font-black uppercase text-[#857a98] mb-2 block">
+                                    Package Amount (Required for Approval)
+                                  </Label>
+                                  <div className="flex gap-2 items-center">
+                                    <Input
+                                      type="number"
+                                      placeholder="Enter custom amount"
+                                      value={customPackageAmountInput}
+                                      onChange={(e) =>
+                                        setCustomPackageAmountInput(e.target.value)
+                                      }
+                                      disabled={
+                                        currentStatusValue === INQUIRY_STATUS_OPTIONS.DECLINED ||
+                                        currentStatusValue === INQUIRY_STATUS_OPTIONS.APPROVED
+                                      }
+                                      className="h-9 flex-1 bg-white border-[#ebe3f5] focus-visible:ring-[#8C6bB1] text-xs font-bold disabled:opacity-50"
+                                    />
+                                    <Button
+                                      onClick={handleSaveCustomPackageAmount}
+                                      disabled={
+                                        isSavingCustomPackageAmount ||
+                                        !customPackageAmountInput ||
+                                        currentStatusValue === INQUIRY_STATUS_OPTIONS.DECLINED ||
+                                        currentStatusValue === INQUIRY_STATUS_OPTIONS.APPROVED
+                                      }
+                                      className="h-9 px-3 bg-[#8C6bB1] hover:bg-[#6c4e8e] text-white font-bold rounded-lg text-xs transition-all shadow-sm disabled:opacity-50"
+                                    >
+                                      {isSavingCustomPackageAmount ? (
+                                        <Loader2 className="w-3 h-3 animate-spin mr-1" />
+                                      ) : (
+                                        'Save'
+                                      )}
+                                    </Button>
+                                  </div>
+                                </div>
+                              )}
+                              <div className="relative my-2 rounded-xl border border-[#eadcf7] bg-[#faf7ff] p-3">
+                                <Label className="text-[10px] font-black uppercase text-[#857a98] mb-2 block">
+                                  Venue (Required for Approval)
+                                </Label>
+                                <div className="flex gap-2 items-center">
+                                  <Select
+                                    value={venueInput || undefined}
+                                    onValueChange={(value) => {
+                                      setVenueInput(value);
+                                      // Auto-save on selection
+                                      const id = String(selectedInquiry.id || selectedInquiry._id || '').trim();
+                                      if (id && value.trim()) {
+                                        setIsSavingVenue(true);
+                                        saveVenueMutation.mutate({ id, venue: value.trim() });
+                                      }
+                                    }}
+                                    disabled={
+                                      currentStatusValue === INQUIRY_STATUS_OPTIONS.DECLINED ||
+                                      currentStatusValue === INQUIRY_STATUS_OPTIONS.APPROVED ||
+                                      isLoadingVenues
+                                    }
+                                  >
+                                    <SelectTrigger className="h-9 flex-1 bg-white border-[#ebe3f5] text-xs font-bold disabled:opacity-50">
+                                      <SelectValue placeholder={isLoadingVenues ? 'Loading venues...' : 'Select venue...'} />
+                                    </SelectTrigger>
+                                    <SelectContent className="rounded-xl border-[#e5ddee]">
+                                      {venueVendors.map((venue) => (
+                                        <SelectItem key={venue.name} value={venue.name}>
+                                          {venue.name} {venue.price !== null && venue.price !== undefined ? `(₱${venue.price.toLocaleString('en-PH')})` : ''}
+                                        </SelectItem>
+                                      ))}
+                                      {venueVendors.length === 0 && !isLoadingVenues && (
+                                        <div className="px-3 py-2 text-xs text-[#8f879f] italic">
+                                          No venue vendors found
+                                        </div>
+                                      )}
+                                    </SelectContent>
+                                  </Select>
+                                  {isSavingVenue && (
+                                    <Loader2 className="w-4 h-4 animate-spin text-[#8C6bB1]" />
+                                  )}
+                                </div>
+                              </div>
+                              <div className="relative my-2 rounded-xl border border-[#eadcf7] bg-[#faf7ff] p-3">
+                                <Label className="text-[10px] font-black uppercase text-[#857a98] mb-2 block">
+                                  Downpayment (Required for Approval)
+                                </Label>
+                                <div className="flex gap-2 items-center">
+                                  <Input
+                                    type="number"
+                                    placeholder="Amount"
+                                    value={downpaymentInput}
+                                    onChange={(e) => setDownpaymentInput(e.target.value)}
+                                    disabled={
+                                      currentStatusValue === INQUIRY_STATUS_OPTIONS.DECLINED ||
+                                      currentStatusValue === INQUIRY_STATUS_OPTIONS.APPROVED
+                                    }
+                                    className="h-9 flex-1 bg-white border-[#ebe3f5] focus-visible:ring-[#8C6bB1] text-xs font-bold disabled:opacity-50"
+                                  />
+                                  <Button
+                                    onClick={handleSaveDownpayment}
+                                    disabled={
+                                      isSavingDownpayment ||
+                                      !downpaymentInput ||
+                                      currentStatusValue === INQUIRY_STATUS_OPTIONS.DECLINED ||
+                                      currentStatusValue === INQUIRY_STATUS_OPTIONS.APPROVED
+                                    }
+                                    className="h-9 px-3 bg-[#8C6bB1] hover:bg-[#6c4e8e] text-white font-bold rounded-lg text-xs transition-all shadow-sm disabled:opacity-50"
+                                  >
+                                    {isSavingDownpayment ? (
+                                      <Loader2 className="w-3 h-3 animate-spin mr-1" />
+                                    ) : (
+                                      'Save'
+                                    )}
+                                  </Button>
+                                </div>
+                              </div>
+                              <div className="relative my-2 rounded-xl border border-[#eadcf7] bg-[#faf7ff] p-3">
+                                {!selectedInquiry.meetingDetails && !hasAccount && (
+                                  <div className="absolute inset-0 z-10 bg-white/60 backdrop-blur-[1px] flex items-center justify-center p-2 text-center rounded-xl">
+                                    <p className="text-[10px] font-bold text-amber-700 bg-amber-50 px-2 py-1 rounded border border-amber-100 shadow-sm">
+                                      Schedule a meeting first.
+                                    </p>
+                                  </div>
+                                )}
+                                <Label className="text-[10px] font-black uppercase text-[#857a98] mb-2 block">
+                                  Portal Access (Required for Approval)
+                                </Label>
+                                <Button
+                                  type="button"
+                                  onClick={handleCreateUserAccount}
+                                  disabled={
+                                    isCreatingAccount ||
+                                    !selectedInquiry?.email ||
+                                    hasAccount ||
+                                    !selectedInquiry.meetingDetails
+                                  }
+                                  className={`w-full h-10 ${hasAccount ? 'bg-emerald-600' : 'bg-linear-to-r from-[#2e2837] to-[#5a5368]'} text-white font-bold rounded-lg text-xs`}
+                                >
+                                  {isCreatingAccount
+                                    ? 'Processing...'
+                                    : hasAccount
+                                      ? 'Account Ready'
+                                      : 'Create User Account'}
+                                </Button>
+                              </div>
+                            </>
+                          )}
+                          <Button
+                            variant={isActive ? 'default' : 'outline'}
+                            disabled={isOptionDisabled && !isActive}
+                            className={`w-full justify-start h-11 rounded-xl font-bold transition-all ${
+                              isActive
+                                ? 'bg-linear-to-r from-[#f347a5] to-[#8f1fd1] text-white border-none shadow-md'
+                                : isCompleted
+                                  ? 'bg-[#f7f5fa] border-[#e5ddee] text-[#8f879f]'
+                                  : 'bg-white border-[#e5ddee] text-[#5a5368] hover:border-[#d5c9e4] hover:bg-[#faf7ff]'
+                            }`}
+                            onClick={() => {
+                              if (isActive) return;
+                              if (isMeetingBtn && !selectedInquiry?.meetingDetails) {
+                                setIsScheduleModalOpen(true);
+                              } else {
+                                handleStatusChange(option.value);
+                              }
+                            }}
+                          >
+                            <span
+                              className={`mr-3 flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[11px] font-black ${
+                                isActive
+                                  ? 'bg-white/20 text-white'
+                                  : isCompleted
+                                    ? 'bg-[#e5ddee] text-[#a094b8]'
+                                    : 'bg-[#f3edfa] text-[#8f1fd1]'
+                              }`}
+                            >
+                              {index + 1}
+                            </span>
+                            {displayLabel}
+                            {isMeetingBtn &&
+                              !selectedInquiry?.meetingDetails &&
+                              !option.disabled &&
+                              !isActive && <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />}
+                          </Button>
+                        </Fragment>
+                      );
+                    })}
+                    {statusChangeError && (
+                      <p className="mt-2 text-[11px] font-semibold text-red-600">
+                        {statusChangeError}
                       </p>
-                    </div>
-                  )}
-                </div>
-              </section>
-
-              {user?.role === 'ADMIN' && (
-                <div className="mt-6 pt-6 border-t border-[#eee7f4]">
-                  <Button
-                    variant="destructive"
-                    className="w-full font-bold"
-                    onClick={() => setIsDeleteConfirmOpen(true)}
-                  >
-                    Delete Inquiry
-                  </Button>
-                </div>
-              )}
+                    )}
+                  </div>
+                </section>
+              </div>
             </div>
           </div>
         )}

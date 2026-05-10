@@ -60,7 +60,16 @@ export function ClientDashboardPage() {
               )
             : events;
 
-        const userEventBase = userEvents.length > 0 ? userEvents[0] : null;
+        // Sort events: Newest first, and prioritize events that aren't "Meetings"
+        const sortedEvents = userEvents.sort((a, b) => {
+          const aIsMeeting = a.title.toLowerCase().includes('meeting');
+          const bIsMeeting = b.title.toLowerCase().includes('meeting');
+          if (aIsMeeting && !bIsMeeting) return 1;
+          if (!aIsMeeting && bIsMeeting) return -1;
+          return new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime();
+        });
+
+        const userEventBase = sortedEvents.length > 0 ? sortedEvents[0] : null;
 
         if (userEventBase) {
           // Fetch full event details to get specific fields
@@ -73,12 +82,13 @@ export function ClientDashboardPage() {
             (fullEvent as any).organizerId ||
             userEventBase.organizerId ||
             (userEventBase as any).organizer_id;
-          let organizerName = 'Assigned Organizer';
+          let organizerName = userEventBase.organizerName || 'Assigned Organizer';
           if (orgId) {
             try {
               const org = await getEventUser(orgId);
               organizerName =
-                `${org.firstName || ''} ${org.lastName || ''}`.trim() || 'Assigned Organizer';
+                `${org.firstName || org.user?.firstName || ''} ${org.lastName || org.user?.lastName || ''}`.trim() ||
+                organizerName;
               console.log('Organizer found:', organizerName);
             } catch (e) {
               console.error('Error fetching organizer:', e);
@@ -106,18 +116,30 @@ export function ClientDashboardPage() {
             : 'TBD';
 
           // Extract package and pax info correctly (check both base and full details)
-          const pkgName =
+          const rawPkgName =
             fullEvent.eventPackageKey ||
             userEventBase.package ||
             fullEvent.package?.name ||
             fullEvent.eventPackage ||
             'Custom Package';
+
+          const currentEventType = fullEvent.eventType || userEventBase.type || 'Event';
+
+          // If package is "Others", use eventType as the display name
+          const displayPkgName = rawPkgName === 'Others' ? currentEventType : rawPkgName;
+
           const paxCount =
             fullEvent.eventPax ||
             (userEventBase as any).pax ||
             (fullEvent as any).package?.pax ||
             0;
-          const costValue = (fullEvent as any).cost || 'TBD';
+
+          // Cost logic: Use packageInitialAmount for custom events ("Others")
+          let costValue = (fullEvent as any).cost || 'TBD';
+          if (rawPkgName === 'Others' && (fullEvent as any).packageInitialAmount) {
+            costValue = `₱${Number((fullEvent as any).packageInitialAmount).toLocaleString()}`;
+          }
+
           const venueValue =
             fullEvent.venue || (fullEvent as any).eventLocation || userEventBase.venue || 'Araneta';
 
@@ -126,8 +148,8 @@ export function ClientDashboardPage() {
             organizer: organizerName,
             eventDate: formattedDate,
             venue: venueValue,
-            packageName: pkgName,
-            eventType: fullEvent.eventType || userEventBase.type || 'Event',
+            packageName: displayPkgName,
+            eventType: currentEventType,
             pax: paxCount,
             cost: costValue,
             eventTitle: fullEvent.title || userEventBase.title || 'Your Event',
@@ -332,38 +354,13 @@ export function ClientDashboardPage() {
                   </h2>
                   <p className="text-xs text-[#696373] mt-1">Event Title</p>
                 </div>
-                <div className="flex flex-col gap-1 sm:flex-1">
-                  <div className="group/bar flex items-center gap-3">
-                    <span className="text-sm font-semibold text-[#2d2834] shrink-0">
-                      {displayEvent.completion}% complete
-                    </span>
-                    <div className="relative flex-1">
-                      <div className="h-6 overflow-hidden rounded-full bg-gray-200 cursor-pointer">
-                        <div
-                          className="h-full rounded-full transition-all"
-                          style={{
-                            width: `${displayEvent.completion}%`,
-                            backgroundImage: 'linear-gradient(to right, #FF0066 0%, #700F81 100%)',
-                          }}
-                        />
-                      </div>
-                      {/* Hover tooltip — Contract Signing */}
-                      <div
-                        className="pointer-events-none absolute -bottom-7 -translate-x-1/2 whitespace-nowrap rounded-full border border-gray-200 bg-white px-2 py-0.5 text-[10px] text-gray-400 shadow-sm opacity-0 scale-90 transition-all duration-200 group-hover/bar:opacity-100 group-hover/bar:scale-100"
-                        style={{ left: `${displayEvent.completion}%` }}
-                      >
-                        {displayEvent.eventStatus}
-                      </div>
-                    </div>
-                  </div>
-                  <div className="flex justify-end mt-6">
-                    <button
-                      onClick={() => navigate('/client/event-plan')}
-                      className="bg-pink-400 text-white rounded-full px-6 py-2.5 text-xs font-bold shadow-sm hover:bg-pink-500 transition-colors"
-                    >
-                      View Event Plan
-                    </button>
-                  </div>
+                <div className="flex flex-col justify-end">
+                  <button
+                    onClick={() => navigate('/client/event-plan')}
+                    className="bg-pink-400 text-white rounded-full px-6 py-2.5 text-xs font-bold shadow-sm hover:bg-pink-500 transition-colors"
+                  >
+                    View Event Plan
+                  </button>
                 </div>
               </div>
 
@@ -377,13 +374,7 @@ export function ClientDashboardPage() {
                     </span>
                   </div>
                   <ul className="space-y-0.5 text-xs text-[#696373]">
-                    <li className="font-medium text-[#2d2834]">• Food</li>
-                    <li className="pl-3">Classic Buffet</li>
-                    <li className="pl-3 font-medium text-[#2d2834]">1. Appetizer</li>
-                    <li className="pl-4 text-[11px] text-[#8a8697]">
-                      Slight bite size, finger foods, salsa or a fresh salad.
-                    </li>
-                    <li className="pl-3 font-medium text-[#2d2834]">2. Main Course</li>
+                    <li className="text-gray-400 italic">No service requirements specified yet.</li>
                   </ul>
                 </div>
 
@@ -395,16 +386,7 @@ export function ClientDashboardPage() {
                     </span>
                   </div>
                   <ul className="space-y-2 text-xs">
-                    <li>
-                      <span className="font-medium text-pink-500">• Event Coordinator</span>
-                      <p className="pl-3 text-[#2d2834]">Ken Chan</p>
-                      <p className="pl-3 text-[#8a8697]">00:00 – 00:00</p>
-                    </li>
-                    <li>
-                      <span className="font-medium text-pink-500">• Host</span>
-                      <p className="pl-3 text-[#2d2834]">Angel U. Nicorn</p>
-                      <p className="pl-3 text-[#8a8697]">00:00 – 00:00</p>
-                    </li>
+                    <li className="text-gray-400 italic">No allocated resources currently.</li>
                   </ul>
                 </div>
 
@@ -416,11 +398,7 @@ export function ClientDashboardPage() {
                     </span>
                   </div>
                   <ul className="space-y-0.5 text-xs">
-                    <li className="font-medium text-pink-500">• Meetings</li>
-                    <li className="pl-3 text-[#2d2834]">Meeting 1 | Zus Coffee</li>
-                    <li className="pl-3 text-[#8a8697]">00:00 – 00:00</li>
-                    <li className="pl-3 text-[#2d2834]">Meeting 2 | Zus Coffee</li>
-                    <li className="pl-3 text-[#8a8697]">00:00 – 00:00</li>
+                    <li className="text-gray-400 italic">No scheduled meetings yet.</li>
                   </ul>
                 </div>
 
@@ -430,20 +408,9 @@ export function ClientDashboardPage() {
                     <span className="text-sm font-semibold text-[#2d2834]">Program Flow</span>
                   </div>
                   <div className="flex flex-col gap-3">
-                    {/* Header: DATE AND TIME */}
-                    <p className="text-lg font-bold text-[#2d2834] leading-tight">DATE AND TIME</p>
-                    {/* Row: Time | Divider | Description */}
-                    <div className="flex gap-4 items-start">
-                      <p className="text-xs text-[#8a8697] shrink-0">00:00</p>
-                      <div className="w-px bg-gray-200 self-stretch"></div>
-                      <div className="flex-1">
-                        <p className="font-semibold text-[#2d2834] text-sm">Description Here</p>
-                        <p className="line-clamp-3 text-[11px] text-[#8a8697] mt-1 leading-relaxed">
-                          Lorem ipsum dolor sit amet, consectetur adipiscing elit, in tincidunt
-                          justo quis...
-                        </p>
-                      </div>
-                    </div>
+                    <p className="text-xs text-gray-400 italic">
+                      Program flow is currently being finalized.
+                    </p>
                   </div>
                 </div>
               </div>

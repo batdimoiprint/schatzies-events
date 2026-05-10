@@ -79,7 +79,8 @@ export function ForceResetPasswordPage() {
         typeof err === 'object' &&
         err !== null &&
         'response' in err &&
-        typeof (err as { response?: { data?: { error?: string } } }).response?.data?.error === 'string'
+        typeof (err as { response?: { data?: { error?: string } } }).response?.data?.error ===
+          'string'
           ? (err as { response: { data: { error: string } } }).response.data.error
           : 'Unable to change password. Please try again.';
       setError(apiError);

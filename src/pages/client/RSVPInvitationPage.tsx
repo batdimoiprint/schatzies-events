@@ -35,7 +35,19 @@ export function RSVPInvitationPage({
     : selectedEvent.date;
   const dayNum = isValidDate ? parsedDate.getDate() : '';
   const yearNum = isValidDate ? parsedDate.getFullYear() : '';
-  const atTime = `at ${(selectedEvent.time || 'TBA').replace(/:00(?=\s|$)/, '').trim()}`;
+  const formatTime12Hour = (timeStr: string) => {
+    if (!timeStr || timeStr === 'TBA') return 'TBA';
+
+    // Handle HH:mm or HH:mm:ss
+    const [hoursStr, minutesStr] = timeStr.split(':');
+    let hours = parseInt(hoursStr, 10);
+    const ampm = hours >= 12 ? 'PM' : 'AM';
+    hours = hours % 12;
+    hours = hours || 12; // the hour '0' should be '12'
+    return `${hours}:${minutesStr} ${ampm}`;
+  };
+
+  const atTime = `at ${formatTime12Hour(selectedEvent.time || 'TBA')}`;
 
   // Get event type (wedding, debut, etc.)
   const eventType = (selectedEvent.description || 'wedding').toLowerCase();

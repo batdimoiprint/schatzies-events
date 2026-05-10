@@ -196,7 +196,7 @@ export function ScheduleMeetingDialog({
                 required
                 {...register('title', { required: true })}
                 placeholder="Enter title"
-                className="h-11 rounded-lg border-[#ddd8e8] bg-white px-3 text-xl text-[#4c455e]"
+                className="h-11 rounded-lg border-[#ddd8e8] bg-white px-3 text-sm font-semibold text-[#4c455e] md:text-base"
               />
             </div>
 
@@ -236,7 +236,7 @@ export function ScheduleMeetingDialog({
                       type="button"
                       variant="outline"
                       className={cn(
-                        'h-11 w-full justify-start rounded-lg border-[#ddd8e8] px-3 text-left text-sm font-semibold text-[#4c455e]',
+                        'h-11 w-full justify-start rounded-lg border-[#ddd8e8] px-3 text-left text-sm font-semibold text-[#4c455e] md:text-base',
                         !startDateKey && 'text-[#a49cb3]'
                       )}
                     >
@@ -267,7 +267,7 @@ export function ScheduleMeetingDialog({
                   type="time"
                   required
                   {...register('startTime', { required: true })}
-                  className="h-11 rounded-lg border-[#ddd8e8] text-xl text-[#4c455e]"
+                  className="h-11 rounded-lg border-[#ddd8e8] text-sm font-semibold text-[#4c455e] md:text-base"
                 />
               </div>
               <div className="space-y-1.5">
@@ -279,7 +279,7 @@ export function ScheduleMeetingDialog({
                       type="button"
                       variant="outline"
                       className={cn(
-                        'h-11 w-full justify-start rounded-lg border-[#ddd8e8] px-3 text-left text-sm font-semibold text-[#4c455e]',
+                        'h-11 w-full justify-start rounded-lg border-[#ddd8e8] px-3 text-left text-sm font-semibold text-[#4c455e] md:text-base',
                         !endDateKey && 'text-[#a49cb3]'
                       )}
                     >
@@ -314,7 +314,7 @@ export function ScheduleMeetingDialog({
                   type="time"
                   required
                   {...register('endTime', { required: true })}
-                  className="h-11 rounded-lg border-[#ddd8e8] text-xl text-[#4c455e]"
+                  className="h-11 rounded-lg border-[#ddd8e8] text-sm font-semibold text-[#4c455e] md:text-base"
                 />
               </div>
             </div>
@@ -326,7 +326,7 @@ export function ScheduleMeetingDialog({
                 <Label className="text-sm font-bold text-[#6a627c]">Label</Label>
                 <select
                   {...register('label')}
-                  className="h-11 w-full rounded-lg border border-[#ddd8e8] bg-white px-2 text-sm font-semibold text-[#4c455e] outline-none focus:border-[#be8de4]"
+                  className="h-11 w-full rounded-lg border border-[#ddd8e8] bg-white px-2 text-sm font-semibold text-[#4c455e] outline-none focus:border-[#be8de4] md:text-base"
                 >
                   <option value="Meeting">Meeting</option>
                   <option value="Task">Task</option>
@@ -337,7 +337,7 @@ export function ScheduleMeetingDialog({
                 <Label className="text-sm font-bold text-[#6a627c]">Event Type</Label>
                 <select
                   {...register('eventType')}
-                  className="h-11 w-full rounded-lg border border-[#ddd8e8] bg-white px-2 text-sm font-semibold text-[#4c455e] outline-none focus:border-[#be8de4]"
+                  className="h-11 w-full rounded-lg border border-[#ddd8e8] bg-white px-2 text-sm font-semibold text-[#4c455e] outline-none focus:border-[#be8de4] md:text-base"
                 >
                   <option value="General">General</option>
                   <option value="Booking">Booking</option>
@@ -354,7 +354,7 @@ export function ScheduleMeetingDialog({
               <Input
                 {...register('location')}
                 placeholder="Location"
-                className="h-11 rounded-lg border-[#ddd8e8] px-3 text-xl text-[#4c455e]"
+                className="h-11 rounded-lg border-[#ddd8e8] px-3 text-sm font-semibold text-[#4c455e] md:text-base"
               />
             </div>
 
@@ -363,7 +363,7 @@ export function ScheduleMeetingDialog({
               <textarea
                 {...register('description')}
                 placeholder="Optional notes"
-                className="h-24 w-full resize-none rounded-lg border border-[#ddd8e8] bg-white px-3 py-3 text-xl text-[#4c455e] outline-none placeholder:text-[#a49cb3] focus:border-[#be8de4]"
+                className="h-24 w-full resize-none rounded-lg border border-[#ddd8e8] bg-white px-3 py-3 text-sm font-semibold text-[#4c455e] outline-none placeholder:text-[#a49cb3] focus:border-[#be8de4] md:text-base"
               />
             </div>
 

@@ -44,13 +44,26 @@ const serviceImages = {
 export function LandingPage() {
   const [inquiryOpen, setInquiryOpen] = useState(false);
   const [heroIndex, setHeroIndex] = useState(0);
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [showInquiryConfirmed, setShowInquiryConfirmed] = useState(false);
 
   useEffect(() => {
     if (searchParams.get('inquiry') === 'true') {
       setInquiryOpen(true);
+      // Clean up the param
+      const next = new URLSearchParams(searchParams);
+      next.delete('inquiry');
+      setSearchParams(next, { replace: true });
     }
-  }, [searchParams]);
+
+    if (searchParams.get('inquiry_confirmed') === 'true') {
+      setShowInquiryConfirmed(true);
+      // Clean up the param
+      const next = new URLSearchParams(searchParams);
+      next.delete('inquiry_confirmed');
+      setSearchParams(next, { replace: true });
+    }
+  }, [searchParams, setSearchParams]);
 
   useEffect(() => {
     heroImages.forEach((src) => {
@@ -72,6 +85,46 @@ export function LandingPage() {
   return (
     <>
       <LoadingScreen />
+
+      {/* ── Inquiry Confirmed Success Modal ── */}
+      {showInquiryConfirmed && (
+        <div
+          className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50 backdrop-blur-sm"
+          onClick={() => setShowInquiryConfirmed(false)}
+        >
+          <div
+            className="flex w-[380px] flex-col items-center rounded-2xl bg-white px-8 py-10 shadow-2xl animate-in fade-in zoom-in-95 duration-300"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Green check circle */}
+            <div className="flex h-20 w-20 items-center justify-center rounded-full bg-gradient-to-br from-emerald-400 to-emerald-600 shadow-lg shadow-emerald-500/30">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="white"
+                strokeWidth="2.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                className="h-10 w-10"
+              >
+                <polyline points="20 6 9 17 4 12" />
+              </svg>
+            </div>
+            <h3 className="mt-5 text-[1.4rem] font-bold text-[#1a1225]">Inquiry Submitted!</h3>
+            <p className="mt-2 text-center text-[0.88rem] leading-[1.6] text-gray-500">
+              Your inquiry has been confirmed and submitted successfully! Our team will review it
+              and get back to you within 2-3 business days.
+            </p>
+            <button
+              onClick={() => setShowInquiryConfirmed(false)}
+              className="mt-6 h-10 rounded-full bg-gradient-to-r from-[#FF0066] to-[#700F81] px-8 text-[0.88rem] font-bold text-white shadow-lg transition hover:brightness-110"
+            >
+              Got it
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* ── Section 1: ── */}
       <section

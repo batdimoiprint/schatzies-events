@@ -8,9 +8,9 @@ export function AdminLayout() {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center h-screen">
+      <div className="flex items-center justify-center h-screen bg-[#fbf8fd]">
         <div className="text-center">
-          <p className="text-lg">Loading...</p>
+          <p className="text-base font-semibold text-[#4f4b57]">Loading admin panel...</p>
         </div>
       </div>
     );
@@ -21,11 +21,9 @@ export function AdminLayout() {
   }
 
   return (
-    <div className="min-h-screen bg-[#fbf8fd]">
-      <div className="flex h-full flex-col md:flex-row">
-        <aside className="w-full border-b border-[#ece7f2] bg-white md:h-full md:w-62 md:border-b-0 md:border-r">
-          <AdminSidebar />
-        </aside>
+    <div className="flex h-screen w-full overflow-hidden bg-[#fbf8fd]">
+      <div className="flex h-full w-full flex-col md:flex-row">
+        <AdminSidebar />
 
         <div className="flex min-h-0 flex-1 flex-col">
           <AdminTopBar />

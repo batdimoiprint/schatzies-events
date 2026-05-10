@@ -135,14 +135,14 @@
         "price",
         "cost"
       ],
-      "answer": "We offer 5 wedding tiers to suit different visions:",
+      "answer": "We offer 5 wedding tiers (prices in ₱):\n- **Blooms**: 50 ₱200,000 | 100 ₱235,000 | 150 ₱277,500 | 200 ₱320,000\n- **Fascinating**: 100 ₱295,000 | 150 ₱342,500 | 200 ₱390,000\n- **Windy**: 100 ₱420,000 | 150 ₱480,000 | 200 ₱540,000\n- **De Luxe**: 100 ₱520,000 | 150 ₱585,000 | 200 ₱650,000\n- **Grandezza**: 100 ₱780,000 | 150 ₱870,000 | 200 ₱960,000\n\nExtra head charges (Wedding): applies only to guests beyond 100 pax.\n- Blooms: ₱850/head\n- Fascinating: ₱950/head\n- Windy: ₱950/head\n- De Luxe: ₱1,300/head\n- Grandezza: ₱1,800/head",
       "extra": {
         "packages": [
-          { "name": "Bloom", "starting_price": 235000 },
-          { "name": "Fascinating", "starting_price": 335000 },
-          { "name": "Windy", "starting_price": 455000 },
-          { "name": "De Luxe", "starting_price": 595000 },
-          { "name": "Grandezza", "starting_price": 755000 }
+          { "name": "Blooms", "starting_price": 200000 },
+          { "name": "Fascinating", "starting_price": 295000 },
+          { "name": "Windy", "starting_price": 420000 },
+          { "name": "De Luxe", "starting_price": 520000 },
+          { "name": "Grandezza", "starting_price": 780000 }
         ]
       }
     },
@@ -166,7 +166,7 @@
         "price",
         "cost"
       ],
-      "answer": "We offer 5 grand debut tiers for a memorable 18th birthday:",
+      "answer": "We offer 5 grand debut tiers for a memorable 18th birthday (prices in ₱):\n- **Charming**: 100 ₱200,000 | 150 ₱242,500 | 200 ₱285,000\n- **Irresistible**: 100 ₱295,000 | 150 ₱342,500 | 200 ₱390,000\n- **Flawless**: 100 ₱395,000 | 150 ₱445,000 | 200 ₱495,000\n- **Elegancia**: 100 ₱495,000 | 150 ₱555,000 | 200 ₱615,000\n- **Grandiosa**: 100 ₱595,000 | 150 ₱670,000 | 200 ₱745,000\n\nExtra head charges (Debut): applies to guests beyond the selected tier baseline.\n- Charming: ₱850/head\n- Irresistible: ₱950/head\n- Flawless: ₱1,000/head\n- Elegancia: ₱1,200/head\n- Grandiosa: ₱1,500/head",
       "extra": {
         "packages": [
           { "name": "Charming", "starting_price": 200000 },

@@ -784,94 +784,295 @@ export function CalendarPage() {
 
             <div className="mt-4 overflow-x-auto">
               <div className="min-w-[600px] lg:min-w-0">
-                <div className="grid grid-cols-7 gap-1 sm:gap-2">
-                  {weekdayLabels.map((weekday) => (
-                    <div
-                      key={weekday}
-                      className="rounded-lg border border-[#ece7f2] bg-[#f9f7fc] py-2 text-center text-[10px] sm:text-xs font-bold uppercase tracking-wide text-[#8f879f]"
-                    >
-                      <span>{weekday}</span>
+                {viewMode === 'monthly' ? (
+                  <>
+                    <div className="grid grid-cols-7 gap-1 sm:gap-2">
+                      {weekdayLabels.map((weekday) => (
+                        <div
+                          key={weekday}
+                          className="rounded-lg border border-[#ece7f2] bg-[#f9f7fc] py-2 text-center text-[10px] sm:text-xs font-bold uppercase tracking-wide text-[#8f879f]"
+                        >
+                          <span>{weekday}</span>
+                        </div>
+                      ))}
                     </div>
-                  ))}
-                </div>
 
-                <div className="mt-2 grid grid-cols-7 gap-1 sm:gap-2">
-                  {visibleDaysToRender.map((date) => {
-                    const dateKey = toDateKey(date);
-                    const dayEntries = entriesByDate[dateKey] ?? [];
-                    const isToday = dateKey === todayKey;
-                    const isSelected = dateKey === selectedDateKey;
-                    const isCurrentMonth =
-                      date.getMonth() === displayMonth.getMonth() &&
-                      date.getFullYear() === displayMonth.getFullYear();
+                    <div className="mt-2 grid grid-cols-7 gap-1 sm:gap-2">
+                      {visibleDaysToRender.map((date) => {
+                        const dateKey = toDateKey(date);
+                        const dayEntries = entriesByDate[dateKey] ?? [];
+                        const isToday = dateKey === todayKey;
+                        const isSelected = dateKey === selectedDateKey;
+                        const isCurrentMonth =
+                          date.getMonth() === displayMonth.getMonth() &&
+                          date.getFullYear() === displayMonth.getFullYear();
 
-                    return (
-                      <button
-                        key={dateKey}
-                        type="button"
-                        onClick={() => handleSelectDate(date)}
-                        className={[
-                          'flex flex-col rounded-xl border p-1.5 sm:p-2 text-left transition-all overflow-hidden relative',
-                          viewMode === 'monthly' ? 'h-20 sm:h-28' : 'h-24 sm:h-36',
-                          isSelected
-                            ? 'border-[#be8de4] bg-[#fbf5ff] shadow-[0_8px_18px_rgba(165,62,191,0.18)]'
-                            : 'border-[#ece7f2] bg-white hover:border-[#d7cbe7] hover:bg-[#fcf9ff]',
-                          viewMode === 'monthly' && !isCurrentMonth ? 'opacity-55' : '',
-                        ].join(' ')}
-                      >
-                        <div className="flex items-center justify-between shrink-0 mb-1">
-                          <span
+                        return (
+                          <button
+                            key={dateKey}
+                            type="button"
+                            onClick={() => handleSelectDate(date)}
                             className={[
-                              'inline-flex h-5 min-w-5 sm:h-6 sm:min-w-6 items-center justify-center rounded-full px-1 sm:px-1.5 text-[10px] sm:text-xs font-black',
-                              isToday
-                                ? 'bg-linear-to-r from-[#f347a5] to-[#8f1fd1] text-white'
-                                : 'text-[#4a445a]',
+                              'flex flex-col rounded-xl border p-1.5 sm:p-2 text-left transition-all overflow-hidden relative',
+                              'h-20 sm:h-28',
+                              isSelected
+                                ? 'border-[#be8de4] bg-[#fbf5ff] shadow-[0_8px_18px_rgba(165,62,191,0.18)]'
+                                : 'border-[#ece7f2] bg-white hover:border-[#d7cbe7] hover:bg-[#fcf9ff]',
+                              !isCurrentMonth ? 'opacity-55' : '',
                             ].join(' ')}
                           >
-                            {String(date.getDate()).padStart(2, '0')}
-                          </span>
-
-                          {dayEntries.length > 0 ? (
-                            <span className="text-[9px] sm:text-[10px] font-bold text-[#8f879f]">
-                              {dayEntries.length}
-                            </span>
-                          ) : null}
-                        </div>
-
-                        <div className="mt-1 w-full flex-1 overflow-hidden">
-                          {/* Mobile Dots */}
-                          <div className="flex flex-wrap gap-0.5 sm:hidden">
-                            {dayEntries.map((entry) => (
+                            <div className="flex items-center justify-between shrink-0 mb-1">
                               <span
-                                key={entry.id}
-                                className={`size-1.5 rounded-full ${getLabelStyle(entry.label).dot}`}
-                              />
-                            ))}
-                          </div>
-
-                          {/* Desktop Chips */}
-                          <div className="hidden sm:block space-y-1">
-                            {dayEntries.slice(0, 3).map((entry) => (
-                              <span
-                                key={entry.id}
-                                className={`block truncate rounded-md border px-1.5 py-1 text-[10px] font-semibold ${getLabelStyle(entry.label).chip}`}
-                                title={`${formatTime12Hour(entry.startTime)} - ${formatTime12Hour(entry.endTime)} ${entry.title}`}
+                                className={[
+                                  'inline-flex h-5 min-w-5 sm:h-6 sm:min-w-6 items-center justify-center rounded-full px-1 sm:px-1.5 text-[10px] sm:text-xs font-black',
+                                  isToday
+                                    ? 'bg-linear-to-r from-[#f347a5] to-[#8f1fd1] text-white'
+                                    : 'text-[#4a445a]',
+                                ].join(' ')}
                               >
-                                {formatTime12Hour(entry.startTime)} -{' '}
-                                {formatTime12Hour(entry.endTime)} {entry.title}
+                                {String(date.getDate()).padStart(2, '0')}
                               </span>
-                            ))}
-                            {dayEntries.length > 3 ? (
-                              <span className="block text-[10px] font-semibold text-[#8f879f]">
-                                +{dayEntries.length - 3} more
-                              </span>
-                            ) : null}
+
+                              {dayEntries.length > 0 ? (
+                                <span className="text-[9px] sm:text-[10px] font-bold text-[#8f879f]">
+                                  {dayEntries.length}
+                                </span>
+                              ) : null}
+                            </div>
+
+                            <div className="mt-1 w-full flex-1 overflow-hidden">
+                              {/* Mobile Dots */}
+                              <div className="flex flex-wrap gap-0.5 sm:hidden">
+                                {dayEntries.map((entry) => (
+                                  <span
+                                    key={entry.id}
+                                    className={`size-1.5 rounded-full ${getLabelStyle(entry.label).dot}`}
+                                  />
+                                ))}
+                              </div>
+
+                              {/* Desktop Chips */}
+                              <div className="hidden sm:block space-y-1">
+                                {dayEntries.slice(0, 3).map((entry) => (
+                                  <span
+                                    key={entry.id}
+                                    className={`block truncate rounded-md border px-1.5 py-1 text-[10px] font-semibold ${getLabelStyle(entry.label).chip}`}
+                                    title={`${formatTime12Hour(entry.startTime)} - ${formatTime12Hour(entry.endTime)} ${entry.title}`}
+                                  >
+                                    {formatTime12Hour(entry.startTime)} -{' '}
+                                    {formatTime12Hour(entry.endTime)} {entry.title}
+                                  </span>
+                                ))}
+                                {dayEntries.length > 3 ? (
+                                  <span className="block text-[10px] font-semibold text-[#8f879f]">
+                                    +{dayEntries.length - 3} more
+                                  </span>
+                                ) : null}
+                              </div>
+                            </div>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </>
+                ) : (
+                  <div className="flex flex-col rounded-xl border border-[#ece7f2] bg-white overflow-hidden mt-2">
+                    {/* Weekly Time Grid Header */}
+                    <div className="grid grid-cols-[50px_repeat(7,1fr)] sm:grid-cols-[60px_repeat(7,1fr)] border-b border-[#ece7f2] bg-[#f9f7fc]">
+                      <div className="border-r border-[#ece7f2]"></div>
+                      {visibleDaysToRender.map((date) => {
+                        const isToday = toDateKey(date) === todayKey;
+                        return (
+                          <div
+                            key={toDateKey(date)}
+                            className="py-2 text-center border-r border-[#ece7f2] last:border-r-0"
+                          >
+                            <p
+                              className={`text-[10px] font-bold uppercase ${
+                                isToday ? 'text-[#f347a5]' : 'text-[#8f879f]'
+                              }`}
+                            >
+                              {weekdayLabels[date.getDay()]}
+                            </p>
+                            <p
+                              className={`text-lg sm:text-xl font-black ${
+                                isToday ? 'text-[#f347a5]' : 'text-[#302c39]'
+                              }`}
+                            >
+                              {date.getDate()}
+                            </p>
                           </div>
+                        );
+                      })}
+                    </div>
+
+                    {/* Weekly Time Grid Body */}
+                    <div className="overflow-y-auto max-h-[60vh] [scrollbar-width:thin] scrollbar-thumb-[#ddd8e8] scrollbar-track-transparent">
+                      <div className="relative grid grid-cols-[50px_repeat(7,1fr)] sm:grid-cols-[60px_repeat(7,1fr)]">
+                        {/* Time Axis */}
+                        <div className="flex flex-col border-r border-[#ece7f2] bg-white">
+                          {Array.from({ length: 24 }).map((_, i) => (
+                            <div
+                              key={i}
+                              className="h-14 border-b border-[#ece7f2] text-right pr-2 pt-1 text-[9px] sm:text-[10px] text-[#a49cb3] font-semibold"
+                            >
+                              {i === 0
+                                ? '12 AM'
+                                : i < 12
+                                  ? `${i} AM`
+                                  : i === 12
+                                    ? '12 PM'
+                                    : `${i - 12} PM`}
+                            </div>
+                          ))}
                         </div>
-                      </button>
-                    );
-                  })}
-                </div>
+
+                        {/* Day Columns */}
+                        {visibleDaysToRender.map((date) => {
+                          const dateKey = toDateKey(date);
+                          const dayEntries = entriesByDate[dateKey] ?? [];
+
+                          const parseTimeToMinutes = (timeStr: string) => {
+                            if (!timeStr) return 0;
+                            const [h, m] = timeStr.split(':').map(Number);
+                            return h * 60 + (m || 0);
+                          };
+
+                          const parsedEvents = dayEntries
+                            .map((entry) => {
+                              const startMins = parseTimeToMinutes(entry.startTime);
+                              let endMins = parseTimeToMinutes(entry.endTime);
+                              if (endMins <= startMins) endMins = startMins + 30;
+                              return { entry, startMins, endMins };
+                            })
+                            .sort((a, b) => {
+                              if (a.startMins !== b.startMins) return a.startMins - b.startMins;
+                              return b.endMins - a.endMins;
+                            });
+
+                          const clusters: (typeof parsedEvents)[] = [];
+                          let currentCluster: typeof parsedEvents = [];
+                          let clusterEnd = 0;
+
+                          parsedEvents.forEach((evt) => {
+                            if (currentCluster.length === 0) {
+                              currentCluster.push(evt);
+                              clusterEnd = evt.endMins;
+                            } else if (evt.startMins < clusterEnd) {
+                              currentCluster.push(evt);
+                              clusterEnd = Math.max(clusterEnd, evt.endMins);
+                            } else {
+                              clusters.push(currentCluster);
+                              currentCluster = [evt];
+                              clusterEnd = evt.endMins;
+                            }
+                          });
+
+                          if (currentCluster.length > 0) clusters.push(currentCluster);
+
+                          const layoutedEvents: {
+                            entry: CalendarEntry;
+                            top: number;
+                            height: number;
+                            left: string;
+                            width: string;
+                          }[] = [];
+                          const pixelsPerMinute = 56 / 60;
+
+                          clusters.forEach((cluster) => {
+                            const cols: (typeof parsedEvents)[] = [];
+                            cluster.forEach((evt) => {
+                              let placed = false;
+                              for (let i = 0; i < cols.length; i += 1) {
+                                if (cols[i][cols[i].length - 1].endMins <= evt.startMins) {
+                                  cols[i].push(evt);
+                                  (evt as { colIdx?: number }).colIdx = i;
+                                  placed = true;
+                                  break;
+                                }
+                              }
+                              if (!placed) {
+                                cols.push([evt]);
+                                (evt as { colIdx?: number }).colIdx = cols.length - 1;
+                              }
+                            });
+
+                            const numCols = cols.length;
+                            cluster.forEach((evt) => {
+                              const top = evt.startMins * pixelsPerMinute;
+                              const height = Math.max(
+                                (evt.endMins - evt.startMins) * pixelsPerMinute,
+                                24
+                              );
+                              const widthPct = 100 / numCols;
+                              const leftPct = (evt as { colIdx?: number }).colIdx ?? 0;
+
+                              layoutedEvents.push({
+                                entry: evt.entry,
+                                top,
+                                height,
+                                left: `calc(${leftPct * widthPct}% + 2px)`,
+                                width: `calc(${widthPct}% - 4px)`,
+                              });
+                            });
+                          });
+
+                          return (
+                            <div
+                              key={dateKey}
+                              className="relative border-r border-[#ece7f2] last:border-r-0 min-h-[1344px]"
+                            >
+                              {/* Horizontal Grid Lines */}
+                              {Array.from({ length: 24 }).map((_, i) => (
+                                <div
+                                  key={i}
+                                  className="absolute w-full h-14 border-b border-[#ece7f2] opacity-40 pointer-events-none"
+                                  style={{ top: `${i * 56}px` }}
+                                />
+                              ))}
+
+                              {/* Events positioned absolutely with overlap logic */}
+                              {layoutedEvents.map(({ entry, top, height, left, width }) => (
+                                <div
+                                  key={entry.id}
+                                  onClick={() => {
+                                    setOpenMenuId(null);
+                                    setEditingId(entry.id);
+                                    setIsForcingAdd(true);
+                                    setDraftEntry({
+                                      title: entry.title,
+                                      startDateKey: entry.startDateKey,
+                                      startTime: entry.startTime,
+                                      endDateKey: entry.endDateKey,
+                                      endTime: entry.endTime,
+                                      label: entry.label,
+                                      location: entry.location,
+                                      description: entry.description,
+                                      eventType: entry.eventType,
+                                      eventId: entry.eventId || '',
+                                    });
+                                  }}
+                                  className={`absolute rounded-md p-1 sm:p-1.5 border overflow-hidden cursor-pointer shadow-sm hover:brightness-95 transition-all z-10 ${getLabelStyle(entry.label).chip}`}
+                                  style={{ top: `${top}px`, height: `${height}px`, left, width }}
+                                >
+                                  <p className="text-[9px] sm:text-[10px] font-bold leading-tight truncate">
+                                    {entry.title}
+                                  </p>
+                                  {height >= 40 && (
+                                    <p className="text-[8px] sm:text-[9px] opacity-80 leading-tight truncate mt-0.5">
+                                      {formatTime12Hour(entry.startTime)} -{' '}
+                                      {formatTime12Hour(entry.endTime)}
+                                    </p>
+                                  )}
+                                </div>
+                              ))}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
 

@@ -15,6 +15,8 @@ import {
 import { getCalendarEntries } from '@/api/calendar';
 import { useAuth } from '@/hooks/useAuth';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
+
+// ── Illustration placeholders (img tags) ─────────────────────────────────────
 function PackageIllustration() {
   return (
     <img
@@ -87,7 +89,16 @@ export function EventPlanViewingPage() {
               )
             : events;
 
-        const userEventBase = userEvents.length > 0 ? userEvents[0] : null;
+        // Sort events: Newest first, and prioritize events that aren't "Meetings"
+        const sortedEvents = userEvents.sort((a, b) => {
+          const aIsMeeting = a.title.toLowerCase().includes('meeting');
+          const bIsMeeting = b.title.toLowerCase().includes('meeting');
+          if (aIsMeeting && !bIsMeeting) return 1;
+          if (!aIsMeeting && bIsMeeting) return -1;
+          return new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime();
+        });
+
+        const userEventBase = sortedEvents.length > 0 ? sortedEvents[0] : null;
 
         if (userEventBase) {
           const fullEvent = await getEventById(userEventBase.id);
@@ -98,7 +109,7 @@ export function EventPlanViewingPage() {
             userEventBase.organizerId ||
             (userEventBase as any).organizer_id;
 
-          let organizerName = 'Assigned Organizer';
+          let organizerName = userEventBase.organizerName || 'Assigned Organizer';
           let organizerEmail = 'contact@schatzies.com';
           let organizerContact = '-';
 
@@ -106,9 +117,15 @@ export function EventPlanViewingPage() {
             try {
               const org = await getEventUser(orgId);
               organizerName =
-                `${org.firstName || ''} ${org.lastName || ''}`.trim() || 'Assigned Organizer';
-              organizerEmail = org.email || 'contact@schatzies.com';
-              organizerContact = org.contact_number || org.contactPhone || org.contactNumber || '-';
+                `${org.firstName || org.user?.firstName || ''} ${org.lastName || org.user?.lastName || ''}`.trim() ||
+                organizerName;
+              organizerEmail = org.email || org.user?.email || 'contact@schatzies.com';
+              organizerContact =
+                org.contact_number ||
+                org.user?.contact_number ||
+                org.contactPhone ||
+                org.contactNumber ||
+                '-';
             } catch (e) {
               console.error('Error fetching organizer:', e);
             }
@@ -124,19 +141,29 @@ export function EventPlanViewingPage() {
               })
             : 'TBD';
 
-          const pkgName =
+          const rawPkgName =
             fullEvent.eventPackageKey ||
             userEventBase.package ||
             fullEvent.package?.name ||
             fullEvent.eventPackage ||
             'Custom Package';
 
+          const currentEventType = fullEvent.eventType || userEventBase.type || 'Event';
+
+          // If package is "Others", use eventType as the display name
+          const displayPkgName = rawPkgName === 'Others' ? currentEventType : rawPkgName;
+
           const paxCount =
             fullEvent.eventPax ||
             (userEventBase as any).pax ||
             (fullEvent as any).package?.pax ||
             0;
-          const costValue = (fullEvent as any).cost || 'TBD';
+
+          // Cost logic: Use packageInitialAmount for custom events ("Others")
+          let costValue = (fullEvent as any).cost || 'TBD';
+          if (rawPkgName === 'Others' && (fullEvent as any).packageInitialAmount) {
+            costValue = `₱${Number((fullEvent as any).packageInitialAmount).toLocaleString()}`;
+          }
 
           // Fetch additional data modules
           try {
@@ -151,6 +178,13 @@ export function EventPlanViewingPage() {
 
               const formatDisplayTime = (val: any) => {
                 if (!val) return '00:00';
+                if (typeof val === 'string' && val.includes(':')) {
+                  const [h, m] = val.split(':');
+                  let hours = parseInt(h, 10);
+                  const ampm = hours >= 12 ? 'PM' : 'AM';
+                  hours = hours % 12 || 12;
+                  return `${hours}:${m} ${ampm}`;
+                }
                 return val;
               };
 
@@ -179,6 +213,18 @@ export function EventPlanViewingPage() {
           }
 
           if (isMounted) {
+            const formatTime12Hour = (val: any) => {
+              if (!val) return '';
+              if (typeof val === 'string' && val.includes(':')) {
+                const [h, m] = val.split(':');
+                let hours = parseInt(h, 10);
+                const ampm = hours >= 12 ? 'PM' : 'AM';
+                hours = hours % 12 || 12;
+                return `${hours}:${m} ${ampm}`;
+              }
+              return val;
+            };
+
             setEventData({
               title: fullEvent.title || userEventBase.title || 'Your Event',
               date: formattedDate,
@@ -186,10 +232,16 @@ export function EventPlanViewingPage() {
               organizer: organizerName,
               email: organizerEmail,
               contact: organizerContact,
-              packageName: pkgName,
+              packageName: displayPkgName,
               pax: paxCount,
-              eventType: fullEvent.eventType || userEventBase.type || 'Event',
+              eventType: currentEventType,
               cost: costValue,
+              startTime: formatTime12Hour(
+                fullEvent.startTime || (fullEvent as any).eventTime || ''
+              ),
+              endTime: formatTime12Hour(
+                fullEvent.endTime || (fullEvent as any).eventTimeEnd || ''
+              ),
             });
           }
         }
@@ -250,26 +302,19 @@ export function EventPlanViewingPage() {
                 <Calendar className="size-3.5" />
                 {EVENT.date}
               </span>
-              <span className="flex items-center gap-1.5">
-                <Clock className="size-3.5" />
-                Start Date – End Date
-              </span>
+              {(EVENT.startTime || EVENT.endTime) && (
+                <span className="flex items-center gap-1.5">
+                  <Clock className="size-3.5" />
+                  {EVENT.startTime}
+                  {EVENT.startTime && EVENT.endTime && ' – '}
+                  {EVENT.endTime}
+                </span>
+              )}
             </div>
           </div>
 
           {/* Right: progress + organizer */}
-          <div className="flex flex-col items-start gap-2 w-full sm:w-[60%]">
-            <div className="flex items-center gap-2 w-full">
-              <span className="text-sm font-semibold whitespace-nowrap">
-                {EVENT.completion}% complete
-              </span>
-              <div className="h-6 flex-1 overflow-hidden rounded-full bg-white/30">
-                <div
-                  className="h-full rounded-full bg-white transition-all"
-                  style={{ width: `${EVENT.completion}%` }}
-                />
-              </div>
-            </div>
+          <div className="flex flex-col items-end gap-2 w-full sm:w-[60%]">
             <div className="text-xs text-white/80 leading-relaxed self-end text-right">
               <p>Organizer Name: {EVENT.organizer}</p>
               <p>
