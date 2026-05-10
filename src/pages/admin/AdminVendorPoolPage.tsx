@@ -65,7 +65,7 @@ import { getEvents } from '@/api/events';
 
 type VendorDialogMode = 'create' | 'edit';
 type ViewMode = 'cards' | 'table';
-type SortField = 'name' | 'serviceType' | 'status' | 'email' | 'phone' | 'event';
+type SortField = 'name' | 'serviceType' | 'status' | 'email' | 'phone' | 'price';
 
 interface EventOption {
   id: string;
@@ -211,8 +211,8 @@ export function AdminVendorPoolPage() {
         case 'phone':
           cmp = (a.contactPhone || '').localeCompare(b.contactPhone || '');
           break;
-        case 'event':
-          cmp = getEventName(a).localeCompare(getEventName(b));
+        case 'price':
+          cmp = (a.price ?? 0) - (b.price ?? 0);
           break;
       }
 
@@ -634,11 +634,11 @@ export function AdminVendorPoolPage() {
                     </TableHead>
                     <TableHead
                       className="h-11 cursor-pointer text-xs font-black uppercase tracking-[0.06em] text-[#7c7390] transition-colors hover:text-[#8f1fd1]"
-                      onClick={() => toggleSort('event')}
+                      onClick={() => toggleSort('price')}
                     >
                       <div className="flex items-center">
-                        Event
-                        <SortIcon field="event" />
+                        Price
+                        <SortIcon field="price" />
                       </div>
                     </TableHead>
                     <TableHead
@@ -698,7 +698,11 @@ export function AdminVendorPoolPage() {
                         <TableCell className="text-sm text-[#4e4560]">
                           {vendor.serviceType || '-'}
                         </TableCell>
-                        <TableCell className="text-sm text-[#4e4560]">{eventName}</TableCell>
+                        <TableCell className="text-sm font-semibold text-[#4e4560]">
+                          {vendor.price != null
+                            ? `₱${Number(vendor.price).toLocaleString('en-PH')}`
+                            : '—'}
+                        </TableCell>
                         <TableCell className="text-sm text-[#635a73]">
                           {vendor.contactEmail || '-'}
                         </TableCell>
