@@ -178,6 +178,13 @@ export function EventPlanViewingPage() {
 
               const formatDisplayTime = (val: any) => {
                 if (!val) return '00:00';
+                if (typeof val === 'string' && val.includes(':')) {
+                  const [h, m] = val.split(':');
+                  let hours = parseInt(h, 10);
+                  const ampm = hours >= 12 ? 'PM' : 'AM';
+                  hours = hours % 12 || 12;
+                  return `${hours}:${m} ${ampm}`;
+                }
                 return val;
               };
 
