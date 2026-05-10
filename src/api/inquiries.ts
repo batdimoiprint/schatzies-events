@@ -27,6 +27,7 @@ export interface Inquiry {
   packageInitialAmount?: number;
   downpaymentAmount?: number;
   currency?: string;
+  venue?: string;
 }
 
 export interface ScheduleInquiryMeetingPayload {
