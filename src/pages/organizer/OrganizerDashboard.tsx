@@ -20,7 +20,6 @@ type StatusSlice = {
   color: string;
 };
 
-
 type ListEntry = {
   rank: number;
   title: string;

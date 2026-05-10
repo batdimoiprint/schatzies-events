@@ -106,6 +106,7 @@ export function InquiryForm({ onClose, selectedPackageId, selectedEventType }: I
     const fetchBooked = async () => {
       try {
         const dates = await getBookedDates();
+        console.log('Fetched booked dates:', dates);
         setBookedDates(dates);
       } catch (err) {
         console.error('Failed to fetch booked dates:', err);
@@ -804,14 +805,6 @@ export function InquiryForm({ onClose, selectedPackageId, selectedEventType }: I
                             </div>
                           </Field>
 
-                          {/* Verification status — simple badge below input */}
-                          {emailVerified && (
-                            <div className="flex items-center gap-1 px-2 py-1 rounded bg-emerald-50 border border-emerald-100 mt-1">
-                              <span className="text-[0.65rem] font-bold text-emerald-600">
-                                Email verified ✅ You can now submit the form.
-                              </span>
-                            </div>
-                          )}
                           {verificationSent && !emailVerified && (
                             <div className="flex items-center gap-1 px-2 py-1 rounded bg-amber-50 border border-amber-100 mt-1">
                               <span className="text-[0.65rem] font-medium text-amber-600 animate-pulse">
@@ -909,11 +902,23 @@ export function InquiryForm({ onClose, selectedPackageId, selectedEventType }: I
                                       if (date < getMinDate()) return true;
 
                                       // 2. Must not be in bookedDates
-                                      const dateStr = date.toISOString().split('T')[0];
+                                      const dateStr = format(date, 'yyyy-MM-dd');
                                       return (
                                         Array.isArray(bookedDates) &&
-                                        bookedDates.some((d) => d.split('T')[0] === dateStr)
+                                        bookedDates.some((d) => d.startsWith(dateStr))
                                       );
+                                    }}
+                                    modifiers={{
+                                      booked: (date: Date) => {
+                                        const dateStr = format(date, 'yyyy-MM-dd');
+                                        return (
+                                          Array.isArray(bookedDates) &&
+                                          bookedDates.some((d) => d.startsWith(dateStr))
+                                        );
+                                      },
+                                    }}
+                                    modifiersClassNames={{
+                                      booked: 'rdp-booked-date',
                                     }}
                                     initialFocus
                                   />
@@ -967,7 +972,10 @@ export function InquiryForm({ onClose, selectedPackageId, selectedEventType }: I
                               control={control}
                               name="eventPackage"
                               rules={{
-                                required: watchedEventType !== 'Others' ? 'Event package is required' : false,
+                                required:
+                                  watchedEventType !== 'Others'
+                                    ? 'Event package is required'
+                                    : false,
                               }}
                               render={({ field }) => (
                                 <Select
@@ -981,8 +989,8 @@ export function InquiryForm({ onClose, selectedPackageId, selectedEventType }: I
                                         !watchedEventType
                                           ? 'Select Event Type First'
                                           : watchedEventType === 'Others'
-                                          ? 'Not needed for custom events'
-                                          : 'Event Package'
+                                            ? 'Not needed for custom events'
+                                            : 'Event Package'
                                       }
                                     />
                                   </SelectTrigger>
@@ -1003,7 +1011,8 @@ export function InquiryForm({ onClose, selectedPackageId, selectedEventType }: I
                             control={control}
                             name="eventPax"
                             rules={{
-                              required: watchedEventType !== 'Others' ? 'Number of pax is required' : false,
+                              required:
+                                watchedEventType !== 'Others' ? 'Number of pax is required' : false,
                             }}
                             render={({ field }) => (
                               <Select
@@ -1017,8 +1026,8 @@ export function InquiryForm({ onClose, selectedPackageId, selectedEventType }: I
                                       !watchedEventPackage
                                         ? 'Select Event Package First'
                                         : watchedEventType === 'Others'
-                                        ? 'Not needed for custom events'
-                                        : 'Event Pax'
+                                          ? 'Not needed for custom events'
+                                          : 'Event Pax'
                                     }
                                   />
                                 </SelectTrigger>

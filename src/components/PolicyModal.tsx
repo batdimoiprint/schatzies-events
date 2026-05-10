@@ -15,9 +15,7 @@ export function PolicyModal({ isOpen, onClose, title, children }: PolicyModalPro
           <DialogTitle className="text-2xl font-bold text-[#1a1225]">{title}</DialogTitle>
         </DialogHeader>
         <div className="max-h-[calc(80vh-120px)] overflow-y-auto pr-4">
-          <div className="space-y-4 text-sm text-[#3d2052]">
-            {children}
-          </div>
+          <div className="space-y-4 text-sm text-[#3d2052]">{children}</div>
         </div>
       </DialogContent>
     </Dialog>

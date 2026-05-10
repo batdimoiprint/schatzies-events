@@ -582,3 +582,46 @@ body {
   opacity: 1;
   transform: translateY(0);
 }
+
+/* ── Booked date highlighting on calendar ── */
+.rdp-booked-date {
+  position: relative !important;
+  overflow: visible !important;
+}
+
+/* Booked: No background, just red text + strikethrough */
+.rdp-booked-date button,
+button[data-booked="true"] {
+  background-color: transparent !important;
+  color: #b91c1c !important; /* Dark Red */
+  opacity: 0.6 !important;
+  font-weight: 600 !important;
+  text-decoration: line-through !important;
+  cursor: not-allowed !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+/* "Booked" text indicator below the date */
+.rdp-booked-date::after {
+  content: 'BOOKED';
+  position: absolute;
+  bottom: -4px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 6px;
+  font-weight: 900;
+  color: #b91c1c;
+  letter-spacing: 0.05em;
+  z-index: 20;
+  pointer-events: none;
+}
+
+/* Standard disabled dates (e.g., less than 1 month in advance) */
+.rdp-day_disabled:not([data-booked="true"]) button,
+.rdp-day_disabled:not([data-booked="true"]) {
+  background-color: transparent !important;
+  color: #d1d5db !important;
+  opacity: 0.5 !important;
+  cursor: not-allowed !important;
+}

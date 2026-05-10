@@ -1,7 +1,7 @@
 import { Cookie, Eye, Settings, Zap, BarChart3, Info, AlertCircle, Clock } from 'lucide-react';
 
 export function CookiePolicyContent() {
-  const iconClass = "h-5 w-5 text-[#FF0066]";
+  const iconClass = 'h-5 w-5 text-[#FF0066]';
 
   return (
     <div className="space-y-4">
@@ -10,7 +10,10 @@ export function CookiePolicyContent() {
         <div>
           <h3 className="font-semibold text-[#3d2052] mb-2">What Are Cookies</h3>
           <p className="text-sm">
-            Cookies are small text files that are placed on your computer or mobile device when you visit our website. They allow us to remember your preferences and improve your browsing experience. Cookies also help us understand how our website is used so we can make improvements.
+            Cookies are small text files that are placed on your computer or mobile device when you
+            visit our website. They allow us to remember your preferences and improve your browsing
+            experience. Cookies also help us understand how our website is used so we can make
+            improvements.
           </p>
         </div>
       </section>
@@ -21,10 +24,22 @@ export function CookiePolicyContent() {
           <h3 className="font-semibold text-[#3d2052] mb-2">How We Use Cookies</h3>
           <p className="text-sm mb-2">We use cookies for several purposes:</p>
           <ul className="list-disc list-inside text-sm space-y-1">
-            <li><strong>Essential Cookies:</strong> Required for the website to function properly, including user authentication and security</li>
-            <li><strong>Analytics Cookies:</strong> Help us understand how visitors interact with our website by collecting anonymous information</li>
-            <li><strong>Functional Cookies:</strong> Remember your preferences and settings to enhance your experience</li>
-            <li><strong>Marketing Cookies:</strong> Used to deliver relevant advertisements and track campaign effectiveness</li>
+            <li>
+              <strong>Essential Cookies:</strong> Required for the website to function properly,
+              including user authentication and security
+            </li>
+            <li>
+              <strong>Analytics Cookies:</strong> Help us understand how visitors interact with our
+              website by collecting anonymous information
+            </li>
+            <li>
+              <strong>Functional Cookies:</strong> Remember your preferences and settings to enhance
+              your experience
+            </li>
+            <li>
+              <strong>Marketing Cookies:</strong> Used to deliver relevant advertisements and track
+              campaign effectiveness
+            </li>
           </ul>
         </div>
       </section>
@@ -40,7 +55,8 @@ export function CookiePolicyContent() {
                 Session Cookies
               </h4>
               <p className="text-sm">
-                Temporary cookies that expire when you close your browser. They help us maintain your session while you navigate our website.
+                Temporary cookies that expire when you close your browser. They help us maintain
+                your session while you navigate our website.
               </p>
             </div>
             <div>
@@ -49,7 +65,8 @@ export function CookiePolicyContent() {
                 Persistent Cookies
               </h4>
               <p className="text-sm">
-                Cookies that remain on your device for a set period or until you delete them. They help us remember your preferences for future visits.
+                Cookies that remain on your device for a set period or until you delete them. They
+                help us remember your preferences for future visits.
               </p>
             </div>
             <div>
@@ -58,7 +75,8 @@ export function CookiePolicyContent() {
                 Third-Party Cookies
               </h4>
               <p className="text-sm">
-                Cookies set by third-party services we use, such as analytics providers or social media platforms.
+                Cookies set by third-party services we use, such as analytics providers or social
+                media platforms.
               </p>
             </div>
           </div>
@@ -83,7 +101,9 @@ export function CookiePolicyContent() {
         <AlertCircle className={`${iconClass} flex-shrink-0 mt-0.5`} />
         <div>
           <h3 className="font-semibold text-[#3d2052] mb-2">Third-Party Services</h3>
-          <p className="text-sm mb-2">We may use third-party services that have their own cookie policies. These include:</p>
+          <p className="text-sm mb-2">
+            We may use third-party services that have their own cookie policies. These include:
+          </p>
           <ul className="list-disc list-inside text-sm space-y-1">
             <li>Google Analytics for website analytics</li>
             <li>Social media platforms for sharing functionality</li>
@@ -100,7 +120,9 @@ export function CookiePolicyContent() {
         <div>
           <h3 className="font-semibold text-[#3d2052] mb-2">Updates to This Policy</h3>
           <p className="text-sm">
-            We may update this Cookie Policy from time to time to reflect changes in our practices or for other operational, legal, or regulatory reasons. We will notify you of any material changes by posting the updated policy on this page.
+            We may update this Cookie Policy from time to time to reflect changes in our practices
+            or for other operational, legal, or regulatory reasons. We will notify you of any
+            material changes by posting the updated policy on this page.
           </p>
         </div>
       </section>
@@ -110,7 +132,8 @@ export function CookiePolicyContent() {
         <div>
           <h3 className="font-semibold text-[#3d2052] mb-2">Contact Us</h3>
           <p className="text-sm">
-            If you have any questions about our use of cookies, please contact us at schatziesevents@gmail.com or through our Contact page.
+            If you have any questions about our use of cookies, please contact us at
+            schatziesevents@gmail.com or through our Contact page.
           </p>
           <p className="text-xs text-gray-500 mt-2">
             Last updated: {new Date().toLocaleDateString()}
