@@ -63,6 +63,8 @@ type ProjectSlot = {
   startDate?: string;
   endDate?: string;
   rawStartDate?: string;
+  rawEndDate?: string;
+  eventTime?: string;
   eventType?: string;
   eventPackage?: string;
   eventPax?: number;
@@ -218,6 +220,16 @@ const parseTimeParts = (value: string, fallbackHour: number) => {
   };
 };
 
+const formatTo12Hour = (time24?: string) => {
+  if (!time24) return '';
+  const [h, m] = time24.split(':');
+  let hours = parseInt(h, 10);
+  if (isNaN(hours)) return time24;
+  const ampm = hours >= 12 ? 'PM' : 'AM';
+  hours = hours % 12 || 12;
+  return `${hours}:${m || '00'} ${ampm}`;
+};
+
 const mapLaneToBackendStatus = (lane: TaskLane): string => {
   if (lane === 'in-progress') return 'IN_PROGRESS';
   if (lane === 'completed') return 'COMPLETED';
@@ -262,9 +274,11 @@ function mapBackendFlowToUI(item: any, index: number) {
 function FlowNotesBoard({
   selectedEventId,
   eventDate,
+  eventTime,
 }: {
   selectedEventId: string;
   eventDate: string;
+  eventTime?: string;
 }) {
   const timelineStartHour = 5;
   const timelineEndHour = 11;
@@ -642,10 +656,23 @@ function FlowNotesBoard({
           <article className="overflow-hidden rounded-2xl border border-[#e2dee9] bg-white shadow-[0_8px_18px_rgba(31,18,54,0.05)]">
             <div className="flex flex-wrap items-start justify-between gap-3 border-b border-[#eee9f2] bg-[#fcfbfe] px-5 py-4">
               <div>
-                <h4 className="text-[16px] font-black leading-tight text-[#2f2b39]">
-                  JANUARY 3, 2025
+                <h4 className="text-[16px] font-black leading-tight text-[#2f2b39] uppercase">
+                  {eventDate
+                    ? new Date(eventDate).toLocaleDateString('en-US', {
+                        month: 'long',
+                        day: 'numeric',
+                        year: 'numeric',
+                      })
+                    : 'No Date Set'}
                 </h4>
-                <p className="text-[11px] font-semibold text-[#6d6679]">Event Flow</p>
+                <div className="flex items-center gap-2 mt-0.5">
+                  <p className="text-[11px] font-semibold text-[#6d6679]">Event Flow</p>
+                  {eventTime && (
+                    <span className="rounded bg-[#f3eefb] px-2 py-0.5 text-[10px] font-bold text-[#7c1cc9]">
+                      Assigned Time: {formatTo12Hour(eventTime)}
+                    </span>
+                  )}
+                </div>
               </div>
 
               <label className="inline-flex items-center gap-2 rounded-full border border-[#e4ddea] bg-white px-3 py-1.5 text-[10px] font-semibold text-[#7a728d] shadow-[0_2px_5px_rgba(31,18,54,0.04)]">
@@ -1076,6 +1103,8 @@ export function EventPlannerPage() {
             startDate: formatDateReadable(e.startDate || e.eventDate) || 'No Date Set',
             endDate: formatDateReadable(e.endDate) || 'TBD',
             rawStartDate: e.startDate || e.eventDate || '',
+            rawEndDate: e.endDate || '',
+            eventTime: e.eventTime || e.startTime || '',
             eventType: e.eventType,
             eventPackage: e.eventPackage,
             eventPax: e.eventPax || 0,
@@ -2046,11 +2075,36 @@ export function EventPlannerPage() {
                   Event Planner
                 </p>
                 <h2 className="text-lg font-black">{selectedProject.title || 'Pending Project'}</h2>
-                <p className="text-[11px] text-white/80">
-                  {selectedProject.startDate || 'No Date Set'}{' '}
-                  {selectedProject.endDate && selectedProject.endDate !== 'TBD'
-                    ? `• ${selectedProject.endDate}`
-                    : ''}
+                <p className="text-[11px] text-white/80 flex items-center gap-1.5 flex-wrap">
+                  <span>
+                    {selectedProject.startDate || 'No Date Set'}
+                    {selectedProject.endDate &&
+                    selectedProject.endDate !== 'TBD' &&
+                    selectedProject.endDate !== selectedProject.startDate
+                      ? ` - ${selectedProject.endDate}`
+                      : ''}
+                  </span>
+
+                  {(selectedProject.eventTime ||
+                    (selectedProject.rawStartDate &&
+                      selectedProject.rawStartDate.includes('T'))) && (
+                    <>
+                      <span className="opacity-50">•</span>
+                      <span className="font-medium text-white">
+                        {selectedProject.eventTime
+                          ? formatTo12Hour(selectedProject.eventTime)
+                          : formatTo12Hour(
+                              selectedProject.rawStartDate?.split('T')[1]?.substring(0, 5)
+                            )}
+
+                        {selectedProject.rawEndDate &&
+                          selectedProject.rawEndDate.includes('T') &&
+                          ` - ${formatTo12Hour(
+                            selectedProject.rawEndDate.split('T')[1]?.substring(0, 5)
+                          )}`}
+                      </span>
+                    </>
+                  )}
                 </p>
               </div>
               <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 text-[10px] font-semibold text-white/90">
@@ -2828,6 +2882,12 @@ export function EventPlannerPage() {
               <FlowNotesBoard
                 selectedEventId={selectedEventId}
                 eventDate={selectedProject.rawStartDate || ''}
+                eventTime={
+                  selectedProject.eventTime ||
+                  (selectedProject.rawStartDate?.includes('T')
+                    ? selectedProject.rawStartDate.split('T')[1].substring(0, 5)
+                    : undefined)
+                }
               />
             ) : (
               <section className="rounded-2xl border border-[#ddd8e8] bg-white px-4 py-10 text-center">
