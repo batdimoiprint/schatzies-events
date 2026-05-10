@@ -256,7 +256,7 @@ export function EventManagerPage() {
         : '';
 
   return (
-    <div className="relative w-full max-w-full min-h-screen flex flex-col gap-4 overflow-x-hidden bg-[#fbf8fd] font-sans p-2 sm:p-4 lg:p-6 pb-10">
+    <div className="relative w-full max-w-full h-[calc(100vh-100px)] flex flex-col gap-4 overflow-hidden bg-[#fbf8fd] font-sans p-2 sm:p-4 lg:p-6">
       {errorMessage ? (
         <Card className="border-0 bg-[#fff1f2] py-3 ring-1 ring-[#fecdd3]">
           <CardContent>
@@ -275,7 +275,7 @@ export function EventManagerPage() {
         </Card>
       )}
 
-      <div className="flex-1 flex flex-col rounded-xl border border-[#eef0f4] bg-white p-3 sm:p-6 shadow-sm overflow-hidden min-h-[calc(100vh-150px)]">
+      <div className="flex-1 flex flex-col min-h-0 rounded-xl border border-[#eef0f4] bg-white p-3 sm:p-6 shadow-sm overflow-hidden">
         <div className="mb-4 flex flex-col sm:flex-row sm:items-center justify-between border-b border-[#f1eef5] pb-3 gap-3">
           <div className="flex items-center gap-3">
             <h2 className="text-lg sm:text-xl font-black text-[#302a3a]">Events</h2>
@@ -316,7 +316,7 @@ export function EventManagerPage() {
           </div>
         </div>
 
-        <div className="flex-1 overflow-x-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden rounded-lg">
+        <div className="flex-1 overflow-auto rounded-lg scrollbar-thin scrollbar-thumb-[#eef0f4] scrollbar-track-transparent">
           <Table className="w-full text-[11px] sm:text-xs relative">
             <TableHeader>
               <TableRow className="border-b-2 border-[#f1eef5] hover:bg-transparent">

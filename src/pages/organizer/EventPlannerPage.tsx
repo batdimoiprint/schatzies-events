@@ -217,16 +217,11 @@ const parseTimeParts = (value: string, fallbackHour: number) => {
   };
 };
 
-const mapBackendStatusToLane = (status: string): TaskLane => {
-  if (status === 'IN_PROGRESS') return 'in-progress';
-  if (status === 'COMPLETED') return 'completed';
-  return 'todo';
-};
-
 const mapLaneToBackendStatus = (lane: TaskLane): string => {
-  if (lane === 'in-progress') return 'IN_PROGRESS';
-  if (lane === 'completed') return 'COMPLETED';
-  return 'TODO';
+  // Use the exact strings the backend expects when saving
+  if (lane === 'in-progress') return 'In Progress';
+  if (lane === 'completed') return 'Completed';
+  return 'Todo';
 };
 
 const flowBlockTones = [
@@ -1221,25 +1216,62 @@ export function EventPlannerPage() {
 
       try {
         const response = await getBoardTasks(selectedEventId);
-
         if (!isMounted) return;
 
-        const backendTasks: Record<string, any[]> = response?.tasks || {};
+        // The actual backend structure is { message: string, tasks: { "Todo": [], "In Progress": [], "Completed": [] } }
+        const taskGroups = response?.tasks || {};
         const formattedTasks: PlannerBoardTask[] = [];
 
-        ['TODO', 'IN_PROGRESS', 'COMPLETED'].forEach((status) => {
-          const group = backendTasks[status] || [];
-          group.forEach((task: any) => {
+        // Safely extract from the grouped object
+        if (typeof taskGroups === 'object' && !Array.isArray(taskGroups)) {
+          Object.entries(taskGroups).forEach(([groupName, tasksInGroup]) => {
+            if (Array.isArray(tasksInGroup)) {
+              tasksInGroup.forEach((task: any) => {
+                const taskId = String(task.id || task._id || `task-${Date.now()}-${Math.random()}`);
+
+                // Determine lane based on the group key or the task's own status string
+                const rawStatus = String(task.status || groupName)
+                  .trim()
+                  .toLowerCase()
+                  .replace(/[^a-z0-9]/g, '');
+
+                let lane: TaskLane = 'todo';
+                if (rawStatus.includes('progress')) lane = 'in-progress';
+                else if (rawStatus.includes('complete')) lane = 'completed';
+
+                formattedTasks.push({
+                  id: taskId,
+                  title: task.title || 'Untitled',
+                  details: task.description || '',
+                  editorType: 'Text',
+                  lane: lane,
+                  checklist: task.checklist || [],
+                });
+              });
+            }
+          });
+        } else if (Array.isArray(response)) {
+          // Fallback if the backend ever returns a flat array directly
+          response.forEach((task: any) => {
+            const taskId = String(task.id || task._id || `task-${Date.now()}-${Math.random()}`);
+            const rawStatus = String(task.status || 'todo')
+              .trim()
+              .toLowerCase()
+              .replace(/[^a-z0-9]/g, '');
+            let lane: TaskLane = 'todo';
+            if (rawStatus.includes('progress')) lane = 'in-progress';
+            else if (rawStatus.includes('complete')) lane = 'completed';
+
             formattedTasks.push({
-              id: String(task.id || task._id), // Clean ID assignment
+              id: taskId,
               title: task.title || 'Untitled',
               details: task.description || '',
               editorType: 'Text',
-              lane: mapBackendStatusToLane(task.status || status),
-              checklist: [],
+              lane: lane,
+              checklist: task.checklist || [],
             });
           });
-        });
+        }
 
         setBoardTasks(formattedTasks);
       } catch (error) {
@@ -2676,9 +2708,7 @@ export function EventPlannerPage() {
                               // Only call API when user finishes typing and clicks away
                               handleUpdateChecklistLabel(item.id, e.target.value);
                             }}
-                            className={`h-9 border-transparent bg-transparent px-1 text-[15px] font-medium shadow-none focus-visible:ring-1 focus-visible:ring-[#e3ddea] w-full ${
-                              item.done ? 'text-[#a29faf] line-through' : 'text-[#302c39]'
-                            }`}
+                            className={`h-9 border-transparent bg-transparent px-1 text-[15px] font-medium shadow-none focus-visible:ring-1 focus-visible:ring-[#e3ddea] w-full ${item.done ? 'text-[#a29faf] line-through' : 'text-[#302c39]'}`}
                           />
                         </div>
 
