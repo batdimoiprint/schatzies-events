@@ -297,18 +297,20 @@ function ScheduleListCard({
       <CardHeader className="pt-6 px-6 pb-4">
         <div className="flex items-center justify-between gap-2">
           <CardTitle className="text-lg font-bold text-[#4a4a4a] font-sans">{title}</CardTitle>
-          <Button
-            className="h-8 px-4 rounded-full bg-[#ff7eb3] text-white hover:bg-[#ff6aa5] transition-colors"
-            size="sm"
-            onClick={onViewListClick}
-          >
-            <span className="text-xs font-bold">View List</span>
-            {hiddenCount > 0 ? (
-              <span className="ml-2 inline-flex items-center rounded-full bg-[#8f1fd0] px-2 py-0.5 text-[10px] font-black leading-none text-white">
-                +{hiddenCount}
-              </span>
-            ) : null}
-          </Button>
+          {onViewListClick && (
+            <Button
+              className="h-8 px-4 rounded-full bg-[#ff7eb3] text-white hover:bg-[#ff6aa5] transition-colors"
+              size="sm"
+              onClick={onViewListClick}
+            >
+              <span className="text-xs font-bold">View List</span>
+              {hiddenCount > 0 ? (
+                <span className="ml-2 inline-flex items-center rounded-full bg-[#8f1fd0] px-2 py-0.5 text-[10px] font-black leading-none text-white">
+                  +{hiddenCount}
+                </span>
+              ) : null}
+            </Button>
+          )}
         </div>
       </CardHeader>
       <CardContent className="p-0">
@@ -1108,15 +1110,7 @@ export function OrganizerDashboard() {
               })
             }
           />
-          <ScheduleListCard
-            title="Active Outsourced Vendors"
-            entries={activeVendorsData}
-            onViewListClick={() =>
-              navigate('/organizer/event-manager', {
-                state: { activeTab: 'Vendor' },
-              })
-            }
-          />
+          <ScheduleListCard title="Active Outsourced Vendors" entries={activeVendorsData} />
         </div>
       </div>
     </section>
