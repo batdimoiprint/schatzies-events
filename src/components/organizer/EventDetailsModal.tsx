@@ -166,7 +166,7 @@ export function EventDetailsModal({
   const [downpaymentError, setDownpaymentError] = useState<string>('');
 
   // Venue vendors state
-  const [venueVendors, setVenueVendors] = useState<{id: string; name: string; price: number | null}[]>([]);
+  const [venueVendors, setVenueVendors] = useState<{ id: string; name: string; price: number | null }[]>([]);
   const [isLoadingVenues, setIsLoadingVenues] = useState(false);
   const [isSavingVenue, setIsSavingVenue] = useState(false);
 
@@ -335,11 +335,10 @@ export function EventDetailsModal({
               </span>
               <p className="text-sm font-bold text-[#2e2837] truncate">{event.date}</p>
             </div>
-            <div className={`rounded-xl border px-3 py-3 ${
-              isEditingEventPrice
+            <div className={`rounded-xl border px-3 py-3 ${isEditingEventPrice
                 ? 'border-[#df1b8b]/30 bg-[#fdf2f8]'
                 : 'border-[#f1eef5] bg-[#faf9fc]'
-            }`}>
+              }`}>
               <div className="flex items-center justify-between mb-1">
                 <span className="text-[10px] font-black uppercase tracking-widest text-[#8b839c]">
                   Event Price
@@ -431,11 +430,10 @@ export function EventDetailsModal({
                 <p className="text-[10px] font-bold text-[#c5221f] mt-1">{eventPriceError}</p>
               )}
             </div>
-            <div className={`rounded-xl border px-3 py-3 ${
-              isEditingDownpayment
+            <div className={`rounded-xl border px-3 py-3 ${isEditingDownpayment
                 ? 'border-[#df1b8b]/30 bg-[#fdf2f8]'
                 : 'border-[#f1eef5] bg-[#faf9fc]'
-            }`}>
+              }`}>
               <div className="flex items-center justify-between mb-1">
                 <span className="text-[10px] font-black uppercase tracking-widest text-[#8b839c]">
                   Downpayment

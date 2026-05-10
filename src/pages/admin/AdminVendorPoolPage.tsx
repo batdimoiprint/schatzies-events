@@ -406,11 +406,10 @@ export function AdminVendorPoolPage() {
             <button
               type="button"
               onClick={() => setViewMode('cards')}
-              className={`rounded-md px-2.5 py-1.5 transition-colors ${
-                viewMode === 'cards'
+              className={`rounded-md px-2.5 py-1.5 transition-colors ${viewMode === 'cards'
                   ? 'bg-[#f3e8ff] text-[#8f1fd1]'
                   : 'text-[#7c7390] hover:text-[#4e445e]'
-              }`}
+                }`}
               title="Card view"
             >
               <LayoutGrid className="h-4 w-4" />
@@ -418,11 +417,10 @@ export function AdminVendorPoolPage() {
             <button
               type="button"
               onClick={() => setViewMode('table')}
-              className={`rounded-md px-2.5 py-1.5 transition-colors ${
-                viewMode === 'table'
+              className={`rounded-md px-2.5 py-1.5 transition-colors ${viewMode === 'table'
                   ? 'bg-[#f3e8ff] text-[#8f1fd1]'
                   : 'text-[#7c7390] hover:text-[#4e445e]'
-              }`}
+                }`}
               title="Table view"
             >
               <List className="h-4 w-4" />
@@ -1382,14 +1380,12 @@ function VendorSidepanel({
                   </div>
                 </div>
                 <div className="flex items-center gap-2 ml-2">
-                  <span className={`flex items-center gap-1 text-[9px] font-bold px-2 py-0.5 rounded-full ${
-                    worker.status.toLowerCase() === 'active'
+                  <span className={`flex items-center gap-1 text-[9px] font-bold px-2 py-0.5 rounded-full ${worker.status.toLowerCase() === 'active'
                       ? 'bg-[#e6f9ec] text-[#1e7e34]'
                       : 'bg-[#f3f0f7] text-[#7c7390]'
-                  }`}>
-                    <span className={`h-1.5 w-1.5 rounded-full ${
-                      worker.status.toLowerCase() === 'active' ? 'bg-[#29bf4c]' : 'bg-[#b5aec3]'
-                    }`} />
+                    }`}>
+                    <span className={`h-1.5 w-1.5 rounded-full ${worker.status.toLowerCase() === 'active' ? 'bg-[#29bf4c]' : 'bg-[#b5aec3]'
+                      }`} />
                     {worker.status}
                   </span>
                   <button
@@ -1474,23 +1470,22 @@ function VendorSidepanel({
               const dateStr = evt.startDate || evt.eventDate;
               const formattedDate = dateStr
                 ? new Date(dateStr).toLocaleDateString('en-US', {
-                    timeZone: 'UTC',
-                    month: 'short',
-                    day: 'numeric',
-                    year: 'numeric',
-                  })
+                  timeZone: 'UTC',
+                  month: 'short',
+                  day: 'numeric',
+                  year: 'numeric',
+                })
                 : 'Date TBD';
 
               return (
                 <div
                   key={evt.eventId}
-                  className={`flex items-center justify-between rounded-xl border px-3.5 py-3 transition-all ${
-                    isExecution
+                  className={`flex items-center justify-between rounded-xl border px-3.5 py-3 transition-all ${isExecution
                       ? 'border-[#df1b8b]/20 bg-[#fff8fb] shadow-sm'
                       : isCompleted
                         ? 'border-[#f1eef5] bg-[#faf9fc] opacity-70'
                         : 'border-[#f1eef5] bg-white hover:border-[#df1b8b]/25 hover:shadow-sm'
-                  }`}
+                    }`}
                 >
                   <div className="min-w-0 flex-1">
                     <p className="text-sm font-bold text-[#2e2837] truncate">{evt.title}</p>
@@ -1500,20 +1495,18 @@ function VendorSidepanel({
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
-                    <span className={`flex items-center gap-1 text-[9px] font-bold px-2 py-0.5 rounded-full ${
-                      isExecution
+                    <span className={`flex items-center gap-1 text-[9px] font-bold px-2 py-0.5 rounded-full ${isExecution
                         ? 'bg-[#ffe6f1] text-[#df1b8b]'
                         : isCompleted
                           ? 'bg-[#f4e6fc] text-[#8637c3]'
                           : 'bg-[#fff5d3] text-[#b68c17]'
-                    }`}>
-                      <span className={`h-1.5 w-1.5 rounded-full ${
-                        isExecution
+                      }`}>
+                      <span className={`h-1.5 w-1.5 rounded-full ${isExecution
                           ? 'bg-[#df1b8b]'
                           : isCompleted
                             ? 'bg-[#8637c3]'
                             : 'bg-[#b68c17]'
-                      }`} />
+                        }`} />
                       {evt.status}
                     </span>
                     <button
