@@ -78,16 +78,7 @@ function getStatusOption(status: string) {
   return STATUS_OPTIONS[0];
 }
 
-const pesoFormatter = new Intl.NumberFormat('en-PH', {
-  style: 'currency',
-  currency: 'PHP',
-  maximumFractionDigits: 0,
-});
 
-function formatMoney(value?: number | null) {
-  if (value === undefined || value === null || Number.isNaN(Number(value))) return '—';
-  return pesoFormatter.format(Number(value));
-}
 
 export function EventManagerPage() {
   const outletContext = useOutletContext<OrganizerLayoutOutletContext | undefined>();

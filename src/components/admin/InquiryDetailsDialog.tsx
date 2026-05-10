@@ -240,14 +240,6 @@ export function InquiryDetailsDialog({
     saveCustomPackageAmountMutation.mutate({ id, amount: Number(customPackageAmountInput) });
   };
 
-  const handleSaveVenue = () => {
-    if (!selectedInquiry || !venueInput.trim()) return;
-    const id = String(selectedInquiry.id || selectedInquiry._id || '').trim();
-    if (!id) return;
-    setIsSavingVenue(true);
-    saveVenueMutation.mutate({ id, venue: venueInput.trim() });
-  };
-
   const getInquiryKey = (inquiry?: InquiryRecord | null) =>
     String(inquiry?.id || inquiry?._id || inquiry?.email || '').trim();
 

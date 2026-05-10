@@ -120,7 +120,7 @@ export function EventDetailsModal({
   onClose,
   onUpdate,
   onDelete,
-  onViewPlanner,
+  onViewPlanner: _onViewPlanner,
   isUpdating,
   isDeleting = false,
   isAdmin = false,

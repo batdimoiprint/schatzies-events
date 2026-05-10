@@ -72,8 +72,6 @@ export interface CreateEventPayload {
   organizerId?: string;
   inquiryId?: string;
   inquiry_id?: string;
-  inquiryId?: string;
-  inquiry_id?: string;
   eventPackageKey?: string;
   eventLocation?: string;
   eventDate?: string;

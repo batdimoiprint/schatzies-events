@@ -36,7 +36,6 @@ import { QrCodePage } from '@/pages/client/QrCodePage';
 import { NotificationsPage } from '@/pages/client/NotificationsPage';
 import { SettingsPage } from '@/pages/client/SettingsPage';
 import { CalendarPage } from '@/pages/organizer/CalendarPage';
-import { EventPlannerPage } from '@/pages/organizer/EventPlannerPage';
 import { EventManagerPage } from '@/pages/organizer/EventManagerPage';
 import { RSVPPage } from '@/pages/client/RSVPPage';
 import { OrganizerMessagePage } from '@/pages/organizer/OrganizerMessagePage';
@@ -201,7 +200,7 @@ const router = createBrowserRouter(
         },
         {
           path: 'event-planner',
-          Component: EventPlannerPage,
+          Component: AdminEventPlannerPage,
         },
         {
           path: 'event-manager',

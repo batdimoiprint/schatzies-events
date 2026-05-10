@@ -31,7 +31,6 @@ import {
   Dialog,
   DialogContent,
   DialogDescription,
-  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
@@ -192,8 +191,6 @@ export function AdminVendorPoolPage() {
   const sortedVendors = useMemo(() => {
     return [...visibleVendors].sort((a, b) => {
       let cmp = 0;
-      const getEventName = (v: Vendor) =>
-        events.find((e) => e.id === v.eventId)?.title || v.eventId || '';
 
       switch (sortBy) {
         case 'name':
@@ -674,10 +671,6 @@ export function AdminVendorPoolPage() {
                 <TableBody>
                   {paginatedVendors.map((vendor) => {
                     const badge = getStatusBadge(vendor.status);
-                    const eventName =
-                      events.find((e) => e.id === vendor.eventId)?.title ||
-                      vendor.eventId ||
-                      'Unassigned';
 
                     return (
                       <TableRow
