@@ -31,10 +31,6 @@ import {
 import { EventDetailsModal, type EventFormData } from '@/components/organizer/EventDetailsModal';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/hooks/useAuth';
-import { useNavigate } from 'react-router-dom';
-
-const EVENT_MANAGER_TABS = ['Events', 'Vendor', 'Workers'] as const;
-type EventManagerTab = typeof EVENT_MANAGER_TABS[number];
 
 type SortDirection = 'asc' | 'desc' | null;
 type EventSortKey =
@@ -93,12 +89,6 @@ export function EventManagerPage() {
   const [localSearchTerm, setLocalSearchTerm] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [rowsPerPage, setRowsPerPage] = useState(10);
-  const [activeTab, setActiveTab] = useState<EventManagerTab>('Events');
-  const navigate = useNavigate();
-
-  const handleOpenRsvpModal = (event: EventManagerEvent) => {
-    navigate(`/organizer/rsvp?eventId=${event.id}`);
-  };
 
   const [isEventDetailsModalOpen, setIsEventDetailsModalOpen] = useState(false);
   const [selectedEventForDetails, setSelectedEventForDetails] = useState<EventManagerEvent | null>(
@@ -248,23 +238,15 @@ export function EventManagerPage() {
     return data;
   }, [events, searchTerm, localSearchTerm, sortKey, sortDirection]);
 
-  // Tab-aware data filtering/sorting
-  const filteredData = useMemo(() => {
-    if (activeTab === 'Events') {
-      return { activeTab: 'Events' as const, data: filteredEvents };
-    }
-    return { activeTab, data: [] };
-  }, [activeTab, filteredEvents]);
-
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchTerm, localSearchTerm, sortKey, sortDirection, activeTab]);
+  }, [searchTerm, localSearchTerm, sortKey, sortDirection]);
 
-  const totalPages = Math.max(1, Math.ceil(filteredData.data.length / rowsPerPage));
+  const totalPages = Math.max(1, Math.ceil(filteredEvents.length / rowsPerPage));
   const paginatedEvents = useMemo(() => {
     const start = (currentPage - 1) * rowsPerPage;
-    return filteredData.data.slice(start, start + rowsPerPage);
-  }, [filteredData.data, currentPage, rowsPerPage]);
+    return filteredEvents.slice(start, start + rowsPerPage);
+  }, [filteredEvents, currentPage, rowsPerPage]);
 
   const errorMessage =
     queryError instanceof Error
@@ -293,26 +275,10 @@ export function EventManagerPage() {
         </Card>
       )}
 
-      <div className="flex-1 flex flex-col rounded-xl border border-[#eef0f4] bg-white p-3 sm:p-6 shadow-sm overflow-hidden min-h-[calc(100vh-150px)]">
-        <div className="mb-4 flex flex-col lg:flex-row lg:items-center justify-between border-b border-[#f1eef5] pb-0 gap-4">
-          <div className="flex gap-1 overflow-x-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden whitespace-nowrap pb-1">
-            {EVENT_MANAGER_TABS.map((tabLabel) => (
-              <button
-                key={tabLabel}
-                type="button"
-                onClick={() => setActiveTab(tabLabel)}
-                className={`relative top-px z-10 rounded-t-lg px-4 sm:px-6 py-2.5 text-xs sm:text-sm font-bold transition-colors ${
-                  activeTab === tabLabel
-                    ? 'border border-[#f1eef5] border-b-white bg-white text-[#302a3a]'
-                    : 'border border-transparent bg-[#faf9fc] text-[#a49db4] hover:bg-[#f3f0f7]'
-                }`}
-              >
-                {tabLabel}
-              </button>
-            ))}
-          </div>
-
-          <div className="mb-2 flex items-center gap-2 sm:gap-3 w-full sm:w-auto justify-end">
+      <div className="flex-1 flex flex-col min-h-0 rounded-xl border border-[#eef0f4] bg-white p-3 sm:p-6 shadow-sm overflow-hidden">
+        <div className="mb-4 flex flex-col sm:flex-row sm:items-center justify-between border-b border-[#f1eef5] pb-3 gap-3">
+          <div className="flex items-center gap-3">
+            <h2 className="text-lg sm:text-xl font-black text-[#302a3a]">Events</h2>
             {isLoading && (
               <div className="flex items-center gap-2 text-xs font-semibold text-[#a49db4]">
                 <svg
@@ -338,204 +304,177 @@ export function EventManagerPage() {
                 Loading...
               </div>
             )}
-            <div className="relative w-full sm:w-64">
-              <Search className="absolute left-2 top-2.5 h-4 w-4 text-[#a49db4]" />
-              <Input
-                placeholder="Search..."
-                value={localSearchTerm}
-                onChange={(e) => setLocalSearchTerm(e.target.value)}
-                className="border border-[#eef0f4] bg-white pl-8 shadow-sm h-9 text-xs sm:text-sm font-semibold text-[#302a3a] outline-none focus:border-[#df1b8b]"
-              />
-            </div>
+          </div>
+          <div className="relative w-full sm:w-64">
+            <Search className="absolute left-2 top-2.5 h-4 w-4 text-[#a49db4]" />
+            <Input
+              placeholder="Search events..."
+              value={localSearchTerm}
+              onChange={(e) => setLocalSearchTerm(e.target.value)}
+              className="border border-[#eef0f4] bg-white pl-8 shadow-sm h-9 text-xs sm:text-sm font-semibold text-[#302a3a] outline-none focus:border-[#df1b8b]"
+            />
           </div>
         </div>
 
         <div className="flex-1 overflow-auto rounded-lg scrollbar-thin scrollbar-thumb-[#eef0f4] scrollbar-track-transparent">
           <Table className="w-full text-[11px] sm:text-xs relative">
             <TableHeader>
-              {activeTab === 'Events' ? (
-                <TableRow className="border-b-2 border-[#f1eef5] hover:bg-transparent">
-                  {(
-                    [
-                      { key: 'title', label: 'Title', alwaysVisible: true },
-                      { key: 'date', label: 'Date', alwaysVisible: true },
-                      { key: 'client', label: 'Client', alwaysVisible: false },
-                      { key: 'type', label: 'Type', alwaysVisible: false },
-                      { key: 'package', label: 'Package', alwaysVisible: false },
-                      { key: 'venue', label: 'Venue', alwaysVisible: false },
-                      { key: 'rsvp', label: 'RSVP', alwaysVisible: false },
-                      { key: 'status', label: 'Status', alwaysVisible: false },
-                      { key: 'createdAt', label: 'Approved Date', alwaysVisible: false },
-                    ] as { key: EventSortKey; label: string; alwaysVisible: boolean }[]
-                  ).map((col) => (
-                    <TableHead
-                      key={col.key}
-                      className={`h-10 font-black text-[#211a2f] cursor-pointer select-none transition-colors hover:text-[#df1b8b] ${
-                        !col.alwaysVisible ? 'hidden md:table-cell' : ''
-                      }`}
-                      onClick={() => handleSortToggle(col.key)}
-                    >
-                      <div className="flex items-center gap-1">
-                        {col.label}
-                        {sortKey === col.key ? (
-                          sortDirection === 'asc' ? (
-                            <ArrowUp className="h-3 w-3 text-[#df1b8b]" />
-                          ) : (
-                            <ArrowDown className="h-3 w-3 text-[#df1b8b]" />
-                          )
+              <TableRow className="border-b-2 border-[#f1eef5] hover:bg-transparent">
+                {(
+                  [
+                    { key: 'title', label: 'Title', alwaysVisible: true },
+                    { key: 'date', label: 'Date', alwaysVisible: true },
+                    { key: 'client', label: 'Client', alwaysVisible: false },
+                    { key: 'type', label: 'Type', alwaysVisible: false },
+                    { key: 'package', label: 'Package', alwaysVisible: false },
+                    { key: 'venue', label: 'Venue', alwaysVisible: false },
+                    { key: 'status', label: 'Status', alwaysVisible: false },
+                    { key: 'createdAt', label: 'Approved Date', alwaysVisible: false },
+                  ] as { key: EventSortKey; label: string; alwaysVisible: boolean }[]
+                ).map((col) => (
+                  <TableHead
+                    key={col.key}
+                    className={`h-10 font-black text-[#211a2f] cursor-pointer select-none transition-colors hover:text-[#df1b8b] ${
+                      !col.alwaysVisible ? 'hidden md:table-cell' : ''
+                    }`}
+                    onClick={() => handleSortToggle(col.key)}
+                  >
+                    <div className="flex items-center gap-1">
+                      {col.label}
+                      {sortKey === col.key ? (
+                        sortDirection === 'asc' ? (
+                          <ArrowUp className="h-3 w-3 text-[#df1b8b]" />
                         ) : (
-                          <ArrowUpDown className="h-3 w-3 text-[#c4bdd0]" />
-                        )}
-                      </div>
-                    </TableHead>
-                  ))}
-                </TableRow>
-              ) : (
-                <TableRow className="border-b-2 border-[#f1eef5] hover:bg-transparent">
-                  <TableHead className="h-10 font-black text-[#211a2f]">Name</TableHead>
-                  <TableHead className="h-10 font-black text-[#211a2f]">Details</TableHead>
-                  <TableHead className="h-10 font-black text-[#211a2f]">Action</TableHead>
-                </TableRow>
-              )}
+                          <ArrowDown className="h-3 w-3 text-[#df1b8b]" />
+                        )
+                      ) : (
+                        <ArrowUpDown className="h-3 w-3 text-[#c4bdd0]" />
+                      )}
+                    </div>
+                  </TableHead>
+                ))}
+              </TableRow>
             </TableHeader>
             <TableBody>
-              {activeTab === 'Events' ? (
-                paginatedEvents.map((event) => (
-                  <TableRow
-                    key={event.id}
-                    onClick={() => {
-                      setSelectedEventId(event.id);
-                      setSelectedEventForDetails(event);
-                      setIsEventDetailsModalOpen(true);
-                    }}
-                    className={`group transition-all cursor-pointer border-b border-[#f6f4f9] ${
-                      selectedEventId === event.id
-                        ? 'bg-[#fdf2f8] border-l-4 border-l-[#df1b8b] shadow-sm'
-                        : 'hover:bg-[#faf9fc] border-l-4 border-l-transparent'
-                    }`}
-                  >
-                    <TableCell className="py-4 font-bold text-[#5c546a]">{event.title}</TableCell>
-                    <TableCell className="py-4 font-semibold text-[#5c546a]">{event.date}</TableCell>
-                    <TableCell className="py-4 font-semibold text-[#5c546a] hidden md:table-cell">
-                      {event.client}
-                    </TableCell>
-                    <TableCell className="py-4 font-semibold text-[#5c546a] hidden md:table-cell">
-                      {event.type}
-                    </TableCell>
-                    <TableCell className="py-4 font-semibold text-[#5c546a] hidden md:table-cell">
-                      {event.package}
-                    </TableCell>
-                    <TableCell className="py-4 font-semibold text-[#5c546a] hidden md:table-cell">
-                      {event.venue &&
-                      !['', '-', '–', '—', 'n/a', 'tba'].includes(
-                        event.venue.trim().toLowerCase()
-                      ) ? (
-                        event.venue
-                      ) : (
-                        <span className="font-extrabold text-red-600 uppercase tracking-tight">
-                          Venue Required
-                        </span>
+              {paginatedEvents.map((event) => (
+                <TableRow
+                  key={event.id}
+                  onClick={() => {
+                    setSelectedEventId(event.id);
+                    setSelectedEventForDetails(event);
+                    setIsEventDetailsModalOpen(true);
+                  }}
+                  className={`group transition-all cursor-pointer border-b border-[#f6f4f9] ${
+                    selectedEventId === event.id
+                      ? 'bg-[#fdf2f8] border-l-4 border-l-[#df1b8b] shadow-sm'
+                      : 'hover:bg-[#faf9fc] border-l-4 border-l-transparent'
+                  }`}
+                >
+                  <TableCell className="py-4 font-bold text-[#5c546a]">{event.title}</TableCell>
+                  <TableCell className="py-4 font-semibold text-[#5c546a]">{event.date}</TableCell>
+                  <TableCell className="py-4 font-semibold text-[#5c546a] hidden md:table-cell">
+                    {event.client}
+                  </TableCell>
+                  <TableCell className="py-4 font-semibold text-[#5c546a] hidden md:table-cell">
+                    {event.type}
+                  </TableCell>
+                  <TableCell className="py-4 font-semibold text-[#5c546a] hidden md:table-cell">
+                    {event.package}
+                  </TableCell>
+                  <TableCell className="py-4 font-semibold text-[#5c546a] hidden md:table-cell">
+                    {event.venue &&
+                    !['', '-', '–', '—', 'n/a', 'tba'].includes(
+                      event.venue.trim().toLowerCase()
+                    ) ? (
+                      event.venue
+                    ) : (
+                      <span className="font-extrabold text-red-600 uppercase tracking-tight">
+                        Venue Required
+                      </span>
+                    )}
+                  </TableCell>
+                  <TableCell className="py-4 hidden md:table-cell">
+                    <div className="relative">
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setStatusDropdownEventId(
+                            statusDropdownEventId === event.id ? '' : event.id
+                          );
+                        }}
+                        disabled={updateEventMutation.isPending}
+                        className={`inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-[10px] font-black tracking-wide transition-all hover:ring-2 hover:ring-[#df1b8b]/20 disabled:opacity-50 ${getStatusOption(event.status).bg} ${getStatusOption(event.status).text}`}
+                      >
+                        <span
+                          className={`h-1.5 w-1.5 rounded-full ${getStatusOption(event.status).dot}`}
+                        ></span>
+                        {getStatusOption(event.status).label.toUpperCase()}
+                        <svg
+                          width="8"
+                          height="8"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="3"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        >
+                          <path d="m6 9 6 6 6-6" />
+                        </svg>
+                      </button>
+                      {statusDropdownEventId === event.id && (
+                        <div
+                          className="absolute right-0 z-50 mt-1 w-40 origin-top-right overflow-hidden rounded-xl border border-[#f1eef5] bg-white py-1 shadow-xl animate-in fade-in zoom-in-95"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          {STATUS_OPTIONS.map((opt) => (
+                            <button
+                              key={opt.value}
+                              type="button"
+                              onClick={() => handleInlineStatusChange(event.id, opt.value)}
+                              className={`flex w-full items-center gap-2 px-4 py-2.5 text-left text-xs font-bold transition-colors hover:bg-[#faf9fc] hover:text-[#df1b8b] ${
+                                getStatusOption(event.status).value === opt.value
+                                  ? 'text-[#df1b8b] bg-[#fdf2f8]'
+                                  : 'text-[#5c546a]'
+                              }`}
+                            >
+                              <span className={`h-1.5 w-1.5 rounded-full ${opt.dot}`}></span>
+                              {opt.label}
+                              {getStatusOption(event.status).value === opt.value && (
+                                <svg
+                                  className="ml-auto h-3 w-3"
+                                  viewBox="0 0 24 24"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  strokeWidth="3"
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                >
+                                  <path d="M20 6 9 17l-5-5" />
+                                </svg>
+                              )}
+                            </button>
+                          ))}
+                        </div>
                       )}
-                    </TableCell>
-                    <TableCell className="py-4 font-bold text-[#5c546a] hidden md:table-cell">
-                      <div className="flex items-center gap-1.5">
-                        {event.rsvp}
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleOpenRsvpModal(event);
-                          }}
-                          className="text-[9px] font-bold uppercase tracking-wider text-[#760CB4] hover:brightness-125 hover:underline"
-                        >
-                          View RSVP
-                        </button>
-                      </div>
-                    </TableCell>
-                    <TableCell className="py-4 hidden md:table-cell">
-                      <div className="relative">
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setStatusDropdownEventId(
-                              statusDropdownEventId === event.id ? '' : event.id
-                            );
-                          }}
-                          disabled={updateEventMutation.isPending}
-                          className={`inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-[10px] font-black tracking-wide transition-all hover:ring-2 hover:ring-[#df1b8b]/20 disabled:opacity-50 ${
-                            getStatusOption(event.status).bg
-                          } ${getStatusOption(event.status).text}`}
-                        >
-                          <span
-                            className={`h-1.5 w-1.5 rounded-full ${getStatusOption(event.status).dot}`}
-                          ></span>
-                          {getStatusOption(event.status).label.toUpperCase()}
-                          <svg
-                            width="8"
-                            height="8"
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="currentColor"
-                            strokeWidth="3"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                          >
-                            <path d="m6 9 6 6 6-6" />
-                          </svg>
-                        </button>
-                        {statusDropdownEventId === event.id && (
-                          <div
-                            className="absolute right-0 z-50 mt-1 w-40 origin-top-right overflow-hidden rounded-xl border border-[#f1eef5] bg-white py-1 shadow-xl animate-in fade-in zoom-in-95"
-                            onClick={(e) => e.stopPropagation()}
-                          >
-                            {STATUS_OPTIONS.map((opt) => (
-                              <button
-                                key={opt.value}
-                                type="button"
-                                onClick={() => handleInlineStatusChange(event.id, opt.value)}
-                                className={`flex w-full items-center gap-2 px-4 py-2.5 text-left text-xs font-bold transition-colors hover:bg-[#faf9fc] hover:text-[#df1b8b] ${
-                                  getStatusOption(event.status).value === opt.value
-                                    ? 'text-[#df1b8b] bg-[#fdf2f8]'
-                                    : 'text-[#5c546a]'
-                                }`}
-                              >
-                                <span className={`h-1.5 w-1.5 rounded-full ${opt.dot}`}></span>
-                                {opt.label}
-                                {getStatusOption(event.status).value === opt.value && (
-                                  <svg
-                                    className="ml-auto h-3 w-3"
-                                    viewBox="0 0 24 24"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    strokeWidth="3"
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                  >
-                                    <path d="M20 6 9 17l-5-5" />
-                                  </svg>
-                                )}
-                              </button>
-                            ))}
-                          </div>
-                        )}
-                      </div>
-                    </TableCell>
-                    <TableCell className="py-4 font-semibold text-[#8f879f] hidden md:table-cell">
-                      {event.createdAt
-                        ? new Date(event.createdAt).toLocaleDateString('en-US', {
-                            month: 'short',
-                            day: 'numeric',
-                            year: 'numeric',
-                          })
-                        : '-'}
-                    </TableCell>
-                  </TableRow>
-                ))
-              ) : (
+                    </div>
+                  </TableCell>
+                  <TableCell className="py-4 font-semibold text-[#8f879f] hidden md:table-cell">
+                    {event.createdAt
+                      ? new Date(event.createdAt).toLocaleDateString('en-US', {
+                          month: 'short',
+                          day: 'numeric',
+                          year: 'numeric',
+                        })
+                      : '-'}
+                  </TableCell>
+                </TableRow>
+              ))}
+              {paginatedEvents.length === 0 && (
                 <TableRow>
                   <TableCell colSpan={8} className="py-12 text-center text-sm text-[#8f879f]">
-                    No data for {activeTab} yet.
+                    {isLoading ? 'Loading events...' : 'No events found.'}
                   </TableCell>
                 </TableRow>
               )}
@@ -543,6 +482,7 @@ export function EventManagerPage() {
           </Table>
         </div>
 
+        {/* Pagination Bar */}
         <div className="mt-4 flex flex-col gap-3 border-t border-[#f1eef5] pt-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-2 text-xs font-semibold text-[#7c7390]">
             <span>Rows per page:</span>
@@ -562,8 +502,8 @@ export function EventManagerPage() {
             </select>
             <span className="ml-2 text-[#a49db4]">
               {paginatedEvents.length > 0 ? (currentPage - 1) * rowsPerPage + 1 : 0}–
-              {Math.min(currentPage * rowsPerPage, filteredData.data.length)} of{' '}
-              {filteredData.data.length}
+              {Math.min(currentPage * rowsPerPage, filteredEvents.length)} of{' '}
+              {filteredEvents.length}
             </span>
           </div>
 
@@ -611,6 +551,7 @@ export function EventManagerPage() {
         </div>
       </div>
 
+      {/* Event Details Modal */}
       {selectedEventForDetails && (
         <EventDetailsModal
           event={selectedEventForDetails}
