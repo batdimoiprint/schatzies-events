@@ -27,6 +27,7 @@ import {
   ChevronsLeft,
   ChevronsRight,
   Search,
+  Eye,
 } from 'lucide-react';
 import { EventDetailsModal, type EventFormData } from '@/components/organizer/EventDetailsModal';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -375,6 +376,9 @@ export function EventManagerPage() {
                     </div>
                   </TableHead>
                 ))}
+                <TableHead className="h-10 font-black text-[#211a2f] hidden md:table-cell">
+                  Actions
+                </TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -468,11 +472,28 @@ export function EventManagerPage() {
                         })
                       : '-'}
                   </TableCell>
+                  <TableCell className="py-4 hidden md:table-cell">
+                    <div className="flex items-center gap-1.5">
+                      <button
+                        type="button"
+                        title="View Planner"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          const basePath = isAdmin ? '/admin/event-planner' : '/organizer/event-planner';
+                          navigate(`${basePath}?eventId=${event.id}`);
+                        }}
+                        className="inline-flex items-center gap-1 rounded-md px-2.5 py-1.5 text-[10px] font-bold text-purple-700 bg-purple-50 hover:bg-purple-100 transition-colors"
+                      >
+                        <Eye className="h-3 w-3" />
+                        Planner
+                      </button>
+                    </div>
+                  </TableCell>
                 </TableRow>
               ))}
               {paginatedEvents.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={8} className="py-12 text-center text-sm text-[#8f879f]">
+                  <TableCell colSpan={9} className="py-12 text-center text-sm text-[#8f879f]">
                     {isLoading ? 'Loading events...' : 'No events found.'}
                   </TableCell>
                 </TableRow>

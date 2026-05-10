@@ -293,11 +293,6 @@ export function EventDetailsModal({
                   )}
                 </>
               )}
-              {onViewPlanner && (
-                <Button type="button" onClick={() => onViewPlanner(event.id)} className="h-8 bg-purple-100 text-purple-700 hover:bg-purple-200 font-bold px-4 text-xs">
-                  View Planner
-                </Button>
-              )}
               <Button type="button" onClick={onClose} disabled={isUpdating} variant="outline" className="h-8 px-4 text-xs font-bold text-[#696373] border-[#e1d5eb]">
                 Cancel
               </Button>

@@ -4,7 +4,6 @@ import {
   LayoutDashboard,
   Calendar,
   CalendarCheck,
-  Wallet,
   Briefcase,
   UsersRound,
   UserCheck,
@@ -27,7 +26,6 @@ const adminNavItems = [
   { label: 'RSVP', to: '/admin/rsvp', icon: UserCheck },
   { label: 'User Management', to: '/admin/users', icon: UsersRound },
   { label: 'Calendar', to: '/admin/calendar', icon: Calendar },
-  { label: 'Cost Breakdown', to: '/admin/costs', icon: Wallet },
   { label: 'Vendor Pool', to: '/admin/vendors', icon: Briefcase },
   { label: 'Data Backup', to: '/admin/data-backup', icon: DatabaseBackup },
 ];

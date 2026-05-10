@@ -32,11 +32,6 @@ const organizerNavItems = [
     to: '/organizer/message',
     icon: '/Pictures/organizerpics/Message.png',
   },
-  {
-    label: 'Cost Breakdown',
-    to: '/organizer/cost-breakdown',
-    icon: '/Pictures/organizerpics/Cost Breakdown.png',
-  },
 ];
 
 export type OrganizerLayoutOutletContext = {
