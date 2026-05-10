@@ -35,7 +35,11 @@ import {
   type UserResponse,
   type UserPayload,
 } from '@/api/users';
-import { getVerifiedEmails, deleteVerifiedEmail, type VerifiedEmail } from '@/api/email-verification';
+import {
+  getVerifiedEmails,
+  deleteVerifiedEmail,
+  type VerifiedEmail,
+} from '@/api/email-verification';
 import {
   Plus,
   Trash2,
@@ -1007,16 +1011,19 @@ export function UsersManagement() {
           <DialogHeader>
             <DialogTitle>Delete Verified Email</DialogTitle>
             <DialogDescription>
-              Are you sure you want to delete the verified email{' '}
-              <strong>{veToDelete}</strong>? This will remove the verification
-              record and they will need to verify again.
+              Are you sure you want to delete the verified email <strong>{veToDelete}</strong>? This
+              will remove the verification record and they will need to verify again.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
             <Button variant="outline" onClick={() => setIsVeDeleteConfirmOpen(false)}>
               Cancel
             </Button>
-            <Button variant="destructive" onClick={confirmDeleteVerifiedEmail} disabled={veDeleting}>
+            <Button
+              variant="destructive"
+              onClick={confirmDeleteVerifiedEmail}
+              disabled={veDeleting}
+            >
               {veDeleting ? 'Deleting…' : 'Delete Email'}
             </Button>
           </DialogFooter>

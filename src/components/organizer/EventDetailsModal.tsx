@@ -308,9 +308,7 @@ export function EventDetailsModal({
                   Event Price
                 </span>
               </div>
-              <p className="text-sm font-bold text-[#2e2837] truncate">
-                {formatMoney(eventPrice)}
-              </p>
+              <p className="text-sm font-bold text-[#2e2837] truncate">{formatMoney(eventPrice)}</p>
             </div>
             <div className="rounded-xl border border-[#f1eef5] bg-[#faf9fc] px-3 py-3">
               <div className="flex items-center gap-2 mb-1">

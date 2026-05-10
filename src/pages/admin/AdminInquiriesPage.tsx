@@ -471,13 +471,14 @@ export function AdminInquiriesPage() {
                     {inquiry.createdAt || inquiry.created_at
                       ? new Date(inquiry.createdAt || inquiry.created_at).toLocaleDateString(
                           'en-US',
-                          { month: 'long', day: '2-digit', year: 'numeric' }
+                          { timeZone: 'UTC', month: 'long', day: '2-digit', year: 'numeric' }
                         )
                       : 'N/A'}
                   </TableCell>
                   <TableCell className="font-semibold text-lg text-[#4e4560]">
                     {inquiry.date
                       ? new Date(inquiry.date).toLocaleDateString('en-US', {
+                          timeZone: 'UTC',
                           month: 'long',
                           day: '2-digit',
                           year: 'numeric',

@@ -992,15 +992,15 @@ export function InquiryForm({ onClose, selectedPackageId, selectedEventType }: I
                                   disabled={!watchedEventType || watchedEventType === 'Others'}
                                 >
                                   <SelectTrigger className={fieldBase}>
-                                  <SelectValue
-                                    placeholder={
-                                      !watchedEventType
-                                        ? 'Select Event Type First'
-                                        : watchedEventType === 'Others'
-                                          ? 'Custom Package (Others)'
-                                          : 'Event Package'
-                                    }
-                                  />
+                                    <SelectValue
+                                      placeholder={
+                                        !watchedEventType
+                                          ? 'Select Event Type First'
+                                          : watchedEventType === 'Others'
+                                            ? 'Custom Package (Others)'
+                                            : 'Event Package'
+                                      }
+                                    />
                                   </SelectTrigger>
                                   <SelectContent className={overlayPopupLayer}>
                                     {packageOptions.map((p) => (

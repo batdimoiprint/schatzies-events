@@ -94,8 +94,6 @@ function formatCsvValue(value: string | number): string {
   return value;
 }
 
-
-
 export function CostBreakdownPage() {
   const [selectedEventId, setSelectedEventId] = useState('');
   const [apiEvents, setApiEvents] = useState<any[]>([]);

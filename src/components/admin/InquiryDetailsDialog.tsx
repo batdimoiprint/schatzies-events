@@ -148,6 +148,10 @@ export function InquiryDetailsDialog({
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
   const [downpaymentInput, setDownpaymentInput] = useState('');
   const [isSavingDownpayment, setIsSavingDownpayment] = useState(false);
+  const [customPackageAmountInput, setCustomPackageAmountInput] = useState('');
+  const [isSavingCustomPackageAmount, setIsSavingCustomPackageAmount] = useState(false);
+  const [venueInput, setVenueInput] = useState('');
+  const [isSavingVenue, setIsSavingVenue] = useState(false);
 
   const formatMoney = (amount?: number | null) => {
     if (amount === undefined || amount === null || Number.isNaN(Number(amount))) return '—';
@@ -185,12 +189,60 @@ export function InquiryDetailsDialog({
     },
   });
 
+  const saveCustomPackageAmountMutation = useMutation({
+    mutationFn: async ({ id, amount }: { id: string; amount: number }) => {
+      return await updateInquiry(id, { packageInitialAmount: amount });
+    },
+    onSuccess: (updatedInquiry) => {
+      queryClient.invalidateQueries({ queryKey: ['inquiries'] });
+      onInquiryUpdated(updatedInquiry as InquiryRecord);
+      setCustomPackageAmountInput(
+        updatedInquiry?.packageInitialAmount ? String(updatedInquiry.packageInitialAmount) : ''
+      );
+      setIsSavingCustomPackageAmount(false);
+    },
+    onError: () => {
+      setIsSavingCustomPackageAmount(false);
+    },
+  });
+
+  const saveVenueMutation = useMutation({
+    mutationFn: async ({ id, venue }: { id: string; venue: string }) => {
+      return await updateInquiry(id, { venue } as Partial<InquiryRecord>);
+    },
+    onSuccess: (updatedInquiry) => {
+      queryClient.invalidateQueries({ queryKey: ['inquiries'] });
+      onInquiryUpdated(updatedInquiry as InquiryRecord);
+      setVenueInput(String((updatedInquiry as InquiryRecord)?.venue || ''));
+      setIsSavingVenue(false);
+    },
+    onError: () => {
+      setIsSavingVenue(false);
+    },
+  });
+
   const handleSaveDownpayment = () => {
     if (!selectedInquiry || !downpaymentInput) return;
     const id = String(selectedInquiry.id || selectedInquiry._id || '').trim();
     if (!id) return;
     setIsSavingDownpayment(true);
     saveDownpaymentMutation.mutate({ id, downpayment: Number(downpaymentInput) });
+  };
+
+  const handleSaveCustomPackageAmount = () => {
+    if (!selectedInquiry || !customPackageAmountInput) return;
+    const id = String(selectedInquiry.id || selectedInquiry._id || '').trim();
+    if (!id) return;
+    setIsSavingCustomPackageAmount(true);
+    saveCustomPackageAmountMutation.mutate({ id, amount: Number(customPackageAmountInput) });
+  };
+
+  const handleSaveVenue = () => {
+    if (!selectedInquiry || !venueInput.trim()) return;
+    const id = String(selectedInquiry.id || selectedInquiry._id || '').trim();
+    if (!id) return;
+    setIsSavingVenue(true);
+    saveVenueMutation.mutate({ id, venue: venueInput.trim() });
   };
 
   const getInquiryKey = (inquiry?: InquiryRecord | null) =>
@@ -216,7 +268,13 @@ export function InquiryDetailsDialog({
     setAccountCreateError('');
     setAccountCreateSuccess('');
     setCopiedInquiryId('');
-    setDownpaymentInput(selectedInquiry?.downpaymentAmount ? String(selectedInquiry.downpaymentAmount) : '');
+    setDownpaymentInput(
+      selectedInquiry?.downpaymentAmount ? String(selectedInquiry.downpaymentAmount) : ''
+    );
+    setCustomPackageAmountInput(
+      selectedInquiry?.packageInitialAmount ? String(selectedInquiry.packageInitialAmount) : ''
+    );
+    setVenueInput(selectedInquiry?.venue || selectedInquiry?.location || '');
 
     const inquiryKey = getInquiryKey(selectedInquiry);
     if (!inquiryKey) return;
@@ -282,9 +340,22 @@ export function InquiryDetailsDialog({
         setStatusChangeError('A scheduled meeting is required before approving this inquiry.');
         return;
       }
-      
+
       if (!selectedInquiry.downpaymentAmount) {
         setStatusChangeError('A downpayment must be added before approving this inquiry.');
+        return;
+      }
+
+      const inquiryVenue = String(selectedInquiry.venue || selectedInquiry.location || '').trim();
+      if (!inquiryVenue) {
+        setStatusChangeError('A venue must be added before approving this inquiry.');
+        return;
+      }
+
+      const isOthersPackage = String(selectedInquiry.eventPackage || '').trim().toLowerCase() === 'others';
+      const hasCustomPackageAmount = Number.isFinite(Number(selectedInquiry.packageInitialAmount)) && Number(selectedInquiry.packageInitialAmount) > 0;
+      if (isOthersPackage && !hasCustomPackageAmount) {
+        setStatusChangeError('A custom package amount must be added before approving this inquiry.');
         return;
       }
 
@@ -314,11 +385,12 @@ export function InquiryDetailsDialog({
 
         const computedPrice = calculatePackagePrice(eventPackageStr, eventTypeStr, eventPaxNum);
         const rawPackageInitialAmount = Number(selectedInquiry.packageInitialAmount);
-        const packageInitialAmount = Number.isFinite(rawPackageInitialAmount) && rawPackageInitialAmount > 0
-          ? rawPackageInitialAmount
-          : computedPrice > 0
-            ? computedPrice
-            : undefined;
+        const packageInitialAmount =
+          Number.isFinite(rawPackageInitialAmount) && rawPackageInitialAmount > 0
+            ? rawPackageInitialAmount
+            : computedPrice > 0
+              ? computedPrice
+              : undefined;
 
         const downpaymentAmount = Number(selectedInquiry.downpaymentAmount);
         const hasPackageInitialAmount = packageInitialAmount !== undefined;
@@ -348,8 +420,8 @@ export function InquiryDetailsDialog({
             downpaymentAmount: hasDownpaymentAmount ? downpaymentAmount : undefined,
             packagePrice,
             eventDate: endDate,
-            eventLocation: '',
-            venue: '',
+            eventLocation: String(selectedInquiry.venue || selectedInquiry.location || '').trim(),
+            venue: String(selectedInquiry.venue || selectedInquiry.location || '').trim(),
             status: 'Planning',
           });
         } catch (createError) {
@@ -544,8 +616,9 @@ export function InquiryDetailsDialog({
   const currentStatusValue = normalizeInquiryStatus(selectedInquiry?.status);
   const statusOptions = getInquiryStatusOptions(selectedInquiry?.status).filter(
     (opt) =>
-      opt.value !== INQUIRY_STATUS_OPTIONS.REQUIRES_CLARIFICATION ||
-      opt.value === currentStatusValue
+      (opt.value !== INQUIRY_STATUS_OPTIONS.REQUIRES_CLARIFICATION ||
+        opt.value === currentStatusValue) &&
+      opt.value !== INQUIRY_STATUS_OPTIONS.DECLINED
   );
 
   return (
@@ -562,6 +635,7 @@ export function InquiryDetailsDialog({
                 {new Date(
                   selectedInquiry?.createdAt || selectedInquiry?.created_at || Date.now()
                 ).toLocaleDateString('en-US', {
+                  timeZone: 'UTC',
                   month: 'long',
                   day: 'numeric',
                   year: 'numeric',
@@ -571,6 +645,18 @@ export function InquiryDetailsDialog({
               </p>
             </div>
             <div className="flex items-center gap-2">
+              {selectedInquiry && (
+                <Button
+                  variant="outline"
+                  className="font-bold border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700"
+                  disabled={currentStatusValue === INQUIRY_STATUS_OPTIONS.DECLINED}
+                  onClick={() => handleStatusChange(INQUIRY_STATUS_OPTIONS.DECLINED)}
+                >
+                  {currentStatusValue === INQUIRY_STATUS_OPTIONS.DECLINED
+                    ? 'Declined'
+                    : 'Decline Inquiry'}
+                </Button>
+              )}
               {user?.role === 'ADMIN' && selectedInquiry && (
                 <Button
                   variant="destructive"
@@ -647,6 +733,7 @@ export function InquiryDetailsDialog({
                         {new Date(
                           selectedInquiry.date || selectedInquiry.createdAt || Date.now()
                         ).toLocaleDateString('en-US', {
+                          timeZone: 'UTC',
                           month: 'long',
                           day: 'numeric',
                           year: 'numeric',
@@ -661,6 +748,7 @@ export function InquiryDetailsDialog({
                         {new Date(
                           selectedInquiry.createdAt || selectedInquiry.created_at || Date.now()
                         ).toLocaleDateString('en-US', {
+                          timeZone: 'UTC',
                           month: 'short',
                           day: 'numeric',
                           year: 'numeric',
@@ -688,25 +776,30 @@ export function InquiryDetailsDialog({
                       </div>
                     )}
 
-                    {(selectedInquiry.eventPackage || selectedInquiry.packageInitialAmount !== undefined) && (() => {
-                      const displayAmount = Number.isFinite(Number(selectedInquiry.packageInitialAmount)) && Number(selectedInquiry.packageInitialAmount) > 0
-                        ? Number(selectedInquiry.packageInitialAmount)
-                        : calculatePackagePrice(
-                            String(selectedInquiry.eventPackage || '').trim(),
-                            String(selectedInquiry.eventType || '').trim(),
-                            Number(selectedInquiry.eventPax) || 0,
-                          );
-                      return (
-                        <div className="rounded-xl border border-[#f1eaf7] bg-white p-3 shadow-sm col-span-2">
-                          <h4 className="text-[10px] font-black uppercase tracking-wider text-[#a094b8] mb-1">
-                            Package Amount
-                          </h4>
-                          <p className="text-[#4e4560] font-bold text-sm">
-                            {displayAmount > 0 ? formatMoney(displayAmount) : '—'}
-                          </p>
-                        </div>
-                      );
-                    })()}
+                    {(selectedInquiry.eventPackage ||
+                      selectedInquiry.packageInitialAmount !== undefined) &&
+                      String(selectedInquiry.eventPackage || '').trim().toLowerCase() !== 'others' &&
+                      (() => {
+                        const displayAmount =
+                          Number.isFinite(Number(selectedInquiry.packageInitialAmount)) &&
+                          Number(selectedInquiry.packageInitialAmount) > 0
+                            ? Number(selectedInquiry.packageInitialAmount)
+                            : calculatePackagePrice(
+                                String(selectedInquiry.eventPackage || '').trim(),
+                                String(selectedInquiry.eventType || '').trim(),
+                                Number(selectedInquiry.eventPax) || 0
+                              );
+                        return (
+                          <div className="rounded-xl border border-[#f1eaf7] bg-white p-3 shadow-sm col-span-2">
+                            <h4 className="text-[10px] font-black uppercase tracking-wider text-[#a094b8] mb-1">
+                              Package Amount
+                            </h4>
+                            <p className="text-[#4e4560] font-bold text-sm">
+                              {displayAmount > 0 ? formatMoney(displayAmount) : '—'}
+                            </p>
+                          </div>
+                        );
+                      })()}
                   </div>
                 </section>
 
@@ -739,6 +832,7 @@ export function InquiryDetailsDialog({
                               {new Date(
                                 selectedInquiry.meetingDetails.date || Date.now()
                               ).toLocaleDateString('en-US', {
+                                timeZone: 'UTC',
                                 month: 'short',
                                 day: 'numeric',
                                 year: 'numeric',
@@ -869,7 +963,6 @@ export function InquiryDetailsDialog({
                               <span className="text-right break-all">{selectedInquiry.email}</span>
                             </p>
                           )}
-                          
                         </div>
                         <p className="text-[10px] font-bold text-emerald-700/80">
                           Temporary password is sent to the email.
@@ -889,11 +982,14 @@ export function InquiryDetailsDialog({
                         </p>
                       </div>
                     )}
-                    {!createdAccount && !hasAccountForInquiry && !accountCreateError && !accountCreateSuccess && (
-                      <p className="text-[11px] text-[#9a8fb0] text-center italic py-2">
-                        No account details generated yet.
-                      </p>
-                    )}
+                    {!createdAccount &&
+                      !hasAccountForInquiry &&
+                      !accountCreateError &&
+                      !accountCreateSuccess && (
+                        <p className="text-[11px] text-[#9a8fb0] text-center italic py-2">
+                          No account details generated yet.
+                        </p>
+                      )}
                   </div>
                 </section>
               </div>
@@ -930,109 +1026,223 @@ export function InquiryDetailsDialog({
 
                       // Override "Approved" gating: enable once account is ready AND meeting is scheduled.
                       // Other statuses keep their default disabled behavior.
+                      const hasVenue = Boolean(
+                        String(selectedInquiry?.venue || selectedInquiry?.location || '').trim()
+                      );
+                      const isOthersPackage = String(selectedInquiry?.eventPackage || '').trim().toLowerCase() === 'others';
+                      const hasCustomPackageAmount = Number.isFinite(Number(selectedInquiry?.packageInitialAmount)) && Number(selectedInquiry?.packageInitialAmount) > 0;
+
                       const isOptionDisabled = isApprovedBtn
-                        ? !hasAccount || !hasMeetingScheduled || !selectedInquiry?.downpaymentAmount
+                        ? !hasAccount ||
+                          !hasMeetingScheduled ||
+                          !selectedInquiry?.downpaymentAmount ||
+                          !hasVenue ||
+                          (isOthersPackage && !hasCustomPackageAmount)
                         : option.disabled;
 
                       return (
                         <Fragment key={option.value}>
                           {isApprovedBtn && (
                             <>
+                              {isOthersPackage && (
+                                <div className="relative my-2 rounded-xl border border-[#eadcf7] bg-[#faf7ff] p-3">
+                                  <Label className="text-[10px] font-black uppercase text-[#857a98] mb-2 block">
+                                    Package Amount (Required for Approval)
+                                  </Label>
+                                  {(!Number.isFinite(Number(selectedInquiry.packageInitialAmount)) || Number(selectedInquiry.packageInitialAmount) <= 0) && selectedInquiry.status !== 'Approved' ? (
+                                    <div className="flex gap-2 items-center">
+                                      <Input
+                                        type="number"
+                                        placeholder="Enter custom amount"
+                                        value={customPackageAmountInput}
+                                        onChange={(e) => setCustomPackageAmountInput(e.target.value)}
+                                        disabled={currentStatusValue === INQUIRY_STATUS_OPTIONS.DECLINED}
+                                        className="h-9 flex-1 bg-white border-[#ebe3f5] focus-visible:ring-[#8C6bB1] text-xs font-bold disabled:opacity-50"
+                                      />
+                                      <Button
+                                        onClick={handleSaveCustomPackageAmount}
+                                        disabled={
+                                          isSavingCustomPackageAmount ||
+                                          !customPackageAmountInput ||
+                                          currentStatusValue === INQUIRY_STATUS_OPTIONS.DECLINED
+                                        }
+                                        className="h-9 px-3 bg-[#8C6bB1] hover:bg-[#6c4e8e] text-white font-bold rounded-lg text-xs transition-all shadow-sm disabled:opacity-50"
+                                      >
+                                        {isSavingCustomPackageAmount ? (
+                                          <Loader2 className="w-3 h-3 animate-spin mr-1" />
+                                        ) : (
+                                          'Save'
+                                        )}
+                                      </Button>
+                                    </div>
+                                  ) : (
+                                    <div className="flex justify-between items-center bg-white p-2.5 rounded-lg border border-[#e5ddee]">
+                                      <span className="text-[11px] font-bold text-[#5a5368]">
+                                        Amount Set
+                                      </span>
+                                      <span className="text-sm font-black text-[#6f2ea8]">
+                                        {formatMoney(selectedInquiry.packageInitialAmount)}
+                                      </span>
+                                    </div>
+                                  )}
+                                </div>
+                              )}
+                              <div className="relative my-2 rounded-xl border border-[#eadcf7] bg-[#faf7ff] p-3">
+                                <Label className="text-[10px] font-black uppercase text-[#857a98] mb-2 block">
+                                  Venue (Required for Approval)
+                                </Label>
+                                {!String(
+                                  selectedInquiry.venue || selectedInquiry.location || ''
+                                ).trim() && selectedInquiry.status !== 'Approved' ? (
+                                  <div className="flex gap-2 items-center">
+                                    <Input
+                                      type="text"
+                                      placeholder="Enter event venue"
+                                      value={venueInput}
+                                      onChange={(e) => setVenueInput(e.target.value)}
+                                      disabled={
+                                        currentStatusValue === INQUIRY_STATUS_OPTIONS.DECLINED
+                                      }
+                                      className="h-9 flex-1 bg-white border-[#ebe3f5] focus-visible:ring-[#8C6bB1] text-xs font-bold disabled:opacity-50"
+                                    />
+                                    <Button
+                                      onClick={handleSaveVenue}
+                                      disabled={
+                                        isSavingVenue ||
+                                        !venueInput.trim() ||
+                                        currentStatusValue === INQUIRY_STATUS_OPTIONS.DECLINED
+                                      }
+                                      className="h-9 px-3 bg-[#8C6bB1] hover:bg-[#6c4e8e] text-white font-bold rounded-lg text-xs transition-all shadow-sm disabled:opacity-50"
+                                    >
+                                      {isSavingVenue ? (
+                                        <Loader2 className="w-3 h-3 animate-spin mr-1" />
+                                      ) : (
+                                        'Save'
+                                      )}
+                                    </Button>
+                                  </div>
+                                ) : (
+                                  <div className="flex justify-between items-center bg-white p-2.5 rounded-lg border border-[#e5ddee]">
+                                    <span className="text-[11px] font-bold text-[#5a5368]">
+                                      Event Venue
+                                    </span>
+                                    <span className="text-sm font-black text-[#6f2ea8]">
+                                      {selectedInquiry.venue || selectedInquiry.location || '—'}
+                                    </span>
+                                  </div>
+                                )}
+                              </div>
                               <div className="relative my-2 rounded-xl border border-[#eadcf7] bg-[#faf7ff] p-3">
                                 <Label className="text-[10px] font-black uppercase text-[#857a98] mb-2 block">
                                   Downpayment (Required for Approval)
                                 </Label>
-                                {!selectedInquiry.downpaymentAmount && selectedInquiry.status !== 'Approved' ? (
+                                {!selectedInquiry.downpaymentAmount &&
+                                selectedInquiry.status !== 'Approved' ? (
                                   <div className="flex gap-2 items-center">
                                     <Input
                                       type="number"
                                       placeholder="Amount"
                                       value={downpaymentInput}
                                       onChange={(e) => setDownpaymentInput(e.target.value)}
-                                      className="h-9 flex-1 bg-white border-[#ebe3f5] focus-visible:ring-[#8C6bB1] text-xs font-bold"
+                                      disabled={
+                                        currentStatusValue === INQUIRY_STATUS_OPTIONS.DECLINED
+                                      }
+                                      className="h-9 flex-1 bg-white border-[#ebe3f5] focus-visible:ring-[#8C6bB1] text-xs font-bold disabled:opacity-50"
                                     />
                                     <Button
                                       onClick={handleSaveDownpayment}
-                                      disabled={isSavingDownpayment || !downpaymentInput}
-                                      className="h-9 px-3 bg-[#8C6bB1] hover:bg-[#6c4e8e] text-white font-bold rounded-lg text-xs transition-all shadow-sm"
+                                      disabled={
+                                        isSavingDownpayment ||
+                                        !downpaymentInput ||
+                                        currentStatusValue === INQUIRY_STATUS_OPTIONS.DECLINED
+                                      }
+                                      className="h-9 px-3 bg-[#8C6bB1] hover:bg-[#6c4e8e] text-white font-bold rounded-lg text-xs transition-all shadow-sm disabled:opacity-50"
                                     >
-                                      {isSavingDownpayment ? <Loader2 className="w-3 h-3 animate-spin mr-1" /> : 'Save'}
+                                      {isSavingDownpayment ? (
+                                        <Loader2 className="w-3 h-3 animate-spin mr-1" />
+                                      ) : (
+                                        'Save'
+                                      )}
                                     </Button>
                                   </div>
                                 ) : (
                                   <div className="flex justify-between items-center bg-white p-2.5 rounded-lg border border-[#e5ddee]">
-                                     <span className="text-[11px] font-bold text-[#5a5368]">Paid Amount</span>
-                                     <span className="text-sm font-black text-[#6f2ea8]">{formatMoney(selectedInquiry.downpaymentAmount)}</span>
+                                    <span className="text-[11px] font-bold text-[#5a5368]">
+                                      Paid Amount
+                                    </span>
+                                    <span className="text-sm font-black text-[#6f2ea8]">
+                                      {formatMoney(selectedInquiry.downpaymentAmount)}
+                                    </span>
                                   </div>
                                 )}
                               </div>
                               <div className="relative my-2 rounded-xl border border-[#eadcf7] bg-[#faf7ff] p-3">
                                 {!selectedInquiry.meetingDetails && !hasAccount && (
                                   <div className="absolute inset-0 z-10 bg-white/60 backdrop-blur-[1px] flex items-center justify-center p-2 text-center rounded-xl">
-                                  <p className="text-[10px] font-bold text-amber-700 bg-amber-50 px-2 py-1 rounded border border-amber-100 shadow-sm">
-                                    Schedule a meeting first.
-                                  </p>
-                                </div>
-                              )}
-                              <Label className="text-[10px] font-black uppercase text-[#857a98] mb-2 block">
-                                Portal Access (Required for Approval)
-                              </Label>
-                              <Button
-                                type="button"
-                                onClick={handleCreateUserAccount}
-                                disabled={
-                                  isCreatingAccount ||
-                                  !selectedInquiry?.email ||
-                                  hasAccount ||
-                                  !selectedInquiry.meetingDetails
-                                }
-                                className={`w-full h-10 ${hasAccount ? 'bg-emerald-600' : 'bg-linear-to-r from-[#2e2837] to-[#5a5368]'} text-white font-bold rounded-lg text-xs`}
-                              >
-                                {isCreatingAccount
-                                  ? 'Processing...'
-                                  : hasAccount
-                                    ? 'Account Ready'
-                                    : 'Create User Account'}
-                              </Button>
-                            </div>
+                                    <p className="text-[10px] font-bold text-amber-700 bg-amber-50 px-2 py-1 rounded border border-amber-100 shadow-sm">
+                                      Schedule a meeting first.
+                                    </p>
+                                  </div>
+                                )}
+                                <Label className="text-[10px] font-black uppercase text-[#857a98] mb-2 block">
+                                  Portal Access (Required for Approval)
+                                </Label>
+                                <Button
+                                  type="button"
+                                  onClick={handleCreateUserAccount}
+                                  disabled={
+                                    isCreatingAccount ||
+                                    !selectedInquiry?.email ||
+                                    hasAccount ||
+                                    !selectedInquiry.meetingDetails
+                                  }
+                                  className={`w-full h-10 ${hasAccount ? 'bg-emerald-600' : 'bg-linear-to-r from-[#2e2837] to-[#5a5368]'} text-white font-bold rounded-lg text-xs`}
+                                >
+                                  {isCreatingAccount
+                                    ? 'Processing...'
+                                    : hasAccount
+                                      ? 'Account Ready'
+                                      : 'Create User Account'}
+                                </Button>
+                              </div>
                             </>
                           )}
                           <Button
                             variant={isActive ? 'default' : 'outline'}
                             disabled={isOptionDisabled && !isActive}
                             className={`w-full justify-start h-11 rounded-xl font-bold transition-all ${
-                            isActive
-                              ? 'bg-linear-to-r from-[#f347a5] to-[#8f1fd1] text-white border-none shadow-md'
-                              : isCompleted
-                                ? 'bg-[#f7f5fa] border-[#e5ddee] text-[#8f879f]'
-                                : 'bg-white border-[#e5ddee] text-[#5a5368] hover:border-[#d5c9e4] hover:bg-[#faf7ff]'
-                          }`}
-                          onClick={() => {
-                            if (isActive) return;
-                            if (isMeetingBtn && !selectedInquiry?.meetingDetails) {
-                              setIsScheduleModalOpen(true);
-                            } else {
-                              handleStatusChange(option.value);
-                            }
-                          }}
-                        >
-                          <span
-                            className={`mr-3 flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[11px] font-black ${
                               isActive
-                                ? 'bg-white/20 text-white'
+                                ? 'bg-linear-to-r from-[#f347a5] to-[#8f1fd1] text-white border-none shadow-md'
                                 : isCompleted
-                                  ? 'bg-[#e5ddee] text-[#a094b8]'
-                                  : 'bg-[#f3edfa] text-[#8f1fd1]'
+                                  ? 'bg-[#f7f5fa] border-[#e5ddee] text-[#8f879f]'
+                                  : 'bg-white border-[#e5ddee] text-[#5a5368] hover:border-[#d5c9e4] hover:bg-[#faf7ff]'
                             }`}
+                            onClick={() => {
+                              if (isActive) return;
+                              if (isMeetingBtn && !selectedInquiry?.meetingDetails) {
+                                setIsScheduleModalOpen(true);
+                              } else {
+                                handleStatusChange(option.value);
+                              }
+                            }}
                           >
-                            {index + 1}
-                          </span>
-                          {displayLabel}
-                          {isMeetingBtn &&
-                            !selectedInquiry?.meetingDetails &&
-                            !option.disabled &&
-                            !isActive && <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />}
-                        </Button>
+                            <span
+                              className={`mr-3 flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[11px] font-black ${
+                                isActive
+                                  ? 'bg-white/20 text-white'
+                                  : isCompleted
+                                    ? 'bg-[#e5ddee] text-[#a094b8]'
+                                    : 'bg-[#f3edfa] text-[#8f1fd1]'
+                              }`}
+                            >
+                              {index + 1}
+                            </span>
+                            {displayLabel}
+                            {isMeetingBtn &&
+                              !selectedInquiry?.meetingDetails &&
+                              !option.disabled &&
+                              !isActive && <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />}
+                          </Button>
                         </Fragment>
                       );
                     })}
