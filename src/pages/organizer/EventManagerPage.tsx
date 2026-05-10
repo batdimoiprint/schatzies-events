@@ -349,7 +349,6 @@ export function EventManagerPage() {
                     { key: 'client', label: 'Client', alwaysVisible: false },
                     { key: 'type', label: 'Type', alwaysVisible: false },
                     { key: 'package', label: 'Package', alwaysVisible: false },
-                    { key: 'amount', label: 'Amount', alwaysVisible: false },
                     { key: 'venue', label: 'Venue', alwaysVisible: false },
                     { key: 'status', label: 'Status', alwaysVisible: false },
                     { key: 'createdAt', label: 'Approved Date', alwaysVisible: false },
@@ -403,9 +402,6 @@ export function EventManagerPage() {
                   </TableCell>
                   <TableCell className="py-4 font-semibold text-[#5c546a] hidden md:table-cell">
                     {event.package}
-                  </TableCell>
-                  <TableCell className="py-4 font-semibold text-[#5c546a] hidden md:table-cell">
-                    {formatMoney(event.packagePrice ?? event.packageInitialAmount ?? null)}
                   </TableCell>
                   <TableCell className="py-4 font-semibold text-[#5c546a] hidden md:table-cell">
                     {event.venue &&

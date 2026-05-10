@@ -156,11 +156,14 @@ export function EventDetailsModal({
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   // Admin pricing edit state
-  const [isEditingPricing, setIsEditingPricing] = useState(false);
+  const [isEditingEventPrice, setIsEditingEventPrice] = useState(false);
+  const [isEditingDownpayment, setIsEditingDownpayment] = useState(false);
   const [editPrice, setEditPrice] = useState<string>('');
   const [editDownpayment, setEditDownpayment] = useState<string>('');
-  const [isSavingPricing, setIsSavingPricing] = useState(false);
-  const [pricingError, setPricingError] = useState<string>('');
+  const [isSavingEventPrice, setIsSavingEventPrice] = useState(false);
+  const [isSavingDownpayment, setIsSavingDownpayment] = useState(false);
+  const [eventPriceError, setEventPriceError] = useState<string>('');
+  const [downpaymentError, setDownpaymentError] = useState<string>('');
 
   // Venue vendors state
   const [venueVendors, setVenueVendors] = useState<{id: string; name: string; price: number | null}[]>([]);
@@ -193,8 +196,10 @@ export function EventDetailsModal({
       });
 
       setShowDeleteConfirm(false);
-      setIsEditingPricing(false);
-      setPricingError('');
+      setIsEditingEventPrice(false);
+      setIsEditingDownpayment(false);
+      setEventPriceError('');
+      setDownpaymentError('');
 
       // Fetch RSVP guests
       setIsLoadingRsvp(true);
@@ -331,7 +336,7 @@ export function EventDetailsModal({
               <p className="text-sm font-bold text-[#2e2837] truncate">{event.date}</p>
             </div>
             <div className={`rounded-xl border px-3 py-3 ${
-              isEditingPricing
+              isEditingEventPrice
                 ? 'border-[#df1b8b]/30 bg-[#fdf2f8]'
                 : 'border-[#f1eef5] bg-[#faf9fc]'
             }`}>
@@ -339,84 +344,52 @@ export function EventDetailsModal({
                 <span className="text-[10px] font-black uppercase tracking-widest text-[#8b839c]">
                   Event Price
                 </span>
-                {isAdmin && !isEditingPricing && (
+                {isAdmin && !isEditingEventPrice && (
                   <button
                     type="button"
                     onClick={() => {
-                      setIsEditingPricing(true);
+                      setIsEditingEventPrice(true);
                       setEditPrice(String(eventPrice ?? ''));
-                      setEditDownpayment(String(downpaymentAmount ?? ''));
-                      setPricingError('');
+                      setEventPriceError('');
                     }}
                     className="text-[#a69eb5] hover:text-[#df1b8b] transition-colors"
-                    title="Edit pricing"
+                    title="Edit event price"
                   >
                     <Pencil className="size-3" />
                   </button>
                 )}
-              </div>
-              {isEditingPricing ? (
-                <input
-                  type="number"
-                  min="0"
-                  step="1000"
-                  value={editPrice}
-                  onChange={(e) => setEditPrice(e.target.value)}
-                  disabled={isSavingPricing}
-                  className="w-full rounded-md border border-[#e1d5eb] bg-white px-2 py-1 text-sm font-bold text-[#2e2837] outline-none focus:border-[#df1b8b] focus:ring-1 focus:ring-[#df1b8b] disabled:opacity-50"
-                  placeholder="0"
-                />
-              ) : (
-                <p className="text-sm font-bold text-[#2e2837] truncate">{formatMoney(eventPrice)}</p>
-              )}
-            </div>
-            <div className={`rounded-xl border px-3 py-3 ${
-              isEditingPricing
-                ? 'border-[#df1b8b]/30 bg-[#fdf2f8]'
-                : 'border-[#f1eef5] bg-[#faf9fc]'
-            }`}>
-              <div className="flex items-center justify-between mb-1">
-                <span className="text-[10px] font-black uppercase tracking-widest text-[#8b839c]">
-                  Downpayment
-                </span>
-                {isAdmin && isEditingPricing && (
+                {isAdmin && isEditingEventPrice && (
                   <div className="flex items-center gap-1">
                     <button
                       type="button"
-                      disabled={isSavingPricing}
+                      disabled={isSavingEventPrice}
                       onClick={async () => {
-                        setPricingError('');
+                        setEventPriceError('');
                         const parsedPrice = Number(editPrice);
-                        const parsedDown = Number(editDownpayment);
                         if (!Number.isFinite(parsedPrice) || parsedPrice < 0) {
-                          setPricingError('Invalid event price');
+                          setEventPriceError('Invalid event price');
                           return;
                         }
-                        if (!Number.isFinite(parsedDown) || parsedDown < 0) {
-                          setPricingError('Invalid downpayment');
-                          return;
-                        }
-                        setIsSavingPricing(true);
+                        setIsSavingEventPrice(true);
                         try {
                           await updateEventPricing(event.id, {
                             packageInitialAmount: parsedPrice,
-                            downpaymentAmount: parsedDown,
+                            // don't touch downpayment
                           });
-                          // Update the displayed values immediately
                           event.packageInitialAmount = parsedPrice;
-                          event.downpaymentAmount = parsedDown;
-                          event.packagePrice = Math.max(0, parsedPrice - parsedDown);
-                          setIsEditingPricing(false);
+                          const currentDownpayment = Number(event.downpaymentAmount) || 0;
+                          event.packagePrice = Math.max(0, parsedPrice - currentDownpayment);
+                          setIsEditingEventPrice(false);
                         } catch (err: any) {
-                          setPricingError(err?.response?.data?.error || 'Failed to save pricing');
+                          setEventPriceError(err?.response?.data?.error || 'Failed to save price');
                         } finally {
-                          setIsSavingPricing(false);
+                          setIsSavingEventPrice(false);
                         }
                       }}
                       className="text-emerald-600 hover:text-emerald-700 transition-colors disabled:opacity-50"
-                      title="Save pricing"
+                      title="Save price"
                     >
-                      {isSavingPricing ? (
+                      {isSavingEventPrice ? (
                         <svg className="animate-spin size-3.5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                           <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                           <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
@@ -427,10 +400,10 @@ export function EventDetailsModal({
                     </button>
                     <button
                       type="button"
-                      disabled={isSavingPricing}
+                      disabled={isSavingEventPrice}
                       onClick={() => {
-                        setIsEditingPricing(false);
-                        setPricingError('');
+                        setIsEditingEventPrice(false);
+                        setEventPriceError('');
                       }}
                       className="text-[#c5221f] hover:text-[#a31b18] transition-colors disabled:opacity-50"
                       title="Cancel"
@@ -440,14 +413,110 @@ export function EventDetailsModal({
                   </div>
                 )}
               </div>
-              {isEditingPricing ? (
+              {isEditingEventPrice ? (
+                <input
+                  type="number"
+                  min="0"
+                  step="1000"
+                  value={editPrice}
+                  onChange={(e) => setEditPrice(e.target.value)}
+                  disabled={isSavingEventPrice}
+                  className="w-full rounded-md border border-[#e1d5eb] bg-white px-2 py-1 text-sm font-bold text-[#2e2837] outline-none focus:border-[#df1b8b] focus:ring-1 focus:ring-[#df1b8b] disabled:opacity-50"
+                  placeholder="0"
+                />
+              ) : (
+                <p className="text-sm font-bold text-[#2e2837] truncate">{formatMoney(eventPrice)}</p>
+              )}
+              {eventPriceError && (
+                <p className="text-[10px] font-bold text-[#c5221f] mt-1">{eventPriceError}</p>
+              )}
+            </div>
+            <div className={`rounded-xl border px-3 py-3 ${
+              isEditingDownpayment
+                ? 'border-[#df1b8b]/30 bg-[#fdf2f8]'
+                : 'border-[#f1eef5] bg-[#faf9fc]'
+            }`}>
+              <div className="flex items-center justify-between mb-1">
+                <span className="text-[10px] font-black uppercase tracking-widest text-[#8b839c]">
+                  Downpayment
+                </span>
+                {isAdmin && !isEditingDownpayment && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsEditingDownpayment(true);
+                      setEditDownpayment(String(downpaymentAmount ?? ''));
+                      setDownpaymentError('');
+                    }}
+                    className="text-[#a69eb5] hover:text-[#df1b8b] transition-colors"
+                    title="Edit downpayment"
+                  >
+                    <Pencil className="size-3" />
+                  </button>
+                )}
+                {isAdmin && isEditingDownpayment && (
+                  <div className="flex items-center gap-1">
+                    <button
+                      type="button"
+                      disabled={isSavingDownpayment}
+                      onClick={async () => {
+                        setDownpaymentError('');
+                        const parsedDown = Number(editDownpayment);
+                        if (!Number.isFinite(parsedDown) || parsedDown < 0) {
+                          setDownpaymentError('Invalid downpayment');
+                          return;
+                        }
+                        setIsSavingDownpayment(true);
+                        try {
+                          await updateEventPricing(event.id, {
+                            downpaymentAmount: parsedDown,
+                            // don't touch initial amount
+                          });
+                          event.downpaymentAmount = parsedDown;
+                          const currentPrice = Number(event.packageInitialAmount) || 0;
+                          event.packagePrice = Math.max(0, currentPrice - parsedDown);
+                          setIsEditingDownpayment(false);
+                        } catch (err: any) {
+                          setDownpaymentError(err?.response?.data?.error || 'Failed to save downpayment');
+                        } finally {
+                          setIsSavingDownpayment(false);
+                        }
+                      }}
+                      className="text-emerald-600 hover:text-emerald-700 transition-colors disabled:opacity-50"
+                      title="Save downpayment"
+                    >
+                      {isSavingDownpayment ? (
+                        <svg className="animate-spin size-3.5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                      ) : (
+                        <Check className="size-3.5" />
+                      )}
+                    </button>
+                    <button
+                      type="button"
+                      disabled={isSavingDownpayment}
+                      onClick={() => {
+                        setIsEditingDownpayment(false);
+                        setDownpaymentError('');
+                      }}
+                      className="text-[#c5221f] hover:text-[#a31b18] transition-colors disabled:opacity-50"
+                      title="Cancel"
+                    >
+                      <X className="size-3.5" />
+                    </button>
+                  </div>
+                )}
+              </div>
+              {isEditingDownpayment ? (
                 <input
                   type="number"
                   min="0"
                   step="1000"
                   value={editDownpayment}
                   onChange={(e) => setEditDownpayment(e.target.value)}
-                  disabled={isSavingPricing}
+                  disabled={isSavingDownpayment}
                   className="w-full rounded-md border border-[#e1d5eb] bg-white px-2 py-1 text-sm font-bold text-[#2e2837] outline-none focus:border-[#df1b8b] focus:ring-1 focus:ring-[#df1b8b] disabled:opacity-50"
                   placeholder="0"
                 />
@@ -456,8 +525,8 @@ export function EventDetailsModal({
                   {formatMoney(downpaymentAmount)}
                 </p>
               )}
-              {pricingError && (
-                <p className="text-[10px] font-bold text-[#c5221f] mt-1">{pricingError}</p>
+              {downpaymentError && (
+                <p className="text-[10px] font-bold text-[#c5221f] mt-1">{downpaymentError}</p>
               )}
             </div>
             <div className="rounded-xl border border-[#f1eef5] bg-[#faf9fc] px-3 py-3">
