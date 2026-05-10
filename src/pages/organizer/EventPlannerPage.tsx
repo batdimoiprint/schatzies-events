@@ -6,7 +6,7 @@ import {
   type DragEvent,
   type FormEvent,
 } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useSearchParams } from 'react-router-dom';
 import {
   ChevronLeft,
   Download,
@@ -1058,7 +1058,8 @@ const noteTileThemes = [
 
 export function EventPlannerPage() {
   const location = useLocation();
-  const passedEventId = location.state?.eventId;
+  const [searchParams] = useSearchParams();
+  const passedEventId = searchParams.get('eventId') || location.state?.eventId;
   const [selectedEventId, setSelectedEventId] = useState('');
   const [projectSlots, setProjectSlots] = useState<ProjectSlot[]>([]);
   const [activeTab, setActiveTab] = useState<PlannerTab>('overview');

@@ -4,7 +4,6 @@ import {
   LayoutDashboard,
   Calendar,
   CalendarCheck,
-  NotebookPen,
   Wallet,
   Briefcase,
   UsersRound,
@@ -24,7 +23,7 @@ const adminNavItems = [
   { label: 'Inquiries', to: '/admin/inquiries', icon: MailQuestion },
   { label: 'Message', to: '/admin/message', icon: MessageSquareDotIcon },
   { label: 'Event Manager', to: '/admin/event-manager', icon: CalendarCheck },
-  { label: 'Event Planner', to: '/admin/event-planner', icon: NotebookPen },
+
   { label: 'RSVP', to: '/admin/rsvp', icon: UserCheck },
   { label: 'User Management', to: '/admin/users', icon: UsersRound },
   { label: 'Calendar', to: '/admin/calendar', icon: Calendar },

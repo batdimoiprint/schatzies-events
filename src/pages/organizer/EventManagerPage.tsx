@@ -587,7 +587,10 @@ export function EventManagerPage() {
           isAdmin={isAdmin}
           onDelete={(eventId) => deleteEventMutation.mutateAsync(eventId)}
           isDeleting={deleteEventMutation.isPending}
-          onViewPlanner={(id) => navigate('/organizer/event-planner', { state: { eventId: id } })}
+          onViewPlanner={(id) => {
+            const basePath = isAdmin ? '/admin/event-planner' : '/organizer/event-planner';
+            navigate(`${basePath}?eventId=${id}`);
+          }}
         />
       )}
     </div>
