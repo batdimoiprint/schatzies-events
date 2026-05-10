@@ -249,9 +249,12 @@ export function InquiryDetailsDialog({
       await updateInquiryStatus(id, pendingStatus);
 
       if (canCreateApprovedEvent) {
-        const now = new Date().toISOString();
-        const startDate = now;
-        const endDate = now;
+        const startDate = meetingDateSource
+          ? new Date(meetingDateSource).toISOString()
+          : new Date().toISOString();
+        const endDate = plannedDateSource
+          ? new Date(plannedDateSource).toISOString()
+          : new Date().toISOString();
 
         try {
           await createEvent({
@@ -472,7 +475,7 @@ export function InquiryDetailsDialog({
 
   return (
     <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-      <DialogContent className="sm:max-w-6xl">
+      <DialogContent className="sm:max-w-7xl">
         <div className="bg-linear-to-r from-[#fdfbff] to-[#f5f7ff] p-6 border-b border-[#eee7f4]">
           <div className="flex items-center justify-between">
             <div>
@@ -497,9 +500,10 @@ export function InquiryDetailsDialog({
         </div>
 
         {selectedInquiry && (
-          <div className="p-6 md:flex md:gap-8 max-h-[80vh] overflow-y-auto">
-            {/* Left Column - Core Info */}
-            <div className="space-y-6 md:w-3/5">
+          <div className="max-h-[80vh] overflow-y-auto p-6">
+            <div className="grid gap-8 xl:grid-cols-[minmax(0,1.45fr)_minmax(280px,0.95fr)_minmax(320px,1fr)]">
+              {/* First Column - Core Info */}
+              <div className="space-y-6">
               <section className="space-y-3">
                 <h3 className="text-xs font-black uppercase tracking-widest text-[#b0a4c5] flex items-center gap-2">
                   <span className="h-px w-4 bg-[#d5c9e4]"></span>
@@ -606,34 +610,57 @@ export function InquiryDetailsDialog({
                   "{selectedInquiry.message || 'No additional message provided.'}"
                 </div>
               </section>
-            </div>
+              </div>
 
-            {/* Right Column - Actions & Status */}
-            <div className="mt-8 border-t border-[#efe8f6] pt-8 md:mt-0 md:w-2/5 md:border-l md:border-t-0 md:pl-8 md:pt-0 space-y-6">
+              {/* Second Column - Status & Meetings */}
+              <div className="space-y-6">
               <section className="space-y-3">
                 <h4 className="text-xs font-black uppercase tracking-widest text-[#b0a4c5] mb-2">
                   Inquiry Status
                 </h4>
-                <div className="p-4 rounded-2xl border border-[#eadcf7] bg-white shadow-sm">
-                  <Label className="text-[10px] font-black uppercase text-[#857a98] mb-2 block">
+                <div className="p-4 rounded-2xl border border-[#eadcf7] bg-white shadow-sm flex flex-col gap-2">
+                  <Label className="text-[10px] font-black uppercase text-[#857a98] mb-1 block">
                     Change State
                   </Label>
-                  <Select value={currentStatusValue} onValueChange={handleStatusChange}>
-                    <SelectTrigger className="w-full h-11 border-[#e5ddee] bg-white rounded-xl font-bold text-[#4e4560]">
-                      <SelectValue placeholder="Update status" />
-                    </SelectTrigger>
-                    <SelectContent className="rounded-xl border-[#e5ddee]">
-                      {statusOptions.map((option) => (
-                        <SelectItem
-                          key={option.value}
-                          value={option.value}
-                          disabled={option.disabled}
-                        >
-                          {option.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  {statusOptions.map((option, index) => {
+                    const isMeetingBtn = option.value === INQUIRY_STATUS_OPTIONS.MEETING_SCHEDULED;
+                    const isActive = currentStatusValue === option.value;
+                    const currentIndex = statusOptions.findIndex(o => o.value === currentStatusValue);
+                    const isCompleted = index < currentIndex;
+                    
+                    return (
+                      <Button
+                        key={option.value}
+                        variant={isActive ? "default" : "outline"}
+                        disabled={option.disabled && !isActive}
+                        className={`w-full justify-start h-11 rounded-xl font-bold transition-all ${
+                          isActive 
+                            ? 'bg-linear-to-r from-[#f347a5] to-[#8f1fd1] text-white border-none shadow-md' 
+                            : isCompleted
+                              ? 'bg-[#f7f5fa] border-[#e5ddee] text-[#8f879f]'
+                              : 'bg-white border-[#e5ddee] text-[#5a5368] hover:border-[#d5c9e4] hover:bg-[#faf7ff]'
+                        }`}
+                        onClick={() => {
+                          if (isActive) return;
+                          if (isMeetingBtn && !selectedInquiry?.meetingDetails) {
+                            setIsScheduleModalOpen(true);
+                          } else {
+                            handleStatusChange(option.value);
+                          }
+                        }}
+                      >
+                        <span className={`mr-3 flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[11px] font-black ${
+                          isActive ? 'bg-white/20 text-white' : isCompleted ? 'bg-[#e5ddee] text-[#a094b8]' : 'bg-[#f3edfa] text-[#8f1fd1]'
+                        }`}>
+                          {index + 1}
+                        </span>
+                        {option.label}
+                        {isMeetingBtn && !selectedInquiry?.meetingDetails && !option.disabled && !isActive && (
+                          <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                        )}
+                      </Button>
+                    );
+                  })}
                   {statusChangeError && (
                     <p className="mt-2 text-[11px] font-semibold text-red-600">
                       {statusChangeError}
@@ -715,20 +742,16 @@ export function InquiryDetailsDialog({
                       <CalendarIcon className="h-8 w-8 text-[#d5c9e4] mx-auto mb-2" />
                       <p className="text-sm font-bold text-[#6a5a83]">No meeting scheduled</p>
                       <p className="text-[11px] text-[#9a8fb0] mt-1">
-                        Schedule a discovery call to proceed
+                        Use the status options above to schedule a discovery call
                       </p>
                     </div>
-                    <Button
-                      className="w-full h-12 bg-linear-to-r from-[#f347a5] to-[#8f1fd1] text-white font-black rounded-xl shadow-md hover:shadow-lg transition-all"
-                      onClick={() => setIsScheduleModalOpen(true)}
-                    >
-                      <CalendarIcon className="mr-2 h-4 w-4" />
-                      Schedule Meeting
-                    </Button>
                   </div>
                 )}
               </section>
+              </div>
 
+              {/* Third Column - Portal Access */}
+              <div className="space-y-6">
               <section className="space-y-3">
                 <h4 className="text-xs font-black uppercase tracking-widest text-[#b0a4c5] mb-2">
                   Portal Access
@@ -836,7 +859,7 @@ export function InquiryDetailsDialog({
               </section>
 
               {user?.role === 'ADMIN' && (
-                <div className="mt-6 pt-6 border-t border-[#eee7f4]">
+                <div className="border-t border-[#eee7f4] pt-6">
                   <Button
                     variant="destructive"
                     className="w-full font-bold"
@@ -846,6 +869,7 @@ export function InquiryDetailsDialog({
                   </Button>
                 </div>
               )}
+              </div>
             </div>
           </div>
         )}

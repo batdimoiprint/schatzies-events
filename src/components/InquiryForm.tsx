@@ -95,10 +95,8 @@ export function InquiryForm({ onClose, selectedPackageId, selectedEventType }: I
   const [verificationSending, setVerificationSending] = useState(false);
   const [verificationSent, setVerificationSent] = useState(false);
   const [verificationError, setVerificationError] = useState<string | null>(null);
-  const [shouldAutoSubmit, setShouldAutoSubmit] = useState(false);
   const [verificationCooldown, setVerificationCooldown] = useState(0);
   const [bookedDates, setBookedDates] = useState<string[]>([]);
-  const pollingRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const cooldownRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   // Fetch booked dates on mount
@@ -179,30 +177,6 @@ export function InquiryForm({ onClose, selectedPackageId, selectedEventType }: I
     }
   };
 
-  // Poll backend for verification while waiting
-  useEffect(() => {
-    if (verificationSent && !emailVerified && watchedEmail) {
-      pollingRef.current = setInterval(async () => {
-        // Ask backend
-        try {
-          const { verified } = await checkEmailVerified(watchedEmail);
-          if (verified) {
-            setEmailVerified(true);
-            setVerificationSent(false);
-            if (pollingRef.current) clearInterval(pollingRef.current);
-
-            // Trigger automatic submit since verification is complete
-            setShouldAutoSubmit(true);
-          }
-        } catch {
-          /* ignore polling errors */
-        }
-      }, 4000);
-    }
-    return () => {
-      if (pollingRef.current) clearInterval(pollingRef.current);
-    };
-  }, [verificationSent, emailVerified, watchedEmail]);
 
   // Cooldown timer to prevent spamming verification emails
   useEffect(() => {
@@ -337,13 +311,7 @@ export function InquiryForm({ onClose, selectedPackageId, selectedEventType }: I
     }
   };
 
-  // Handle auto-submit after verification
-  useEffect(() => {
-    if (shouldAutoSubmit) {
-      setShouldAutoSubmit(false);
-      handleSubmit(onFormSubmit)();
-    }
-  }, [shouldAutoSubmit, handleSubmit]);
+
 
   return (
     <>
@@ -594,6 +562,53 @@ export function InquiryForm({ onClose, selectedPackageId, selectedEventType }: I
         className="fixed inset-0 z-[9998] flex items-center justify-center bg-black/60 px-4 backdrop-blur-sm [scrollbar-gutter:stable]"
         onClick={onClose}
       >
+        {/* ── "Check your email" dialog when verification sent ── */}
+        {verificationSent && !emailVerified && !submitted && !isLoading && (
+          <div
+            className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50 backdrop-blur-sm"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div
+              className="flex w-[380px] flex-col items-center rounded-2xl bg-white px-8 py-10 shadow-2xl animate-in fade-in zoom-in-95 duration-300"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Mail icon */}
+              <div className="flex h-20 w-20 items-center justify-center rounded-full bg-gradient-to-br from-[#FF0066] to-[#700F81] shadow-lg shadow-[#700F81]/30">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="white"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  className="h-10 w-10"
+                >
+                  <rect width="20" height="16" x="2" y="4" rx="2" />
+                  <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" />
+                </svg>
+              </div>
+              <h3 className="mt-5 text-[1.3rem] font-bold text-[#1a1225]">Check Your Email</h3>
+              <p className="mt-2 text-center text-[0.88rem] leading-[1.6] text-gray-500">
+                We've sent a confirmation link to your email address. Please open your email and click{' '}
+                <span className="font-semibold text-[#700F81]">"Confirm Inquiry"</span> to complete your submission.
+              </p>
+              <p className="mt-3 text-center text-[0.75rem] leading-[1.5] text-gray-400">
+                The link will expire in 15 minutes. Check your spam folder if you don't see it.
+              </p>
+              <button
+                onClick={() => {
+                  setVerificationSent(false);
+                  setVerificationCooldown(0);
+                }}
+                className="mt-6 h-10 rounded-full bg-gradient-to-r from-[#FF0066] to-[#700F81] px-8 text-[0.88rem] font-bold text-white shadow-lg transition hover:brightness-110"
+              >
+                Got it
+              </button>
+            </div>
+          </div>
+        )}
+
         {/* ── Success confirmation overlay ── */}
         {submitted && !isLoading && (
           <div
@@ -805,13 +820,7 @@ export function InquiryForm({ onClose, selectedPackageId, selectedEventType }: I
                             </div>
                           </Field>
 
-                          {verificationSent && !emailVerified && (
-                            <div className="flex items-center gap-1 px-2 py-1 rounded bg-amber-50 border border-amber-100 mt-1">
-                              <span className="text-[0.65rem] font-medium text-amber-600 animate-pulse">
-                                Verification link sent. Please check your email before submitting.
-                              </span>
-                            </div>
-                          )}
+
                         </div>
 
                         {/* ── Contact number ── */}
