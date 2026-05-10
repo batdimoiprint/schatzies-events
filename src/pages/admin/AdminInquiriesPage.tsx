@@ -40,10 +40,10 @@ export function AdminInquiriesPage() {
   });
 
   const [searchQuery, setSearchQuery] = useState('');
-  const [sortBy, setSortBy] = useState<'date' | 'status' | 'eventType' | 'sender' | 'email'>(
-    'date'
-  );
-  const [sortOrder, setSortOrder] = useState<'desc' | 'asc'>('asc');
+  const [sortBy, setSortBy] = useState<
+    'createdAt' | 'date' | 'status' | 'eventType' | 'sender' | 'email' | 'package' | 'guestCount'
+  >('createdAt');
+  const [sortOrder, setSortOrder] = useState<'desc' | 'asc'>('desc');
   const [selectedInquiry, setSelectedInquiry] = useState<any | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isScheduleModalOpen, setIsScheduleModalOpen] = useState(false);
@@ -168,10 +168,32 @@ export function AdminInquiriesPage() {
         }
       }
 
-      const aDate = new Date(a.date || a.createdAt || 0).getTime();
-      const bDate = new Date(b.date || b.createdAt || 0).getTime();
-      const dateCompare = aDate - bDate;
-      return sortOrder === 'asc' ? dateCompare : -dateCompare;
+      if (sortBy === 'date') {
+        const aDate = new Date(a.date || 0).getTime();
+        const bDate = new Date(b.date || 0).getTime();
+        const dateCompare = aDate - bDate;
+        if (dateCompare !== 0) return sortOrder === 'asc' ? dateCompare : -dateCompare;
+      } else if (sortBy === 'createdAt') {
+        const aDate = new Date(a.createdAt || a.created_at || 0).getTime();
+        const bDate = new Date(b.createdAt || b.created_at || 0).getTime();
+        const dateCompare = aDate - bDate;
+        if (dateCompare !== 0) return sortOrder === 'asc' ? dateCompare : -dateCompare;
+      } else if (sortBy === 'package') {
+        const pkgA = (a.eventPackage || a.package?.name || '').toLowerCase();
+        const pkgB = (b.eventPackage || b.package?.name || '').toLowerCase();
+        const pkgCompare = pkgA.localeCompare(pkgB);
+        if (pkgCompare !== 0) return sortOrder === 'asc' ? pkgCompare : -pkgCompare;
+      } else if (sortBy === 'guestCount') {
+        const guestA = parseInt(a.eventPax || a.package?.pax || '0', 10);
+        const guestB = parseInt(b.eventPax || b.package?.pax || '0', 10);
+        const guestCompare = guestA - guestB;
+        if (guestCompare !== 0) return sortOrder === 'asc' ? guestCompare : -guestCompare;
+      }
+
+      const aFallback = new Date(a.createdAt || a.created_at || 0).getTime();
+      const bFallback = new Date(b.createdAt || b.created_at || 0).getTime();
+      const fallbackCompare = aFallback - bFallback;
+      return sortOrder === 'asc' ? fallbackCompare : -fallbackCompare;
     });
 
     return sorted;
@@ -233,7 +255,17 @@ export function AdminInquiriesPage() {
     );
   };
 
-  const toggleSort = (field: 'date' | 'status' | 'eventType' | 'sender' | 'email') => {
+  const toggleSort = (
+    field:
+      | 'createdAt'
+      | 'date'
+      | 'status'
+      | 'eventType'
+      | 'sender'
+      | 'email'
+      | 'package'
+      | 'guestCount'
+  ) => {
     if (sortBy === field) {
       setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
     } else {
@@ -242,7 +274,19 @@ export function AdminInquiriesPage() {
     }
   };
 
-  const SortIcon = ({ field }: { field: 'date' | 'status' | 'eventType' | 'sender' | 'email' }) => {
+  const SortIcon = ({
+    field,
+  }: {
+    field:
+      | 'createdAt'
+      | 'date'
+      | 'status'
+      | 'eventType'
+      | 'sender'
+      | 'email'
+      | 'package'
+      | 'guestCount';
+  }) => {
     if (sortBy !== field) return <ArrowUpDown className="ml-2 h-4 w-4 opacity-50" />;
     return sortOrder === 'asc' ? (
       <ArrowUp className="ml-2 h-4 w-4 text-[#8f1fd1]" />
@@ -260,9 +304,7 @@ export function AdminInquiriesPage() {
 
         <div className="relative flex flex-wrap items-center justify-between gap-3">
           <div>
-            <h1 className="text-xl font-black text-[#2e2837] md:text-2xl">
-              Client Inquiries
-            </h1>
+            <h1 className="text-xl font-black text-[#2e2837] md:text-2xl">Client Inquiries</h1>
             <p className="mt-0.5 text-sm font-semibold text-[#8f879f]">
               Manage requests, meetings &amp; bookings.
             </p>
@@ -270,22 +312,30 @@ export function AdminInquiriesPage() {
 
           <div className="flex items-center gap-2">
             <div className="flex items-center gap-1.5 rounded-lg border border-[#f1e8f7] bg-white/80 px-3 py-1.5">
-              <span className="text-[10px] font-bold uppercase tracking-wide text-[#8a7ca3]">Total</span>
+              <span className="text-[10px] font-bold uppercase tracking-wide text-[#8a7ca3]">
+                Total
+              </span>
               <span className="text-lg font-black text-[#2e2837]">{statusCounts.total}</span>
             </div>
             <div className="flex items-center gap-1.5 rounded-lg border border-[#f1e8f7] bg-white/80 px-3 py-1.5">
               <Clock3 className="h-3 w-3 text-[#8a7ca3]" />
-              <span className="text-[10px] font-bold uppercase tracking-wide text-[#8a7ca3]">Pending</span>
+              <span className="text-[10px] font-bold uppercase tracking-wide text-[#8a7ca3]">
+                Pending
+              </span>
               <span className="text-lg font-black text-[#2e2837]">{statusCounts.pending}</span>
             </div>
             <div className="flex items-center gap-1.5 rounded-lg border border-[#f1e8f7] bg-white/80 px-3 py-1.5">
               <CalendarIcon className="h-3 w-3 text-[#8a7ca3]" />
-              <span className="text-[10px] font-bold uppercase tracking-wide text-[#8a7ca3]">Scheduled</span>
+              <span className="text-[10px] font-bold uppercase tracking-wide text-[#8a7ca3]">
+                Scheduled
+              </span>
               <span className="text-lg font-black text-[#2e2837]">{statusCounts.scheduled}</span>
             </div>
             <div className="flex items-center gap-1.5 rounded-lg border border-[#f1e8f7] bg-white/80 px-3 py-1.5">
               <CheckCircle2 className="h-3 w-3 text-[#8a7ca3]" />
-              <span className="text-[10px] font-bold uppercase tracking-wide text-[#8a7ca3]">Approved</span>
+              <span className="text-[10px] font-bold uppercase tracking-wide text-[#8a7ca3]">
+                Approved
+              </span>
               <span className="text-lg font-black text-[#2e2837]">{statusCounts.approved}</span>
             </div>
           </div>
@@ -358,11 +408,38 @@ export function AdminInquiriesPage() {
                 </TableHead>
                 <TableHead
                   className="h-12 text-lg font-black uppercase tracking-[0.06em] text-[#7c7390] cursor-pointer hover:text-[#8f1fd1] transition-colors"
+                  onClick={() => toggleSort('createdAt')}
+                >
+                  <div className="flex items-center">
+                    Submitted
+                    <SortIcon field="createdAt" />
+                  </div>
+                </TableHead>
+                <TableHead
+                  className="h-12 text-lg font-black uppercase tracking-[0.06em] text-[#7c7390] cursor-pointer hover:text-[#8f1fd1] transition-colors"
                   onClick={() => toggleSort('date')}
                 >
                   <div className="flex items-center">
-                    Date
+                    Event Date
                     <SortIcon field="date" />
+                  </div>
+                </TableHead>
+                <TableHead
+                  className="h-12 text-lg font-black uppercase tracking-[0.06em] text-[#7c7390] cursor-pointer hover:text-[#8f1fd1] transition-colors"
+                  onClick={() => toggleSort('package')}
+                >
+                  <div className="flex items-center">
+                    Package
+                    <SortIcon field="package" />
+                  </div>
+                </TableHead>
+                <TableHead
+                  className="h-12 text-lg font-black uppercase tracking-[0.06em] text-[#7c7390] cursor-pointer hover:text-[#8f1fd1] transition-colors"
+                  onClick={() => toggleSort('guestCount')}
+                >
+                  <div className="flex items-center">
+                    Guest Count
+                    <SortIcon field="guestCount" />
                   </div>
                 </TableHead>
                 <TableHead
@@ -391,7 +468,27 @@ export function AdminInquiriesPage() {
                     {inquiry.eventType || inquiry.subject || 'Inquiry'}
                   </TableCell>
                   <TableCell className="font-semibold text-lg text-[#4e4560]">
-                    {new Date(inquiry.date || inquiry.createdAt).toLocaleDateString()}
+                    {inquiry.createdAt || inquiry.created_at
+                      ? new Date(inquiry.createdAt || inquiry.created_at).toLocaleDateString(
+                          'en-US',
+                          { month: 'long', day: '2-digit', year: 'numeric' }
+                        )
+                      : 'N/A'}
+                  </TableCell>
+                  <TableCell className="font-semibold text-lg text-[#4e4560]">
+                    {inquiry.date
+                      ? new Date(inquiry.date).toLocaleDateString('en-US', {
+                          month: 'long',
+                          day: '2-digit',
+                          year: 'numeric',
+                        })
+                      : 'N/A'}
+                  </TableCell>
+                  <TableCell className="font-semibold text-lg text-[#4e4560]">
+                    {inquiry.eventPackage || inquiry.package?.name || 'N/A'}
+                  </TableCell>
+                  <TableCell className="font-semibold text-lg text-[#4e4560]">
+                    {inquiry.eventPax || inquiry.package?.pax || 'N/A'}
                   </TableCell>
                   <TableCell>
                     <Badge className={getStatusBadgeClass(inquiry.status)}>
@@ -428,12 +525,15 @@ export function AdminInquiriesPage() {
                 className="rounded-md border border-[#e5ddee] bg-white px-2 py-1 text-sm font-semibold text-[#2e2837] outline-none focus:ring-2 focus:ring-[#8f1fd1]/30"
               >
                 {[5, 10, 25, 50].map((n) => (
-                  <option key={n} value={n}>{n}</option>
+                  <option key={n} value={n}>
+                    {n}
+                  </option>
                 ))}
               </select>
               <span className="ml-2 text-[#8a7ca3]">
-                {(currentPage - 1) * rowsPerPage + 1}–{Math.min(currentPage * rowsPerPage, filteredAndSortedInquiries.length)}{' '}
-                of {filteredAndSortedInquiries.length}
+                {(currentPage - 1) * rowsPerPage + 1}–
+                {Math.min(currentPage * rowsPerPage, filteredAndSortedInquiries.length)} of{' '}
+                {filteredAndSortedInquiries.length}
               </span>
             </div>
 

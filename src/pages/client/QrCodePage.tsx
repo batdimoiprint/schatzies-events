@@ -7,9 +7,9 @@ import {
   MagnifyingGlass,
   Funnel,
 } from '@phosphor-icons/react';
-import { generateRSVPQRCode, downloadQRCode } from '@/lib/qrCodeGenerator';
+import { downloadQRCode } from '@/lib/qrCodeGenerator';
 import LoadingScreen from '@/components/ui/LoadingScreen';
-import { getRSVPList } from '@/api/rsvp';
+import { getRSVPList, generateEventRsvpQr } from '@/api/rsvp';
 import { getEventManagerEvents, getEventById } from '@/api/events';
 import type { RSVPResponse } from '@/types/rsvp';
 import { useAuth } from '@/hooks/useAuth';
@@ -71,19 +71,23 @@ export function QrCodePage() {
         if (userEvents.length > 0) {
           const firstEvent = userEvents[0];
           setSelectedEventId((prev) => prev || firstEvent.id);
-          
-          // Set initial capacity from summary if available
-          if (firstEvent.pax) setEventPax(Number(firstEvent.pax));
+
+          if ((firstEvent as any).pax) setEventPax(Number((firstEvent as any).pax));
 
           // Fetch full details to get the most accurate capacity (eventPax)
           try {
             const fullDetails = await getEventById(firstEvent.id);
-            const pax = fullDetails.eventPax || fullDetails.event_pax || (fullDetails.package as any)?.pax || firstEvent.pax || 200;
+            const pax =
+              fullDetails.eventPax ||
+              (fullDetails as any).event_pax ||
+              (fullDetails.package as any)?.pax ||
+              (firstEvent as any).pax ||
+              200;
             if (pax > 0) setEventPax(Number(pax));
           } catch (e) {
             console.error('Error fetching event capacity:', e);
             // Fallback to 200 if we couldn't fetch details but know it's a client event
-            if (!firstEvent.pax) setEventPax(200);
+            if (!(firstEvent as any).pax) setEventPax(200);
           }
         }
       } catch (error) {
@@ -99,21 +103,31 @@ export function QrCodePage() {
   }, [user]); // Re-run if user changes
 
   useEffect(() => {
-    // Load persisted QR code and fetch guests for the specific selected event
+    // Fetch event's RSVP QR code from backend and load guests
     if (selectedEventId) {
       fetchRSVPs(selectedEventId);
 
-      const savedQR = localStorage.getItem(`qr_code_${selectedEventId}`);
-      const savedQRId = localStorage.getItem(`qr_id_${selectedEventId}`);
-      if (savedQR && savedQRId) {
-        setQrCode(savedQR);
-        setCurrentQRId(savedQRId);
-        setState('active');
-      } else {
-        // Reset state if no QR found for this specific event
-        setCurrentQRId('');
-        setState('idle');
-      }
+      // Check if backend already has a QR code for this event
+      const loadQr = async () => {
+        try {
+          const data = await generateEventRsvpQr(selectedEventId);
+          if (data.qrCode) {
+            setQrCode(data.qrCode);
+            setCurrentQRId(data.s3Key || selectedEventId);
+            setState('active');
+          } else {
+            setQrCode('');
+            setCurrentQRId('');
+            setState('idle');
+          }
+        } catch {
+          // No QR yet — show idle state
+          setQrCode('');
+          setCurrentQRId('');
+          setState('idle');
+        }
+      };
+      loadQr();
     }
   }, [selectedEventId]);
 
@@ -129,39 +143,52 @@ export function QrCodePage() {
         try {
           const altData = await getRSVPList(`EVENT#${eventId}`);
           if (altData && altData.length > 0) data = altData;
-        } catch { /* ignore fallback error */ }
+        } catch {
+          /* ignore fallback error */
+        }
       }
 
       // Map database fields to the format the UI expects
-      const mappedData: RSVPResponse[] = (Array.isArray(data) ? data : []).map((item: BackendRSVPItem) => {
-        const rawStatus = (item.status || '').toString().toUpperCase();
-        const isAttending = rawStatus === 'ATTENDING' || rawStatus === 'CONFIRMED' || rawStatus === 'TRUE';
-        
-        const scanned = item.isScanned === true || 
-          (item.isScanned && typeof item.isScanned === 'object' && 'BOOL' in item.isScanned && 
-            (item.isScanned as { BOOL: boolean }).BOOL === true) ||
-          item.isScanned === 'true';
+      const mappedData: RSVPResponse[] = (Array.isArray(data) ? data : []).map(
+        (item: BackendRSVPItem) => {
+          const rawStatus = (item.status || '').toString().toUpperCase();
+          const isAttending =
+            rawStatus === 'ATTENDING' || rawStatus === 'CONFIRMED' || rawStatus === 'TRUE';
 
-        return {
-          id: String(item.guestId || item.SK?.split('#')[1] || item.id || ''),
-          guestId: String(item.guestId || item.SK?.split('#')[1] || item.id || ''),
-          firstName: String(item.guestfirstName || item.firstName || item.first_name || 'Guest'),
-          lastName: String(item.guestlastName || item.lastName || item.last_name || ''),
-          middleName: String(item.guestmiddleName || item.middleName || item.middle_name || ''),
-          contactNumber: String(item.contactNumber || item.contact_number || ''),
-          status: (isAttending ? 'Attending' : 'Not Attending') as 'Attending' | 'Not Attending',
-          isScanned: scanned,
-          isVerified: Boolean(item.isVerified === true || 
-                      (item.isVerified && typeof item.isVerified === 'object' && 'BOOL' in (item.isVerified as any) && (item.isVerified as any).BOOL === true) ||
-                      item.isVerified === 'true'),
-          qrCode: String(
-            typeof item.qrCode === 'object' && item.qrCode && 'S' in (item.qrCode as any)
-              ? (item.qrCode as any).S
-              : item.qrCode || ''
-          ),
-          message: String(item.message || ''),
-        } as RSVPResponse;
-      });
+          const scanned =
+            item.isScanned === true ||
+            (item.isScanned &&
+              typeof item.isScanned === 'object' &&
+              'BOOL' in item.isScanned &&
+              (item.isScanned as { BOOL: boolean }).BOOL === true) ||
+            item.isScanned === 'true';
+
+          return {
+            id: String(item.guestId || item.SK?.split('#')[1] || item.id || ''),
+            guestId: String(item.guestId || item.SK?.split('#')[1] || item.id || ''),
+            firstName: String(item.guestfirstName || item.firstName || item.first_name || 'Guest'),
+            lastName: String(item.guestlastName || item.lastName || item.last_name || ''),
+            middleName: String(item.guestmiddleName || item.middleName || item.middle_name || ''),
+            contactNumber: String(item.contactNumber || item.contact_number || ''),
+            status: (isAttending ? 'Attending' : 'Not Attending') as 'Attending' | 'Not Attending',
+            isScanned: scanned,
+            isVerified: Boolean(
+              item.isVerified === true ||
+              (item.isVerified &&
+                typeof item.isVerified === 'object' &&
+                'BOOL' in (item.isVerified as any) &&
+                (item.isVerified as any).BOOL === true) ||
+              item.isVerified === 'true'
+            ),
+            qrCode: String(
+              typeof item.qrCode === 'object' && item.qrCode && 'S' in (item.qrCode as any)
+                ? (item.qrCode as any).S
+                : item.qrCode || ''
+            ),
+            message: String(item.message || ''),
+          } as RSVPResponse;
+        }
+      );
 
       setRsvps(mappedData);
     } catch (err) {
@@ -182,13 +209,9 @@ export function QrCodePage() {
     if (!selectedEventId) return;
     setIsLoading(true);
     try {
-      const qrId = `qr-${Date.now()}`;
-      const invitationUrl = `${window.location.origin}/invitation/${selectedEventId}/${qrId}`;
-      const qrDataUrl = await generateRSVPQRCode(invitationUrl, selectedEventId);
-      setQrCode(qrDataUrl);
-      setCurrentQRId(qrId);
-      localStorage.setItem(`qr_code_${selectedEventId}`, qrDataUrl);
-      localStorage.setItem(`qr_id_${selectedEventId}`, qrId);
+      const data = await generateEventRsvpQr(selectedEventId);
+      setQrCode(data.qrCode);
+      setCurrentQRId(data.s3Key || selectedEventId);
       setState('active');
     } catch (error) {
       console.error('Error generating QR code:', error);
@@ -197,11 +220,21 @@ export function QrCodePage() {
     }
   };
 
-  const handleDownloadQR = () => {
-    if (qrCode) downloadQRCode(qrCode, 'wedding-invitation.png');
+  const handleDownloadQR = async () => {
+    if (!qrCode) return;
+    try {
+      const response = await fetch(qrCode);
+      const blob = await response.blob();
+      const blobUrl = URL.createObjectURL(blob);
+      downloadQRCode(blobUrl, 'rsvp-invitation-qr.png');
+      URL.revokeObjectURL(blobUrl);
+    } catch {
+      downloadQRCode(qrCode, 'rsvp-invitation-qr.png');
+    }
   };
   const handleCopyLink = () => {
-    const invitationLink = `${window.location.origin}/invitation/${selectedEventId}/${currentQRId}`;
+    const baseUrl = window.location.origin;
+    const invitationLink = `${baseUrl}/rsvp?eventId=${selectedEventId}`;
     navigator.clipboard.writeText(invitationLink);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
@@ -222,7 +255,9 @@ export function QrCodePage() {
   const displayRsvps = rsvps.filter((r) => r.isVerified || r.status === 'Not Attending');
   const verifiedRsvps = rsvps.filter((r) => r.isVerified);
   const totalRSVPs = displayRsvps.length;
-  const attendingCount = displayRsvps.filter((r) => r.status === 'Attending' && r.isVerified).length;
+  const attendingCount = displayRsvps.filter(
+    (r) => r.status === 'Attending' && r.isVerified
+  ).length;
   const notAttendingCount = displayRsvps.filter((r) => r.status === 'Not Attending').length;
   const arrivedCount = verifiedRsvps.filter((r) => r.isScanned).length;
   const pendingCount = Math.max(0, eventPax - attendingCount - notAttendingCount);
@@ -389,13 +424,16 @@ export function QrCodePage() {
               </div>
               <div className="mt-6 flex justify-between items-center text-xs text-[#696373]">
                 <div className="flex gap-4">
-                    Capacity: <strong>{eventPax}</strong>
+                  Capacity: <strong>{eventPax}</strong>
                   <span>
                     Arrived: <strong className="text-blue-600">{arrivedCount}</strong>
                   </span>
                 </div>
                 <span>
-                  Total Responses: <strong>{totalRSVPs}/{eventPax}</strong>
+                  Total Responses:{' '}
+                  <strong>
+                    {totalRSVPs}/{eventPax}
+                  </strong>
                 </span>
               </div>
             </div>
@@ -475,7 +513,11 @@ export function QrCodePage() {
                         <span
                           className={`inline-flex items-center gap-1.5 rounded-full px-3 py-0.5 text-[10px] font-bold ${rsvp.isScanned ? 'bg-blue-100 text-blue-700' : rsvp.status === 'Not Attending' ? 'bg-red-100 text-red-700' : 'bg-yellow-100 text-yellow-700'}`}
                         >
-                          {rsvp.isScanned ? 'Arrived' : rsvp.status === 'Not Attending' ? 'Absent' : 'Pending'}
+                          {rsvp.isScanned
+                            ? 'Arrived'
+                            : rsvp.status === 'Not Attending'
+                              ? 'Absent'
+                              : 'Pending'}
                         </span>
                       </td>
                       <td className="px-4 py-3.5 text-center">

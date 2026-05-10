@@ -11,7 +11,7 @@ export async function generateRSVPQRCode(rsvpId: string, eventId: string): Promi
     // Get the current origin (localhost:5173, production domain, etc.)
     // Use window.location.hostname to support access from other devices on the network
     let origin = 'http://localhost:5173';
-    
+
     if (typeof window !== 'undefined') {
       const { protocol, hostname, port } = window.location;
       origin = port ? `${protocol}//${hostname}:${port}` : `${protocol}//${hostname}`;

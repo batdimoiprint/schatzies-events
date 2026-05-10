@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { format } from 'date-fns';
 import { useForm, Controller } from 'react-hook-form';
 import { cn } from '@/lib/utils';
@@ -11,7 +11,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import LoadingScreen from '@/components/ui/LoadingScreen';
-import { submitInquiry } from '@/api/inquiries';
+import { submitInquiry, getBookedDates } from '@/api/inquiries';
 import { checkOrSendVerification, checkEmailVerified } from '@/api/email-verification';
 import { getPackageById, getPackagesByType } from '@/data/packages';
 import {
@@ -22,7 +22,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 
-const eventTypes = ['Wedding', 'Debut'];
+const eventTypes = ['Wedding', 'Debut', 'Others'];
 
 const defaultPaxOptions = ['100', '150', '200'];
 const bloomsPaxOptions = ['50', '100', '150', '200'];
@@ -76,6 +76,7 @@ interface IInquiryForm {
   contactNumber: string;
   eventDate: string;
   eventType: string;
+  customEventType?: string;
   eventPackage: string;
   eventPax: string;
   message: string;
@@ -94,10 +95,23 @@ export function InquiryForm({ onClose, selectedPackageId, selectedEventType }: I
   const [verificationSending, setVerificationSending] = useState(false);
   const [verificationSent, setVerificationSent] = useState(false);
   const [verificationError, setVerificationError] = useState<string | null>(null);
-  const [shouldAutoSubmit, setShouldAutoSubmit] = useState(false);
   const [verificationCooldown, setVerificationCooldown] = useState(0);
-  const pollingRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const [bookedDates, setBookedDates] = useState<string[]>([]);
   const cooldownRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  // Fetch booked dates on mount
+  useEffect(() => {
+    const fetchBooked = async () => {
+      try {
+        const dates = await getBookedDates();
+        console.log('Fetched booked dates:', dates);
+        setBookedDates(dates);
+      } catch (err) {
+        console.error('Failed to fetch booked dates:', err);
+      }
+    };
+    fetchBooked();
+  }, []);
 
   // Get the selected package info if available
   const selectedPackage =
@@ -121,6 +135,7 @@ export function InquiryForm({ onClose, selectedPackageId, selectedEventType }: I
       contactNumber: '',
       eventDate: '',
       eventType: selectedEventType || '',
+      customEventType: '',
       eventPackage: selectedPackage?.name || '',
       eventPax: '',
       message: '',
@@ -142,37 +157,25 @@ export function InquiryForm({ onClose, selectedPackageId, selectedEventType }: I
     setEmailVerified(false);
   }, [watchedEmail]);
 
-  // Poll backend for verification while waiting
-  useEffect(() => {
-    if (verificationSent && !emailVerified && watchedEmail) {
-      pollingRef.current = setInterval(async () => {
-        // Ask backend
-        try {
-          const { verified, alreadyUsed } = await checkEmailVerified(watchedEmail);
-          if (alreadyUsed) {
-            setVerificationError('This email is already used. Please use another email.');
-            setEmailVerified(false);
-            setVerificationSent(false);
-            if (pollingRef.current) clearInterval(pollingRef.current);
-            return;
-          }
-          if (verified) {
-            setEmailVerified(true);
-            setVerificationSent(false);
-            if (pollingRef.current) clearInterval(pollingRef.current);
-            
-            // Trigger automatic submit since verification is complete
-            setShouldAutoSubmit(true);
-          }
-        } catch {
-          /* ignore polling errors */
-        }
-      }, 4000);
+  // Helper to check verification status (called on Blur)
+  const handleEmailBlur = async () => {
+    if (!watchedEmail) return;
+
+    // Basic email format check before calling API
+    const emailRegex = /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i;
+    if (!emailRegex.test(watchedEmail)) return;
+
+    try {
+      const { verified } = await checkEmailVerified(watchedEmail);
+      if (verified) {
+        setEmailVerified(true);
+        setVerificationSent(false);
+        setVerificationError(null);
+      }
+    } catch {
+      // If check fails, we just don't show the verified status
     }
-    return () => {
-      if (pollingRef.current) clearInterval(pollingRef.current);
-    };
-  }, [verificationSent, emailVerified, watchedEmail]);
+  };
 
   // Cooldown timer to prevent spamming verification emails
   useEffect(() => {
@@ -193,13 +196,18 @@ export function InquiryForm({ onClose, selectedPackageId, selectedEventType }: I
   }, [verificationCooldown]);
 
   // ── Send verification email handler (called automatically on submit) ──
-  const handleSendVerification = async (email: string): Promise<boolean> => {
+  const handleSendVerification = async (email: string, pendingInquiry?: any): Promise<boolean> => {
     setVerificationSending(true);
     setVerificationError(null);
     try {
-      const result = await checkOrSendVerification(email);
+      const result = await checkOrSendVerification(email, pendingInquiry);
       if (result.alreadyUsed) {
-        setVerificationError('This email is already used. Please use another email.');
+        if (result.reason) {
+          setVerificationError(result.reason);
+          return false;
+        }
+        // If no reason, it means it was just auto-submitted by the backend
+        setSubmitted(true);
         return false;
       }
       if (result.verified) {
@@ -211,11 +219,8 @@ export function InquiryForm({ onClose, selectedPackageId, selectedEventType }: I
         setVerificationCooldown(30); // 30 second cooldown
         return false; // email sent, do not proceed
       }
-    } catch (err) {
-      const msg =
-        typeof err === 'object' && err !== null && 'response' in err
-          ? (err as { response?: { data?: { message?: string } } }).response?.data?.message
-          : undefined;
+    } catch (err: any) {
+      const msg = err.response?.data?.error || err.response?.data?.message;
       setVerificationError(msg || 'Failed to send verification email. Please try again.');
       return false;
     } finally {
@@ -271,54 +276,39 @@ export function InquiryForm({ onClose, selectedPackageId, selectedEventType }: I
   const onFormSubmit = async (data: IInquiryForm) => {
     setError(null);
 
+    const inquiryData = {
+      firstName: data.firstName.trim(),
+      lastName: data.lastName.trim(),
+      middleName: data.middleName.trim() || undefined,
+      email: data.email.trim(),
+      contactNumber: `+63${data.contactNumber.trim()}`,
+      date: data.eventDate,
+      eventType: data.eventType,
+      eventPackage: data.eventPackage,
+      eventPax: Number.parseInt(data.eventPax, 10),
+      message: data.message.trim() || undefined,
+    };
+
     // ── Automatic email verification check on submit ──
     const email = data.email.trim();
-    const canProceed = await handleSendVerification(email);
+    const canProceed = await handleSendVerification(email, inquiryData);
     if (!canProceed) {
-      // Verification email was sent, or there was an error. Do not submit.
+      // Verification email was sent (with pending data), or it was already submitted, or error.
       return;
     }
     setIsLoading(true);
 
     try {
-      await submitInquiry({
-        firstName: data.firstName.trim(),
-        lastName: data.lastName.trim(),
-        middleName: data.middleName.trim() || undefined,
-        email: data.email.trim(),
-        contactNumber: `+63${data.contactNumber.trim()}`,
-        date: data.eventDate,
-        eventType: data.eventType,
-        eventPackage: data.eventPackage,
-        eventPax: Number.parseInt(data.eventPax, 10),
-        message: data.message.trim() || undefined,
-      });
-
+      await submitInquiry(inquiryData);
       setSubmitted(true);
-    } catch (submitError) {
-      const message =
-        typeof submitError === 'object' &&
-          submitError !== null &&
-          'response' in submitError &&
-          typeof (submitError as { response?: { data?: { message?: string } } }).response?.data
-            ?.message === 'string'
-          ? (submitError as { response?: { data?: { message?: string } } }).response?.data?.message
-          : 'Failed to submit inquiry. Please try again.';
-
-      setError(message ?? 'Failed to submit inquiry. Please try again.');
+    } catch (submitError: any) {
+      const apiMessage = submitError.response?.data?.error || submitError.response?.data?.message;
+      setError(apiMessage || 'Failed to submit inquiry. Please try again.');
       console.error('Error submitting inquiry:', submitError);
     } finally {
       setIsLoading(false);
     }
   };
-
-  // Handle auto-submit after verification
-  useEffect(() => {
-    if (shouldAutoSubmit) {
-      setShouldAutoSubmit(false);
-      handleSubmit(onFormSubmit)();
-    }
-  }, [shouldAutoSubmit, handleSubmit]);
 
   return (
     <>
@@ -569,6 +559,54 @@ export function InquiryForm({ onClose, selectedPackageId, selectedEventType }: I
         className="fixed inset-0 z-[9998] flex items-center justify-center bg-black/60 px-4 backdrop-blur-sm [scrollbar-gutter:stable]"
         onClick={onClose}
       >
+        {/* ── "Check your email" dialog when verification sent ── */}
+        {verificationSent && !emailVerified && !submitted && !isLoading && (
+          <div
+            className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50 backdrop-blur-sm"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div
+              className="flex w-[380px] flex-col items-center rounded-2xl bg-white px-8 py-10 shadow-2xl animate-in fade-in zoom-in-95 duration-300"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Mail icon */}
+              <div className="flex h-20 w-20 items-center justify-center rounded-full bg-gradient-to-br from-[#FF0066] to-[#700F81] shadow-lg shadow-[#700F81]/30">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="white"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  className="h-10 w-10"
+                >
+                  <rect width="20" height="16" x="2" y="4" rx="2" />
+                  <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" />
+                </svg>
+              </div>
+              <h3 className="mt-5 text-[1.3rem] font-bold text-[#1a1225]">Check Your Email</h3>
+              <p className="mt-2 text-center text-[0.88rem] leading-[1.6] text-gray-500">
+                We've sent a confirmation link to your email address. Please open your email and
+                click <span className="font-semibold text-[#700F81]">"Confirm Inquiry"</span> to
+                complete your submission.
+              </p>
+              <p className="mt-3 text-center text-[0.75rem] leading-[1.5] text-gray-400">
+                The link will expire in 15 minutes. Check your spam folder if you don't see it.
+              </p>
+              <button
+                onClick={() => {
+                  setVerificationSent(false);
+                  setVerificationCooldown(0);
+                }}
+                className="mt-6 h-10 rounded-full bg-gradient-to-r from-[#FF0066] to-[#700F81] px-8 text-[0.88rem] font-bold text-white shadow-lg transition hover:brightness-110"
+              >
+                Got it
+              </button>
+            </div>
+          </div>
+        )}
+
         {/* ── Success confirmation overlay ── */}
         {submitted && !isLoading && (
           <div
@@ -772,31 +810,13 @@ export function InquiryForm({ onClose, selectedPackageId, selectedEventType }: I
                                   // Call standard react-hook-form onBlur
                                   const { onBlur } = register('email');
                                   onBlur(e);
+                                  // Also check verification status
+                                  handleEmailBlur();
                                 }}
-                                disabled={emailVerified}
-                                className={cn(
-                                  fieldBase,
-                                  emailVerified && 'opacity-60 cursor-not-allowed'
-                                )}
+                                className={fieldBase}
                               />
                             </div>
                           </Field>
-
-                          {/* Verification status — simple badge below input */}
-                          {emailVerified && (
-                            <div className="flex items-center gap-1 px-2 py-1 rounded bg-emerald-50 border border-emerald-100 mt-1">
-                              <span className="text-[0.65rem] font-bold text-emerald-600">
-                                Email verified ✅ You can now submit the form.
-                              </span>
-                            </div>
-                          )}
-                          {verificationSent && !emailVerified && (
-                            <div className="flex items-center gap-1 px-2 py-1 rounded bg-amber-50 border border-amber-100 mt-1">
-                              <span className="text-[0.65rem] font-medium text-amber-600 animate-pulse">
-                                Verification link sent. Please check your email before submitting.
-                              </span>
-                            </div>
-                          )}
                         </div>
 
                         {/* ── Contact number ── */}
@@ -881,8 +901,32 @@ export function InquiryForm({ onClose, selectedPackageId, selectedEventType }: I
                                     defaultMonth={
                                       field.value ? new Date(field.value) : getMinDate()
                                     }
-                                    onSelect={(date) => field.onChange(date?.toISOString())}
-                                    disabled={(date) => date < getMinDate()}
+                                    onSelect={(date) =>
+                                      field.onChange(date ? format(date, 'yyyy-MM-dd') : undefined)
+                                    }
+                                    disabled={(date) => {
+                                      // 1. Must be at least 1 month in advance
+                                      if (date < getMinDate()) return true;
+
+                                      // 2. Must not be in bookedDates
+                                      const dateStr = format(date, 'yyyy-MM-dd');
+                                      return (
+                                        Array.isArray(bookedDates) &&
+                                        bookedDates.some((d) => d.startsWith(dateStr))
+                                      );
+                                    }}
+                                    modifiers={{
+                                      booked: (date: Date) => {
+                                        const dateStr = format(date, 'yyyy-MM-dd');
+                                        return (
+                                          Array.isArray(bookedDates) &&
+                                          bookedDates.some((d) => d.startsWith(dateStr))
+                                        );
+                                      },
+                                    }}
+                                    modifiersClassNames={{
+                                      booked: 'rdp-booked-date',
+                                    }}
                                     initialFocus
                                   />
                                 </PopoverContent>
@@ -912,25 +956,48 @@ export function InquiryForm({ onClose, selectedPackageId, selectedEventType }: I
                           />
                         </Field>
                       </div>
+                      {watchedEventType === 'Others' && (
+                        <div className="grid grid-cols-1 gap-2.5">
+                          <Field required error={errors.customEventType?.message}>
+                            <Input
+                              type="text"
+                              placeholder="Please specify your event type"
+                              {...register('customEventType', {
+                                required: 'Please specify your event type',
+                                minLength: { value: 2, message: 'Minimum 2 characters' },
+                                maxLength: { value: 100, message: 'Maximum 100 characters' },
+                              })}
+                              className={fieldBase}
+                            />
+                          </Field>
+                        </div>
+                      )}
                       <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2">
                         <Field error={errors.eventPackage?.message}>
                           <div className="flex items-center gap-1.5">
                             <Controller
                               control={control}
                               name="eventPackage"
-                              rules={{ required: 'Event package is required' }}
+                              rules={{
+                                required:
+                                  watchedEventType !== 'Others'
+                                    ? 'Event package is required'
+                                    : false,
+                              }}
                               render={({ field }) => (
                                 <Select
                                   onValueChange={field.onChange}
                                   value={field.value}
-                                  disabled={!watchedEventType}
+                                  disabled={!watchedEventType || watchedEventType === 'Others'}
                                 >
                                   <SelectTrigger className={fieldBase}>
                                     <SelectValue
                                       placeholder={
                                         !watchedEventType
                                           ? 'Select Event Type First'
-                                          : 'Event Package'
+                                          : watchedEventType === 'Others'
+                                            ? 'Not needed for custom events'
+                                            : 'Event Package'
                                       }
                                     />
                                   </SelectTrigger>
@@ -950,19 +1017,24 @@ export function InquiryForm({ onClose, selectedPackageId, selectedEventType }: I
                           <Controller
                             control={control}
                             name="eventPax"
-                            rules={{ required: 'Number of pax is required' }}
+                            rules={{
+                              required:
+                                watchedEventType !== 'Others' ? 'Number of pax is required' : false,
+                            }}
                             render={({ field }) => (
                               <Select
                                 onValueChange={field.onChange}
                                 value={field.value}
-                                disabled={!watchedEventPackage}
+                                disabled={!watchedEventPackage || watchedEventType === 'Others'}
                               >
                                 <SelectTrigger className={fieldBase}>
                                   <SelectValue
                                     placeholder={
                                       !watchedEventPackage
                                         ? 'Select Event Package First'
-                                        : 'Event Pax'
+                                        : watchedEventType === 'Others'
+                                          ? 'Not needed for custom events'
+                                          : 'Event Pax'
                                     }
                                   />
                                 </SelectTrigger>

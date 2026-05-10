@@ -93,6 +93,68 @@ function formatCsvValue(value: string | number): string {
   return value;
 }
 
+function calculatePackagePrice(packageName: string, eventType: string, pax: number): number {
+  const pkg = packageName.trim().toLowerCase();
+  const type = eventType.trim().toLowerCase();
+
+  if (type === 'wedding') {
+    if (pkg === 'blooms') {
+      if (pax <= 50) return 200000;
+      if (pax <= 100) return 235000;
+      if (pax <= 150) return 277500;
+      return 320000;
+    }
+    if (pkg === 'fascinating') {
+      if (pax <= 100) return 295000;
+      if (pax <= 150) return 342500;
+      return 390000;
+    }
+    if (pkg === 'windy') {
+      if (pax <= 100) return 420000;
+      if (pax <= 150) return 480000;
+      return 540000;
+    }
+    if (pkg === 'de luxe') {
+      if (pax <= 100) return 520000;
+      if (pax <= 150) return 585000;
+      return 650000;
+    }
+    if (pkg === 'grandezza') {
+      if (pax <= 100) return 780000;
+      if (pax <= 150) return 870000;
+      return 960000;
+    }
+  } else if (type === 'debut') {
+    if (pkg === 'charming') {
+      if (pax <= 100) return 200000;
+      if (pax <= 150) return 242500;
+      return 285000;
+    }
+    if (pkg === 'irresistible') {
+      if (pax <= 100) return 295000;
+      if (pax <= 150) return 342500;
+      return 390000;
+    }
+    if (pkg === 'elegancia') {
+      if (pax <= 100) return 495000;
+      if (pax <= 150) return 555000;
+      return 615000;
+    }
+    if (pkg === 'flawless') {
+      if (pax <= 100) return 395000;
+      if (pax <= 150) return 445000;
+      return 495000;
+    }
+    if (pkg === 'grandiosa') {
+      if (pax <= 100) return 595000;
+      if (pax <= 150) return 670000;
+      return 745000;
+    }
+  }
+
+  return 0;
+}
+
 export function CostBreakdownPage() {
   const [selectedEventId, setSelectedEventId] = useState('');
   const [apiEvents, setApiEvents] = useState<any[]>([]);
@@ -278,11 +340,25 @@ export function CostBreakdownPage() {
   const fallbackAdditionalCharges = toOptionalNumber(
     selectedEvent?.additionalCharges ?? selectedEvent?.additionalCharge
   );
-  const resolvedPackagePrice = apiPackagePrice ?? fallbackPackagePrice ?? 0;
+
   const resolvedEventPax = apiEventPax ?? fallbackEventPax ?? 0;
+  const computedPackagePrice = calculatePackagePrice(
+    selectedEventPackage,
+    selectedEventType,
+    resolvedEventPax
+  );
+
+  const rawApiPrice = apiPackagePrice ?? fallbackPackagePrice ?? 0;
+  const resolvedPackagePrice =
+    computedPackagePrice > 0
+      ? computedPackagePrice
+      : rawApiPrice > 50000
+        ? rawApiPrice
+        : rawApiPrice * resolvedEventPax;
+
   const baseAdditionalCharges = apiAdditionalCharges ?? fallbackAdditionalCharges ?? 0;
   const displayedAdditionalCharges = baseAdditionalCharges + additionalItemsTotal;
-  const packagePayment = resolvedPackagePrice * resolvedEventPax;
+  const packagePayment = resolvedPackagePrice;
   const totalVendorCharges = useMemo(() => {
     return apiVendors.reduce((total, charge) => total + charge.cost, 0);
   }, [apiVendors]);
@@ -291,6 +367,20 @@ export function CostBreakdownPage() {
 
   const formattedEventDate = useMemo(() => {
     const dateValue = selectedEvent?.startDate ?? selectedEvent?.eventDate ?? selectedEvent?.date;
+    if (!dateValue) {
+      return 'Date not available';
+    }
+
+    const parsedDate = new Date(dateValue);
+    if (Number.isNaN(parsedDate.getTime())) {
+      return 'Date not available';
+    }
+
+    return longDateFormatter.format(parsedDate);
+  }, [selectedEvent]);
+
+  const formattedEndDate = useMemo(() => {
+    const dateValue = selectedEvent?.endDate;
     if (!dateValue) {
       return 'Date not available';
     }
@@ -626,7 +716,7 @@ export function CostBreakdownPage() {
                     <span className="text-[10px] font-medium uppercase tracking-wide text-[#8b8199]">
                       End Date
                     </span>
-                    <span className="whitespace-nowrap">{formattedEventDate}</span>
+                    <span className="whitespace-nowrap">{formattedEndDate}</span>
                   </div>
                 </div>
               </div>
@@ -698,7 +788,7 @@ export function CostBreakdownPage() {
               <div className="p-5">
                 <p className="inline-flex items-center gap-2 text-sm font-semibold text-[#7a7186] truncate w-full">
                   <span className="size-2.5 shrink-0 rounded-full bg-[#d7d6db]" />
-                  Package (Per Pax)
+                  Package Price
                 </p>
                 <p className="mt-5 font-sans text-2xl sm:text-3xl lg:text-5xl font-black tracking-tight text-[#2d2834]">
                   {formatPeso(resolvedPackagePrice)}

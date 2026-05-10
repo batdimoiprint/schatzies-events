@@ -7,7 +7,6 @@ import {
   type FormEvent,
 } from 'react';
 import {
-  CalendarDays,
   ChevronLeft,
   ClipboardList,
   Download,
@@ -27,6 +26,7 @@ import {
   createBoardTask,
   updateBoardTask,
   deleteBoardTask,
+  moveBoardTask,
 } from '@/api/planner-tasks';
 import {
   getEvents,
@@ -36,14 +36,26 @@ import {
   createEventNote,
   updateEventNote,
   deleteEventNote,
+  getEventChecklist,
+  updateEventChecklistItem,
+  addEventChecklistItem,
+  deleteEventChecklistItem,
   getEventFlow,
   saveEventFlow,
   deleteEventActivity,
   getEventById,
 } from '@/api/events';
 import { getCalendarEntries } from '@/api/calendar';
+import {
+  getVendorsByEventId,
+  getVendors,
+  assignVendorToEvent,
+  unassignVendorFromEvent,
+  type EventManagerVendor,
+  type Vendor,
+} from '@/api/vendors';
 
-type PlannerTab = 'overview' | 'task' | 'notes' | 'flow' | 'checklist';
+type PlannerTab = 'overview' | 'task' | 'notes' | 'flow' | 'checklist' | 'vendors';
 
 type ProjectSlot = {
   id: string;
@@ -58,21 +70,6 @@ type ProjectSlot = {
   clientId?: string;
   clientRealName?: string;
   eventCost?: string | number;
-};
-
-type TaskCard = {
-  id: string;
-  title: string;
-  badge: string;
-  accentClassName: string;
-  frameClassName: string;
-  due: string;
-  owner: string;
-  items: Array<{
-    id: string;
-    label: string;
-    done: boolean;
-  }>;
 };
 
 type TaskLane = 'todo' | 'in-progress' | 'completed';
@@ -106,72 +103,7 @@ const tabs: Array<{ id: PlannerTab; label: string }> = [
   { id: 'notes', label: 'Notes' },
   { id: 'flow', label: 'Flow' },
   { id: 'checklist', label: 'Checklist' },
-];
-
-const taskCards: TaskCard[] = [
-  {
-    id: 'task-event-manager',
-    title: 'Event Manager',
-    badge: 'Operations',
-    accentClassName: 'from-[#f6d6e8] to-[#fceef6] text-[#7b2a5c]',
-    frameClassName: 'border-[#edd3e4] bg-white',
-    due: 'Due: Jan 2, 2026',
-    owner: 'Owner: Coordinator Team',
-    items: [
-      { id: 'em-1', label: 'Confirm program timeline with host', done: true },
-      { id: 'em-2', label: 'Finalize entrance and cue sequence', done: false },
-      { id: 'em-3', label: 'Assign backstage task leads', done: false },
-      { id: 'em-4', label: 'Lock floor plan and guest flow', done: true },
-    ],
-  },
-  {
-    id: 'task-rsvp',
-    title: 'RSVP Monitoring',
-    badge: 'Guest Handling',
-    accentClassName: 'from-[#dfe7ff] to-[#eff3ff] text-[#2a4f7b]',
-    frameClassName: 'border-[#d7def1] bg-white',
-    due: 'Due: Jan 1, 2026',
-    owner: 'Owner: RSVP Team',
-    items: [
-      { id: 'rsvp-1', label: 'Send final RSVP reminder blast', done: true },
-      { id: 'rsvp-2', label: 'Follow up VIP non-responders', done: false },
-      { id: 'rsvp-3', label: 'Update confirmed headcount sheet', done: false },
-      { id: 'rsvp-4', label: 'Sync seat map with latest responses', done: false },
-    ],
-  },
-  {
-    id: 'task-vendors',
-    title: 'Vendor Coordination',
-    badge: 'Suppliers',
-    accentClassName: 'from-[#efe3d4] to-[#faf4ea] text-[#7a654d]',
-    frameClassName: 'border-[#e6dccf] bg-white',
-    due: 'Due: Jan 2, 2026',
-    owner: 'Owner: Vendor Lead',
-    items: [
-      { id: 'ven-1', label: 'Confirm catering arrival time', done: true },
-      { id: 'ven-2', label: 'Approve styling mockup revisions', done: false },
-      { id: 'ven-3', label: 'Validate AV equipment checklist', done: false },
-      { id: 'ven-4', label: 'Receive final supplier permits', done: true },
-    ],
-  },
-  {
-    id: 'task-budget',
-    title: 'Cost Breakdown',
-    badge: 'Finance',
-    accentClassName: 'from-[#dff0db] to-[#eef8ea] text-[#5a7335]',
-    frameClassName: 'border-[#d5ebce] bg-white',
-    due: 'Due: Jan 1, 2026',
-    owner: 'Owner: Finance Team',
-    items: [
-      { id: 'cost-1', label: 'Technicals Manpower', done: true },
-      { id: 'cost-2', label: '(2) lighting', done: true },
-      { id: 'cost-3', label: 'Fresh Flowers Delivered', done: true },
-      { id: 'cost-4', label: 'Dry Run Day 1', done: true },
-      { id: 'cost-5', label: 'Dry Run Day 2', done: true },
-      { id: 'cost-6', label: 'Approve program outline', done: false },
-      { id: 'cost-7', label: 'Guest pass validation', done: false },
-    ],
-  },
+  { id: 'vendors', label: 'Vendors' },
 ];
 
 const taskLaneConfig: Array<{
@@ -284,12 +216,6 @@ const parseTimeParts = (value: string, fallbackHour: number) => {
     minute,
     totalMinutes: hour * 60 + minute,
   };
-};
-
-const mapBackendStatusToLane = (status: string): TaskLane => {
-  if (status === 'IN_PROGRESS') return 'in-progress';
-  if (status === 'COMPLETED') return 'completed';
-  return 'todo';
 };
 
 const mapLaneToBackendStatus = (lane: TaskLane): string => {
@@ -1107,13 +1033,17 @@ export function EventPlannerPage() {
   const [selectedEventId, setSelectedEventId] = useState('');
   const [projectSlots, setProjectSlots] = useState<ProjectSlot[]>([]);
   const [activeTab, setActiveTab] = useState<PlannerTab>('overview');
-  const [plannerTaskCards, setPlannerTaskCards] = useState<TaskCard[]>(taskCards);
+  const [checklistItems, setChecklistItems] = useState<any[]>([]);
   const [boardTasks, setBoardTasks] = useState<PlannerBoardTask[]>([]);
   const [currentClientName, setCurrentClientName] = useState('');
   const [eventAllocation, setEventAllocation] = useState<any>(null);
   const [eventMeetings, setEventMeetings] = useState<any[]>([]);
   const [overviewFlows, setOverviewFlows] = useState<any[]>([]);
   const [selectedEventDetails, setSelectedEventDetails] = useState<any>(null);
+  const [eventVendors, setEventVendors] = useState<EventManagerVendor[]>([]);
+  const [vendorPool, setVendorPool] = useState<Vendor[]>([]);
+  const [isAssignVendorModalOpen, setIsAssignVendorModalOpen] = useState(false);
+  const [isAssigningVendor, setIsAssigningVendor] = useState(false);
 
   useEffect(() => {
     let isMounted = true;
@@ -1201,10 +1131,10 @@ export function EventPlannerPage() {
             if (isMounted) {
               setCurrentClientName(
                 userData?.name ||
-                userData?.firstName ||
-                userData?.realName ||
-                userData?.clientName ||
-                ''
+                  userData?.firstName ||
+                  userData?.realName ||
+                  userData?.clientName ||
+                  ''
               );
             }
           })
@@ -1249,14 +1179,22 @@ export function EventPlannerPage() {
         if (isMounted) {
           const mappedFlows = Array.isArray(flowData)
             ? flowData
-              .map((item: any, index: number) => mapBackendFlowToUI(item, index))
-              .sort((a: any, b: any) => a.startHour - b.startHour)
+                .map((item: any, index: number) => mapBackendFlowToUI(item, index))
+                .sort((a: any, b: any) => a.startHour - b.startHour)
             : [];
           setOverviewFlows(mappedFlows);
         }
       } catch (error) {
         console.error('Failed to fetch event flow for overview', error);
         if (isMounted) setOverviewFlows([]);
+      }
+
+      try {
+        const checklistData = await getEventChecklist(selectedEventId);
+        if (isMounted) setChecklistItems(checklistData || []);
+      } catch (error) {
+        console.error('Failed to load checklist:', error);
+        if (isMounted) setChecklistItems([]);
       }
 
       try {
@@ -1269,26 +1207,71 @@ export function EventPlannerPage() {
       }
 
       try {
-        const response = await getBoardTasks(selectedEventId);
+        const vendorsData = await getVendorsByEventId(selectedEventId);
+        if (isMounted) setEventVendors(vendorsData || []);
+      } catch (error) {
+        console.error('Failed to load vendors:', error);
+        if (isMounted) setEventVendors([]);
+      }
 
+      try {
+        const response = await getBoardTasks(selectedEventId);
         if (!isMounted) return;
 
-        const backendTasks: Record<string, any[]> = response?.tasks || {};
+        // The actual backend structure is { message: string, tasks: { "Todo": [], "In Progress": [], "Completed": [] } }
+        const taskGroups = response?.tasks || {};
         const formattedTasks: PlannerBoardTask[] = [];
 
-        ['TODO', 'IN_PROGRESS', 'COMPLETED'].forEach((status) => {
-          const group = backendTasks[status] || [];
-          group.forEach((task: any) => {
+        // Safely extract from the grouped object
+        if (typeof taskGroups === 'object' && !Array.isArray(taskGroups)) {
+          Object.entries(taskGroups).forEach(([groupName, tasksInGroup]) => {
+            if (Array.isArray(tasksInGroup)) {
+              tasksInGroup.forEach((task: any) => {
+                const taskId = String(task.id || task._id || `task-${Date.now()}-${Math.random()}`);
+
+                // Determine lane based on the group key or the task's own status string
+                const rawStatus = String(task.status || groupName)
+                  .trim()
+                  .toLowerCase()
+                  .replace(/[^a-z0-9]/g, '');
+
+                let lane: TaskLane = 'todo';
+                if (rawStatus.includes('progress')) lane = 'in-progress';
+                else if (rawStatus.includes('complete')) lane = 'completed';
+
+                formattedTasks.push({
+                  id: taskId,
+                  title: task.title || 'Untitled',
+                  details: task.description || '',
+                  editorType: 'Text',
+                  lane: lane,
+                  checklist: task.checklist || [],
+                });
+              });
+            }
+          });
+        } else if (Array.isArray(response)) {
+          // Fallback if the backend ever returns a flat array directly
+          response.forEach((task: any) => {
+            const taskId = String(task.id || task._id || `task-${Date.now()}-${Math.random()}`);
+            const rawStatus = String(task.status || 'todo')
+              .trim()
+              .toLowerCase()
+              .replace(/[^a-z0-9]/g, '');
+            let lane: TaskLane = 'todo';
+            if (rawStatus.includes('progress')) lane = 'in-progress';
+            else if (rawStatus.includes('complete')) lane = 'completed';
+
             formattedTasks.push({
-              id: String(task.id || task._id), // Clean ID assignment
+              id: taskId,
               title: task.title || 'Untitled',
               details: task.description || '',
               editorType: 'Text',
-              lane: mapBackendStatusToLane(task.status || status),
-              checklist: [],
+              lane: lane,
+              checklist: task.checklist || [],
             });
           });
-        });
+        }
 
         setBoardTasks(formattedTasks);
       } catch (error) {
@@ -1302,6 +1285,52 @@ export function EventPlannerPage() {
       isMounted = false;
     };
   }, [selectedEventId, projectSlots]);
+
+  const normalizeStatus = (status: string) => {
+    return String(status).trim().toLowerCase() === 'active' ? 'active' : 'inactive';
+  };
+
+  const handleOpenAssignVendorModal = async () => {
+    setIsAssigningVendor(true);
+    try {
+      const allVendors = await getVendors();
+      setVendorPool(allVendors.filter((v) => normalizeStatus(v.status) === 'active'));
+      setIsAssignVendorModalOpen(true);
+    } catch (error) {
+      console.error('Failed to load vendors pool:', error);
+      alert('Failed to load vendors pool.');
+    } finally {
+      setIsAssigningVendor(false);
+    }
+  };
+
+  const handleAssignVendor = async (vendorId: string) => {
+    setIsAssigningVendor(true);
+    try {
+      await assignVendorToEvent(vendorId, selectedEventId);
+      const vendorsData = await getVendorsByEventId(selectedEventId);
+      setEventVendors(vendorsData || []);
+      setIsAssignVendorModalOpen(false);
+    } catch (error) {
+      console.error('Failed to assign vendor:', error);
+      alert('Failed to assign vendor. Please try again.');
+    } finally {
+      setIsAssigningVendor(false);
+    }
+  };
+
+  const handleUnassignVendor = async (vendorId: string) => {
+    if (!window.confirm('Are you sure you want to unassign this vendor?')) return;
+    try {
+      await unassignVendorFromEvent(vendorId);
+      const vendorsData = await getVendorsByEventId(selectedEventId);
+      setEventVendors(vendorsData || []);
+    } catch (error) {
+      console.error('Failed to unassign vendor:', error);
+      alert('Failed to unassign vendor. Please try again.');
+    }
+  };
+
   const [isTaskPreviewOpen, setIsTaskPreviewOpen] = useState(false);
   const [selectedBoardTaskId, setSelectedBoardTaskId] = useState<string | null>(null);
   const [taskPreviewTitle, setTaskPreviewTitle] = useState('');
@@ -1323,6 +1352,7 @@ export function EventPlannerPage() {
   const [noteDraftTitle, setNoteDraftTitle] = useState('');
   const [noteDraftBody, setNoteDraftBody] = useState('');
   const [noteDraftImageDataUrl, setNoteDraftImageDataUrl] = useState<string | undefined>(undefined);
+  const [noteDraftImageFile, setNoteDraftImageFile] = useState<File | null>(null);
   const [noteDraftError, setNoteDraftError] = useState('');
   const [editingPlannerNoteId, setEditingPlannerNoteId] = useState<string | null>(null);
   const [isNoteModalOpen, setIsNoteModalOpen] = useState(false);
@@ -1386,9 +1416,9 @@ export function EventPlannerPage() {
         label: 'Event Pax',
         value: String(
           selectedEventDetails?.package?.pax ||
-          selectedEventDetails?.eventPax ||
-          selectedProject.eventPax ||
-          '0'
+            selectedEventDetails?.eventPax ||
+            selectedProject.eventPax ||
+            '0'
         ),
         imageSrc: '/Pictures/organizerpics/event-pax-illustration.png',
         accent: 'text-[#88511a] bg-[#fff8ef] border-[#f3e2cc]',
@@ -1423,6 +1453,7 @@ export function EventPlannerPage() {
     setNoteDraftTitle('');
     setNoteDraftBody('');
     setNoteDraftImageDataUrl(undefined);
+    setNoteDraftImageFile(null);
     setNoteDraftError('');
     setEditingPlannerNoteId(null);
   };
@@ -1434,9 +1465,7 @@ export function EventPlannerPage() {
 
   const handlePlannerNoteImageChange = (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
-    if (!file) {
-      return;
-    }
+    if (!file) return;
 
     if (!file.type.startsWith('image/')) {
       setNoteDraftError('Please select an image file only.');
@@ -1450,6 +1479,9 @@ export function EventPlannerPage() {
       return;
     }
 
+    // SAVE THE FILE FOR MUTLER
+    setNoteDraftImageFile(file);
+
     const reader = new FileReader();
     reader.onload = () => {
       if (typeof reader.result === 'string') {
@@ -1459,7 +1491,6 @@ export function EventPlannerPage() {
     };
     reader.readAsDataURL(file);
 
-    // Allow selecting the same file again after removal.
     event.target.value = '';
   };
 
@@ -1475,20 +1506,29 @@ export function EventPlannerPage() {
 
     try {
       if (editingPlannerNoteId) {
-        const updatedNote = await updateEventNote(selectedEventId, editingPlannerNoteId, {
-          title: normalizedTitle || 'Untitled',
-          body: normalizedBody || 'No details provided.',
-          imageDataUrl: noteDraftImageDataUrl ?? undefined,
-        });
+        const updatedNote = await updateEventNote(
+          selectedEventId,
+          editingPlannerNoteId,
+          {
+            title: normalizedTitle || 'Untitled',
+            body: normalizedBody || 'No details provided.',
+            imageDataUrl: noteDraftImageDataUrl ?? undefined, // Keep for optimistic UI
+          },
+          noteDraftImageFile
+        ); // Pass the file here
         setPlannerNotes((prev) =>
           prev.map((n) => (n.id === editingPlannerNoteId ? updatedNote : n))
         );
       } else {
-        const newNote = await createEventNote(selectedEventId, {
-          title: normalizedTitle || 'Untitled',
-          body: normalizedBody || 'No details provided.',
-          imageDataUrl: noteDraftImageDataUrl ?? undefined,
-        });
+        const newNote = await createEventNote(
+          selectedEventId,
+          {
+            title: normalizedTitle || 'Untitled',
+            body: normalizedBody || 'No details provided.',
+            imageDataUrl: noteDraftImageDataUrl ?? undefined, // Keep for optimistic UI
+          },
+          noteDraftImageFile
+        ); // Pass the file here
         setPlannerNotes((prev) => [newNote, ...prev]);
       }
       closePlannerNoteModal();
@@ -1499,17 +1539,11 @@ export function EventPlannerPage() {
       if (error?.response) {
         const status = error.response.status;
         const serverMsg = error.response.data?.message || error.response.data?.error;
-        if (status === 500) {
-          userMessage = 'Server error: Unable to save note at this time.';
-        } else if (status === 400) {
-          userMessage = serverMsg
-            ? `Bad request: ${serverMsg}`
-            : 'Invalid note data. Please check your input.';
-        } else if (status === 404) {
-          userMessage = 'Event not found. Please refresh and try again.';
-        } else if (serverMsg) {
-          userMessage = `Error (${status}): ${serverMsg}`;
-        }
+        if (status === 500) userMessage = 'Server error: Unable to save note at this time.';
+        else if (status === 400)
+          userMessage = serverMsg ? `Bad request: ${serverMsg}` : 'Invalid note data.';
+        else if (status === 404) userMessage = 'Event not found. Please refresh and try again.';
+        else if (serverMsg) userMessage = `Error (${status}): ${serverMsg}`;
       } else if (error?.message) {
         userMessage = `Network error: ${error.message}`;
       }
@@ -1549,18 +1583,51 @@ export function EventPlannerPage() {
     }
   };
 
-  const handleToggleTaskItem = (cardId: string, itemId: string) => {
-    setPlannerTaskCards((previousCards) =>
-      previousCards.map((card) => {
-        if (card.id !== cardId) return card;
-        return {
-          ...card,
-          items: card.items.map((item) =>
-            item.id === itemId ? { ...item, done: !item.done } : item
-          ),
-        };
-      })
+  const handleToggleChecklistItem = async (itemId: string, currentDone: boolean) => {
+    if (!selectedEventId) return;
+    const newDone = !currentDone;
+    const targetItem = checklistItems.find((i) => i.id === itemId);
+
+    // Optimistic Update
+    setChecklistItems((prev) =>
+      prev.map((item) => (item.id === itemId ? { ...item, done: newDone } : item))
     );
+
+    try {
+      if (!String(itemId).startsWith('temp-')) {
+        // Pass the label as well to satisfy backend requirements!
+        await updateEventChecklistItem(
+          selectedEventId,
+          'overall',
+          itemId,
+          newDone,
+          targetItem?.label || 'Task'
+        );
+      }
+    } catch (error) {
+      setChecklistItems((prev) =>
+        prev.map((item) => (item.id === itemId ? { ...item, done: currentDone } : item))
+      );
+      alert('Failed to update status.');
+    }
+  };
+
+  const handleUpdateChecklistLabel = async (itemId: string, newLabel: string) => {
+    // Note: Local state is already updated via onChange. This function purely syncs to the API on blur.
+    try {
+      const targetItem = checklistItems.find((i) => i.id === itemId);
+      if (targetItem && !String(itemId).startsWith('temp-')) {
+        await updateEventChecklistItem(
+          selectedEventId,
+          'overall',
+          itemId,
+          targetItem.done,
+          newLabel
+        );
+      }
+    } catch (error) {
+      console.error('Failed to sync label update', error);
+    }
   };
 
   const handleAddEmptyTask = () => {
@@ -1671,18 +1738,17 @@ export function EventPlannerPage() {
     );
     setDraggedTaskId(null);
 
-    // API Call
+    // API Call to MOVE the task
     try {
       if (taskStrId.startsWith('board-task-')) {
         throw new Error('Please edit and save this new task first before moving it.');
       }
 
       const newStatus = mapLaneToBackendStatus(lane);
-      await updateBoardTask(selectedEventId, taskStrId, {
-        title: current.title,
-        description: current.details,
-        status: newStatus,
-        checklist: current.checklist,
+
+      await moveBoardTask(selectedEventId, taskStrId, {
+        newStatus: newStatus,
+        newOrder: 1,
       });
     } catch (error) {
       setBoardTasks(previousTasksState);
@@ -1751,12 +1817,12 @@ export function EventPlannerPage() {
         previousTasks.map((task) =>
           String(task.id) === String(selectedBoardTaskId)
             ? {
-              ...task,
-              id: String(newId),
-              title: payload.title,
-              details: finalDetails,
-              checklist: normalizedChecklist,
-            }
+                ...task,
+                id: String(newId),
+                title: payload.title,
+                details: finalDetails,
+                checklist: normalizedChecklist,
+              }
             : task
         )
       );
@@ -1858,44 +1924,37 @@ export function EventPlannerPage() {
     setTaskPreviewChecklist((previous) => previous.filter((item) => item.id !== itemId));
   };
 
-  const checklistTaskCard = useMemo(() => {
-    return plannerTaskCards.find((card) => card.id === 'task-budget') ?? null;
-  }, [plannerTaskCards]);
-
-  const checklistItems = checklistTaskCard?.items ?? [];
-
-  const checklistDoneCount = checklistItems.filter((it) => it.done).length;
+  const checklistDoneCount = checklistItems.filter((it: any) => it.done).length;
   const checklistProgress = checklistItems.length
     ? Math.round((checklistDoneCount / checklistItems.length) * 100)
     : 0;
 
-  const handleAddChecklistItem = () => {
-    if (!checklistTaskCard) return;
-    setPlannerTaskCards((previousCards) =>
-      previousCards.map((card) => {
-        if (card.id !== checklistTaskCard.id) return card;
+  const handleAddChecklistItem = async () => {
+    if (!selectedEventId) return;
+    try {
+      await addEventChecklistItem(selectedEventId, 'New checklist item');
 
-        const nextItemId = `cost-${Date.now()}`;
-        const nextLabel = `New checklist item ${card.items.length + 1}`;
-        return {
-          ...card,
-          items: [...card.items, { id: nextItemId, label: nextLabel, done: false }],
-        };
-      })
-    );
+      // Re-fetch the entire list to ensure IDs are completely synced and avoid duplicates
+      const freshList = await getEventChecklist(selectedEventId);
+      setChecklistItems(freshList || []);
+    } catch (error) {
+      alert('Failed to add checklist item.');
+    }
   };
 
-  const handleRemoveChecklistItem = (itemId: string) => {
-    if (!checklistTaskCard) return;
-    setPlannerTaskCards((previousCards) =>
-      previousCards.map((card) => {
-        if (card.id !== checklistTaskCard.id) return card;
-        return {
-          ...card,
-          items: card.items.filter((item) => item.id !== itemId),
-        };
-      })
-    );
+  const handleRemoveChecklistItem = async (itemId: string) => {
+    if (!selectedEventId) return;
+    const previousState = [...checklistItems];
+    setChecklistItems((prev) => prev.filter((item) => item.id !== itemId));
+
+    try {
+      if (!String(itemId).startsWith('temp-')) {
+        await deleteEventChecklistItem(selectedEventId, itemId);
+      }
+    } catch (error) {
+      setChecklistItems(previousState);
+      alert('Failed to delete item.');
+    }
   };
 
   const openChecklistDeleteValidation = (item: { id: string; label: string }) => {
@@ -1976,52 +2035,6 @@ export function EventPlannerPage() {
                 );
               })}
             </div>
-          </section>
-
-          <section className="rounded-2xl border border-[#ddd8e8] bg-white p-3 shadow-[0_6px_14px_rgba(31,18,54,0.06)]">
-            <header className="mb-2 flex items-center justify-between">
-              <h2 className="flex items-center gap-1.5 text-sm font-bold text-[#383341]">
-                <ListChecks className="size-3.5 text-[#5a5469]" />
-                Confirmed Events
-              </h2>
-              <button
-                type="button"
-                className="rounded-md p-1 text-[#898399] transition-colors hover:bg-[#f2eff8] hover:text-[#4b4558]"
-                aria-label="Confirmed events options"
-              >
-                <span className="text-lg leading-none">⋮</span>
-              </button>
-            </header>
-
-            <article className="rounded-xl border border-[#e5dfef] bg-[#fcfbfe] p-3">
-              <div className="border-l-[3px] border-[#ed3da5] pl-2.5">
-                <h3 className="text-[13px] font-bold text-[#524d60]">WeddingniSeb&amp;Rox</h3>
-                <p className="mt-1 text-[11px] font-semibold text-[#7f788f]">January 3, 2026</p>
-                <p className="text-[11px] text-[#9a93a8]">Start Date - End Date</p>
-
-                <div className="mt-3 space-y-1 text-[11px] text-[#857f94]">
-                  <p>Event Specification</p>
-                  <p>Event Package</p>
-                  <p>Event Pax</p>
-                  <p>Event Type</p>
-                </div>
-
-                <p className="mt-3 text-[10px] font-semibold text-[#9b94a7]">Description</p>
-                <p className="text-[10px] text-[#9b94a7]">
-                  Lorem ipsum dolor sit amet, consectetur adipiscing elit. In tincidunt justo quis
-                  viverra bibendum.
-                </p>
-
-                <button
-                  type="button"
-                  className="mt-3 inline-flex h-7 items-center justify-center rounded-full bg-linear-to-r from-[#f347a5] to-[#8f1fd1] px-4 text-[10px] font-bold text-white"
-                >
-                  Plan
-                </button>
-              </div>
-            </article>
-
-            <div className="mt-2 h-12 rounded-xl border border-[#e9e4f1] bg-[#fdfcfe]" />
           </section>
         </aside>
 
@@ -2140,7 +2153,7 @@ export function EventPlannerPage() {
                           <p>Theme: {eventAllocation.decorations.theme || 'None specified'}</p>
                           <p className="mt-1 font-semibold text-[#5a546a]">Materials</p>
                           {eventAllocation.decorations.materials &&
-                            eventAllocation.decorations.materials.length > 0 ? (
+                          eventAllocation.decorations.materials.length > 0 ? (
                             eventAllocation.decorations.materials.map(
                               (mat: string, idx: number) => (
                                 <p key={idx}>
@@ -2660,14 +2673,12 @@ export function EventPlannerPage() {
                         key={item.id}
                         className="flex min-h-[56px] items-center justify-between px-4"
                       >
-                        <div className="flex min-w-0 items-center gap-3">
+                        <div className="flex min-w-0 flex-1 items-center gap-3">
                           <button
                             type="button"
-                            onClick={() =>
-                              handleToggleTaskItem(checklistTaskCard?.id ?? '', item.id)
-                            }
+                            onClick={() => handleToggleChecklistItem(item.id, item.done)}
                             aria-label={`${item.done ? 'Uncheck' : 'Check'} ${item.label}`}
-                            className="inline-flex h-8 w-8 items-center justify-center rounded-md border-2 transition-all"
+                            className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md border-2 transition-all"
                             style={{
                               borderColor: color,
                               background: item.done ? color : 'white',
@@ -2682,19 +2693,25 @@ export function EventPlannerPage() {
                             style={{ background: color }}
                           />
 
-                          <span className="truncate text-[15px] font-medium text-[#302c39]">
-                            {item.label}
-                          </span>
+                          <Input
+                            value={item.label}
+                            onChange={(e) => {
+                              // Only update local UI state immediately to feel responsive
+                              setChecklistItems((prev) =>
+                                prev.map((i) =>
+                                  i.id === item.id ? { ...i, label: e.target.value } : i
+                                )
+                              );
+                            }}
+                            onBlur={(e) => {
+                              // Only call API when user finishes typing and clicks away
+                              handleUpdateChecklistLabel(item.id, e.target.value);
+                            }}
+                            className={`h-9 border-transparent bg-transparent px-1 text-[15px] font-medium shadow-none focus-visible:ring-1 focus-visible:ring-[#e3ddea] w-full ${item.done ? 'text-[#a29faf] line-through' : 'text-[#302c39]'}`}
+                          />
                         </div>
 
                         <div className="ml-3 flex shrink-0 items-center gap-2">
-                          {item.id === 'cost-2' ? (
-                            <span className="inline-flex items-center gap-1 rounded-md border border-[#d8d3de] bg-[#f6f5f8] px-2 py-1 text-[9px] font-semibold text-[#6f697e]">
-                              <CalendarDays className="size-3" />
-                              Due Jan 2
-                            </span>
-                          ) : null}
-
                           <button
                             type="button"
                             onClick={() =>
@@ -2726,6 +2743,74 @@ export function EventPlannerPage() {
                 <Plus className="size-5 text-[#1f1b2b]" />
                 <span>Add Checklist Item</span>
               </button>
+            </section>
+          ) : activeTab === 'vendors' ? (
+            <section className="rounded-2xl border border-[#ddd8e8] bg-[#fbfafd] p-4 shadow-[0_6px_14px_rgba(31,18,54,0.05)]">
+              <header className="mb-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div>
+                  <h3 className="text-lg font-black tracking-tight text-[#1f1f21]">
+                    Event Vendors
+                  </h3>
+                  <p className="text-xs font-semibold text-[#6e687d]">
+                    Vendors currently assigned to this event
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={handleOpenAssignVendorModal}
+                  disabled={isAssigningVendor}
+                  className="inline-flex h-9 items-center gap-2 rounded-lg bg-linear-to-r from-[#f1589e] via-[#d735b3] to-[#8a1fd0] px-4 text-[11px] font-black text-white shadow-[0_10px_20px_rgba(125,31,186,0.24)] transition hover:brightness-105 disabled:opacity-50"
+                >
+                  <Plus className="size-3.5" />
+                  Assign from Pool
+                </button>
+              </header>
+              <div className="space-y-3">
+                {Array.isArray(eventVendors) && eventVendors.length > 0 ? (
+                  eventVendors.map((vendor) => (
+                    <article
+                      key={vendor.id}
+                      className="flex items-center justify-between rounded-xl border border-[#e3deeb] bg-white p-3 shadow-sm"
+                    >
+                      <div>
+                        <p className="text-[14px] font-black text-[#2f2b39]">{vendor.name}</p>
+                        <p className="text-[11px] font-semibold text-[#6f687f]">
+                          {vendor.service || 'Service not specified'}
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-4">
+                        <div className="text-right">
+                          <span
+                            className={`inline-flex rounded-full px-2 py-0.5 text-[10px] font-bold ${
+                              vendor.status === 'Active'
+                                ? 'bg-[#e6f4e8] text-[#2e6b37]'
+                                : 'bg-[#f4e6e6] text-[#b53e3e]'
+                            }`}
+                          >
+                            {vendor.status}
+                          </span>
+                          <div className="mt-1 flex items-center justify-end gap-2 text-[10px] text-[#8c8598]">
+                            {vendor.email !== '-' && <span>{vendor.email}</span>}
+                            {vendor.phone !== '-' && <span>{vendor.phone}</span>}
+                          </div>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => handleUnassignVendor(vendor.id)}
+                          className="inline-flex size-8 items-center justify-center rounded-md border border-[#e1d8ef] bg-white text-[#7b6f90] transition hover:border-[#f1589e] hover:text-[#f1589e]"
+                          aria-label="Unassign vendor"
+                        >
+                          <Trash2 className="size-3.5" />
+                        </button>
+                      </div>
+                    </article>
+                  ))
+                ) : (
+                  <div className="rounded-lg border border-dashed border-[#d8d2e2] bg-white/60 p-8 text-center text-sm font-semibold text-[#8b84a0]">
+                    No vendors assigned to this event yet.
+                  </div>
+                )}
+              </div>
             </section>
           ) : activeTab === 'flow' ? (
             <FlowNotesBoard
@@ -2840,7 +2925,6 @@ export function EventPlannerPage() {
             setTaskPreviewTitle('');
             setTaskPreviewDetails('');
             setTaskPreviewChecklist([]);
-
           }
         }}
       >
@@ -3184,6 +3268,78 @@ export function EventPlannerPage() {
               </button>
             </div>
           </form>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog
+        open={isAssignVendorModalOpen}
+        onOpenChange={(open) => {
+          if (!open && !isAssigningVendor) {
+            setIsAssignVendorModalOpen(false);
+          }
+        }}
+      >
+        <DialogContent
+          showCloseButton={false}
+          aria-describedby={undefined}
+          className="fixed left-[50%] top-[50%] z-[100000] w-full max-w-[calc(100%-1rem)] -translate-x-1/2 -translate-y-1/2 rounded-2xl border border-[#e3dfea] bg-[#fbfafd] p-0 shadow-2xl sm:max-w-[560px] overflow-hidden flex flex-col max-h-[85vh]"
+        >
+          <DialogTitle className="sr-only">Assign Vendor</DialogTitle>
+          <header className="flex items-center justify-between border-b border-[#eee9f2] bg-white px-5 py-4">
+            <div>
+              <h3 className="text-lg font-black tracking-tight text-[#1f1f21]">Assign Vendor</h3>
+              <p className="text-[11px] font-semibold text-[#8b84a0]">
+                Select a vendor from the active pool
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => setIsAssignVendorModalOpen(false)}
+              disabled={isAssigningVendor}
+              className="inline-flex size-8 items-center justify-center rounded-full text-[#9f97ad] transition hover:bg-[#f3eff8] disabled:opacity-50"
+            >
+              <X className="size-4" />
+            </button>
+          </header>
+          <div className="flex-1 overflow-y-auto p-5 [scrollbar-width:thin]">
+            <div className="space-y-3">
+              {vendorPool.length > 0 ? (
+                vendorPool.map((vendor) => {
+                  const isAssigned =
+                    Array.isArray(eventVendors) && eventVendors.some((ev) => ev.id === vendor.id);
+                  return (
+                    <article
+                      key={vendor.id}
+                      className="flex items-center justify-between rounded-xl border border-[#e3deeb] bg-white p-3 shadow-sm"
+                    >
+                      <div>
+                        <p className="text-[14px] font-black text-[#2f2b39]">{vendor.name}</p>
+                        <p className="text-[11px] font-semibold text-[#6f687f]">
+                          {vendor.serviceType || 'Service not specified'}
+                        </p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => handleAssignVendor(vendor.id)}
+                        disabled={isAssigned || isAssigningVendor}
+                        className={`inline-flex h-8 items-center justify-center rounded-lg px-3 text-[11px] font-bold transition ${
+                          isAssigned
+                            ? 'bg-[#f4f1f8] text-[#9f97ad] cursor-not-allowed'
+                            : 'bg-[#eef5ff] text-[#2a6fb0] hover:bg-[#e0efff] border border-[#d6e8ff]'
+                        }`}
+                      >
+                        {isAssigned ? 'Assigned' : 'Assign'}
+                      </button>
+                    </article>
+                  );
+                })
+              ) : (
+                <div className="rounded-lg border border-dashed border-[#d8d2e2] bg-white/60 p-8 text-center text-sm font-semibold text-[#8b84a0]">
+                  No active vendors found in the pool.
+                </div>
+              )}
+            </div>
+          </div>
         </DialogContent>
       </Dialog>
     </div>

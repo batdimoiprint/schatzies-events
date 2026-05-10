@@ -31,7 +31,10 @@ export function RSVPVerifyPage() {
         setQrCode(data.qrCode || '');
       } catch (err: any) {
         console.error('Verification error:', err);
-        setError(err.response?.data?.message || 'Failed to verify RSVP. The link may be expired or invalid.');
+        setError(
+          err.response?.data?.message ||
+            'Failed to verify RSVP. The link may be expired or invalid.'
+        );
       } finally {
         setLoading(false);
       }
@@ -40,14 +43,28 @@ export function RSVPVerifyPage() {
     verify();
   }, [eventId, guestId, token]);
 
-  const handleDownloadQR = () => {
+  const handleDownloadQR = async () => {
     if (!qrCode) return;
-    const link = document.createElement('a');
-    link.href = qrCode;
-    link.download = `RSVP_QR_${guestData?.guestfirstName || 'Guest'}.png`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    try {
+      const response = await fetch(qrCode);
+      const blob = await response.blob();
+      const blobUrl = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = blobUrl;
+      link.download = `RSVP_QR_${guestData?.guestfirstName || 'Guest'}.png`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(blobUrl);
+    } catch {
+      // Fallback: direct link download
+      const link = document.createElement('a');
+      link.href = qrCode;
+      link.download = `RSVP_QR_${guestData?.guestfirstName || 'Guest'}.png`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
   };
 
   const handleVisitHome = () => {

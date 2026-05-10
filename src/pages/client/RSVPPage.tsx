@@ -3,9 +3,8 @@ import type { AxiosError } from 'axios';
 import { useSearchParams } from 'react-router-dom';
 
 import type { EventData, RSVPResponse } from '@/types/rsvp';
-import axiosInstance from '@/api/axios-instance'; // Added for API calls
+import axiosInstance from '@/api/axios-instance';
 import { downloadQRCode } from '@/lib/qrCodeGenerator';
-import { getEventById } from '@/lib/rsvpStorage';
 import { RSVPInvitationPage } from './RSVPInvitationPage';
 import { RSVPFormPage } from './RSVPFormPage';
 import { RSVPSuccessPage } from './RSVPSuccessPage';
@@ -38,7 +37,7 @@ export function RSVPPage() {
   useEffect(() => {
     const eventIdParam = searchParams.get('eventId');
 
-    // Fetch event details from backend to ensure capacity and existence
+    // Fetch event details from backend
     const fetchEvent = async () => {
       if (!eventIdParam) return;
       try {
@@ -52,15 +51,24 @@ export function RSVPPage() {
           try {
             const orgResponse = await axiosInstance.get(`/users/${orgId}`);
             const orgData = orgResponse.data.user || orgResponse.data;
-            organizerName = `${orgData.firstName || ''} ${orgData.lastName || ''}`.trim() || organizerName;
-          } catch (e) { /* ignore */ }
+            organizerName =
+              `${orgData.firstName || ''} ${orgData.lastName || ''}`.trim() || organizerName;
+          } catch (e) {
+            /* ignore */
+          }
         }
 
         // Map backend fields to the format the invitation page expects
         setSelectedEvent({
           id: eventData.id,
           title: eventData.title || 'Wedding Celebration',
-          date: eventData.endDate || eventData.dateEnd || eventData.dateStart || eventData.startDate || eventData.eventDate || '',
+          date:
+            eventData.endDate ||
+            eventData.dateEnd ||
+            eventData.dateStart ||
+            eventData.startDate ||
+            eventData.eventDate ||
+            '',
           time: eventData.dateStart
             ? new Date(eventData.dateStart).toLocaleTimeString([], {
                 hour: '2-digit',
@@ -76,12 +84,7 @@ export function RSVPPage() {
           description: eventData.eventType || '',
         });
       } catch (error) {
-        console.error('Error fetching event from API, trying local storage:', error);
-        // Fallback to local storage for demo events like evt-001
-        const localEvent = getEventById(eventIdParam);
-        if (localEvent) {
-          setSelectedEvent(localEvent);
-        }
+        console.error('Error fetching event from API:', error);
       }
     };
 
@@ -121,10 +124,13 @@ export function RSVPPage() {
     try {
       // Check if email already exists in the system
       try {
-        const checkResponse = await axiosInstance.get(`/rsvp/check-email/${formData.email}?eventId=${selectedEvent.id}`);
+        const checkResponse = await axiosInstance.get(
+          `/rsvp/check-email/${formData.email}?eventId=${selectedEvent.id}`
+        );
         if (checkResponse.data.exists) {
           setFormErrors({
-            email: 'This email has already been registered for this event. Please use a different email or contact support.',
+            email:
+              'This email has already been registered for this event. Please use a different email or contact support.',
           });
           setLoading(false);
           return;
@@ -165,7 +171,7 @@ export function RSVPPage() {
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       };
-      
+
       setRsvpResponse(finalRsvp);
       if (response.data.qrCode) {
         setQrCode(response.data.qrCode);

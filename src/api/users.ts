@@ -35,6 +35,7 @@ export interface UserResponse {
   contactNumber: string;
   role: string;
   profilePic?: string;
+  isPasswordChanged?: boolean;
   created_at: string;
 }
 
@@ -82,4 +83,16 @@ export const updateUser = async (
 
 export const deleteUser = async (userId: string): Promise<void> => {
   await axiosInstance.delete(`/users/${userId}`);
+};
+
+export const replacePassword = async (
+  userId: string,
+  currentPassword: string,
+  newPassword: string
+): Promise<{ message: string; user: UserResponse }> => {
+  const response = await axiosInstance.patch(`/users/${userId}/replace-password`, {
+    currentPassword,
+    newPassword,
+  });
+  return response.data;
 };

@@ -1,0 +1,14 @@
+# https://www.robotstxt.org/robotstxt.html
+User-agent: *
+Allow: /
+Disallow: /login
+Disallow: /admin
+Disallow: /organizer
+Disallow: /client
+Disallow: /invitation/
+Disallow: /verify
+Disallow: /forgot-password
+Disallow: /force-reset-password
+Disallow: /rsvp/verify
+
+Sitemap: https://www.schatziesevents.com/sitemap.xml

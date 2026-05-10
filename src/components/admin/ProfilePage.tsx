@@ -2,7 +2,6 @@ import { useEffect, useRef, useState } from 'react';
 import { ChevronDown, LogOut, User, X } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import LoadingScreen from '@/components/ui/LoadingScreen';
-import { logout } from '@/api/auth';
 import { useAuth } from '@/hooks/useAuth';
 
 const FALLBACK_AVATAR = '/Pictures/business-logo.png';
@@ -19,7 +18,7 @@ export function ProfilePage({ profilePath = '/admin/profile' }: ProfilePageProps
   const profileRef = useRef<HTMLDivElement>(null);
 
   const navigate = useNavigate();
-  const { user, setAuthenticatedUser } = useAuth();
+  const { user, logout } = useAuth();
 
   const userAvatar = user?.profilePic || FALLBACK_AVATAR;
   const displayName = user ? `${user.firstName} ${user.lastName}` : 'Admin';
@@ -51,8 +50,9 @@ export function ProfilePage({ profilePath = '/admin/profile' }: ProfilePageProps
 
     try {
       await logout();
+    } catch (error) {
+      console.error('Logout failed:', error);
     } finally {
-      setAuthenticatedUser(null);
       navigate('/login', { replace: true });
       setIsLoggingOut(false);
     }

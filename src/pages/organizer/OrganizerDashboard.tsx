@@ -20,11 +20,6 @@ type StatusSlice = {
   color: string;
 };
 
-function toNonNegativeNumber(value: unknown) {
-  const numericValue = Number(value);
-  return Number.isFinite(numericValue) && numericValue > 0 ? numericValue : 0;
-}
-
 type ListEntry = {
   rank: number;
   title: string;
@@ -417,32 +412,98 @@ export function OrganizerDashboard() {
       const data = await fetchDashboardSummary();
 
       if (data) {
-        if (data.kpi) {
-          const formatMoney = (val: number = 0) => `PHP ${val.toLocaleString('en-US')}`;
-          const vendorCount = String(data.activeVendors?.count || 0);
+        // FIX: Extract data dynamically, checking `kpi` first, then falling back to `status`.
+        // This ensures values show up even if the backend misses sending the `kpi` wrapper.
+        const formatMoney = (val: number = 0) => `PHP ${val.toLocaleString('en-US')}`;
+        const vendorCount = String(data.activeVendors?.count || 0);
 
-          setKpiData((prev) => ({
-            ...prev,
-            Weekly: [
-              { ...prev.Weekly[0], value: String(data.kpi?.week?.completed || 0) },
-              { ...prev.Weekly[1], value: formatMoney(data.kpi?.week?.completedRevenue || 0) },
-              { ...prev.Weekly[2], value: vendorCount },
-              { ...prev.Weekly[3], value: formatMoney(data.kpi?.week?.completedProfit || 0) },
-            ],
-            Monthly: [
-              { ...prev.Monthly[0], value: String(data.kpi.month?.completed || 0) },
-              { ...prev.Monthly[1], value: formatMoney(data.kpi.month?.completedRevenue || 0) },
-              { ...prev.Monthly[2], value: vendorCount },
-              { ...prev.Monthly[3], value: formatMoney(data.kpi.month?.completedProfit || 0) },
-            ],
-            Annually: [
-              { ...prev.Annually[0], value: String(data.kpi.year?.completed || 0) },
-              { ...prev.Annually[1], value: formatMoney(data.kpi.year?.completedRevenue || 0) },
-              { ...prev.Annually[2], value: vendorCount },
-              { ...prev.Annually[3], value: formatMoney(data.kpi.year?.completedProfit || 0) },
-            ],
-          }));
-        }
+        // Helper to pick the largest valid number between kpi and status
+        const getBestValue = (kpiVal: any, statusVal: any) => {
+          const numKpi = Number(kpiVal) || 0;
+          const numStatus = Number(statusVal) || 0;
+          return Math.max(numKpi, numStatus, 0); // Always returns a non-negative number
+        };
+
+        const weekData = {
+          completed: getBestValue(data.kpi?.week?.completed, data.status?.week?.completed),
+          completedRevenue: getBestValue(
+            data.kpi?.week?.completedRevenue,
+            data.status?.week?.completedRevenue
+          ),
+          completedProfit: getBestValue(
+            data.kpi?.week?.completedProfit,
+            data.status?.week?.completedProfit
+          ),
+        };
+
+        const monthData = {
+          completed: getBestValue(data.kpi?.month?.completed, data.status?.month?.completed),
+          execution: getBestValue(data.kpi?.month?.execution, data.status?.month?.execution),
+          planning: getBestValue(data.kpi?.month?.planning, data.status?.month?.planning),
+          completedRevenue: getBestValue(
+            data.kpi?.month?.completedRevenue,
+            data.status?.month?.completedRevenue
+          ),
+          completedProfit: getBestValue(
+            data.kpi?.month?.completedProfit,
+            data.status?.month?.completedProfit
+          ),
+        };
+
+        const yearData = {
+          completed: getBestValue(data.kpi?.year?.completed, data.status?.year?.completed),
+          completedRevenue: getBestValue(
+            data.kpi?.year?.completedRevenue,
+            data.status?.year?.completedRevenue
+          ),
+          completedProfit: getBestValue(
+            data.kpi?.year?.completedProfit,
+            data.status?.year?.completedProfit
+          ),
+        };
+
+        const semiData = {
+          completed: getBestValue(
+            data.kpi?.semiAnnual?.completed,
+            data.status?.semiAnnual?.completed
+          ),
+          completedRevenue: getBestValue(
+            data.kpi?.semiAnnual?.completedRevenue,
+            data.status?.semiAnnual?.completedRevenue
+          ),
+          completedProfit: getBestValue(
+            data.kpi?.semiAnnual?.completedProfit,
+            data.status?.semiAnnual?.completedProfit
+          ),
+        };
+
+        setKpiData((prev) => ({
+          ...prev,
+          Weekly: [
+            { ...prev.Weekly[0], value: String(weekData.completed) },
+            { ...prev.Weekly[1], value: formatMoney(weekData.completedRevenue) },
+            { ...prev.Weekly[2], value: vendorCount },
+            { ...prev.Weekly[3], value: formatMoney(weekData.completedProfit) },
+          ],
+          Monthly: [
+            { ...prev.Monthly[0], value: String(monthData.completed) },
+            { ...prev.Monthly[1], value: formatMoney(monthData.completedRevenue) },
+            { ...prev.Monthly[2], value: vendorCount },
+            { ...prev.Monthly[3], value: formatMoney(monthData.completedProfit) },
+          ],
+          'Semi-Annually': [
+            { ...prev['Semi-Annually'][0], value: String(semiData.completed) },
+            { ...prev['Semi-Annually'][1], value: formatMoney(semiData.completedRevenue) },
+            { ...prev['Semi-Annually'][2], value: vendorCount },
+            { ...prev['Semi-Annually'][3], value: formatMoney(semiData.completedProfit) },
+          ],
+          Annually: [
+            { ...prev.Annually[0], value: String(yearData.completed) },
+            { ...prev.Annually[1], value: formatMoney(yearData.completedRevenue) },
+            { ...prev.Annually[2], value: vendorCount },
+            { ...prev.Annually[3], value: formatMoney(yearData.completedProfit) },
+          ],
+        }));
 
         // 1. Map Semi-Annual Graph
         if (data.semiAnnual && data.semiAnnual.monthlyGraph) {
@@ -472,34 +533,28 @@ export function OrganizerDashboard() {
           setSemiAnnualData(mappedSemiAnnual);
         }
 
-        // 2. Map Monthly Status Donut Chart
-        if (data.status && data.status.month) {
-          const monthData = data.status.month;
-          const completedCount = toNonNegativeNumber(monthData.completed);
-          const executionCount = toNonNegativeNumber(monthData.execution);
-          const planningCount = toNonNegativeNumber(monthData.planning);
-          const total = completedCount + executionCount + planningCount || 1;
-          setMonthlyStatusData([
-            {
-              label: 'Completed',
-              value: Math.round((completedCount / total) * 100) || 0,
-              eventCount: completedCount,
-              color: '#b964ef',
-            },
-            {
-              label: 'Execution',
-              value: Math.round((executionCount / total) * 100) || 0,
-              eventCount: executionCount,
-              color: '#ef79b3',
-            },
-            {
-              label: 'Planning',
-              value: Math.round((planningCount / total) * 100) || 0,
-              eventCount: planningCount,
-              color: '#f4d03f',
-            },
-          ]);
-        }
+        // 2. Map Monthly Status Donut Chart (Using the sanitized monthData)
+        const total = monthData.completed + monthData.execution + monthData.planning || 1;
+        setMonthlyStatusData([
+          {
+            label: 'Completed',
+            value: Math.round((monthData.completed / total) * 100) || 0,
+            eventCount: monthData.completed,
+            color: '#b964ef',
+          },
+          {
+            label: 'Execution',
+            value: Math.round((monthData.execution / total) * 100) || 0,
+            eventCount: monthData.execution,
+            color: '#ef79b3',
+          },
+          {
+            label: 'Planning',
+            value: Math.round((monthData.planning / total) * 100) || 0,
+            eventCount: monthData.planning,
+            color: '#f4d03f',
+          },
+        ]);
 
         // 3. Map Upcoming Events List
         if (data.upcomingEvents && Array.isArray(data.upcomingEvents)) {

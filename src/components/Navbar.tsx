@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 
 const navItems = [
   { label: 'Home', href: '/' },
@@ -10,11 +11,17 @@ const navItems = [
   { label: 'Contact', href: '/contact' },
 ];
 
+const otherEvents = [
+  { label: 'Wedding Events', href: '/event-packages?type=wedding' },
+  { label: 'Debut Events', href: '/event-packages?type=debut' },
+];
+
 const logoImagePath = '/Pictures/business-logo.png';
 
 export function Navbar() {
   const location = useLocation();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [dropdownOpen, setDropdownOpen] = useState(false);
 
   // Lock body scroll when drawer is open
   useEffect(() => {
@@ -48,8 +55,72 @@ export function Navbar() {
                 : location.pathname.startsWith(item.href) && item.href !== '#';
 
             const classes = isActive
-              ? 'relative pb-1 text-[1.05rem] font-semibold text-[#FF0066] after:content-[""] after:absolute after:bottom-0 after:left-0 after:w-full after:h-0.5 after:bg-[#FF0066] after:origin-left after:scale-x-100 transition-all duration-300'
-              : 'relative pb-1 text-[1.05rem] font-semibold text-[#4A1053] after:content-[""] after:absolute after:bottom-0 after:left-0 after:w-full after:h-0.5 after:bg-[#FF0066] after:origin-left after:scale-x-0 hover:text-[#FF0066] hover:after:scale-x-100 after:transition-transform after:duration-300 transition-colors duration-300';
+              ? 'relative pb-1 text-[1.2rem] font-semibold text-[#FF0066] after:content-[""] after:absolute after:bottom-0 after:left-0 after:w-full after:h-0.5 after:bg-[#FF0066] after:origin-left after:scale-x-100 transition-all duration-300'
+              : 'relative pb-1 text-[1.2rem] font-semibold text-[#4A1053] after:content-[""] after:absolute after:bottom-0 after:left-0 after:w-full after:h-0.5 after:bg-[#FF0066] after:origin-left after:scale-x-0 hover:text-[#FF0066] hover:after:scale-x-100 after:transition-transform after:duration-300 transition-colors duration-300';
+
+            if (item.label === 'Events Packages') {
+              return (
+                <Popover key={item.label} open={dropdownOpen} onOpenChange={setDropdownOpen}>
+                  <PopoverTrigger asChild>
+                    <button className={classes}>{item.label}</button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-56 p-0">
+                    <div className="flex flex-col">
+                      <Link
+                        to={item.href}
+                        onClick={() => setDropdownOpen(false)}
+                        className="group relative px-4 py-3 text-sm font-semibold overflow-hidden transition-all duration-300 hover:bg-gradient-to-r hover:from-[#FF0066] hover:to-[#4A1053]"
+                      >
+                        <span
+                          className="transition-all duration-300"
+                          style={{
+                            backgroundImage: 'linear-gradient(to right, #FF0066 0%, #4A1053 100%)',
+                            backgroundClip: 'text',
+                            WebkitBackgroundClip: 'text',
+                            color: 'transparent',
+                          }}
+                        >
+                          All Packages
+                        </span>
+                        <span
+                          className="absolute inset-0 flex items-center px-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+                          style={{ color: 'white' }}
+                        >
+                          All Packages
+                        </span>
+                      </Link>
+                      {otherEvents.map((event) => (
+                        <Link
+                          key={event.label}
+                          to={event.href}
+                          onClick={() => setDropdownOpen(false)}
+                          className="group relative px-4 py-3 text-sm font-semibold overflow-hidden transition-all duration-300 hover:bg-gradient-to-r hover:from-[#FF0066] hover:to-[#4A1053]"
+                        >
+                          <span
+                            className="transition-all duration-300"
+                            style={{
+                              backgroundImage:
+                                'linear-gradient(to right, #FF0066 0%, #4A1053 100%)',
+                              backgroundClip: 'text',
+                              WebkitBackgroundClip: 'text',
+                              color: 'transparent',
+                            }}
+                          >
+                            {event.label}
+                          </span>
+                          <span
+                            className="absolute inset-0 flex items-center px-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+                            style={{ color: 'white' }}
+                          >
+                            {event.label}
+                          </span>
+                        </Link>
+                      ))}
+                    </div>
+                  </PopoverContent>
+                </Popover>
+              );
+            }
 
             return item.href === '#' ? (
               <span key={item.label} className={classes}>
@@ -67,7 +138,7 @@ export function Navbar() {
         <div className="hidden w-28 lg:block xl:w-32" />
         <Button
           asChild
-          className="hidden h-[52px] min-w-[140px] shrink-0 rounded-full bg-white px-10 text-[1.05rem] font-bold tracking-wide uppercase shadow-[0_8px_22px_rgba(39,21,57,0.2)] hover:bg-gray-100 hover:shadow-lg lg:inline-flex"
+          className="hidden h-[52px] min-w-[140px] shrink-0 rounded-full bg-white px-10 text-[1.2rem] font-bold tracking-wide uppercase shadow-[0_8px_22px_rgba(39,21,57,0.2)] hover:bg-gray-100 hover:shadow-lg lg:inline-flex"
         >
           <Link to="/login">
             <span
@@ -188,7 +259,7 @@ export function Navbar() {
                 key={item.label}
                 to={item.href}
                 onClick={() => setMobileOpen(false)}
-                className={`flex items-center gap-3 rounded-xl px-4 py-3 text-[1rem] font-semibold transition-all duration-200 ${
+                className={`flex items-center gap-3 rounded-xl px-4 py-3 text-[1.1rem] font-semibold transition-all duration-200 ${
                   isActive
                     ? 'bg-white/20 text-white'
                     : 'text-white/80 hover:bg-white/10 hover:text-white'
@@ -213,7 +284,7 @@ export function Navbar() {
           <Link
             to="/login"
             onClick={() => setMobileOpen(false)}
-            className="flex h-12 w-full items-center justify-center rounded-2xl bg-white text-[1rem] font-bold uppercase tracking-wide shadow-lg transition hover:bg-white/90"
+            className="flex h-12 w-full items-center justify-center rounded-2xl bg-white text-[1.1rem] font-bold uppercase tracking-wide shadow-lg transition hover:bg-white/90"
             style={{
               backgroundImage: 'none',
             }}

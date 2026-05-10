@@ -3,14 +3,14 @@ import { useSearchParams, useNavigate } from 'react-router-dom';
 import axiosInstance from '@/api/axios-instance';
 
 /**
- * /verify — Handles email-verification.
+ * /verify — Handles inquiry confirmation via email link.
  *
  * Two possible flows:
  *
  * Flow A (token in URL — user clicked the link from their email):
  *   ?token=XYZ
  *   → calls backend POST /api/auth/verify-email to verify the token
- *   → shows success / failure based on the API response
+ *   → on success, redirects to /?inquiry_confirmed=true to show success modal
  *
  * Flow B (result redirect from backend):
  *   ?verified=true&email=user@example.com
@@ -66,7 +66,7 @@ export default function VerifyEmailPage() {
         const apiReason =
           axiosErr?.response?.data?.reason ?? axiosErr?.response?.data?.error ?? null;
 
-        setReason(apiReason ?? 'Something went wrong while verifying your email.');
+        setReason(apiReason ?? 'Something went wrong while confirming your inquiry.');
       }
     })();
   }, [token]);
@@ -112,11 +112,21 @@ export default function VerifyEmailPage() {
      "Cannot update a component while rendering" warnings */
   useEffect(() => {
     if (countdown === 0 && status !== 'loading') {
-      navigate('/?inquiry=true', { replace: true });
+      if (status === 'success') {
+        navigate('/?inquiry_confirmed=true', { replace: true });
+      } else {
+        navigate('/?inquiry=true', { replace: true });
+      }
     }
   }, [countdown, status, navigate]);
 
-  const goHome = () => navigate('/?inquiry=true', { replace: true });
+  const goHome = () => {
+    if (status === 'success') {
+      navigate('/?inquiry_confirmed=true', { replace: true });
+    } else {
+      navigate('/?inquiry=true', { replace: true });
+    }
+  };
 
   /* Loading state */
   if (status === 'loading') {
@@ -147,9 +157,9 @@ export default function VerifyEmailPage() {
             </svg>
           </div>
 
-          <h1 className="mt-6 text-2xl font-bold text-[#1a1225]">Verifying your email…</h1>
+          <h1 className="mt-6 text-2xl font-bold text-[#1a1225]">Confirming your inquiry…</h1>
           <p className="mt-3 text-sm leading-relaxed text-gray-600">
-            Please wait while we verify your email address.
+            Please wait while we confirm your inquiry submission.
           </p>
         </div>
       </div>
@@ -162,10 +172,10 @@ export default function VerifyEmailPage() {
     if (isSuccess) return '';
     const r = reason.toLowerCase().replace(/_/g, ' ');
     if (r.includes('invalid') || r.includes('expired'))
-      return 'This verification link is invalid or has expired. Please request a new one from the inquiry form.';
+      return 'This confirmation link is invalid or has expired. Please submit a new inquiry.';
     if (r.includes('already been used'))
-      return 'This verification link has already been used. Your email may already be verified.';
-    return reason || 'Something went wrong while verifying your email. Please try again.';
+      return 'This confirmation link has already been used. Your inquiry may already be confirmed.';
+    return reason || 'Something went wrong while confirming your inquiry. Please try again.';
   })();
 
   return (
@@ -207,15 +217,15 @@ export default function VerifyEmailPage() {
 
         {/* Heading */}
         <h1 className="mt-6 text-2xl font-bold text-[#1a1225]">
-          {isSuccess ? 'Email Verified!' : 'Verification Failed'}
+          {isSuccess ? 'Inquiry Confirmed!' : 'Confirmation Failed'}
         </h1>
 
         {/* Body text */}
         <p className="mt-3 text-sm leading-relaxed text-gray-600">
           {isSuccess ? (
             <>
-              <span className="font-semibold text-[#3d2052]">{email}</span> has been successfully
-              verified. You can now submit the form.
+              Your inquiry has been confirmed and submitted successfully! Our team will review it
+              and get back to you shortly.
             </>
           ) : (
             <>{friendlyReason}</>
