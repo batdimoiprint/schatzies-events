@@ -399,9 +399,7 @@ export function ClientDashboardPage() {
                     </span>
                   </div>
                   <ul className="space-y-2 text-xs">
-                    <li className="text-gray-400 italic">
-                      No allocated resources currently.
-                    </li>
+                    <li className="text-gray-400 italic">No allocated resources currently.</li>
                   </ul>
                 </div>
 
@@ -423,7 +421,9 @@ export function ClientDashboardPage() {
                     <span className="text-sm font-semibold text-[#2d2834]">Program Flow</span>
                   </div>
                   <div className="flex flex-col gap-3">
-                    <p className="text-xs text-gray-400 italic">Program flow is currently being finalized.</p>
+                    <p className="text-xs text-gray-400 italic">
+                      Program flow is currently being finalized.
+                    </p>
                   </div>
                 </div>
               </div>
