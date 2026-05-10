@@ -79,11 +79,11 @@ export function QrCodePage() {
             const fullDetails = await getEventById(firstEvent.id);
             const pax =
               fullDetails.eventPax ||
-              (fullDetails as any).event_pax ||
-              (fullDetails.package as any)?.pax ||
+              (fullDetails as unknown as Record<string, unknown>).event_pax ||
+              ((fullDetails as unknown as Record<string, unknown>).package as Record<string, unknown>)?.pax ||
               (firstEvent as any).pax ||
               200;
-            if (pax > 0) setEventPax(Number(pax));
+            if (Number(pax) > 0) setEventPax(Number(pax));
           } catch (e) {
             console.error('Error fetching event capacity:', e);
             // Fallback to 200 if we couldn't fetch details but know it's a client event
@@ -176,13 +176,13 @@ export function QrCodePage() {
               item.isVerified === true ||
               (item.isVerified &&
                 typeof item.isVerified === 'object' &&
-                'BOOL' in (item.isVerified as any) &&
-                (item.isVerified as any).BOOL === true) ||
+                'BOOL' in item.isVerified &&
+                (item.isVerified as { BOOL: boolean }).BOOL === true) ||
               item.isVerified === 'true'
             ),
             qrCode: String(
-              typeof item.qrCode === 'object' && item.qrCode && 'S' in (item.qrCode as any)
-                ? (item.qrCode as any).S
+              typeof item.qrCode === 'object' && item.qrCode && 'S' in item.qrCode
+                ? (item.qrCode as { S: string }).S
                 : item.qrCode || ''
             ),
             message: String(item.message || ''),

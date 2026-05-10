@@ -65,16 +65,20 @@ export function RSVPPage() {
           date:
             eventData.endDate ||
             eventData.dateEnd ||
-            eventData.dateStart ||
+            eventData.invitationDate ||
             eventData.startDate ||
             eventData.eventDate ||
+            eventData.dateStart ||
             '',
-          time: eventData.dateStart
-            ? new Date(eventData.dateStart).toLocaleTimeString([], {
-                hour: '2-digit',
-                minute: '2-digit',
-              })
-            : 'TBA',
+          time:
+            eventData.eventTime ||
+            eventData.startTime ||
+            (eventData.dateStart
+              ? new Date(eventData.dateStart).toLocaleTimeString([], {
+                  hour: '2-digit',
+                  minute: '2-digit',
+                })
+              : 'TBA'),
           location: eventData.venue || eventData.location || 'TBA',
           couple: {
             name1: eventData.title || 'Event',

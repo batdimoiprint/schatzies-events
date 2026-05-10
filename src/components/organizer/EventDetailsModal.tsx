@@ -620,11 +620,10 @@ export function EventDetailsModal({
                           )}
                         </div>
                         <Badge
-                          className={`text-[9px] px-1.5 py-0.5 shadow-none ${
-                            guest.isScanned
+                          className={`text-[9px] px-1.5 py-0.5 shadow-none ${guest.isScanned
                               ? 'bg-[#e6f4ea] text-[#1e7e34]'
                               : 'bg-[#f3f0f7] text-[#7c7390]'
-                          }`}
+                            }`}
                         >
                           {guest.isScanned ? 'Present' : 'Absent'}
                         </Badge>
