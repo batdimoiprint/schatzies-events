@@ -80,7 +80,12 @@ export function QrCodePage() {
             const pax =
               fullDetails.eventPax ||
               (fullDetails as unknown as Record<string, unknown>).event_pax ||
-              ((fullDetails as unknown as Record<string, unknown>).package as Record<string, unknown>)?.pax ||
+              (
+                (fullDetails as unknown as Record<string, unknown>).package as Record<
+                  string,
+                  unknown
+                >
+              )?.pax ||
               (firstEvent as any).pax ||
               200;
             if (Number(pax) > 0) setEventPax(Number(pax));

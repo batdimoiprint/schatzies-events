@@ -108,9 +108,9 @@ export function RSVPPage() {
           setState('idle');
         }
       };
-      
-      getEventManagerEvents().then(data => {
-        const ev = data.find(e => e.id === selectedEventId);
+
+      getEventManagerEvents().then((data) => {
+        const ev = data.find((e) => e.id === selectedEventId);
         if (ev) setSelectedEvent(ev);
       });
 
@@ -257,7 +257,7 @@ export function RSVPPage() {
         try {
           // Now that the backend stores the URL, we can just send the decodedText
           const result = await scanGuest(selectedEventId, decodedText);
-          
+
           const isResultSuccess =
             result.success ||
             result.id ||
@@ -611,19 +611,22 @@ export function RSVPPage() {
                   </div>
                 </div>
               </div>
-                  <div className="mt-6 flex justify-between items-center text-xs text-[#696373]">
-                    <div className="flex gap-4">
-                      <span>
-                        Capacity: <strong>{selectedEvent?.pax || 'TBA'}</strong>
-                      </span>
-                      <span>
-                        Arrived: <strong className="text-blue-600">{arrivedCount}</strong>
-                      </span>
-                    </div>
-                    <span>
-                      Total Responses: <strong>{totalRSVPs}/{selectedEvent?.pax || 'TBA'}</strong>
-                    </span>
-                  </div>
+              <div className="mt-6 flex justify-between items-center text-xs text-[#696373]">
+                <div className="flex gap-4">
+                  <span>
+                    Capacity: <strong>{selectedEvent?.pax || 'TBA'}</strong>
+                  </span>
+                  <span>
+                    Arrived: <strong className="text-blue-600">{arrivedCount}</strong>
+                  </span>
+                </div>
+                <span>
+                  Total Responses:{' '}
+                  <strong>
+                    {totalRSVPs}/{selectedEvent?.pax || 'TBA'}
+                  </strong>
+                </span>
+              </div>
             </div>
           )}
 

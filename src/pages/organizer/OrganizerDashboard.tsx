@@ -607,7 +607,6 @@ export function OrganizerDashboard() {
 
   const [isChartMounted, setIsChartMounted] = useState(false);
   const [hoveredDonut, setHoveredDonut] = useState<StatusSlice | null>(null);
-  const [selectedDate, setSelectedDate] = useState<Date | null>(() => today);
   const [viewDate, setViewDate] = useState(
     () => new Date(today.getFullYear(), today.getMonth(), 1)
   );
@@ -952,14 +951,12 @@ export function OrganizerDashboard() {
                     </span>
                   </div>
                   <p className="mt-1 text-xs font-semibold text-[#c5bdd1] text-center">
-                    {selectedDate
-                      ? selectedDate.toLocaleDateString('en-US', {
-                          weekday: 'long',
-                          month: 'short',
-                          day: 'numeric',
-                          year: 'numeric',
-                        })
-                      : 'No Date Selected'}
+                    {today.toLocaleDateString('en-US', {
+                      weekday: 'long',
+                      month: 'short',
+                      day: 'numeric',
+                      year: 'numeric',
+                    })}
                   </p>
                 </div>
 
@@ -1010,22 +1007,16 @@ export function OrganizerDashboard() {
 
                     const dayDate = new Date(viewDate.getFullYear(), viewDate.getMonth(), day);
                     const isToday = isSameCalendarDay(today, dayDate);
-                    const isSelected = isSameCalendarDay(selectedDate, dayDate);
 
                     return (
                       <div key={`calendar-cell-${index}`} className="flex justify-center">
-                        <button
-                          type="button"
-                          onClick={() => setSelectedDate(dayDate)}
-                          aria-pressed={isSelected}
+                        <div
                           title={isToday ? `Today • Day ${day}` : `Day ${day}`}
                           className={[
-                            'flex size-10 flex-col items-center justify-between rounded-md py-1 border text-xs font-sans transition-all duration-150',
-                            isSelected
+                            'flex size-10 flex-col items-center justify-between rounded-md py-1 border text-xs font-sans cursor-default',
+                            isToday
                               ? 'bg-[#fdf8ff] text-[#8f1fd1] font-black border-2 border-[#8f1fd1]'
-                              : isToday
-                                ? 'bg-[#fce4ec] text-[#7a667f] font-bold border-[#f1c3d7]'
-                                : 'text-[#9b8fa8] font-semibold border-transparent hover:bg-[#f4eff8]',
+                              : 'text-[#9b8fa8] font-semibold border-transparent',
                           ].join(' ')}
                         >
                           <span className="leading-none">{day}</span>
@@ -1078,7 +1069,7 @@ export function OrganizerDashboard() {
                               );
                             })()}
                           </div>
-                        </button>
+                        </div>
                       </div>
                     );
                   })}

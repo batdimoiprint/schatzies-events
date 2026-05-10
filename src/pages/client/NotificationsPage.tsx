@@ -17,7 +17,14 @@ const ICON_MAP: Record<string, typeof Bell> = {
   message: MessageSquare,
 };
 
-const INITIAL_NOTIFICATIONS: Array<{ id: number; type: string; title: string; message: string; time: string; unread: boolean; }> = [];
+const INITIAL_NOTIFICATIONS: Array<{
+  id: number;
+  type: string;
+  title: string;
+  message: string;
+  time: string;
+  unread: boolean;
+}> = [];
 
 type FilterType = 'all' | 'event' | 'task' | 'rsvp' | 'message';
 

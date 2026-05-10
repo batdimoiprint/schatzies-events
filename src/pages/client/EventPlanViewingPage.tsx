@@ -16,8 +16,6 @@ import { getCalendarEntries } from '@/api/calendar';
 import { useAuth } from '@/hooks/useAuth';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 
-
-
 // ── Illustration placeholders (img tags) ─────────────────────────────────────
 function PackageIllustration() {
   return (
