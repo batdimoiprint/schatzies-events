@@ -24,6 +24,7 @@ import { AdminVendorPoolPage } from '@/pages/admin/AdminVendorPoolPage';
 import { AdminInquiriesPage } from '@/pages/admin/AdminInquiriesPage';
 import { AdminNotificationsPage } from '@/pages/admin/AdminNotificationsPage';
 import { AdminSettingsPage } from '@/pages/admin/AdminSettingsPage';
+import { AdminDataBackupPage } from '@/pages/admin/AdminDataBackupPage';
 import { ProfilePage } from '@/pages/admin/ProfilePage';
 
 // Organizer Pages
@@ -179,6 +180,10 @@ const router = createBrowserRouter(
         {
           path: 'profile',
           Component: ProfilePage,
+        },
+        {
+          path: 'data-backup',
+          Component: AdminDataBackupPage,
         },
       ],
     },

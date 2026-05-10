@@ -11,6 +11,7 @@ import {
   UserCheck,
   MailQuestion,
   MessageSquareDotIcon,
+  DatabaseBackup,
   LogOut,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -27,6 +28,7 @@ const adminNavItems = [
   { label: 'Calendar', to: '/admin/calendar', icon: Calendar },
   { label: 'Cost Breakdown', to: '/admin/costs', icon: Wallet },
   { label: 'Vendor Pool', to: '/admin/vendors', icon: Briefcase },
+  { label: 'Data Backup', to: '/admin/data-backup', icon: DatabaseBackup },
 ];
 
 export default function AdminSidebar() {

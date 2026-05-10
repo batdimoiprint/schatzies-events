@@ -1,10 +1,11 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import LoadingScreen from '@/components/ui/LoadingScreen';
+import { forceChangePassword } from '@/api/auth';
 
 function passwordRequirements(value: string) {
   return [
@@ -17,6 +18,9 @@ function passwordRequirements(value: string) {
 
 export function ForceResetPasswordPage() {
   const navigate = useNavigate();
+  const location = useLocation();
+  const resetToken = (location.state as { resetToken?: string })?.resetToken;
+
   const [isLoading, setIsLoading] = useState(false);
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -24,6 +28,31 @@ export function ForceResetPasswordPage() {
   const [success, setSuccess] = useState(false);
 
   const requirements = passwordRequirements(password);
+
+  // If no reset token, redirect to login
+  if (!resetToken) {
+    return (
+      <div className="relative min-h-screen overflow-hidden bg-gradient-to-b from-[#fff5fb] via-[#ffe3f1] to-[#ffd6e6] py-12 sm:py-16 lg:py-24">
+        <div className="relative mx-auto flex min-h-[calc(100vh-4rem)] max-w-2xl items-center justify-center px-4 sm:px-6 lg:px-8">
+          <Card className="w-full rounded-[2rem] border border-white/80 bg-white/95 p-6 shadow-[0_30px_80px_rgba(177,63,134,0.14)] backdrop-blur-sm sm:p-10">
+            <CardContent className="pt-10 text-center">
+              <h1 className="text-2xl font-bold text-[#24182f] mb-4">Session Expired</h1>
+              <p className="text-sm text-[#5a3f57] mb-6">
+                Your password reset session has expired or is invalid. Please log in again.
+              </p>
+              <Button
+                type="button"
+                onClick={() => navigate('/login')}
+                className="rounded-full bg-gradient-to-r from-[#ff5fa1] to-[#b049f0] px-6 py-3 text-sm font-bold text-white shadow-xl transition hover:brightness-110"
+              >
+                Go to Login
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    );
+  }
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -42,9 +71,21 @@ export function ForceResetPasswordPage() {
     }
 
     setIsLoading(true);
-    await new Promise((resolve) => setTimeout(resolve, 900));
-    setIsLoading(false);
-    setSuccess(true);
+    try {
+      await forceChangePassword(resetToken, password);
+      setSuccess(true);
+    } catch (err: unknown) {
+      const apiError =
+        typeof err === 'object' &&
+        err !== null &&
+        'response' in err &&
+        typeof (err as { response?: { data?: { error?: string } } }).response?.data?.error === 'string'
+          ? (err as { response: { data: { error: string } } }).response.data.error
+          : 'Unable to change password. Please try again.';
+      setError(apiError);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
