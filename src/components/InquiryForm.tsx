@@ -905,7 +905,7 @@ export function InquiryForm({ onClose, selectedPackageId, selectedEventType }: I
                                     defaultMonth={
                                       field.value ? new Date(field.value) : getMinDate()
                                     }
-                                    onSelect={(date) => field.onChange(date?.toISOString())}
+                                    onSelect={(date) => field.onChange(date ? format(date, 'yyyy-MM-dd') : undefined)}
                                     disabled={(date) => {
                                       // 1. Must be at least 1 month in advance
                                       if (date < getMinDate()) return true;

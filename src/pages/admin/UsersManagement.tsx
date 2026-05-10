@@ -35,6 +35,7 @@ import {
   type UserResponse,
   type UserPayload,
 } from '@/api/users';
+import { getVerifiedEmails, type VerifiedEmail } from '@/api/email-verification';
 import {
   Plus,
   Trash2,
@@ -50,6 +51,8 @@ import {
   ArrowUp,
   ArrowDown,
   Search,
+  Mail,
+  BadgeCheck,
 } from 'lucide-react';
 import { UserDetailsPopover } from '@/components/admin/UserDetailsPopover';
 
@@ -71,8 +74,10 @@ const initialFormState: UserPayload = {
 };
 
 type UserSortField = 'name' | 'email' | 'role' | 'contact' | 'created';
+type TabView = 'users' | 'verified-emails';
 
 export function UsersManagement() {
+  const [activeTab, setActiveTab] = useState<TabView>('users');
   const [users, setUsers] = useState<UserResponse[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -86,6 +91,13 @@ export function UsersManagement() {
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
   const [currentPage, setCurrentPage] = useState(1);
   const [rowsPerPage, setRowsPerPage] = useState(10);
+
+  // Verified emails state
+  const [verifiedEmails, setVerifiedEmails] = useState<VerifiedEmail[]>([]);
+  const [veLoading, setVeLoading] = useState(false);
+  const [veSearch, setVeSearch] = useState('');
+  const [vePage, setVePage] = useState(1);
+  const vePerPage = 15;
 
   // State for role confirmation dialog
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
@@ -117,6 +129,25 @@ export function UsersManagement() {
   useEffect(() => {
     fetchUsers();
   }, []);
+
+  // Fetch verified emails when that tab is activated
+  const fetchVerifiedEmails = async () => {
+    try {
+      setVeLoading(true);
+      const data = await getVerifiedEmails();
+      setVerifiedEmails(data.emails);
+    } catch (err) {
+      console.error('Failed to fetch verified emails:', err);
+    } finally {
+      setVeLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (activeTab === 'verified-emails' && verifiedEmails.length === 0) {
+      fetchVerifiedEmails();
+    }
+  }, [activeTab]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -265,6 +296,18 @@ export function UsersManagement() {
       <ArrowDown className="ml-1.5 h-3.5 w-3.5 text-[#8f1fd1]" />
     );
   };
+
+  // Verified emails filtered + paginated
+  const filteredVe = useMemo(() => {
+    const q = veSearch.trim().toLowerCase();
+    if (!q) return verifiedEmails;
+    return verifiedEmails.filter((v) => v.email.toLowerCase().includes(q));
+  }, [verifiedEmails, veSearch]);
+
+  useEffect(() => { setVePage(1); }, [veSearch]);
+
+  const veTotalPages = Math.max(1, Math.ceil(filteredVe.length / vePerPage));
+  const paginatedVe = filteredVe.slice((vePage - 1) * vePerPage, vePage * vePerPage);
 
   if (loading) {
     return <div className="p-4">Loading users...</div>;
@@ -449,6 +492,40 @@ export function UsersManagement() {
           {error}
         </div>
       )}
+
+      {/* Tab Navigation */}
+      <div className="flex gap-1 rounded-xl bg-[#f5f0fa] p-1">
+        <button
+          onClick={() => setActiveTab('users')}
+          className={`flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold transition-all ${
+            activeTab === 'users'
+              ? 'bg-white text-[#2e2837] shadow-sm'
+              : 'text-[#7c7390] hover:text-[#2e2837]'
+          }`}
+        >
+          <Users className="h-4 w-4" />
+          Users
+          <span className={`rounded-full px-2 py-0.5 text-xs font-bold ${
+            activeTab === 'users' ? 'bg-[#f0e8f7] text-[#8f1fd1]' : 'bg-[#e8e0f0] text-[#7c7390]'
+          }`}>{totalUsers}</span>
+        </button>
+        <button
+          onClick={() => setActiveTab('verified-emails')}
+          className={`flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold transition-all ${
+            activeTab === 'verified-emails'
+              ? 'bg-white text-[#2e2837] shadow-sm'
+              : 'text-[#7c7390] hover:text-[#2e2837]'
+          }`}
+        >
+          <BadgeCheck className="h-4 w-4" />
+          Verified Emails
+          <span className={`rounded-full px-2 py-0.5 text-xs font-bold ${
+            activeTab === 'verified-emails' ? 'bg-emerald-100 text-emerald-700' : 'bg-[#e8e0f0] text-[#7c7390]'
+          }`}>{verifiedEmails.length}</span>
+        </button>
+      </div>
+
+      {activeTab === 'users' && (<>
 
       <div className="grid gap-4 md:grid-cols-4">
         <Card>
@@ -690,6 +767,115 @@ export function UsersManagement() {
           </div>
         )}
       </div>
+      </>)}
+
+      {/* ── Verified Emails Tab ── */}
+      {activeTab === 'verified-emails' && (
+        <div className="overflow-hidden rounded-2xl border border-[#eee7f4] bg-white shadow-[0_8px_30px_rgba(53,36,71,0.06)]">
+          <div className="flex items-center justify-between gap-3 border-b border-[#f1eaf7] bg-[#fcf9ff] px-4 py-3">
+            <div className="relative w-full max-w-md">
+              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-[#8a7ca3]" />
+              <Input
+                placeholder="Search verified emails…"
+                value={veSearch}
+                onChange={(e) => setVeSearch(e.target.value)}
+                className="h-9 border-[#e5ddee] bg-white pl-8"
+              />
+            </div>
+            <Button variant="outline" size="sm" onClick={fetchVerifiedEmails} disabled={veLoading}>
+              {veLoading ? 'Refreshing…' : 'Refresh'}
+            </Button>
+          </div>
+
+          {veLoading ? (
+            <div className="flex items-center justify-center py-16 text-[#7c7390]">
+              Loading verified emails…
+            </div>
+          ) : (
+            <Table>
+              <TableHeader className="bg-[#faf7fd]">
+                <TableRow className="border-b border-[#efe7f6]">
+                  <TableHead className="h-11 w-12 text-center text-xs font-black uppercase tracking-[0.06em] text-[#7c7390]">
+                    #
+                  </TableHead>
+                  <TableHead className="h-11 text-xs font-black uppercase tracking-[0.06em] text-[#7c7390]">
+                    <div className="flex items-center gap-1.5">
+                      <Mail className="h-3.5 w-3.5" />
+                      Email
+                    </div>
+                  </TableHead>
+                  <TableHead className="h-11 text-xs font-black uppercase tracking-[0.06em] text-[#7c7390]">
+                    Status
+                  </TableHead>
+                  <TableHead className="h-11 text-xs font-black uppercase tracking-[0.06em] text-[#7c7390]">
+                    Verified At
+                  </TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {paginatedVe.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={4} className="text-center py-8 text-gray-500">
+                      {verifiedEmails.length > 0 ? 'No emails match your search.' : 'No verified emails found.'}
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  paginatedVe.map((ve, idx) => (
+                    <TableRow key={ve.email} className="border-b border-[#f3edf8] hover:bg-[#fcf9ff]">
+                      <TableCell className="text-center text-sm text-[#8a7ca3]">
+                        {(vePage - 1) * vePerPage + idx + 1}
+                      </TableCell>
+                      <TableCell className="font-semibold text-[#2e2837]">
+                        {ve.email}
+                      </TableCell>
+                      <TableCell>
+                        <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-0.5 text-xs font-bold text-emerald-700">
+                          <BadgeCheck className="h-3 w-3" />
+                          Verified
+                        </span>
+                      </TableCell>
+                      <TableCell className="text-sm text-[#4e4560]">
+                        {ve.verifiedAt
+                          ? new Date(ve.verifiedAt).toLocaleString('en-PH', {
+                              year: 'numeric',
+                              month: 'short',
+                              day: 'numeric',
+                              hour: '2-digit',
+                              minute: '2-digit',
+                            })
+                          : '-'}
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
+          )}
+
+          {filteredVe.length > vePerPage && (
+            <div className="flex items-center justify-between border-t border-[#f1eaf7] bg-[#fcf9ff] px-4 py-3">
+              <span className="text-sm text-[#7c7390]">
+                {(vePage - 1) * vePerPage + 1}–{Math.min(vePage * vePerPage, filteredVe.length)} of {filteredVe.length}
+              </span>
+              <div className="flex items-center gap-1">
+                <Button variant="outline" size="icon" className="h-8 w-8 border-[#e5ddee] disabled:opacity-40" onClick={() => setVePage(1)} disabled={vePage === 1}>
+                  <ChevronsLeft className="h-4 w-4" />
+                </Button>
+                <Button variant="outline" size="icon" className="h-8 w-8 border-[#e5ddee] disabled:opacity-40" onClick={() => setVePage((p) => Math.max(1, p - 1))} disabled={vePage === 1}>
+                  <ChevronLeft className="h-4 w-4" />
+                </Button>
+                <span className="mx-2 text-sm font-bold text-[#2e2837]">Page {vePage} of {veTotalPages}</span>
+                <Button variant="outline" size="icon" className="h-8 w-8 border-[#e5ddee] disabled:opacity-40" onClick={() => setVePage((p) => Math.min(veTotalPages, p + 1))} disabled={vePage === veTotalPages}>
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+                <Button variant="outline" size="icon" className="h-8 w-8 border-[#e5ddee] disabled:opacity-40" onClick={() => setVePage(veTotalPages)} disabled={vePage === veTotalPages}>
+                  <ChevronsRight className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Role Change Confirmation Dialog */}
       <Dialog open={isConfirmOpen} onOpenChange={setIsConfirmOpen}>
