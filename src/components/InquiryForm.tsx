@@ -45,14 +45,16 @@ function Req() {
 function Field({
   required,
   error,
+  className,
   children,
 }: {
   required?: boolean;
   error?: string;
+  className?: string;
   children: React.ReactNode;
 }) {
   return (
-    <div className="flex flex-col">
+    <div className={cn('flex flex-col', className)}>
       <div className="relative">
         {children}
         {required && <Req />}
@@ -974,56 +976,58 @@ export function InquiryForm({ onClose, selectedPackageId, selectedEventType }: I
                         </div>
                       )}
                       <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2">
-                        <Field error={errors.eventPackage?.message}>
-                          <div className="flex items-center gap-1.5">
-                            <Controller
-                              control={control}
-                              name="eventPackage"
-                              rules={{
-                                required:
-                                  watchedEventType !== 'Others'
-                                    ? 'Event package is required'
-                                    : false,
-                              }}
-                              render={({ field }) => (
-                                <Select
-                                  onValueChange={field.onChange}
-                                  value={field.value}
-                                  disabled={!watchedEventType || watchedEventType === 'Others'}
-                                >
-                                  <SelectTrigger className={fieldBase}>
-                                    <SelectValue
-                                      placeholder={
-                                        !watchedEventType
-                                          ? 'Select Event Type First'
-                                          : watchedEventType === 'Others'
-                                            ? 'Custom Package (Others)'
+                        {watchedEventType !== 'Others' && (
+                          <Field error={errors.eventPackage?.message}>
+                            <div className="flex items-center gap-1.5">
+                              <Controller
+                                control={control}
+                                name="eventPackage"
+                                rules={{
+                                  required:
+                                    watchedEventType !== 'Others'
+                                      ? 'Event package is required'
+                                      : false,
+                                }}
+                                render={({ field }) => (
+                                  <Select
+                                    onValueChange={field.onChange}
+                                    value={field.value}
+                                    disabled={!watchedEventType}
+                                  >
+                                    <SelectTrigger className={fieldBase}>
+                                      <SelectValue
+                                        placeholder={
+                                          !watchedEventType
+                                            ? 'Select Event Type First'
                                             : 'Event Package'
-                                      }
-                                    />
-                                  </SelectTrigger>
-                                  <SelectContent className={overlayPopupLayer}>
-                                    {packageOptions.map((p) => (
-                                      <SelectItem key={p} value={p}>
-                                        {p}
-                                      </SelectItem>
-                                    ))}
-                                  </SelectContent>
-                                </Select>
-                              )}
-                            />
-                          </div>
-                        </Field>
-                        <Field error={errors.eventPax?.message}>
+                                        }
+                                      />
+                                    </SelectTrigger>
+                                    <SelectContent className={overlayPopupLayer}>
+                                      {packageOptions.map((p) => (
+                                        <SelectItem key={p} value={p}>
+                                          {p}
+                                        </SelectItem>
+                                      ))}
+                                    </SelectContent>
+                                  </Select>
+                                )}
+                              />
+                            </div>
+                          </Field>
+                        )}
+                        <Field
+                          error={errors.eventPax?.message}
+                          className={watchedEventType === 'Others' ? 'col-span-full' : ''}
+                        >
                           {watchedEventType === 'Others' ? (
                             <Input
                               type="number"
-                              min="1"
                               max="200"
                               placeholder="Guest Count (Headcount)"
                               {...register('eventPax', {
                                 required: 'Guest count is required',
-                                min: { value: 1, message: 'Minimum 1 guest' },
+                                min: { value: 50, message: 'Minimum 50 guests' },
                                 max: { value: 200, message: 'Maximum 200 guests' },
                               })}
                               onChange={(e) => {
@@ -1106,7 +1110,9 @@ export function InquiryForm({ onClose, selectedPackageId, selectedEventType }: I
                       )}
 
                       {/* Show "No package selected" message when form is open without a package */}
-                      {!(currentSelectedPackage || selectedPackage) && watchedEventType && (
+                      {!(currentSelectedPackage || selectedPackage) &&
+                        watchedEventType &&
+                        watchedEventType !== 'Others' && (
                         <div className="mt-3 rounded-lg bg-blue-50/50 p-3 border border-blue-200/50">
                           <p className="text-[0.8rem] text-blue-600">
                             💡 Select a package from the dropdown to see its details and inclusions
