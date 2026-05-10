@@ -1,5 +1,12 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { ArrowRight, CalendarDays, ChevronDown, Download } from 'lucide-react';
+import {
+  ArrowRight,
+  CalendarDays,
+  CheckCircle2,
+  ChevronDown,
+  Download,
+  XCircle,
+} from 'lucide-react';
 import {
   exportCostBreakdown,
   getCostBreakdown,
@@ -7,7 +14,6 @@ import {
   createCostBreakdown,
 } from '@/api/cost-breakdown';
 import { getEvents, getEventVendors } from '@/api/events';
-import { calculatePackagePrice } from '@/utils/package-pricing';
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -94,6 +100,68 @@ function formatCsvValue(value: string | number): string {
   return value;
 }
 
+function calculatePackagePrice(packageName: string, eventType: string, pax: number): number {
+  const pkg = packageName.trim().toLowerCase();
+  const type = eventType.trim().toLowerCase();
+
+  if (type === 'wedding') {
+    if (pkg === 'blooms') {
+      if (pax <= 50) return 200000;
+      if (pax <= 100) return 235000;
+      if (pax <= 150) return 277500;
+      return 320000;
+    }
+    if (pkg === 'fascinating') {
+      if (pax <= 100) return 295000;
+      if (pax <= 150) return 342500;
+      return 390000;
+    }
+    if (pkg === 'windy') {
+      if (pax <= 100) return 420000;
+      if (pax <= 150) return 480000;
+      return 540000;
+    }
+    if (pkg === 'de luxe') {
+      if (pax <= 100) return 520000;
+      if (pax <= 150) return 585000;
+      return 650000;
+    }
+    if (pkg === 'grandezza') {
+      if (pax <= 100) return 780000;
+      if (pax <= 150) return 870000;
+      return 960000;
+    }
+  } else if (type === 'debut') {
+    if (pkg === 'charming') {
+      if (pax <= 100) return 200000;
+      if (pax <= 150) return 242500;
+      return 285000;
+    }
+    if (pkg === 'irresistible') {
+      if (pax <= 100) return 295000;
+      if (pax <= 150) return 342500;
+      return 390000;
+    }
+    if (pkg === 'elegancia') {
+      if (pax <= 100) return 495000;
+      if (pax <= 150) return 555000;
+      return 615000;
+    }
+    if (pkg === 'flawless') {
+      if (pax <= 100) return 395000;
+      if (pax <= 150) return 445000;
+      return 495000;
+    }
+    if (pkg === 'grandiosa') {
+      if (pax <= 100) return 595000;
+      if (pax <= 150) return 670000;
+      return 745000;
+    }
+  }
+
+  return 0;
+}
+
 export function CostBreakdownPage() {
   const [selectedEventId, setSelectedEventId] = useState('');
   const [apiEvents, setApiEvents] = useState<any[]>([]);
@@ -110,6 +178,12 @@ export function CostBreakdownPage() {
   const [apiAdditionalCharges, setApiAdditionalCharges] = useState<number | null>(null);
   const [apiRevenue, setApiRevenue] = useState<number | null>(null);
   const [apiProfit, setApiProfit] = useState<number | null>(null);
+  const [clientDeposit, setClientDeposit] = useState<number>(0);
+  const [saveNotification, setSaveNotification] = useState<{
+    open: boolean;
+    type: 'success' | 'error';
+    message: string;
+  }>({ open: false, type: 'success', message: '' });
   const printRef = useRef<HTMLDivElement | null>(null);
 
   const selectedEvent = useMemo(() => {
@@ -172,6 +246,7 @@ export function CostBreakdownPage() {
         setApiRevenue(null);
         setApiProfit(null);
         setApiVendors([]);
+        setClientDeposit(0);
         return;
       }
 
@@ -181,6 +256,7 @@ export function CostBreakdownPage() {
       setApiRevenue(null);
       setApiProfit(null);
       setApiVendors([]);
+      setClientDeposit(0);
 
       try {
         const [costResult, vendorsResult] = await Promise.all([
@@ -251,6 +327,11 @@ export function CostBreakdownPage() {
         setApiRevenue(toOptionalNumber(costPayload.revenue ?? costPayload.totalRevenue));
         setApiProfit(toOptionalNumber(costPayload.profit ?? costPayload.totalProfit));
         setApiVendors(mappedVendors);
+        const depositValue =
+          toOptionalNumber(
+            costPayload.clientDeposit ?? costPayload.deposit ?? costPayload.downPayment
+          ) ?? 0;
+        setClientDeposit(depositValue);
       } catch (error) {
         if (!isMounted) {
           return;
@@ -479,7 +560,8 @@ export function CostBreakdownPage() {
         eventPax: resolvedEventPax,
         manpowerCost: 0, // Fallback as this isn't currently managed in the UI
         additionalCharges: displayedAdditionalCharges,
-      };
+        clientDeposit,
+      } as any;
 
       try {
         // Attempt to update first (PUT)
@@ -492,17 +574,67 @@ export function CostBreakdownPage() {
           throw err;
         }
       }
-      alert('Cost breakdown saved successfully!');
+      setSaveNotification({
+        open: true,
+        type: 'success',
+        message: 'Cost breakdown saved successfully!',
+      });
     } catch (error) {
       console.error('Failed to save cost breakdown', error);
-      alert('Failed to save. Please try again.');
+      setSaveNotification({
+        open: true,
+        type: 'error',
+        message: 'Failed to save. Please try again.',
+      });
     } finally {
       setIsSaving(false);
     }
   };
 
+  const remainingBalance = totalRevenue - clientDeposit;
+
   return (
     <section className="max-w-full space-y-6 pb-6 overflow-x-hidden">
+      {/* ── Save Notification Dialog ── */}
+      <Dialog
+        open={saveNotification.open}
+        onOpenChange={(open) => setSaveNotification((prev) => ({ ...prev, open }))}
+      >
+        <DialogContent className="sm:max-w-sm">
+          <div className="flex flex-col items-center gap-4 py-4 text-center">
+            {saveNotification.type === 'success' ? (
+              <div className="flex size-16 items-center justify-center rounded-full bg-emerald-50">
+                <CheckCircle2 className="size-9 text-emerald-500" />
+              </div>
+            ) : (
+              <div className="flex size-16 items-center justify-center rounded-full bg-red-50">
+                <XCircle className="size-9 text-red-500" />
+              </div>
+            )}
+            <div>
+              <DialogTitle className="text-lg font-bold text-[#2d2834]">
+                {saveNotification.type === 'success' ? 'Saved!' : 'Save Failed'}
+              </DialogTitle>
+              <DialogDescription className="mt-1 text-sm text-[#6f6780]">
+                {saveNotification.message}
+              </DialogDescription>
+            </div>
+          </div>
+          <DialogFooter>
+            <DialogClose asChild>
+              <button
+                className={`w-full rounded-full px-5 py-2 text-sm font-bold text-white transition-opacity hover:opacity-90 ${
+                  saveNotification.type === 'success'
+                    ? 'bg-gradient-to-r from-emerald-400 to-emerald-600'
+                    : 'bg-gradient-to-r from-red-400 to-red-600'
+                }`}
+              >
+                OK
+              </button>
+            </DialogClose>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
       <div className="hidden print:block">
         <div
           ref={printRef}
@@ -701,14 +833,14 @@ export function CostBreakdownPage() {
           </div>
 
           <div className="overflow-hidden rounded-2xl border border-[#e7dfef] bg-white shadow-sm">
-            <div className="grid min-h-[168px] grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-y-4 lg:gap-y-0 lg:divide-x divide-[#ece6f3] py-4 lg:py-0">
+            <div className="grid min-h-[168px] grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-y-4 lg:gap-y-0 lg:divide-x divide-[#ece6f3] py-4 lg:py-0">
               <div className="p-5">
                 <p className="inline-flex items-center gap-2 text-sm font-semibold text-[#7a7186] truncate w-full">
                   <span className="size-2.5 shrink-0 rounded-full bg-[#8f23cf] ring-2 ring-[#efe4fb]" />
-                  Revenue
+                  Total Event Cost
                 </p>
                 <p className="mt-5 font-sans text-2xl sm:text-3xl lg:text-5xl font-black tracking-tight text-[#2d2834]">
-                  {formatPeso(totalRevenue)}
+                  {formatPeso(totalVendorCharges + displayedAdditionalCharges)}
                 </p>
               </div>
 
@@ -737,6 +869,19 @@ export function CostBreakdownPage() {
                 </p>
               </div>
 
+              {/* ── Client Deposit card ── */}
+              <div className="p-5">
+                <p className="inline-flex items-center gap-2 text-sm font-semibold text-[#7a7186] truncate w-full">
+                  <span className="size-2.5 shrink-0 rounded-full bg-[#f34da7] ring-2 ring-[#fde8f3]" />
+                  Client Deposit
+                </p>
+                <p className="mt-5 font-sans text-2xl sm:text-3xl lg:text-5xl font-black tracking-tight text-[#2d2834]">
+                  {formatPeso(clientDeposit)}
+                </p>
+                <p className="mt-2 text-xs font-medium text-[#b0a8be]">Set by admin</p>
+              </div>
+
+              {/* ── Additional Charges card ── */}
               <div className="p-5">
                 <p className="inline-flex items-center gap-2 text-sm font-semibold text-[#7a7186] truncate w-full">
                   <span className="size-2.5 shrink-0 rounded-full bg-[#d7d6db]" />

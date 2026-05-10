@@ -2194,8 +2194,12 @@ export function EventPlannerPage() {
                       <div className="rounded-md border border-[#ece8f0] bg-[#fbf9fe] p-2.5 text-[10px] leading-snug text-[#6f687f]">
                         <p className="text-[11px] font-black text-[#3a3442]">Vendors</p>
                         <p className="mt-0.5 whitespace-pre-line break-words">
-                          {eventAllocation?.vendors && eventAllocation.vendors.length > 0 ? (
-                            eventAllocation.vendors.map((v: any) => v.name).join('\n')
+                          {Array.isArray(eventAllocation?.vendors) &&
+                          eventAllocation.vendors.length > 0 ? (
+                            eventAllocation.vendors
+                              .map((v: any) => String(v?.name || v?.['name'] || ''))
+                              .filter(Boolean)
+                              .join('\n')
                           ) : (
                             <span className="italic text-[#8b84a0]">None assigned</span>
                           )}
@@ -2204,8 +2208,12 @@ export function EventPlannerPage() {
                       <div className="rounded-md border border-[#ece8f0] bg-[#fbf9fe] p-2.5 text-[10px] leading-snug text-[#6f687f]">
                         <p className="text-[11px] font-black text-[#3a3442]">Manpower</p>
                         <p className="mt-0.5 whitespace-pre-line break-words">
-                          {eventAllocation?.manpower && eventAllocation.manpower.length > 0 ? (
-                            eventAllocation.manpower.map((m: any) => m.role).join('\n')
+                          {Array.isArray(eventAllocation?.manpower) &&
+                          eventAllocation.manpower.length > 0 ? (
+                            eventAllocation.manpower
+                              .map((m: any) => String(m?.role || m?.['role'] || ''))
+                              .filter(Boolean)
+                              .join('\n')
                           ) : (
                             <span className="italic text-[#8b84a0]">None assigned</span>
                           )}
@@ -2214,9 +2222,15 @@ export function EventPlannerPage() {
                       <div className="rounded-md border border-[#ece8f0] bg-[#fbf9fe] p-2.5 text-[10px] leading-snug text-[#6f687f]">
                         <p className="text-[11px] font-black text-[#3a3442]">Supplies</p>
                         <p className="mt-0.5 whitespace-pre-line break-words">
-                          {eventAllocation?.supplies && eventAllocation.supplies.length > 0 ? (
+                          {Array.isArray(eventAllocation?.supplies) &&
+                          eventAllocation.supplies.length > 0 ? (
                             eventAllocation.supplies
-                              .map((s: any) => `${s.item} (${s.quantity})`)
+                              .map((s: any) => {
+                                const item = String(s?.item || s?.['item'] || '');
+                                const qty = String(s?.quantity || s?.['quantity'] || '');
+                                return item ? `${item} (${qty})` : '';
+                              })
+                              .filter(Boolean)
                               .join('\n')
                           ) : (
                             <span className="italic text-[#8b84a0]">None assigned</span>
