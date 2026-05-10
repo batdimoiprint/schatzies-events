@@ -6,9 +6,9 @@ import {
   type DragEvent,
   type FormEvent,
 } from 'react';
+import { useLocation } from 'react-router-dom';
 import {
   ChevronLeft,
-  ClipboardList,
   Download,
   ImagePlus,
   ListChecks,
@@ -1057,6 +1057,8 @@ const noteTileThemes = [
 ];
 
 export function EventPlannerPage() {
+  const location = useLocation();
+  const passedEventId = location.state?.eventId;
   const [selectedEventId, setSelectedEventId] = useState('');
   const [projectSlots, setProjectSlots] = useState<ProjectSlot[]>([]);
   const [activeTab, setActiveTab] = useState<PlannerTab>('overview');
@@ -1116,7 +1118,11 @@ export function EventPlannerPage() {
         });
         setProjectSlots(mapped);
         if (mapped.length > 0) {
-          setSelectedEventId(mapped[0].id);
+          const targetId =
+            passedEventId && mapped.some((p: any) => p.id === passedEventId)
+              ? passedEventId
+              : mapped[0].id;
+          setSelectedEventId(targetId);
         }
       } catch (error) {
         console.error('Failed to fetch events for planner:', error);
@@ -1126,7 +1132,7 @@ export function EventPlannerPage() {
     return () => {
       isMounted = false;
     };
-  }, []);
+  }, [passedEventId]);
 
   useEffect(() => {
     let isMounted = true;
@@ -2017,56 +2023,7 @@ export function EventPlannerPage() {
 
   return (
     <div className="flex h-[calc(100vh-100px)] w-full max-w-full flex-col gap-4 overflow-hidden p-2 sm:p-4 lg:p-6 text-[#302c39]">
-      <div className="flex min-h-0 flex-1 flex-col gap-4 xl:grid xl:grid-cols-[250px_minmax(0,1fr)]">
-        <aside className="flex min-h-0 w-full flex-col space-y-4 xl:w-[250px]">
-          <section className="flex min-h-0 flex-1 flex-col rounded-2xl border border-[#ddd8e8] bg-white p-3 shadow-[0_6px_14px_rgba(31,18,54,0.06)]">
-            <header className="mb-2 flex shrink-0 items-center justify-between">
-              <h2 className="flex items-center gap-1.5 text-sm font-bold text-[#383341]">
-                <ClipboardList className="size-3.5 text-[#5a5469]" />
-                Projects List
-              </h2>
-              <button
-                type="button"
-                className="rounded-md p-1 text-[#898399] transition-colors hover:bg-[#f2eff8] hover:text-[#4b4558]"
-                aria-label="Projects list options"
-              >
-                <span className="text-lg leading-none">⋮</span>
-              </button>
-            </header>
-
-            <div className="flex-1 space-y-1.5 overflow-y-auto pr-1 [scrollbar-width:thin]">
-              {projectSlots.map((project, index) => {
-                const isSelected = project.id === selectedEventId;
-                return (
-                  <button
-                    key={project.id}
-                    type="button"
-                    onClick={() => setSelectedEventId(project.id)}
-                    className={[
-                      'flex w-full items-center gap-2 rounded-lg border px-2 py-1.5 text-left transition-all',
-                      isSelected
-                        ? 'border-transparent bg-linear-to-r from-[#f347a5] to-[#8f1fd1] text-white shadow-[0_8px_18px_rgba(171,39,185,0.35)]'
-                        : 'border-[#e3deeb] bg-[#fbfaff] text-[#5e586f] hover:border-[#d4cce2] hover:bg-[#f4effb]',
-                    ].join(' ')}
-                  >
-                    <span
-                      className={[
-                        'inline-flex size-4.5 shrink-0 items-center justify-center rounded text-[10px] font-bold',
-                        isSelected ? 'bg-white/20 text-white' : 'bg-[#ebe6f2] text-[#6e6680]',
-                      ].join(' ')}
-                    >
-                      {index + 1}
-                    </span>
-                    <span className="truncate text-xs font-semibold">
-                      {project.title || 'Pending project slot'}
-                    </span>
-                  </button>
-                );
-              })}
-            </div>
-          </section>
-        </aside>
-
+      <div className="flex min-h-0 flex-1 flex-col gap-4">
         <section className="flex min-h-0 flex-1 flex-col space-y-3">
           <article className="w-full overflow-hidden rounded-xl bg-linear-to-r from-[#f23fa3] to-[#7d1fd0] p-4 text-white shadow-[0_12px_24px_rgba(146,31,186,0.34)]">
             <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">

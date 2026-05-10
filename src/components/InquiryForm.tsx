@@ -1113,12 +1113,13 @@ export function InquiryForm({ onClose, selectedPackageId, selectedEventType }: I
                       {!(currentSelectedPackage || selectedPackage) &&
                         watchedEventType &&
                         watchedEventType !== 'Others' && (
-                        <div className="mt-3 rounded-lg bg-blue-50/50 p-3 border border-blue-200/50">
-                          <p className="text-[0.8rem] text-blue-600">
-                            💡 Select a package from the dropdown to see its details and inclusions
-                          </p>
-                        </div>
-                      )}
+                          <div className="mt-3 rounded-lg bg-blue-50/50 p-3 border border-blue-200/50">
+                            <p className="text-[0.8rem] text-blue-600">
+                              💡 Select a package from the dropdown to see its details and
+                              inclusions
+                            </p>
+                          </div>
+                        )}
                     </div>
                   </section>
 

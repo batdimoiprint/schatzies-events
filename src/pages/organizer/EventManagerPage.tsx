@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { useOutletContext } from 'react-router-dom';
+import { useNavigate, useOutletContext } from 'react-router-dom';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -90,6 +90,7 @@ function formatMoney(value?: number | null) {
 
 export function EventManagerPage() {
   const outletContext = useOutletContext<OrganizerLayoutOutletContext | undefined>();
+  const navigate = useNavigate();
   const searchTerm = outletContext?.searchTerm ?? '';
   const queryClient = useQueryClient();
   const { user } = useAuth();
@@ -586,6 +587,7 @@ export function EventManagerPage() {
           isAdmin={isAdmin}
           onDelete={(eventId) => deleteEventMutation.mutateAsync(eventId)}
           isDeleting={deleteEventMutation.isPending}
+          onViewPlanner={(id) => navigate('/organizer/event-planner', { state: { eventId: id } })}
         />
       )}
     </div>
