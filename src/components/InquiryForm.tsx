@@ -177,7 +177,6 @@ export function InquiryForm({ onClose, selectedPackageId, selectedEventType }: I
     }
   };
 
-
   // Cooldown timer to prevent spamming verification emails
   useEffect(() => {
     if (verificationCooldown > 0) {
@@ -310,8 +309,6 @@ export function InquiryForm({ onClose, selectedPackageId, selectedEventType }: I
       setIsLoading(false);
     }
   };
-
-
 
   return (
     <>
@@ -590,8 +587,9 @@ export function InquiryForm({ onClose, selectedPackageId, selectedEventType }: I
               </div>
               <h3 className="mt-5 text-[1.3rem] font-bold text-[#1a1225]">Check Your Email</h3>
               <p className="mt-2 text-center text-[0.88rem] leading-[1.6] text-gray-500">
-                We've sent a confirmation link to your email address. Please open your email and click{' '}
-                <span className="font-semibold text-[#700F81]">"Confirm Inquiry"</span> to complete your submission.
+                We've sent a confirmation link to your email address. Please open your email and
+                click <span className="font-semibold text-[#700F81]">"Confirm Inquiry"</span> to
+                complete your submission.
               </p>
               <p className="mt-3 text-center text-[0.75rem] leading-[1.5] text-gray-400">
                 The link will expire in 15 minutes. Check your spam folder if you don't see it.
@@ -819,8 +817,6 @@ export function InquiryForm({ onClose, selectedPackageId, selectedEventType }: I
                               />
                             </div>
                           </Field>
-
-
                         </div>
 
                         {/* ── Contact number ── */}
@@ -905,7 +901,9 @@ export function InquiryForm({ onClose, selectedPackageId, selectedEventType }: I
                                     defaultMonth={
                                       field.value ? new Date(field.value) : getMinDate()
                                     }
-                                    onSelect={(date) => field.onChange(date ? format(date, 'yyyy-MM-dd') : undefined)}
+                                    onSelect={(date) =>
+                                      field.onChange(date ? format(date, 'yyyy-MM-dd') : undefined)
+                                    }
                                     disabled={(date) => {
                                       // 1. Must be at least 1 month in advance
                                       if (date < getMinDate()) return true;

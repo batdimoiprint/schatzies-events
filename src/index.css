@@ -591,7 +591,7 @@ body {
 
 /* Booked: No background, just red text + strikethrough */
 .rdp-booked-date button,
-button[data-booked="true"] {
+button[data-booked='true'] {
   background-color: transparent !important;
   color: #b91c1c !important; /* Dark Red */
   opacity: 0.6 !important;
@@ -618,8 +618,8 @@ button[data-booked="true"] {
 }
 
 /* Standard disabled dates (e.g., less than 1 month in advance) */
-.rdp-day_disabled:not([data-booked="true"]) button,
-.rdp-day_disabled:not([data-booked="true"]) {
+.rdp-day_disabled:not([data-booked='true']) button,
+.rdp-day_disabled:not([data-booked='true']) {
   background-color: transparent !important;
   color: #d1d5db !important;
   opacity: 0.5 !important;

@@ -26,6 +26,7 @@ import {
   createBoardTask,
   updateBoardTask,
   deleteBoardTask,
+  moveBoardTask,
 } from '@/api/planner-tasks';
 import {
   getEvents,
@@ -218,10 +219,9 @@ const parseTimeParts = (value: string, fallbackHour: number) => {
 };
 
 const mapLaneToBackendStatus = (lane: TaskLane): string => {
-  // Use the exact strings the backend expects when saving
-  if (lane === 'in-progress') return 'In Progress';
-  if (lane === 'completed') return 'Completed';
-  return 'Todo';
+  if (lane === 'in-progress') return 'IN_PROGRESS';
+  if (lane === 'completed') return 'COMPLETED';
+  return 'TODO';
 };
 
 const flowBlockTones = [
@@ -1738,18 +1738,17 @@ export function EventPlannerPage() {
     );
     setDraggedTaskId(null);
 
-    // API Call
+    // API Call to MOVE the task
     try {
       if (taskStrId.startsWith('board-task-')) {
         throw new Error('Please edit and save this new task first before moving it.');
       }
 
       const newStatus = mapLaneToBackendStatus(lane);
-      await updateBoardTask(selectedEventId, taskStrId, {
-        title: current.title,
-        description: current.details,
-        status: newStatus,
-        checklist: current.checklist,
+
+      await moveBoardTask(selectedEventId, taskStrId, {
+        newStatus: newStatus,
+        newOrder: 1,
       });
     } catch (error) {
       setBoardTasks(previousTasksState);

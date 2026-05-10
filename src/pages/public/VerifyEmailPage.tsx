@@ -224,7 +224,8 @@ export default function VerifyEmailPage() {
         <p className="mt-3 text-sm leading-relaxed text-gray-600">
           {isSuccess ? (
             <>
-              Your inquiry has been confirmed and submitted successfully! Our team will review it and get back to you shortly.
+              Your inquiry has been confirmed and submitted successfully! Our team will review it
+              and get back to you shortly.
             </>
           ) : (
             <>{friendlyReason}</>
