@@ -9,6 +9,8 @@ export interface EventManagerEvent {
   date: string;
   startDate: string;
   endDate: string;
+  startTime: string;
+  endTime: string;
   timeSlot: string;
   client: string;
   type: string;
@@ -43,6 +45,8 @@ interface BackendEvent {
   packagePrice?: number | null;
   venue?: string;
   status?: string;
+  startTime?: string;
+  endTime?: string;
   createdAt?: string;
 }
 
@@ -138,6 +142,8 @@ function mapToManagerRow(baseEvent: BackendEvent, userMap: Map<string, string>):
     date: dateDisplay,
     startDate: rawStartDate,
     endDate: rawEndDate,
+    startTime: baseEvent.startTime || '',
+    endTime: baseEvent.endTime || '',
     timeSlot: '-',
     client: clientName,
     type: baseEvent.eventType || '-',
@@ -205,6 +211,14 @@ export async function patchEvent(
 
 export async function deleteEvent(eventId: string): Promise<void> {
   await axiosInstance.delete(`/events/${eventId}`);
+}
+
+export async function updateEventPricing(
+  eventId: string,
+  pricing: { packageInitialAmount?: number; downpaymentAmount?: number }
+): Promise<BackendEvent> {
+  const response = await axiosInstance.patch(`/events/${eventId}/pricing`, pricing);
+  return response.data.event;
 }
 
 export async function getEventVendors(eventId: string) {

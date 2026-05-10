@@ -12,6 +12,7 @@ import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Calendar as CalendarIcon, Check, Copy, Eye, EyeOff, Loader2 } from 'lucide-react';
 import { createEvent } from '@/api/events';
+import { getVendors } from '@/api/vendors';
 import { updateCalendarEntry } from '@/api/calendar';
 import { calculatePackagePrice } from '@/utils/package-pricing';
 import {
@@ -152,6 +153,8 @@ export function InquiryDetailsDialog({
   const [isSavingCustomPackageAmount, setIsSavingCustomPackageAmount] = useState(false);
   const [venueInput, setVenueInput] = useState('');
   const [isSavingVenue, setIsSavingVenue] = useState(false);
+  const [venueVendors, setVenueVendors] = useState<{name: string; price: number | null}[]>([]);
+  const [isLoadingVenues, setIsLoadingVenues] = useState(false);
 
   const formatMoney = (amount?: number | null) => {
     if (amount === undefined || amount === null || Number.isNaN(Number(amount))) return '—';
@@ -289,6 +292,25 @@ export function InquiryDetailsDialog({
     };
 
     checkRegistered();
+
+    // Fetch venue vendors for the dropdown
+    setIsLoadingVenues(true);
+    getVendors()
+      .then((allVendors) => {
+        const venues = allVendors
+          .filter(
+            (v) =>
+              v.serviceType.toLowerCase() === 'venue' &&
+              v.name &&
+              v.name !== 'Unnamed vendor'
+          )
+          .map((v) => ({ name: v.name, price: v.price }));
+        // Deduplicate by name
+        const uniqueVenues = Array.from(new Map(venues.map((v) => [v.name, v])).values());
+        setVenueVendors(uniqueVenues);
+      })
+      .catch(() => setVenueVendors([]))
+      .finally(() => setIsLoadingVenues(false));
   }, [selectedInquiry]);
 
   const handleStatusChange = (newStatus: string) => {
@@ -1063,140 +1085,115 @@ export function InquiryDetailsDialog({
                                   <Label className="text-[10px] font-black uppercase text-[#857a98] mb-2 block">
                                     Package Amount (Required for Approval)
                                   </Label>
-                                  {(!Number.isFinite(
-                                    Number(selectedInquiry.packageInitialAmount)
-                                  ) ||
-                                    Number(selectedInquiry.packageInitialAmount) <= 0) &&
-                                  selectedInquiry.status !== 'Approved' ? (
-                                    <div className="flex gap-2 items-center">
-                                      <Input
-                                        type="number"
-                                        placeholder="Enter custom amount"
-                                        value={customPackageAmountInput}
-                                        onChange={(e) =>
-                                          setCustomPackageAmountInput(e.target.value)
-                                        }
-                                        disabled={
-                                          currentStatusValue === INQUIRY_STATUS_OPTIONS.DECLINED
-                                        }
-                                        className="h-9 flex-1 bg-white border-[#ebe3f5] focus-visible:ring-[#8C6bB1] text-xs font-bold disabled:opacity-50"
-                                      />
-                                      <Button
-                                        onClick={handleSaveCustomPackageAmount}
-                                        disabled={
-                                          isSavingCustomPackageAmount ||
-                                          !customPackageAmountInput ||
-                                          currentStatusValue === INQUIRY_STATUS_OPTIONS.DECLINED
-                                        }
-                                        className="h-9 px-3 bg-[#8C6bB1] hover:bg-[#6c4e8e] text-white font-bold rounded-lg text-xs transition-all shadow-sm disabled:opacity-50"
-                                      >
-                                        {isSavingCustomPackageAmount ? (
-                                          <Loader2 className="w-3 h-3 animate-spin mr-1" />
-                                        ) : (
-                                          'Save'
-                                        )}
-                                      </Button>
-                                    </div>
-                                  ) : (
-                                    <div className="flex justify-between items-center bg-white p-2.5 rounded-lg border border-[#e5ddee]">
-                                      <span className="text-[11px] font-bold text-[#5a5368]">
-                                        Amount Set
-                                      </span>
-                                      <span className="text-sm font-black text-[#6f2ea8]">
-                                        {formatMoney(selectedInquiry.packageInitialAmount)}
-                                      </span>
-                                    </div>
-                                  )}
+                                  <div className="flex gap-2 items-center">
+                                    <Input
+                                      type="number"
+                                      placeholder="Enter custom amount"
+                                      value={customPackageAmountInput}
+                                      onChange={(e) =>
+                                        setCustomPackageAmountInput(e.target.value)
+                                      }
+                                      disabled={
+                                        currentStatusValue === INQUIRY_STATUS_OPTIONS.DECLINED ||
+                                        currentStatusValue === INQUIRY_STATUS_OPTIONS.APPROVED
+                                      }
+                                      className="h-9 flex-1 bg-white border-[#ebe3f5] focus-visible:ring-[#8C6bB1] text-xs font-bold disabled:opacity-50"
+                                    />
+                                    <Button
+                                      onClick={handleSaveCustomPackageAmount}
+                                      disabled={
+                                        isSavingCustomPackageAmount ||
+                                        !customPackageAmountInput ||
+                                        currentStatusValue === INQUIRY_STATUS_OPTIONS.DECLINED ||
+                                        currentStatusValue === INQUIRY_STATUS_OPTIONS.APPROVED
+                                      }
+                                      className="h-9 px-3 bg-[#8C6bB1] hover:bg-[#6c4e8e] text-white font-bold rounded-lg text-xs transition-all shadow-sm disabled:opacity-50"
+                                    >
+                                      {isSavingCustomPackageAmount ? (
+                                        <Loader2 className="w-3 h-3 animate-spin mr-1" />
+                                      ) : (
+                                        'Save'
+                                      )}
+                                    </Button>
+                                  </div>
                                 </div>
                               )}
                               <div className="relative my-2 rounded-xl border border-[#eadcf7] bg-[#faf7ff] p-3">
                                 <Label className="text-[10px] font-black uppercase text-[#857a98] mb-2 block">
                                   Venue (Required for Approval)
                                 </Label>
-                                {!String(
-                                  selectedInquiry.venue || selectedInquiry.location || ''
-                                ).trim() && selectedInquiry.status !== 'Approved' ? (
-                                  <div className="flex gap-2 items-center">
-                                    <Input
-                                      type="text"
-                                      placeholder="Enter event venue"
-                                      value={venueInput}
-                                      onChange={(e) => setVenueInput(e.target.value)}
-                                      disabled={
-                                        currentStatusValue === INQUIRY_STATUS_OPTIONS.DECLINED
+                                <div className="flex gap-2 items-center">
+                                  <Select
+                                    value={venueInput || undefined}
+                                    onValueChange={(value) => {
+                                      setVenueInput(value);
+                                      // Auto-save on selection
+                                      const id = String(selectedInquiry.id || selectedInquiry._id || '').trim();
+                                      if (id && value.trim()) {
+                                        setIsSavingVenue(true);
+                                        saveVenueMutation.mutate({ id, venue: value.trim() });
                                       }
-                                      className="h-9 flex-1 bg-white border-[#ebe3f5] focus-visible:ring-[#8C6bB1] text-xs font-bold disabled:opacity-50"
-                                    />
-                                    <Button
-                                      onClick={handleSaveVenue}
-                                      disabled={
-                                        isSavingVenue ||
-                                        !venueInput.trim() ||
-                                        currentStatusValue === INQUIRY_STATUS_OPTIONS.DECLINED
-                                      }
-                                      className="h-9 px-3 bg-[#8C6bB1] hover:bg-[#6c4e8e] text-white font-bold rounded-lg text-xs transition-all shadow-sm disabled:opacity-50"
-                                    >
-                                      {isSavingVenue ? (
-                                        <Loader2 className="w-3 h-3 animate-spin mr-1" />
-                                      ) : (
-                                        'Save'
+                                    }}
+                                    disabled={
+                                      currentStatusValue === INQUIRY_STATUS_OPTIONS.DECLINED ||
+                                      currentStatusValue === INQUIRY_STATUS_OPTIONS.APPROVED ||
+                                      isLoadingVenues
+                                    }
+                                  >
+                                    <SelectTrigger className="h-9 flex-1 bg-white border-[#ebe3f5] text-xs font-bold disabled:opacity-50">
+                                      <SelectValue placeholder={isLoadingVenues ? 'Loading venues...' : 'Select venue...'} />
+                                    </SelectTrigger>
+                                    <SelectContent className="rounded-xl border-[#e5ddee]">
+                                      {venueVendors.map((venue) => (
+                                        <SelectItem key={venue.name} value={venue.name}>
+                                          {venue.name} {venue.price !== null && venue.price !== undefined ? `(₱${venue.price.toLocaleString('en-PH')})` : ''}
+                                        </SelectItem>
+                                      ))}
+                                      {venueVendors.length === 0 && !isLoadingVenues && (
+                                        <div className="px-3 py-2 text-xs text-[#8f879f] italic">
+                                          No venue vendors found
+                                        </div>
                                       )}
-                                    </Button>
-                                  </div>
-                                ) : (
-                                  <div className="flex justify-between items-center bg-white p-2.5 rounded-lg border border-[#e5ddee]">
-                                    <span className="text-[11px] font-bold text-[#5a5368]">
-                                      Event Venue
-                                    </span>
-                                    <span className="text-sm font-black text-[#6f2ea8]">
-                                      {selectedInquiry.venue || selectedInquiry.location || '—'}
-                                    </span>
-                                  </div>
-                                )}
+                                    </SelectContent>
+                                  </Select>
+                                  {isSavingVenue && (
+                                    <Loader2 className="w-4 h-4 animate-spin text-[#8C6bB1]" />
+                                  )}
+                                </div>
                               </div>
                               <div className="relative my-2 rounded-xl border border-[#eadcf7] bg-[#faf7ff] p-3">
                                 <Label className="text-[10px] font-black uppercase text-[#857a98] mb-2 block">
                                   Downpayment (Required for Approval)
                                 </Label>
-                                {!selectedInquiry.downpaymentAmount &&
-                                selectedInquiry.status !== 'Approved' ? (
-                                  <div className="flex gap-2 items-center">
-                                    <Input
-                                      type="number"
-                                      placeholder="Amount"
-                                      value={downpaymentInput}
-                                      onChange={(e) => setDownpaymentInput(e.target.value)}
-                                      disabled={
-                                        currentStatusValue === INQUIRY_STATUS_OPTIONS.DECLINED
-                                      }
-                                      className="h-9 flex-1 bg-white border-[#ebe3f5] focus-visible:ring-[#8C6bB1] text-xs font-bold disabled:opacity-50"
-                                    />
-                                    <Button
-                                      onClick={handleSaveDownpayment}
-                                      disabled={
-                                        isSavingDownpayment ||
-                                        !downpaymentInput ||
-                                        currentStatusValue === INQUIRY_STATUS_OPTIONS.DECLINED
-                                      }
-                                      className="h-9 px-3 bg-[#8C6bB1] hover:bg-[#6c4e8e] text-white font-bold rounded-lg text-xs transition-all shadow-sm disabled:opacity-50"
-                                    >
-                                      {isSavingDownpayment ? (
-                                        <Loader2 className="w-3 h-3 animate-spin mr-1" />
-                                      ) : (
-                                        'Save'
-                                      )}
-                                    </Button>
-                                  </div>
-                                ) : (
-                                  <div className="flex justify-between items-center bg-white p-2.5 rounded-lg border border-[#e5ddee]">
-                                    <span className="text-[11px] font-bold text-[#5a5368]">
-                                      Paid Amount
-                                    </span>
-                                    <span className="text-sm font-black text-[#6f2ea8]">
-                                      {formatMoney(selectedInquiry.downpaymentAmount)}
-                                    </span>
-                                  </div>
-                                )}
+                                <div className="flex gap-2 items-center">
+                                  <Input
+                                    type="number"
+                                    placeholder="Amount"
+                                    value={downpaymentInput}
+                                    onChange={(e) => setDownpaymentInput(e.target.value)}
+                                    disabled={
+                                      currentStatusValue === INQUIRY_STATUS_OPTIONS.DECLINED ||
+                                      currentStatusValue === INQUIRY_STATUS_OPTIONS.APPROVED
+                                    }
+                                    className="h-9 flex-1 bg-white border-[#ebe3f5] focus-visible:ring-[#8C6bB1] text-xs font-bold disabled:opacity-50"
+                                  />
+                                  <Button
+                                    onClick={handleSaveDownpayment}
+                                    disabled={
+                                      isSavingDownpayment ||
+                                      !downpaymentInput ||
+                                      currentStatusValue === INQUIRY_STATUS_OPTIONS.DECLINED ||
+                                      currentStatusValue === INQUIRY_STATUS_OPTIONS.APPROVED
+                                    }
+                                    className="h-9 px-3 bg-[#8C6bB1] hover:bg-[#6c4e8e] text-white font-bold rounded-lg text-xs transition-all shadow-sm disabled:opacity-50"
+                                  >
+                                    {isSavingDownpayment ? (
+                                      <Loader2 className="w-3 h-3 animate-spin mr-1" />
+                                    ) : (
+                                      'Save'
+                                    )}
+                                  </Button>
+                                </div>
                               </div>
                               <div className="relative my-2 rounded-xl border border-[#eadcf7] bg-[#faf7ff] p-3">
                                 {!selectedInquiry.meetingDetails && !hasAccount && (

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { X, Trash2 } from 'lucide-react';
+import { X, Trash2, Pencil, Check, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -14,6 +14,8 @@ import {
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import type { EventManagerEvent } from '@/api/events';
+import { updateEventPricing } from '@/api/events';
+import { getVendors, getVendorEntitiesByEventId, assignVendorToEvent } from '@/api/vendors';
 import { getRSVPList } from '@/api/rsvp';
 
 interface EventDetailsModalProps {
@@ -32,6 +34,8 @@ export interface EventFormData {
   title: string;
   startDate: string;
   endDate: string;
+  startTime: string;
+  endTime: string;
   eventType: string;
   eventPackage: string;
   eventPax: number;
@@ -133,6 +137,8 @@ export function EventDetailsModal({
       title: event.title,
       startDate: '',
       endDate: '',
+      startTime: '',
+      endTime: '',
       eventType: event.type,
       eventPackage: '',
       eventPax: 0,
@@ -149,6 +155,21 @@ export function EventDetailsModal({
   const [isLoadingRsvp, setIsLoadingRsvp] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
+  // Admin pricing edit state
+  const [isEditingEventPrice, setIsEditingEventPrice] = useState(false);
+  const [isEditingDownpayment, setIsEditingDownpayment] = useState(false);
+  const [editPrice, setEditPrice] = useState<string>('');
+  const [editDownpayment, setEditDownpayment] = useState<string>('');
+  const [isSavingEventPrice, setIsSavingEventPrice] = useState(false);
+  const [isSavingDownpayment, setIsSavingDownpayment] = useState(false);
+  const [eventPriceError, setEventPriceError] = useState<string>('');
+  const [downpaymentError, setDownpaymentError] = useState<string>('');
+
+  // Venue vendors state
+  const [venueVendors, setVenueVendors] = useState<{ id: string; name: string; price: number | null }[]>([]);
+  const [isLoadingVenues, setIsLoadingVenues] = useState(false);
+  const [isSavingVenue, setIsSavingVenue] = useState(false);
+
   useEffect(() => {
     if (isOpen && event) {
       // Parse start and end dates — prefer raw ISO, fall back to formatted date string
@@ -164,6 +185,8 @@ export function EventDetailsModal({
         title: event.title,
         startDate: startDateISO,
         endDate: endDateISO,
+        startTime: event.startTime || '',
+        endTime: event.endTime || '',
         eventType: event.type,
         eventPackage: packageName,
         eventPax: packagePax,
@@ -173,6 +196,10 @@ export function EventDetailsModal({
       });
 
       setShowDeleteConfirm(false);
+      setIsEditingEventPrice(false);
+      setIsEditingDownpayment(false);
+      setEventPriceError('');
+      setDownpaymentError('');
 
       // Fetch RSVP guests
       setIsLoadingRsvp(true);
@@ -184,38 +211,27 @@ export function EventDetailsModal({
             else if (item && typeof item === 'object') flatArray.push(item);
           };
           processData(data);
-
           const mapped = flatArray.map((item: any) => {
-            const fName = String(item.firstName || item.first_name || item.guestfirstName || '')
-              .replace(/undefined/gi, '')
-              .trim();
-            const lName = String(item.lastName || item.last_name || item.guestlastName || '')
-              .replace(/undefined/gi, '')
-              .trim();
-            const statusStr = String(item.status || '')
-              .trim()
-              .toUpperCase();
-            const isAttending =
-              item.isScanned === true ||
-              item.isScanned === 'true' ||
-              statusStr === 'ATTENDING' ||
-              statusStr === 'CONFIRMED';
-
-            return {
-              id: item.id || item.guestId || item.SK || Math.random().toString(),
-              firstName: fName || 'Guest',
-              lastName: lName,
-              isScanned: isAttending,
-              scannedAt: item.updatedAt || item.scannedAt || item.createdAt || '',
-              contactNumber: item.contactNumber || item.contact_number || '',
-              message: item.message || '',
-            };
+            const fName = String(item.firstName || item.first_name || item.guestfirstName || '').replace(/undefined/gi, '').trim();
+            const lName = String(item.lastName || item.last_name || item.guestlastName || '').replace(/undefined/gi, '').trim();
+            const statusStr = String(item.status || '').trim().toUpperCase();
+            const isAttending = item.isScanned === true || item.isScanned === 'true' || statusStr === 'ATTENDING' || statusStr === 'CONFIRMED';
+            return { id: item.id || item.guestId || item.SK || Math.random().toString(), firstName: fName || 'Guest', lastName: lName, isScanned: isAttending, scannedAt: item.updatedAt || item.scannedAt || item.createdAt || '', contactNumber: item.contactNumber || item.contact_number || '', message: item.message || '' };
           });
-
           setRsvpGuests(mapped);
         })
         .catch(() => setRsvpGuests([]))
         .finally(() => setIsLoadingRsvp(false));
+
+      // Fetch venue vendors
+      setIsLoadingVenues(true);
+      getVendors()
+        .then((all) => {
+          const venues = all.filter(v => v.serviceType.toLowerCase() === 'venue' && v.name && v.name !== 'Unnamed vendor').map(v => ({ id: v.id, name: v.name, price: v.price }));
+          setVenueVendors(Array.from(new Map(venues.map(v => [v.name, v])).values()));
+        })
+        .catch(() => setVenueVendors([]))
+        .finally(() => setIsLoadingVenues(false));
     }
   }, [isOpen, event, reset]);
 
@@ -245,32 +261,57 @@ export function EventDetailsModal({
 
   return (
     <div className="fixed inset-0 z-1000 flex min-h-full items-center justify-center bg-[#1a1423]/60 backdrop-blur-md p-4 overflow-auto">
-      <div className="relative w-full max-w-2xl animate-in zoom-in-95 fade-in rounded-3xl bg-white shadow-2xl max-h-[90vh] overflow-y-auto">
-        <button
-          type="button"
-          onClick={onClose}
-          disabled={isUpdating || isDeleting}
-          className="absolute right-6 top-6 z-10 text-[#a69eb5] hover:text-[#df1b8b] transition-colors disabled:opacity-50"
-        >
-          <X className="size-6" />
-        </button>
+      <div className="relative w-full max-w-5xl animate-in zoom-in-95 fade-in rounded-3xl bg-white shadow-2xl max-h-[90vh] overflow-y-auto">
 
-        {/* ──── Header ──── */}
-        <div className="px-8 pt-8 pb-0">
-          <div className="flex items-start gap-4 mb-2">
-            <div className="flex-1">
-              <h2 className="text-3xl font-black text-[#2e2837]">Event Details</h2>
-              <p className="text-sm font-semibold text-[#7c758d]">
-                Manage event information, RSVP, and assignments
-              </p>
+        {/* ──── Header with Actions ──── */}
+        <div className="sticky top-0 z-10 bg-white/95 backdrop-blur-sm border-b border-[#f1eef5] px-8 py-4 rounded-t-3xl">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <h2 className="text-2xl font-black text-[#2e2837]">Event Details</h2>
+              <Badge className={`${statusCfg.bg} ${statusCfg.text} text-[10px] font-black tracking-wide px-2.5 py-1 shadow-none`}>
+                <span className={`inline-block h-1.5 w-1.5 rounded-full mr-1.5 ${statusCfg.dot}`}></span>
+                {statusCfg.label}
+              </Badge>
             </div>
-            <Badge
-              className={`${statusCfg.bg} ${statusCfg.text} text-xs font-black tracking-wide px-3 py-1.5 shadow-none`}
-            >
-              <span className={`inline-block h-2 w-2 rounded-full mr-1.5 ${statusCfg.dot}`}></span>
-              {statusCfg.label}
-            </Badge>
+            <div className="flex items-center gap-2">
+              {isAdmin && onDelete && (
+                <>
+                  {showDeleteConfirm ? (
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-bold text-[#c5221f]">Delete?</span>
+                      <Button type="button" size="sm" onClick={() => void handleDelete()} disabled={isDeleting} className="h-7 bg-[#c5221f] px-3 text-[10px] font-bold text-white hover:bg-[#a31b18]">
+                        {isDeleting ? 'Deleting...' : 'Yes'}
+                      </Button>
+                      <Button type="button" size="sm" variant="ghost" onClick={() => setShowDeleteConfirm(false)} disabled={isDeleting} className="h-7 px-3 text-[10px] font-bold text-[#696373]">
+                        No
+                      </Button>
+                    </div>
+                  ) : (
+                    <Button type="button" variant="ghost" size="sm" onClick={() => setShowDeleteConfirm(true)} disabled={isUpdating} className="h-8 text-xs font-bold text-[#c5221f] hover:bg-[#fce8e6]">
+                      <Trash2 className="mr-1 h-3.5 w-3.5" /> Delete
+                    </Button>
+                  )}
+                </>
+              )}
+              {onViewPlanner && (
+                <Button type="button" onClick={() => onViewPlanner(event.id)} className="h-8 bg-purple-100 text-purple-700 hover:bg-purple-200 font-bold px-4 text-xs">
+                  View Planner
+                </Button>
+              )}
+              <Button type="button" onClick={onClose} disabled={isUpdating} variant="outline" className="h-8 px-4 text-xs font-bold text-[#696373] border-[#e1d5eb]">
+                Cancel
+              </Button>
+              <Button type="submit" form="event-details-form" disabled={isUpdating} className="h-8 bg-linear-to-r from-[#df1b8b] to-[#9f1baf] px-5 text-xs font-bold text-white shadow-sm disabled:opacity-50">
+                {isUpdating ? <><Loader2 className="mr-1 h-3.5 w-3.5 animate-spin" /> Updating...</> : 'Update Event'}
+              </Button>
+              <button type="button" onClick={onClose} disabled={isUpdating || isDeleting} className="text-[#a69eb5] hover:text-[#df1b8b] transition-colors disabled:opacity-50 ml-1">
+                <X className="size-5" />
+              </button>
+            </div>
           </div>
+        </div>
+
+        <div className="px-8 pt-6 pb-0">
 
           {/* ──── Info Cards ──── */}
           <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mt-4 mb-6">
@@ -294,19 +335,197 @@ export function EventDetailsModal({
               </span>
               <p className="text-sm font-bold text-[#2e2837] truncate">{event.date}</p>
             </div>
-            <div className="rounded-xl border border-[#f1eef5] bg-[#faf9fc] px-3 py-3">
-              <span className="text-[10px] font-black uppercase tracking-widest text-[#8b839c] mb-1 block">
-                Event Price
-              </span>
-              <p className="text-sm font-bold text-[#2e2837] truncate">{formatMoney(eventPrice)}</p>
+            <div className={`rounded-xl border px-3 py-3 ${isEditingEventPrice
+                ? 'border-[#df1b8b]/30 bg-[#fdf2f8]'
+                : 'border-[#f1eef5] bg-[#faf9fc]'
+              }`}>
+              <div className="flex items-center justify-between mb-1">
+                <span className="text-[10px] font-black uppercase tracking-widest text-[#8b839c]">
+                  Event Price
+                </span>
+                {isAdmin && !isEditingEventPrice && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsEditingEventPrice(true);
+                      setEditPrice(String(eventPrice ?? ''));
+                      setEventPriceError('');
+                    }}
+                    className="text-[#a69eb5] hover:text-[#df1b8b] transition-colors"
+                    title="Edit event price"
+                  >
+                    <Pencil className="size-3" />
+                  </button>
+                )}
+                {isAdmin && isEditingEventPrice && (
+                  <div className="flex items-center gap-1">
+                    <button
+                      type="button"
+                      disabled={isSavingEventPrice}
+                      onClick={async () => {
+                        setEventPriceError('');
+                        const parsedPrice = Number(editPrice);
+                        if (!Number.isFinite(parsedPrice) || parsedPrice < 0) {
+                          setEventPriceError('Invalid event price');
+                          return;
+                        }
+                        setIsSavingEventPrice(true);
+                        try {
+                          await updateEventPricing(event.id, {
+                            packageInitialAmount: parsedPrice,
+                            // don't touch downpayment
+                          });
+                          event.packageInitialAmount = parsedPrice;
+                          const currentDownpayment = Number(event.downpaymentAmount) || 0;
+                          event.packagePrice = Math.max(0, parsedPrice - currentDownpayment);
+                          setIsEditingEventPrice(false);
+                        } catch (err: any) {
+                          setEventPriceError(err?.response?.data?.error || 'Failed to save price');
+                        } finally {
+                          setIsSavingEventPrice(false);
+                        }
+                      }}
+                      className="text-emerald-600 hover:text-emerald-700 transition-colors disabled:opacity-50"
+                      title="Save price"
+                    >
+                      {isSavingEventPrice ? (
+                        <svg className="animate-spin size-3.5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                      ) : (
+                        <Check className="size-3.5" />
+                      )}
+                    </button>
+                    <button
+                      type="button"
+                      disabled={isSavingEventPrice}
+                      onClick={() => {
+                        setIsEditingEventPrice(false);
+                        setEventPriceError('');
+                      }}
+                      className="text-[#c5221f] hover:text-[#a31b18] transition-colors disabled:opacity-50"
+                      title="Cancel"
+                    >
+                      <X className="size-3.5" />
+                    </button>
+                  </div>
+                )}
+              </div>
+              {isEditingEventPrice ? (
+                <input
+                  type="number"
+                  min="0"
+                  step="1000"
+                  value={editPrice}
+                  onChange={(e) => setEditPrice(e.target.value)}
+                  disabled={isSavingEventPrice}
+                  className="w-full rounded-md border border-[#e1d5eb] bg-white px-2 py-1 text-sm font-bold text-[#2e2837] outline-none focus:border-[#df1b8b] focus:ring-1 focus:ring-[#df1b8b] disabled:opacity-50"
+                  placeholder="0"
+                />
+              ) : (
+                <p className="text-sm font-bold text-[#2e2837] truncate">{formatMoney(eventPrice)}</p>
+              )}
+              {eventPriceError && (
+                <p className="text-[10px] font-bold text-[#c5221f] mt-1">{eventPriceError}</p>
+              )}
             </div>
-            <div className="rounded-xl border border-[#f1eef5] bg-[#faf9fc] px-3 py-3">
-              <span className="text-[10px] font-black uppercase tracking-widest text-[#8b839c] mb-1 block">
-                Downpayment
-              </span>
-              <p className="text-sm font-bold text-[#2e2837] truncate">
-                {formatMoney(downpaymentAmount)}
-              </p>
+            <div className={`rounded-xl border px-3 py-3 ${isEditingDownpayment
+                ? 'border-[#df1b8b]/30 bg-[#fdf2f8]'
+                : 'border-[#f1eef5] bg-[#faf9fc]'
+              }`}>
+              <div className="flex items-center justify-between mb-1">
+                <span className="text-[10px] font-black uppercase tracking-widest text-[#8b839c]">
+                  Downpayment
+                </span>
+                {isAdmin && !isEditingDownpayment && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsEditingDownpayment(true);
+                      setEditDownpayment(String(downpaymentAmount ?? ''));
+                      setDownpaymentError('');
+                    }}
+                    className="text-[#a69eb5] hover:text-[#df1b8b] transition-colors"
+                    title="Edit downpayment"
+                  >
+                    <Pencil className="size-3" />
+                  </button>
+                )}
+                {isAdmin && isEditingDownpayment && (
+                  <div className="flex items-center gap-1">
+                    <button
+                      type="button"
+                      disabled={isSavingDownpayment}
+                      onClick={async () => {
+                        setDownpaymentError('');
+                        const parsedDown = Number(editDownpayment);
+                        if (!Number.isFinite(parsedDown) || parsedDown < 0) {
+                          setDownpaymentError('Invalid downpayment');
+                          return;
+                        }
+                        setIsSavingDownpayment(true);
+                        try {
+                          await updateEventPricing(event.id, {
+                            downpaymentAmount: parsedDown,
+                            // don't touch initial amount
+                          });
+                          event.downpaymentAmount = parsedDown;
+                          const currentPrice = Number(event.packageInitialAmount) || 0;
+                          event.packagePrice = Math.max(0, currentPrice - parsedDown);
+                          setIsEditingDownpayment(false);
+                        } catch (err: any) {
+                          setDownpaymentError(err?.response?.data?.error || 'Failed to save downpayment');
+                        } finally {
+                          setIsSavingDownpayment(false);
+                        }
+                      }}
+                      className="text-emerald-600 hover:text-emerald-700 transition-colors disabled:opacity-50"
+                      title="Save downpayment"
+                    >
+                      {isSavingDownpayment ? (
+                        <svg className="animate-spin size-3.5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                      ) : (
+                        <Check className="size-3.5" />
+                      )}
+                    </button>
+                    <button
+                      type="button"
+                      disabled={isSavingDownpayment}
+                      onClick={() => {
+                        setIsEditingDownpayment(false);
+                        setDownpaymentError('');
+                      }}
+                      className="text-[#c5221f] hover:text-[#a31b18] transition-colors disabled:opacity-50"
+                      title="Cancel"
+                    >
+                      <X className="size-3.5" />
+                    </button>
+                  </div>
+                )}
+              </div>
+              {isEditingDownpayment ? (
+                <input
+                  type="number"
+                  min="0"
+                  step="1000"
+                  value={editDownpayment}
+                  onChange={(e) => setEditDownpayment(e.target.value)}
+                  disabled={isSavingDownpayment}
+                  className="w-full rounded-md border border-[#e1d5eb] bg-white px-2 py-1 text-sm font-bold text-[#2e2837] outline-none focus:border-[#df1b8b] focus:ring-1 focus:ring-[#df1b8b] disabled:opacity-50"
+                  placeholder="0"
+                />
+              ) : (
+                <p className="text-sm font-bold text-[#2e2837] truncate">
+                  {formatMoney(downpaymentAmount)}
+                </p>
+              )}
+              {downpaymentError && (
+                <p className="text-[10px] font-bold text-[#c5221f] mt-1">{downpaymentError}</p>
+              )}
             </div>
             <div className="rounded-xl border border-[#f1eef5] bg-[#faf9fc] px-3 py-3">
               <span className="text-[10px] font-black uppercase tracking-widest text-[#8b839c] mb-1 block">
@@ -322,7 +541,7 @@ export function EventDetailsModal({
         {/* ──── Form Section ──── */}
         <div>
           <div className="px-8 pb-8">
-            <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
+            <form id="event-details-form" onSubmit={handleSubmit(onSubmit)} className="space-y-5">
               {/* Title */}
               <div className="space-y-2">
                 <Label htmlFor="title" className="text-sm font-bold text-[#2e2837]">
@@ -356,12 +575,40 @@ export function EventDetailsModal({
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="endDate" className="text-sm font-bold text-[#2e2837]">
-                    End Date
+                    Event Date (End Date)
                   </Label>
                   <Input
                     id="endDate"
                     type="date"
                     {...register('endDate')}
+                    className="border-[#e1d5eb] focus:border-[#df1b8b] focus:ring-[#df1b8b]"
+                    disabled={isUpdating}
+                  />
+                </div>
+              </div>
+
+              {/* Event Day Time */}
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-2">
+                  <Label htmlFor="startTime" className="text-sm font-bold text-[#2e2837]">
+                    Event Day Start Time
+                  </Label>
+                  <Input
+                    id="startTime"
+                    type="time"
+                    {...register('startTime')}
+                    className="border-[#e1d5eb] focus:border-[#df1b8b] focus:ring-[#df1b8b]"
+                    disabled={isUpdating}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="endTime" className="text-sm font-bold text-[#2e2837]">
+                    Event Day End Time
+                  </Label>
+                  <Input
+                    id="endTime"
+                    type="time"
+                    {...register('endTime')}
                     className="border-[#e1d5eb] focus:border-[#df1b8b] focus:ring-[#df1b8b]"
                     disabled={isUpdating}
                   />
@@ -415,16 +662,48 @@ export function EventDetailsModal({
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="venue" className="text-sm font-bold text-[#2e2837]">
-                    Venue
+                  <Label className="text-sm font-bold text-[#2e2837]">
+                    Venue {isSavingVenue && <Loader2 className="inline ml-1 h-3 w-3 animate-spin text-[#df1b8b]" />}
                   </Label>
-                  <Input
-                    id="venue"
-                    {...register('venue')}
-                    className="border-[#e1d5eb] focus:border-[#df1b8b] focus:ring-[#df1b8b]"
-                    placeholder="Event location"
-                    disabled={isUpdating}
-                  />
+                  <Select
+                    value={watch('venue') || undefined}
+                    onValueChange={async (value) => {
+                      setValue('venue', value);
+                      // Auto-assign the selected venue vendor to this event
+                      const selectedVenueVendor = venueVendors.find(v => v.name === value);
+                      if (selectedVenueVendor) {
+                        setIsSavingVenue(true);
+                        try {
+                          // First unassign any existing venue vendor
+                          const currentVendors = await getVendorEntitiesByEventId(event.id);
+                          const existingVenueVendor = currentVendors.find(v => v.serviceType.toLowerCase() === 'venue');
+                          if (existingVenueVendor && existingVenueVendor.id !== selectedVenueVendor.id) {
+                            // No need to unassign, just reassign
+                          }
+                          await assignVendorToEvent(selectedVenueVendor.id, event.id);
+                        } catch (err) {
+                          console.error('Failed to assign venue vendor:', err);
+                        } finally {
+                          setIsSavingVenue(false);
+                        }
+                      }
+                    }}
+                    disabled={isUpdating || isLoadingVenues}
+                  >
+                    <SelectTrigger className="border-[#e1d5eb] focus:border-[#df1b8b] focus:ring-[#df1b8b]">
+                      <SelectValue placeholder={isLoadingVenues ? 'Loading venues...' : 'Select venue...'} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {venueVendors.map((venue) => (
+                        <SelectItem key={venue.id} value={venue.name}>
+                          {venue.name}{venue.price != null ? ` (₱${venue.price.toLocaleString('en-PH')})` : ''}
+                        </SelectItem>
+                      ))}
+                      {venueVendors.length === 0 && !isLoadingVenues && (
+                        <div className="px-3 py-2 text-xs text-[#8f879f] italic">No venue vendors found</div>
+                      )}
+                    </SelectContent>
+                  </Select>
                 </div>
               </div>
 
@@ -464,108 +743,6 @@ export function EventDetailsModal({
                 />
               </div>
 
-              {/* Action Buttons */}
-              <div className="flex items-center justify-between pt-4 border-t border-[#f1eef5]">
-                {/* Admin Delete */}
-                <div>
-                  {isAdmin && onDelete && (
-                    <>
-                      {showDeleteConfirm ? (
-                        <div className="flex items-center gap-2">
-                          <span className="text-xs font-bold text-[#c5221f]">
-                            Delete this event?
-                          </span>
-                          <Button
-                            type="button"
-                            size="sm"
-                            onClick={() => void handleDelete()}
-                            disabled={isDeleting}
-                            className="h-7 rounded-md bg-[#c5221f] px-3 text-[10px] font-bold text-white hover:bg-[#a31b18] disabled:opacity-50"
-                          >
-                            {isDeleting ? 'Deleting...' : 'Confirm'}
-                          </Button>
-                          <Button
-                            type="button"
-                            size="sm"
-                            variant="ghost"
-                            onClick={() => setShowDeleteConfirm(false)}
-                            disabled={isDeleting}
-                            className="h-7 rounded-md px-3 text-[10px] font-bold text-[#696373]"
-                          >
-                            Cancel
-                          </Button>
-                        </div>
-                      ) : (
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => setShowDeleteConfirm(true)}
-                          disabled={isUpdating}
-                          className="h-8 text-xs font-bold text-[#c5221f] hover:bg-[#fce8e6] hover:text-[#a31b18]"
-                        >
-                          <Trash2 className="mr-1 h-3.5 w-3.5" />
-                          Delete Event
-                        </Button>
-                      )}
-                    </>
-                  )}
-                </div>
-
-                <div className="flex gap-3">
-                  {onViewPlanner && (
-                    <Button
-                      type="button"
-                      onClick={() => onViewPlanner(event.id)}
-                      className="bg-purple-100 text-purple-700 hover:bg-purple-200 font-bold px-4"
-                    >
-                      View Event Planner
-                    </Button>
-                  )}
-                  <Button
-                    type="button"
-                    onClick={onClose}
-                    disabled={isUpdating}
-                    variant="outline"
-                    className="rounded-lg px-6 py-2 text-sm font-bold text-[#696373] border-[#e1d5eb] hover:bg-[#faf9fc]"
-                  >
-                    Cancel
-                  </Button>
-                  <Button
-                    type="submit"
-                    disabled={isUpdating}
-                    className="rounded-lg bg-linear-to-r from-[#df1b8b] to-[#9f1baf] px-6 py-2 text-sm font-bold text-white shadow-sm transition-all hover:shadow-md disabled:opacity-50"
-                  >
-                    {isUpdating ? (
-                      <div className="flex items-center gap-2">
-                        <svg
-                          className="animate-spin h-4 w-4"
-                          xmlns="http://www.w3.org/2000/svg"
-                          fill="none"
-                          viewBox="0 0 24 24"
-                        >
-                          <circle
-                            className="opacity-25"
-                            cx="12"
-                            cy="12"
-                            r="10"
-                            stroke="currentColor"
-                            strokeWidth="4"
-                          ></circle>
-                          <path
-                            className="opacity-75"
-                            fill="currentColor"
-                            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                          ></path>
-                        </svg>
-                        Updating...
-                      </div>
-                    ) : (
-                      'Update Event'
-                    )}
-                  </Button>
-                </div>
-              </div>
             </form>
           </div>
         </div>
@@ -573,3 +750,4 @@ export function EventDetailsModal({
     </div>
   );
 }
+

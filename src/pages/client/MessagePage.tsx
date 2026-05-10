@@ -148,9 +148,7 @@ export function MessagePage() {
         const org = await getEventUser(orgId);
         return {
           id: orgId,
-          name:
-            `${org.firstName || org.user?.firstName || ''} ${org.lastName || org.user?.lastName || ''}`.trim() ||
-            'Organizer',
+          name: `${org.firstName || org.user?.firstName || ''} ${org.lastName || org.user?.lastName || ''}`.trim() || 'Organizer',
           email: org.email || org.user?.email || '-',
           contactNumber: org.contactNumber || org.user?.contactNumber || '-',
           role: 'organizer',

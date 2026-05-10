@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useOutletContext } from 'react-router-dom';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -108,6 +108,8 @@ export function EventManagerPage() {
     null
   );
   const [statusDropdownEventId, setStatusDropdownEventId] = useState<string>('');
+  const statusButtonRef = useRef<HTMLButtonElement | null>(null);
+  const [dropdownPosition, setDropdownPosition] = useState({ top: 0, left: 0 });
 
   // TanStack Query with 10s polling
   const {
@@ -147,6 +149,8 @@ export function EventManagerPage() {
         title: data.title,
         startDate: data.startDate,
         endDate: data.endDate || undefined,
+        startTime: data.startTime || undefined,
+        endTime: data.endTime || undefined,
         eventType: data.eventType,
         eventPackage: data.eventPackage,
         eventPax: data.eventPax,
@@ -274,7 +278,7 @@ export function EventManagerPage() {
         : '';
 
   return (
-    <div className="relative w-full max-w-full h-[calc(100vh-100px)] flex flex-col gap-4 overflow-hidden bg-[#fbf8fd] font-sans p-2 sm:p-4 lg:p-6">
+    <div className="relative w-full max-w-full min-h-[calc(100vh-100px)] flex flex-col gap-4 bg-[#fbf8fd] font-sans p-2 sm:p-4 lg:p-6">
       {errorMessage ? (
         <Card className="border-0 bg-[#fff1f2] py-3 ring-1 ring-[#fecdd3]">
           <CardContent>
@@ -293,7 +297,7 @@ export function EventManagerPage() {
         </Card>
       )}
 
-      <div className="flex-1 flex flex-col min-h-0 rounded-xl border border-[#eef0f4] bg-white p-3 sm:p-6 shadow-sm overflow-hidden">
+      <div className="flex flex-col rounded-xl border border-[#eef0f4] bg-white p-3 sm:p-6 shadow-sm">
         <div className="mb-4 flex flex-col sm:flex-row sm:items-center justify-between border-b border-[#f1eef5] pb-3 gap-3">
           <div className="flex items-center gap-3">
             <h2 className="text-lg sm:text-xl font-black text-[#302a3a]">Events</h2>
@@ -334,7 +338,7 @@ export function EventManagerPage() {
           </div>
         </div>
 
-        <div className="flex-1 overflow-auto rounded-lg scrollbar-thin scrollbar-thumb-[#eef0f4] scrollbar-track-transparent">
+        <div className="rounded-lg">
           <Table className="w-full text-[11px] sm:text-xs relative">
             <TableHeader>
               <TableRow className="border-b-2 border-[#f1eef5] hover:bg-transparent">
@@ -345,7 +349,6 @@ export function EventManagerPage() {
                     { key: 'client', label: 'Client', alwaysVisible: false },
                     { key: 'type', label: 'Type', alwaysVisible: false },
                     { key: 'package', label: 'Package', alwaysVisible: false },
-                    { key: 'amount', label: 'Amount', alwaysVisible: false },
                     { key: 'venue', label: 'Venue', alwaysVisible: false },
                     { key: 'status', label: 'Status', alwaysVisible: false },
                     { key: 'createdAt', label: 'Approved Date', alwaysVisible: false },
@@ -401,9 +404,6 @@ export function EventManagerPage() {
                     {event.package}
                   </TableCell>
                   <TableCell className="py-4 font-semibold text-[#5c546a] hidden md:table-cell">
-                    {formatMoney(event.packagePrice ?? event.packageInitialAmount ?? null)}
-                  </TableCell>
-                  <TableCell className="py-4 font-semibold text-[#5c546a] hidden md:table-cell">
                     {event.venue &&
                     !['', '-', '–', '—', 'n/a', 'tba'].includes(
                       event.venue.trim().toLowerCase()
@@ -418,12 +418,24 @@ export function EventManagerPage() {
                   <TableCell className="py-4 hidden md:table-cell">
                     <div className="relative">
                       <button
+                        ref={(el) => {
+                          if (el && statusDropdownEventId === event.id) {
+                            statusButtonRef.current = el;
+                          }
+                        }}
                         type="button"
                         onClick={(e) => {
                           e.stopPropagation();
-                          setStatusDropdownEventId(
-                            statusDropdownEventId === event.id ? '' : event.id
-                          );
+                          if (statusDropdownEventId === event.id) {
+                            setStatusDropdownEventId('');
+                          } else {
+                            const rect = e.currentTarget.getBoundingClientRect();
+                            setDropdownPosition({
+                              top: rect.bottom + 4,
+                              left: rect.right - 160,
+                            });
+                            setStatusDropdownEventId(event.id);
+                          }
                         }}
                         disabled={updateEventMutation.isPending}
                         className={`inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-[10px] font-black tracking-wide transition-all hover:ring-2 hover:ring-[#df1b8b]/20 disabled:opacity-50 ${getStatusOption(event.status).bg} ${getStatusOption(event.status).text}`}
@@ -445,41 +457,6 @@ export function EventManagerPage() {
                           <path d="m6 9 6 6 6-6" />
                         </svg>
                       </button>
-                      {statusDropdownEventId === event.id && (
-                        <div
-                          className="absolute right-0 z-50 mt-1 w-40 origin-top-right overflow-hidden rounded-xl border border-[#f1eef5] bg-white py-1 shadow-xl animate-in fade-in zoom-in-95"
-                          onClick={(e) => e.stopPropagation()}
-                        >
-                          {STATUS_OPTIONS.map((opt) => (
-                            <button
-                              key={opt.value}
-                              type="button"
-                              onClick={() => handleInlineStatusChange(event.id, opt.value)}
-                              className={`flex w-full items-center gap-2 px-4 py-2.5 text-left text-xs font-bold transition-colors hover:bg-[#faf9fc] hover:text-[#df1b8b] ${
-                                getStatusOption(event.status).value === opt.value
-                                  ? 'text-[#df1b8b] bg-[#fdf2f8]'
-                                  : 'text-[#5c546a]'
-                              }`}
-                            >
-                              <span className={`h-1.5 w-1.5 rounded-full ${opt.dot}`}></span>
-                              {opt.label}
-                              {getStatusOption(event.status).value === opt.value && (
-                                <svg
-                                  className="ml-auto h-3 w-3"
-                                  viewBox="0 0 24 24"
-                                  fill="none"
-                                  stroke="currentColor"
-                                  strokeWidth="3"
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                >
-                                  <path d="M20 6 9 17l-5-5" />
-                                </svg>
-                              )}
-                            </button>
-                          ))}
-                        </div>
-                      )}
                     </div>
                   </TableCell>
                   <TableCell className="py-4 font-semibold text-[#8f879f] hidden md:table-cell">
@@ -572,6 +549,54 @@ export function EventManagerPage() {
           </div>
         </div>
       </div>
+
+      {/* Fixed-position status dropdown portal */}
+      {statusDropdownEventId && (() => {
+        const dropdownEvent = paginatedEvents.find(e => e.id === statusDropdownEventId);
+        if (!dropdownEvent) return null;
+        return (
+          <>
+            <div
+              className="fixed inset-0 z-[999]"
+              onClick={() => setStatusDropdownEventId('')}
+            />
+            <div
+              className="fixed z-[1000] w-40 overflow-hidden rounded-xl border border-[#f1eef5] bg-white py-1 shadow-xl animate-in fade-in zoom-in-95"
+              style={{ top: dropdownPosition.top, left: dropdownPosition.left }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              {STATUS_OPTIONS.map((opt) => (
+                <button
+                  key={opt.value}
+                  type="button"
+                  onClick={() => handleInlineStatusChange(dropdownEvent.id, opt.value)}
+                  className={`flex w-full items-center gap-2 px-4 py-2.5 text-left text-xs font-bold transition-colors hover:bg-[#faf9fc] hover:text-[#df1b8b] ${
+                    getStatusOption(dropdownEvent.status).value === opt.value
+                      ? 'text-[#df1b8b] bg-[#fdf2f8]'
+                      : 'text-[#5c546a]'
+                  }`}
+                >
+                  <span className={`h-1.5 w-1.5 rounded-full ${opt.dot}`}></span>
+                  {opt.label}
+                  {getStatusOption(dropdownEvent.status).value === opt.value && (
+                    <svg
+                      className="ml-auto h-3 w-3"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="3"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      <path d="M20 6 9 17l-5-5" />
+                    </svg>
+                  )}
+                </button>
+              ))}
+            </div>
+          </>
+        );
+      })()}
 
       {/* Event Details Modal */}
       {selectedEventForDetails && (

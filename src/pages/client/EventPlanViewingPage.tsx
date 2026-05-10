@@ -178,6 +178,13 @@ export function EventPlanViewingPage() {
 
               const formatDisplayTime = (val: any) => {
                 if (!val) return '00:00';
+                if (typeof val === 'string' && val.includes(':')) {
+                  const [h, m] = val.split(':');
+                  let hours = parseInt(h, 10);
+                  const ampm = hours >= 12 ? 'PM' : 'AM';
+                  hours = hours % 12 || 12;
+                  return `${hours}:${m} ${ampm}`;
+                }
                 return val;
               };
 
@@ -285,18 +292,7 @@ export function EventPlanViewingPage() {
           </div>
 
           {/* Right: progress + organizer */}
-          <div className="flex flex-col items-start gap-2 w-full sm:w-[60%]">
-            <div className="flex items-center gap-2 w-full">
-              <span className="text-sm font-semibold whitespace-nowrap">
-                {EVENT.completion}% complete
-              </span>
-              <div className="h-6 flex-1 overflow-hidden rounded-full bg-white/30">
-                <div
-                  className="h-full rounded-full bg-white transition-all"
-                  style={{ width: `${EVENT.completion}%` }}
-                />
-              </div>
-            </div>
+          <div className="flex flex-col items-end gap-2 w-full sm:w-[60%]">
             <div className="text-xs text-white/80 leading-relaxed self-end text-right">
               <p>Organizer Name: {EVENT.organizer}</p>
               <p>
