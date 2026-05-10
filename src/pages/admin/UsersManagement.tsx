@@ -35,7 +35,7 @@ import {
   type UserResponse,
   type UserPayload,
 } from '@/api/users';
-import { getVerifiedEmails, type VerifiedEmail } from '@/api/email-verification';
+import { getVerifiedEmails, deleteVerifiedEmail, type VerifiedEmail } from '@/api/email-verification';
 import {
   Plus,
   Trash2,
@@ -111,6 +111,11 @@ export function UsersManagement() {
   // State for delete confirmation dialog
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
   const [userToDelete, setUserToDelete] = useState<{ id: string; name: string } | null>(null);
+
+  // State for delete verified email confirmation
+  const [isVeDeleteConfirmOpen, setIsVeDeleteConfirmOpen] = useState(false);
+  const [veToDelete, setVeToDelete] = useState<string | null>(null);
+  const [veDeleting, setVeDeleting] = useState(false);
 
   const fetchUsers = async () => {
     try {
@@ -221,6 +226,27 @@ export function UsersManagement() {
       setError('Failed to delete user');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleDeleteVerifiedEmail = (email: string) => {
+    setVeToDelete(email);
+    setIsVeDeleteConfirmOpen(true);
+  };
+
+  const confirmDeleteVerifiedEmail = async () => {
+    if (!veToDelete) return;
+    try {
+      setVeDeleting(true);
+      await deleteVerifiedEmail(veToDelete);
+      setVerifiedEmails((prev) => prev.filter((v) => v.email !== veToDelete));
+      setIsVeDeleteConfirmOpen(false);
+      setVeToDelete(null);
+    } catch (err) {
+      console.error('Failed to delete verified email:', err);
+      setError('Failed to delete verified email');
+    } finally {
+      setVeDeleting(false);
     }
   };
 
@@ -824,12 +850,15 @@ export function UsersManagement() {
                   <TableHead className="h-11 text-xs font-black uppercase tracking-[0.06em] text-[#7c7390]">
                     Verified At
                   </TableHead>
+                  <TableHead className="h-11 w-[80px] text-right text-xs font-black uppercase tracking-[0.06em] text-[#7c7390]">
+                    Actions
+                  </TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {paginatedVe.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={4} className="text-center py-8 text-gray-500">
+                    <TableCell colSpan={5} className="text-center py-8 text-gray-500">
                       {verifiedEmails.length > 0
                         ? 'No emails match your search.'
                         : 'No verified emails found.'}
@@ -861,6 +890,16 @@ export function UsersManagement() {
                               minute: '2-digit',
                             })
                           : '-'}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleDeleteVerifiedEmail(ve.email)}
+                          className="text-red-600 hover:text-red-800"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
                       </TableCell>
                     </TableRow>
                   ))
@@ -957,6 +996,28 @@ export function UsersManagement() {
             </Button>
             <Button variant="destructive" onClick={confirmDelete}>
               Delete User
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Verified Email Confirmation Dialog */}
+      <Dialog open={isVeDeleteConfirmOpen} onOpenChange={setIsVeDeleteConfirmOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Delete Verified Email</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to delete the verified email{' '}
+              <strong>{veToDelete}</strong>? This will remove the verification
+              record and they will need to verify again.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsVeDeleteConfirmOpen(false)}>
+              Cancel
+            </Button>
+            <Button variant="destructive" onClick={confirmDeleteVerifiedEmail} disabled={veDeleting}>
+              {veDeleting ? 'Deleting…' : 'Delete Email'}
             </Button>
           </DialogFooter>
         </DialogContent>

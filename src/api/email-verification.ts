@@ -69,3 +69,17 @@ export async function getVerifiedEmails(): Promise<{
   }>('/auth/verified-emails');
   return data;
 }
+
+/**
+ * Delete a verified email record (admin).
+ * Backend: DELETE /api/auth/verified-emails/:email
+ */
+export async function deleteVerifiedEmail(
+  email: string
+): Promise<{ email: string; deleted: boolean }> {
+  const { data } = await axiosInstance.delete<{
+    email: string;
+    deleted: boolean;
+  }>(`/auth/verified-emails/${encodeURIComponent(email)}`);
+  return data;
+}

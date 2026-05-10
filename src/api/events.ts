@@ -13,6 +13,9 @@ export interface EventManagerEvent {
   client: string;
   type: string;
   package: string;
+  packageInitialAmount?: number | null;
+  downpaymentAmount?: number | null;
+  packagePrice?: number | null;
   venue: string;
   rsvp: number;
   status: EventStatus;
@@ -35,6 +38,9 @@ interface BackendEvent {
   eventPackage?: string;
   eventPackageKey?: string;
   eventPax?: number | null;
+  packageInitialAmount?: number | null;
+  downpaymentAmount?: number | null;
+  packagePrice?: number | null;
   venue?: string;
   status?: string;
   createdAt?: string;
@@ -60,6 +66,10 @@ export interface CreateEventPayload {
   clientId?: string;
   organizer_id?: string;
   organizerId?: string;
+  inquiryId?: string;
+  inquiry_id?: string;
+  inquiryId?: string;
+  inquiry_id?: string;
   eventPackageKey?: string;
   eventLocation?: string;
   eventDate?: string;
@@ -70,6 +80,9 @@ export interface CreateEventPayload {
   eventPax?: number;
   venue?: string;
   status?: string;
+  packageInitialAmount?: number;
+  downpaymentAmount?: number;
+  packagePrice?: number;
 }
 
 export interface UpdateEventPayload extends Partial<CreateEventPayload> {
@@ -129,6 +142,9 @@ function mapToManagerRow(baseEvent: BackendEvent, userMap: Map<string, string>):
     client: clientName,
     type: baseEvent.eventType || '-',
     package: packagePax > 0 ? `${packageName} (${packagePax})` : packageName,
+    packageInitialAmount: baseEvent.packageInitialAmount ?? null,
+    downpaymentAmount: baseEvent.downpaymentAmount ?? null,
+    packagePrice: baseEvent.packagePrice ?? null,
     venue:
       baseEvent.venue &&
       !['', '-', '–', '—', 'n/a', 'tba'].includes(baseEvent.venue.trim().toLowerCase())

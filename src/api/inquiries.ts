@@ -10,6 +10,9 @@ export interface InquiryFormData {
   eventType: string;
   eventPackage: string;
   eventPax: number;
+  packageInitialAmount?: number;
+  downpaymentAmount?: number;
+  currency?: string;
   message?: string;
 }
 
@@ -21,6 +24,9 @@ export interface Inquiry {
   eventType: string;
   createdAt: string;
   status: string;
+  packageInitialAmount?: number;
+  downpaymentAmount?: number;
+  currency?: string;
 }
 
 export interface ScheduleInquiryMeetingPayload {
@@ -48,7 +54,7 @@ export interface InquiryStatusOption {
  */
 export const INQUIRY_STATUS_OPTIONS = {
   PENDING_REVIEW: 'Pending Review',
-  MEETING_SCHEDULED: 'Meeting Scheduled',
+  MEETING_SCHEDULED: 'Schedule a Meeting',
   REQUIRES_CLARIFICATION: 'Requires Clarification',
   APPROVED: 'Approved',
   DECLINED: 'Declined',
@@ -108,12 +114,13 @@ export const getInquiryStatusOptions = (currentStatus?: string): InquiryStatusOp
   }
 
   if (currentNormalized === 'meeting scheduled') {
-    // From Meeting Scheduled: can move to Requires Clarification, Approved, or Declined
+    // From Meeting Scheduled: can move to Requires Clarification or Declined
     return allOptions.map((option) => ({
       ...option,
       disabled:
         option.value === INQUIRY_STATUS_OPTIONS.PENDING_REVIEW ||
-        option.value === INQUIRY_STATUS_OPTIONS.MEETING_SCHEDULED,
+        option.value === INQUIRY_STATUS_OPTIONS.MEETING_SCHEDULED ||
+        option.value === INQUIRY_STATUS_OPTIONS.APPROVED,
     }));
   }
 
@@ -163,6 +170,9 @@ export const submitInquiry = async (inquiryData: InquiryFormData): Promise<void>
       eventType: inquiryData.eventType,
       eventPackage: inquiryData.eventPackage,
       eventPax: inquiryData.eventPax,
+      packageInitialAmount: inquiryData.packageInitialAmount,
+      downpaymentAmount: inquiryData.downpaymentAmount,
+      currency: inquiryData.currency,
       message: inquiryData.message,
     };
     await axiosInstance.post('/inquiries', payload);
@@ -178,6 +188,16 @@ export const getInquiries = async (): Promise<Inquiry[]> => {
     return response.data;
   } catch (error) {
     console.error('Failed to fetch inquiries:', error);
+    throw error;
+  }
+};
+
+export const updateInquiry = async (id: string, updates: Partial<Inquiry>): Promise<Inquiry> => {
+  try {
+    const response = await axiosInstance.patch(`/inquiries/${id}`, updates);
+    return response.data;
+  } catch (error) {
+    console.error('Failed to update inquiry:', error);
     throw error;
   }
 };

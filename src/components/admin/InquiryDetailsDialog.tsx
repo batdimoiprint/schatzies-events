@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, Fragment } from 'react';
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import {
   Select,
@@ -13,9 +13,11 @@ import { Input } from '@/components/ui/input';
 import { Calendar as CalendarIcon, Check, Copy, Eye, EyeOff, Loader2 } from 'lucide-react';
 import { createEvent } from '@/api/events';
 import { updateCalendarEntry } from '@/api/calendar';
+import { calculatePackagePrice } from '@/utils/package-pricing';
 import {
   checkUserRegistered,
   updateInquiryStatus,
+  updateInquiry,
   getInquiryStatusOptions,
   INQUIRY_STATUS_OPTIONS,
   deleteInquiry,
@@ -58,6 +60,9 @@ interface InquiryRecord {
   eventPackage?: string;
   eventPackageKey?: string;
   eventPax?: number;
+  packageInitialAmount?: number;
+  downpaymentAmount?: number;
+  currency?: string;
   message?: string;
   userId?: string;
   user_id?: string;
@@ -141,6 +146,17 @@ export function InquiryDetailsDialog({
   const [isOrgConfirmOpen, setIsOrgConfirmOpen] = useState(false);
   const [pendingOrganizerId, setPendingOrganizerId] = useState('');
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
+  const [downpaymentInput, setDownpaymentInput] = useState('');
+  const [isSavingDownpayment, setIsSavingDownpayment] = useState(false);
+
+  const formatMoney = (amount?: number | null) => {
+    if (amount === undefined || amount === null || Number.isNaN(Number(amount))) return '—';
+    return new Intl.NumberFormat('en-PH', {
+      style: 'currency',
+      currency: String(selectedInquiry?.currency || 'PHP'),
+      maximumFractionDigits: 0,
+    }).format(Number(amount));
+  };
 
   const deleteInquiryMutation = useMutation({
     mutationFn: (id: string) => deleteInquiry(id),
@@ -150,6 +166,32 @@ export function InquiryDetailsDialog({
       setIsDeleteConfirmOpen(false);
     },
   });
+
+  const saveDownpaymentMutation = useMutation({
+    mutationFn: async ({ id, downpayment }: { id: string; downpayment: number }) => {
+      return await updateInquiry(id, { downpaymentAmount: downpayment });
+    },
+    onSuccess: (updatedInquiry) => {
+      queryClient.invalidateQueries({ queryKey: ['inquiries'] });
+      onInquiryUpdated(updatedInquiry as InquiryRecord);
+      setDownpaymentInput(
+        updatedInquiry?.downpaymentAmount ? String(updatedInquiry.downpaymentAmount) : ''
+      );
+      setIsSavingDownpayment(false);
+    },
+    onError: () => {
+      setIsSavingDownpayment(false);
+      // Optional: Add error feedback here
+    },
+  });
+
+  const handleSaveDownpayment = () => {
+    if (!selectedInquiry || !downpaymentInput) return;
+    const id = String(selectedInquiry.id || selectedInquiry._id || '').trim();
+    if (!id) return;
+    setIsSavingDownpayment(true);
+    saveDownpaymentMutation.mutate({ id, downpayment: Number(downpaymentInput) });
+  };
 
   const getInquiryKey = (inquiry?: InquiryRecord | null) =>
     String(inquiry?.id || inquiry?._id || inquiry?.email || '').trim();
@@ -163,6 +205,9 @@ export function InquiryDetailsDialog({
   const isAlreadyRegistered = selectedInquiryKey
     ? isAccountRegisteredByInquiry[selectedInquiryKey]
     : false;
+  const hasAccountForInquiry = Boolean(
+    selectedInquiry?.userId || selectedInquiry?.user_id || isAlreadyRegistered || createdAccount
+  );
 
   useEffect(() => {
     if (!selectedInquiry) return;
@@ -171,6 +216,7 @@ export function InquiryDetailsDialog({
     setAccountCreateError('');
     setAccountCreateSuccess('');
     setCopiedInquiryId('');
+    setDownpaymentInput(selectedInquiry?.downpaymentAmount ? String(selectedInquiry.downpaymentAmount) : '');
 
     const inquiryKey = getInquiryKey(selectedInquiry);
     if (!inquiryKey) return;
@@ -236,6 +282,11 @@ export function InquiryDetailsDialog({
         setStatusChangeError('A scheduled meeting is required before approving this inquiry.');
         return;
       }
+      
+      if (!selectedInquiry.downpaymentAmount) {
+        setStatusChangeError('A downpayment must be added before approving this inquiry.');
+        return;
+      }
 
       if (!plannedDateSource) {
         setStatusChangeError('Inquiry planned date is required before creating the event.');
@@ -256,11 +307,32 @@ export function InquiryDetailsDialog({
           ? new Date(plannedDateSource).toISOString()
           : new Date().toISOString();
 
+        // Compute event price from package + event type + pax if not already set
+        const eventTypeStr = String(selectedInquiry.eventType || '').trim();
+        const eventPackageStr = String(selectedInquiry.eventPackage || '').trim();
+        const eventPaxNum = Number(selectedInquiry.eventPax) || 0;
+
+        const computedPrice = calculatePackagePrice(eventPackageStr, eventTypeStr, eventPaxNum);
+        const rawPackageInitialAmount = Number(selectedInquiry.packageInitialAmount);
+        const packageInitialAmount = Number.isFinite(rawPackageInitialAmount) && rawPackageInitialAmount > 0
+          ? rawPackageInitialAmount
+          : computedPrice > 0
+            ? computedPrice
+            : undefined;
+
+        const downpaymentAmount = Number(selectedInquiry.downpaymentAmount);
+        const hasPackageInitialAmount = packageInitialAmount !== undefined;
+        const hasDownpaymentAmount = Number.isFinite(downpaymentAmount);
+        const packagePrice = hasPackageInitialAmount
+          ? Math.max(0, packageInitialAmount - (hasDownpaymentAmount ? downpaymentAmount : 0))
+          : undefined;
+
         try {
           await createEvent({
             title: eventTitle,
             startDate,
             endDate,
+            inquiryId: id,
             client_id: clientId,
             organizer_id: organizerId,
             eventType: String(selectedInquiry.eventType || '').trim() || 'General',
@@ -272,6 +344,9 @@ export function InquiryDetailsDialog({
               selectedInquiry.eventPax !== undefined && selectedInquiry.eventPax !== null
                 ? Number(selectedInquiry.eventPax)
                 : undefined,
+            packageInitialAmount: hasPackageInitialAmount ? packageInitialAmount : undefined,
+            downpaymentAmount: hasDownpaymentAmount ? downpaymentAmount : undefined,
+            packagePrice,
             eventDate: endDate,
             eventLocation: '',
             venue: '',
@@ -475,7 +550,7 @@ export function InquiryDetailsDialog({
 
   return (
     <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-      <DialogContent className="sm:max-w-7xl">
+      <DialogContent className="sm:max-w-7xl max-h-[90vh] overflow-y-auto p-0">
         <div className="bg-linear-to-r from-[#fdfbff] to-[#f5f7ff] p-6 border-b border-[#eee7f4]">
           <div className="flex items-center justify-between">
             <div>
@@ -495,12 +570,22 @@ export function InquiryDetailsDialog({
                 })}
               </p>
             </div>
-            <div className="hidden md:block"></div>
+            <div className="flex items-center gap-2">
+              {user?.role === 'ADMIN' && selectedInquiry && (
+                <Button
+                  variant="destructive"
+                  className="font-bold"
+                  onClick={() => setIsDeleteConfirmOpen(true)}
+                >
+                  Delete Inquiry
+                </Button>
+              )}
+            </div>
           </div>
         </div>
 
         {selectedInquiry && (
-          <div className="max-h-[80vh] overflow-y-auto p-6">
+          <div className="p-6">
             <div className="grid gap-8 xl:grid-cols-[minmax(0,1.45fr)_minmax(280px,0.95fr)_minmax(320px,1fr)]">
               {/* First Column - Core Info */}
               <div className="space-y-6">
@@ -561,7 +646,11 @@ export function InquiryDetailsDialog({
                       <p className="text-[#4e4560] font-bold text-sm">
                         {new Date(
                           selectedInquiry.date || selectedInquiry.createdAt || Date.now()
-                        ).toLocaleDateString()}
+                        ).toLocaleDateString('en-US', {
+                          month: 'long',
+                          day: 'numeric',
+                          year: 'numeric',
+                        })}
                       </p>
                     </div>
                     <div className="rounded-xl border border-[#f1eaf7] bg-white p-3 shadow-sm">
@@ -598,6 +687,26 @@ export function InquiryDetailsDialog({
                         </p>
                       </div>
                     )}
+
+                    {(selectedInquiry.eventPackage || selectedInquiry.packageInitialAmount !== undefined) && (() => {
+                      const displayAmount = Number.isFinite(Number(selectedInquiry.packageInitialAmount)) && Number(selectedInquiry.packageInitialAmount) > 0
+                        ? Number(selectedInquiry.packageInitialAmount)
+                        : calculatePackagePrice(
+                            String(selectedInquiry.eventPackage || '').trim(),
+                            String(selectedInquiry.eventType || '').trim(),
+                            Number(selectedInquiry.eventPax) || 0,
+                          );
+                      return (
+                        <div className="rounded-xl border border-[#f1eaf7] bg-white p-3 shadow-sm col-span-2">
+                          <h4 className="text-[10px] font-black uppercase tracking-wider text-[#a094b8] mb-1">
+                            Package Amount
+                          </h4>
+                          <p className="text-[#4e4560] font-bold text-sm">
+                            {displayAmount > 0 ? formatMoney(displayAmount) : '—'}
+                          </p>
+                        </div>
+                      );
+                    })()}
                   </div>
                 </section>
 
@@ -606,79 +715,14 @@ export function InquiryDetailsDialog({
                     <span className="h-px w-4 bg-[#d5c9e4]"></span>
                     Client Message
                   </h3>
-                  <div className="min-h-30 whitespace-pre-wrap rounded-2xl border border-[#ece4f5] bg-[#faf7ff] p-5 text-sm text-[#4e4560] leading-relaxed italic shadow-inner">
+                  <div className="min-h-20 whitespace-pre-wrap rounded-2xl border border-[#ece4f5] bg-[#faf7ff] p-5 text-sm text-[#4e4560] leading-relaxed italic shadow-inner">
                     "{selectedInquiry.message || 'No additional message provided.'}"
                   </div>
                 </section>
               </div>
 
-              {/* Second Column - Status & Meetings */}
+              {/* Second Column - Meetings & Account Details */}
               <div className="space-y-6">
-                <section className="space-y-3">
-                  <h4 className="text-xs font-black uppercase tracking-widest text-[#b0a4c5] mb-2">
-                    Inquiry Status
-                  </h4>
-                  <div className="p-4 rounded-2xl border border-[#eadcf7] bg-white shadow-sm flex flex-col gap-2">
-                    <Label className="text-[10px] font-black uppercase text-[#857a98] mb-1 block">
-                      Change State
-                    </Label>
-                    {statusOptions.map((option, index) => {
-                      const isMeetingBtn =
-                        option.value === INQUIRY_STATUS_OPTIONS.MEETING_SCHEDULED;
-                      const isActive = currentStatusValue === option.value;
-                      const currentIndex = statusOptions.findIndex(
-                        (o) => o.value === currentStatusValue
-                      );
-                      const isCompleted = index < currentIndex;
-
-                      return (
-                        <Button
-                          key={option.value}
-                          variant={isActive ? 'default' : 'outline'}
-                          disabled={option.disabled && !isActive}
-                          className={`w-full justify-start h-11 rounded-xl font-bold transition-all ${
-                            isActive
-                              ? 'bg-linear-to-r from-[#f347a5] to-[#8f1fd1] text-white border-none shadow-md'
-                              : isCompleted
-                                ? 'bg-[#f7f5fa] border-[#e5ddee] text-[#8f879f]'
-                                : 'bg-white border-[#e5ddee] text-[#5a5368] hover:border-[#d5c9e4] hover:bg-[#faf7ff]'
-                          }`}
-                          onClick={() => {
-                            if (isActive) return;
-                            if (isMeetingBtn && !selectedInquiry?.meetingDetails) {
-                              setIsScheduleModalOpen(true);
-                            } else {
-                              handleStatusChange(option.value);
-                            }
-                          }}
-                        >
-                          <span
-                            className={`mr-3 flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[11px] font-black ${
-                              isActive
-                                ? 'bg-white/20 text-white'
-                                : isCompleted
-                                  ? 'bg-[#e5ddee] text-[#a094b8]'
-                                  : 'bg-[#f3edfa] text-[#8f1fd1]'
-                            }`}
-                          >
-                            {index + 1}
-                          </span>
-                          {option.label}
-                          {isMeetingBtn &&
-                            !selectedInquiry?.meetingDetails &&
-                            !option.disabled &&
-                            !isActive && <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />}
-                        </Button>
-                      );
-                    })}
-                    {statusChangeError && (
-                      <p className="mt-2 text-[11px] font-semibold text-red-600">
-                        {statusChangeError}
-                      </p>
-                    )}
-                  </div>
-                </section>
-
                 <section className="space-y-3">
                   <h4 className="text-xs font-black uppercase tracking-widest text-[#b0a4c5] mb-2">
                     Meetings
@@ -760,57 +804,15 @@ export function InquiryDetailsDialog({
                     </div>
                   )}
                 </section>
-              </div>
 
-              {/* Third Column - Portal Access */}
-              <div className="space-y-6">
                 <section className="space-y-3">
                   <h4 className="text-xs font-black uppercase tracking-widest text-[#b0a4c5] mb-2">
-                    Portal Access
+                    Account Details
                   </h4>
-                  <div className="rounded-2xl border border-[#eadcf7] bg-white p-4 shadow-sm overflow-hidden relative">
-                    {!selectedInquiry.meetingDetails && !isAlreadyRegistered && !createdAccount && (
-                      <div className="absolute inset-0 z-10 bg-white/60 backdrop-blur-[1px] flex items-center justify-center p-6 text-center">
-                        <p className="text-[11px] font-bold text-amber-700 bg-amber-50 p-2 rounded-lg border border-amber-100 shadow-sm">
-                          Schedule a meeting first to enable account creation.
-                        </p>
-                      </div>
-                    )}
-
-                    <div className="flex items-start gap-3 mb-4">
-                      <div className="h-8 w-8 rounded-lg bg-[#f7ebff] flex items-center justify-center text-[#8f1fd1]">
-                        <Check className="h-4 w-4" />
-                      </div>
-                      <div>
-                        <p className="text-sm font-black text-[#5f4f7a]">Client Account</p>
-                        <p className="text-[10px] font-semibold text-[#8f879f]">
-                          Enable portal access for this client
-                        </p>
-                      </div>
-                    </div>
-
-                    <Button
-                      type="button"
-                      onClick={handleCreateUserAccount}
-                      disabled={
-                        isCreatingAccount ||
-                        !selectedInquiry?.email ||
-                        Boolean(createdAccount) ||
-                        isAlreadyRegistered ||
-                        !selectedInquiry.meetingDetails
-                      }
-                      className="w-full h-11 bg-linear-to-r from-[#2e2837] to-[#5a5368] text-white font-black rounded-xl"
-                    >
-                      {isCreatingAccount
-                        ? 'Processing...'
-                        : createdAccount || isAlreadyRegistered
-                          ? 'Account Ready'
-                          : 'Create User Account'}
-                    </Button>
-
+                  <div className="rounded-2xl border border-[#eadcf7] bg-white p-4 shadow-sm">
                     {createdAccount && (
-                      <div className="mt-4 space-y-2 rounded-xl border border-[#e5dbef] bg-[#faf7ff] p-3 animate-in fade-in slide-in-from-top-2">
-                        <p className="text-[10px] font-black uppercase text-[#6f2ea8]">
+                      <div className="space-y-2 rounded-lg border border-[#e5dbef] bg-[#faf7ff] p-2 animate-in fade-in slide-in-from-top-2">
+                        <p className="text-[9px] font-black uppercase text-[#6f2ea8]">
                           Temporary Access Key
                         </p>
                         <div className="flex items-center gap-2">
@@ -818,7 +820,7 @@ export function InquiryDetailsDialog({
                             <Input
                               readOnly
                               value={isPasswordVisible ? createdAccount.password : '••••••••••••'}
-                              className="h-10 border-[#ddd8e8] bg-white text-xs font-bold text-[#4c455e] rounded-lg pr-10"
+                              className="h-8 text-[11px] font-bold pr-8"
                             />
                             <button
                               type="button"
@@ -828,12 +830,12 @@ export function InquiryDetailsDialog({
                                   [selectedInquiryKey]: !isPasswordVisible,
                                 }))
                               }
-                              className="absolute right-3 top-1/2 -translate-y-1/2 text-[#8f879f] hover:text-[#8f1fd1]"
+                              className="absolute right-2 top-1/2 -translate-y-1/2 text-[#8f879f] hover:text-[#8f1fd1]"
                             >
                               {isPasswordVisible ? (
-                                <EyeOff className="h-4 w-4" />
+                                <EyeOff className="h-3 w-3" />
                               ) : (
-                                <Eye className="h-4 w-4" />
+                                <Eye className="h-3 w-3" />
                               )}
                             </button>
                           </div>
@@ -843,44 +845,204 @@ export function InquiryDetailsDialog({
                             onClick={() =>
                               handleCopyPassword(selectedInquiryKey, createdAccount.password)
                             }
-                            className="h-10 w-10 p-0 border-[#ddd8e8] rounded-lg bg-white"
+                            className="h-8 w-8 p-0 bg-white"
                           >
                             {isCopied ? (
-                              <Check className="h-4 w-4 text-emerald-600" />
+                              <Check className="h-3 w-3 text-emerald-600" />
                             ) : (
-                              <Copy className="h-4 w-4" />
+                              <Copy className="h-3 w-3" />
                             )}
                           </Button>
                         </div>
                       </div>
                     )}
 
+                    {!createdAccount && hasAccountForInquiry && (
+                      <div className="space-y-2 rounded-lg border border-emerald-100 bg-emerald-50 p-3 animate-in fade-in slide-in-from-top-2">
+                        <p className="text-[9px] font-black uppercase text-emerald-700">
+                          Account Ready
+                        </p>
+                        <div className="space-y-1 text-[11px] font-semibold text-emerald-900">
+                          {selectedInquiry?.email && (
+                            <p className="flex justify-between gap-3">
+                              <span className="text-emerald-700/80">Email</span>
+                              <span className="text-right break-all">{selectedInquiry.email}</span>
+                            </p>
+                          )}
+                          
+                        </div>
+                        <p className="text-[10px] font-bold text-emerald-700/80">
+                          Temporary password is sent to the email.
+                        </p>
+                      </div>
+                    )}
+
                     {accountCreateError && (
-                      <div className="mt-3 p-2 rounded-lg bg-red-50 border border-red-100">
-                        <p className="text-[10px] font-bold text-red-600">{accountCreateError}</p>
+                      <div className="mt-2 p-1.5 rounded bg-red-50 border border-red-100">
+                        <p className="text-[9px] font-bold text-red-600">{accountCreateError}</p>
                       </div>
                     )}
                     {accountCreateSuccess && (
-                      <div className="mt-3 p-2 rounded-lg bg-emerald-50 border border-emerald-100">
-                        <p className="text-[10px] font-bold text-emerald-700">
+                      <div className="mt-2 p-1.5 rounded bg-emerald-50 border border-emerald-100">
+                        <p className="text-[9px] font-bold text-emerald-700">
                           {accountCreateSuccess}
                         </p>
                       </div>
                     )}
+                    {!createdAccount && !hasAccountForInquiry && !accountCreateError && !accountCreateSuccess && (
+                      <p className="text-[11px] text-[#9a8fb0] text-center italic py-2">
+                        No account details generated yet.
+                      </p>
+                    )}
                   </div>
                 </section>
+              </div>
 
-                {user?.role === 'ADMIN' && (
-                  <div className="border-t border-[#eee7f4] pt-6">
-                    <Button
-                      variant="destructive"
-                      className="w-full font-bold"
-                      onClick={() => setIsDeleteConfirmOpen(true)}
-                    >
-                      Delete Inquiry
-                    </Button>
+              {/* Third Column - Inquiry Status */}
+              <div className="space-y-6">
+                <section className="space-y-3">
+                  <h4 className="text-xs font-black uppercase tracking-widest text-[#b0a4c5] mb-2">
+                    Inquiry Status
+                  </h4>
+                  <div className="p-4 rounded-2xl border border-[#eadcf7] bg-white shadow-sm flex flex-col gap-2">
+                    <Label className="text-[10px] font-black uppercase text-[#857a98] mb-1 block">
+                      Change State
+                    </Label>
+                    {statusOptions.map((option, index) => {
+                      const isMeetingBtn =
+                        option.value === INQUIRY_STATUS_OPTIONS.MEETING_SCHEDULED;
+                      const isApprovedBtn = option.value === INQUIRY_STATUS_OPTIONS.APPROVED;
+                      const hasAccount = Boolean(
+                        selectedInquiry?.userId || isAlreadyRegistered || createdAccount
+                      );
+                      const isActive = currentStatusValue === option.value;
+                      const currentIndex = statusOptions.findIndex(
+                        (o) => o.value === currentStatusValue
+                      );
+                      const isCompleted = index < currentIndex;
+
+                      let displayLabel = option.label;
+                      if (isMeetingBtn && (isActive || isCompleted)) {
+                        displayLabel = 'Meeting Scheduled';
+                      }
+
+                      const hasMeetingScheduled = Boolean(selectedInquiry?.meetingDetails);
+
+                      // Override "Approved" gating: enable once account is ready AND meeting is scheduled.
+                      // Other statuses keep their default disabled behavior.
+                      const isOptionDisabled = isApprovedBtn
+                        ? !hasAccount || !hasMeetingScheduled || !selectedInquiry?.downpaymentAmount
+                        : option.disabled;
+
+                      return (
+                        <Fragment key={option.value}>
+                          {isApprovedBtn && (
+                            <>
+                              <div className="relative my-2 rounded-xl border border-[#eadcf7] bg-[#faf7ff] p-3">
+                                <Label className="text-[10px] font-black uppercase text-[#857a98] mb-2 block">
+                                  Downpayment (Required for Approval)
+                                </Label>
+                                {!selectedInquiry.downpaymentAmount && selectedInquiry.status !== 'Approved' ? (
+                                  <div className="flex gap-2 items-center">
+                                    <Input
+                                      type="number"
+                                      placeholder="Amount"
+                                      value={downpaymentInput}
+                                      onChange={(e) => setDownpaymentInput(e.target.value)}
+                                      className="h-9 flex-1 bg-white border-[#ebe3f5] focus-visible:ring-[#8C6bB1] text-xs font-bold"
+                                    />
+                                    <Button
+                                      onClick={handleSaveDownpayment}
+                                      disabled={isSavingDownpayment || !downpaymentInput}
+                                      className="h-9 px-3 bg-[#8C6bB1] hover:bg-[#6c4e8e] text-white font-bold rounded-lg text-xs transition-all shadow-sm"
+                                    >
+                                      {isSavingDownpayment ? <Loader2 className="w-3 h-3 animate-spin mr-1" /> : 'Save'}
+                                    </Button>
+                                  </div>
+                                ) : (
+                                  <div className="flex justify-between items-center bg-white p-2.5 rounded-lg border border-[#e5ddee]">
+                                     <span className="text-[11px] font-bold text-[#5a5368]">Paid Amount</span>
+                                     <span className="text-sm font-black text-[#6f2ea8]">{formatMoney(selectedInquiry.downpaymentAmount)}</span>
+                                  </div>
+                                )}
+                              </div>
+                              <div className="relative my-2 rounded-xl border border-[#eadcf7] bg-[#faf7ff] p-3">
+                                {!selectedInquiry.meetingDetails && !hasAccount && (
+                                  <div className="absolute inset-0 z-10 bg-white/60 backdrop-blur-[1px] flex items-center justify-center p-2 text-center rounded-xl">
+                                  <p className="text-[10px] font-bold text-amber-700 bg-amber-50 px-2 py-1 rounded border border-amber-100 shadow-sm">
+                                    Schedule a meeting first.
+                                  </p>
+                                </div>
+                              )}
+                              <Label className="text-[10px] font-black uppercase text-[#857a98] mb-2 block">
+                                Portal Access (Required for Approval)
+                              </Label>
+                              <Button
+                                type="button"
+                                onClick={handleCreateUserAccount}
+                                disabled={
+                                  isCreatingAccount ||
+                                  !selectedInquiry?.email ||
+                                  hasAccount ||
+                                  !selectedInquiry.meetingDetails
+                                }
+                                className={`w-full h-10 ${hasAccount ? 'bg-emerald-600' : 'bg-linear-to-r from-[#2e2837] to-[#5a5368]'} text-white font-bold rounded-lg text-xs`}
+                              >
+                                {isCreatingAccount
+                                  ? 'Processing...'
+                                  : hasAccount
+                                    ? 'Account Ready'
+                                    : 'Create User Account'}
+                              </Button>
+                            </div>
+                            </>
+                          )}
+                          <Button
+                            variant={isActive ? 'default' : 'outline'}
+                            disabled={isOptionDisabled && !isActive}
+                            className={`w-full justify-start h-11 rounded-xl font-bold transition-all ${
+                            isActive
+                              ? 'bg-linear-to-r from-[#f347a5] to-[#8f1fd1] text-white border-none shadow-md'
+                              : isCompleted
+                                ? 'bg-[#f7f5fa] border-[#e5ddee] text-[#8f879f]'
+                                : 'bg-white border-[#e5ddee] text-[#5a5368] hover:border-[#d5c9e4] hover:bg-[#faf7ff]'
+                          }`}
+                          onClick={() => {
+                            if (isActive) return;
+                            if (isMeetingBtn && !selectedInquiry?.meetingDetails) {
+                              setIsScheduleModalOpen(true);
+                            } else {
+                              handleStatusChange(option.value);
+                            }
+                          }}
+                        >
+                          <span
+                            className={`mr-3 flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[11px] font-black ${
+                              isActive
+                                ? 'bg-white/20 text-white'
+                                : isCompleted
+                                  ? 'bg-[#e5ddee] text-[#a094b8]'
+                                  : 'bg-[#f3edfa] text-[#8f1fd1]'
+                            }`}
+                          >
+                            {index + 1}
+                          </span>
+                          {displayLabel}
+                          {isMeetingBtn &&
+                            !selectedInquiry?.meetingDetails &&
+                            !option.disabled &&
+                            !isActive && <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />}
+                        </Button>
+                        </Fragment>
+                      );
+                    })}
+                    {statusChangeError && (
+                      <p className="mt-2 text-[11px] font-semibold text-red-600">
+                        {statusChangeError}
+                      </p>
+                    )}
                   </div>
-                )}
+                </section>
               </div>
             </div>
           </div>

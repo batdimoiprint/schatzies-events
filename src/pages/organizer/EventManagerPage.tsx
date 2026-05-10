@@ -39,6 +39,7 @@ type EventSortKey =
   | 'client'
   | 'type'
   | 'package'
+  | 'amount'
   | 'venue'
   | 'status'
   | 'createdAt';
@@ -74,6 +75,17 @@ function getStatusOption(status: string) {
   if (normalized === 'completed' || normalized === 'confirmed') return STATUS_OPTIONS[2];
   if (normalized === 'execution') return STATUS_OPTIONS[1];
   return STATUS_OPTIONS[0];
+}
+
+const pesoFormatter = new Intl.NumberFormat('en-PH', {
+  style: 'currency',
+  currency: 'PHP',
+  maximumFractionDigits: 0,
+});
+
+function formatMoney(value?: number | null) {
+  if (value === undefined || value === null || Number.isNaN(Number(value))) return '—';
+  return pesoFormatter.format(Number(value));
 }
 
 export function EventManagerPage() {
@@ -179,6 +191,7 @@ export function EventManagerPage() {
         event.client,
         event.type,
         event.package,
+        String(event.packagePrice ?? event.packageInitialAmount ?? ''),
         event.venue && !['', '-', '–', '—', 'n/a', 'tba'].includes(event.venue.trim().toLowerCase())
           ? event.venue
           : 'Venue Required',
@@ -214,6 +227,10 @@ export function EventManagerPage() {
           case 'package':
             aVal = a.package.toLowerCase();
             bVal = b.package.toLowerCase();
+            break;
+          case 'amount':
+            aVal = a.packagePrice ?? a.packageInitialAmount ?? 0;
+            bVal = b.packagePrice ?? b.packageInitialAmount ?? 0;
             break;
           case 'venue':
             aVal = a.venue.toLowerCase();
@@ -327,6 +344,7 @@ export function EventManagerPage() {
                     { key: 'client', label: 'Client', alwaysVisible: false },
                     { key: 'type', label: 'Type', alwaysVisible: false },
                     { key: 'package', label: 'Package', alwaysVisible: false },
+                    { key: 'amount', label: 'Amount', alwaysVisible: false },
                     { key: 'venue', label: 'Venue', alwaysVisible: false },
                     { key: 'status', label: 'Status', alwaysVisible: false },
                     { key: 'createdAt', label: 'Approved Date', alwaysVisible: false },
@@ -380,6 +398,9 @@ export function EventManagerPage() {
                   </TableCell>
                   <TableCell className="py-4 font-semibold text-[#5c546a] hidden md:table-cell">
                     {event.package}
+                  </TableCell>
+                  <TableCell className="py-4 font-semibold text-[#5c546a] hidden md:table-cell">
+                    {formatMoney(event.packagePrice ?? event.packageInitialAmount ?? null)}
                   </TableCell>
                   <TableCell className="py-4 font-semibold text-[#5c546a] hidden md:table-cell">
                     {event.venue &&

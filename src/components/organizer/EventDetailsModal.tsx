@@ -98,6 +98,17 @@ function getStatusConfig(status: string) {
   return STATUS_CONFIG[status] || STATUS_CONFIG.Pending;
 }
 
+const pesoFormatter = new Intl.NumberFormat('en-PH', {
+  style: 'currency',
+  currency: 'PHP',
+  maximumFractionDigits: 0,
+});
+
+function formatMoney(value?: number | null) {
+  if (value === undefined || value === null || Number.isNaN(Number(value))) return '—';
+  return pesoFormatter.format(Number(value));
+}
+
 export function EventDetailsModal({
   event,
   isOpen,
@@ -221,6 +232,14 @@ export function EventDetailsModal({
   const statusCfg = getStatusConfig(event.status);
   const attendingCount = rsvpGuests.filter((g) => g.isScanned).length;
   const totalRsvp = rsvpGuests.length;
+  const eventPrice = Number.isFinite(Number(event.packageInitialAmount))
+    ? Number(event.packageInitialAmount)
+    : Number.isFinite(Number(event.packagePrice))
+      ? Number(event.packagePrice)
+      : null;
+  const downpaymentAmount = Number.isFinite(Number(event.downpaymentAmount))
+    ? Number(event.downpaymentAmount)
+    : null;
 
   return (
     <div className="fixed inset-0 z-1000 flex min-h-full items-center justify-center bg-[#1a1423]/60 backdrop-blur-md p-4 overflow-auto">
@@ -252,7 +271,7 @@ export function EventDetailsModal({
           </div>
 
           {/* ──── Info Cards ──── */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-4 mb-6">
+          <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3 mt-4 mb-6">
             <div className="rounded-xl border border-[#f1eef5] bg-[#faf9fc] px-3 py-3">
               <div className="flex items-center gap-2 mb-1">
                 <User className="h-3.5 w-3.5 text-[#df1b8b]" />
@@ -281,6 +300,28 @@ export function EventDetailsModal({
                 </span>
               </div>
               <p className="text-sm font-bold text-[#2e2837] truncate">{event.date}</p>
+            </div>
+            <div className="rounded-xl border border-[#f1eef5] bg-[#faf9fc] px-3 py-3">
+              <div className="flex items-center gap-2 mb-1">
+                <Briefcase className="h-3.5 w-3.5 text-[#8637c3]" />
+                <span className="text-[10px] font-black uppercase tracking-widest text-[#8b839c]">
+                  Event Price
+                </span>
+              </div>
+              <p className="text-sm font-bold text-[#2e2837] truncate">
+                {formatMoney(eventPrice)}
+              </p>
+            </div>
+            <div className="rounded-xl border border-[#f1eef5] bg-[#faf9fc] px-3 py-3">
+              <div className="flex items-center gap-2 mb-1">
+                <Briefcase className="h-3.5 w-3.5 text-[#df1b8b]" />
+                <span className="text-[10px] font-black uppercase tracking-widest text-[#8b839c]">
+                  Downpayment
+                </span>
+              </div>
+              <p className="text-sm font-bold text-[#2e2837] truncate">
+                {formatMoney(downpaymentAmount)}
+              </p>
             </div>
             <div className="rounded-xl border border-[#f1eef5] bg-[#faf9fc] px-3 py-3">
               <div className="flex items-center gap-2 mb-1">

@@ -7,6 +7,7 @@ import {
   createCostBreakdown,
 } from '@/api/cost-breakdown';
 import { getEvents, getEventVendors } from '@/api/events';
+import { calculatePackagePrice } from '@/utils/package-pricing';
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -93,67 +94,7 @@ function formatCsvValue(value: string | number): string {
   return value;
 }
 
-function calculatePackagePrice(packageName: string, eventType: string, pax: number): number {
-  const pkg = packageName.trim().toLowerCase();
-  const type = eventType.trim().toLowerCase();
 
-  if (type === 'wedding') {
-    if (pkg === 'blooms') {
-      if (pax <= 50) return 200000;
-      if (pax <= 100) return 235000;
-      if (pax <= 150) return 277500;
-      return 320000;
-    }
-    if (pkg === 'fascinating') {
-      if (pax <= 100) return 295000;
-      if (pax <= 150) return 342500;
-      return 390000;
-    }
-    if (pkg === 'windy') {
-      if (pax <= 100) return 420000;
-      if (pax <= 150) return 480000;
-      return 540000;
-    }
-    if (pkg === 'de luxe') {
-      if (pax <= 100) return 520000;
-      if (pax <= 150) return 585000;
-      return 650000;
-    }
-    if (pkg === 'grandezza') {
-      if (pax <= 100) return 780000;
-      if (pax <= 150) return 870000;
-      return 960000;
-    }
-  } else if (type === 'debut') {
-    if (pkg === 'charming') {
-      if (pax <= 100) return 200000;
-      if (pax <= 150) return 242500;
-      return 285000;
-    }
-    if (pkg === 'irresistible') {
-      if (pax <= 100) return 295000;
-      if (pax <= 150) return 342500;
-      return 390000;
-    }
-    if (pkg === 'elegancia') {
-      if (pax <= 100) return 495000;
-      if (pax <= 150) return 555000;
-      return 615000;
-    }
-    if (pkg === 'flawless') {
-      if (pax <= 100) return 395000;
-      if (pax <= 150) return 445000;
-      return 495000;
-    }
-    if (pkg === 'grandiosa') {
-      if (pax <= 100) return 595000;
-      if (pax <= 150) return 670000;
-      return 745000;
-    }
-  }
-
-  return 0;
-}
 
 export function CostBreakdownPage() {
   const [selectedEventId, setSelectedEventId] = useState('');
