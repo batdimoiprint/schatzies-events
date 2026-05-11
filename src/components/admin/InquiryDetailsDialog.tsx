@@ -156,13 +156,12 @@ export function InquiryDetailsDialog({
   const [venueVendors, setVenueVendors] = useState<{name: string; price: number | null}[]>([]);
   const [isLoadingVenues, setIsLoadingVenues] = useState(false);
 
-  const formatMoney = (amount?: number | null) => {
-    if (amount === undefined || amount === null || Number.isNaN(Number(amount))) return '—';
-    return new Intl.NumberFormat('en-PH', {
-      style: 'currency',
-      currency: String(selectedInquiry?.currency || 'PHP'),
+  const formatMoney = (val?: number) => {
+    if (val === undefined || isNaN(val)) return '—';
+    const formatter = new Intl.NumberFormat('en-US', {
       maximumFractionDigits: 0,
-    }).format(Number(amount));
+    });
+    return `Php ${formatter.format(val)}`;
   };
 
   const deleteInquiryMutation = useMutation({

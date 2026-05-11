@@ -3,16 +3,18 @@ import { Plus, Trash2, ChevronDown, ChevronUp } from 'lucide-react';
 import { getVendors, type EventManagerVendor, type Vendor } from '@/api/vendors';
 import { Card, CardContent } from '@/components/ui/card';
 
-const SERVICE_TYPES = ['Catering', 'Styling', 'Media', 'Venue'] as const;
-const SERVICE_COLORS: Record<string, string> = {
-  Catering: '#7a0bc0', Styling: '#ec89be', Media: '#5dbac0', Venue: '#f39c12',
-};
-const SERVICE_ICONS: Record<string, string> = {
-  Catering: '🍽️', Styling: '🎨', Media: '📸', Venue: '🏛️',
-};
+/** Consistent color palette for any service type — cycles if more types exist */
+const TYPE_PALETTE = [
+  '#7a0bc0', '#ec89be', '#5dbac0', '#f39c12', '#e74c3c',
+  '#27ae60', '#2980b9', '#8e44ad', '#d35400', '#1abc9c',
+];
 
-const fmt = new Intl.NumberFormat('en-PH', { style: 'currency', currency: 'PHP', maximumFractionDigits: 0 });
-const peso = (v: number) => fmt.format(v);
+function getTypeColor(index: number): string {
+  return TYPE_PALETTE[index % TYPE_PALETTE.length];
+}
+
+const fmt = new Intl.NumberFormat('en-US', { maximumFractionDigits: 0 });
+const peso = (v: number) => `Php ${fmt.format(v)}`;
 
 interface VendorsTabProps {
   eventVendors: EventManagerVendor[];
@@ -29,34 +31,55 @@ export function VendorsTab({ eventVendors, isAssigningVendor, handleOpenAssignVe
     getVendors().then((v) => setAllVendors(v)).catch(() => setAllVendors([]));
   }, []);
 
+  // Discover all unique service types from the entire vendor pool
+  const allServiceTypes = useMemo(() => {
+    const typeSet = new Set<string>();
+    for (const v of allVendors) {
+      const st = (v.serviceType || '').trim();
+      if (st) typeSet.add(st);
+    }
+    // Also include service types from already-assigned vendors
+    for (const v of eventVendors) {
+      const st = (v.service || '').trim();
+      if (st && st !== '-') typeSet.add(st);
+    }
+    // Sort alphabetically for consistency
+    return Array.from(typeSet).sort((a, b) => a.localeCompare(b));
+  }, [allVendors, eventVendors]);
 
+  // Map service type to a stable color based on sorted index
+  const typeColorMap = useMemo(() => {
+    const m: Record<string, string> = {};
+    allServiceTypes.forEach((t, i) => { m[t.toLowerCase()] = getTypeColor(i); });
+    return m;
+  }, [allServiceTypes]);
 
-  // Group assigned vendors by service type
+  // Group assigned vendors by service type (one per category)
   const assignedByType = useMemo(() => {
     const m: Record<string, EventManagerVendor | null> = {};
-    for (const t of SERVICE_TYPES) m[t] = null;
+    for (const t of allServiceTypes) m[t] = null;
     for (const v of eventVendors) {
-      const normalized = SERVICE_TYPES.find((t) => t.toLowerCase() === (v.service || '').toLowerCase());
+      const normalized = allServiceTypes.find((t) => t.toLowerCase() === (v.service || '').toLowerCase());
       if (normalized && !m[normalized]) {
         m[normalized] = v;
       }
     }
     return m;
-  }, [eventVendors]);
+  }, [eventVendors, allServiceTypes]);
 
   // Group available vendors by service type (active only, not already assigned)
   const poolByType = useMemo(() => {
     const assignedIds = new Set(eventVendors.map((v) => v.id));
     const m: Record<string, Vendor[]> = {};
-    for (const t of SERVICE_TYPES) m[t] = [];
+    for (const t of allServiceTypes) m[t] = [];
     for (const v of allVendors) {
       if (assignedIds.has(v.id)) continue;
       if (String(v.status || v.availabilityStatus || '').toLowerCase() !== 'active') continue;
-      const n = SERVICE_TYPES.find((t) => t.toLowerCase() === (v.serviceType || '').toLowerCase());
+      const n = allServiceTypes.find((t) => t.toLowerCase() === (v.serviceType || '').toLowerCase());
       if (n) m[n].push(v);
     }
     return m;
-  }, [allVendors, eventVendors]);
+  }, [allVendors, eventVendors, allServiceTypes]);
 
   return (
     <section className="space-y-6 pb-6">
@@ -66,14 +89,16 @@ export function VendorsTab({ eventVendors, isAssigningVendor, handleOpenAssignVe
           <h3 className="text-lg font-black tracking-tight text-[#1f1f21]">Event Vendor Slots</h3>
           <p className="text-xs font-semibold text-[#6e687d]">One vendor per service category — no duplicates on the same event date</p>
         </div>
+        <div className="text-xs font-semibold text-[#8b8199]">
+          {allServiceTypes.length} service type{allServiceTypes.length !== 1 ? 's' : ''} available
+        </div>
       </div>
 
-      {/* Service Category Slots */}
+      {/* Service Category Slots — dynamically generated from vendor pool */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        {SERVICE_TYPES.map((type) => {
+        {allServiceTypes.map((type) => {
           const assigned = assignedByType[type];
-          const color = SERVICE_COLORS[type];
-          const icon = SERVICE_ICONS[type];
+          const color = typeColorMap[type.toLowerCase()] || '#8f23cf';
           const pool = poolByType[type] || [];
           const isExpanded = expandedCategory === type;
           const isFilled = !!assigned;
@@ -83,7 +108,9 @@ export function VendorsTab({ eventVendors, isAssigningVendor, handleOpenAssignVe
               {/* Category Header */}
               <div className="flex items-center justify-between px-5 py-4 border-b border-[#ece6f3]" style={{ borderLeftWidth: 4, borderLeftColor: color }}>
                 <div className="flex items-center gap-3">
-                  <span className="text-xl">{icon}</span>
+                  <span className="inline-flex size-8 items-center justify-center rounded-lg text-white text-[11px] font-black" style={{ backgroundColor: color }}>
+                    {type.charAt(0).toUpperCase()}
+                  </span>
                   <div>
                     <p className="text-sm font-black uppercase tracking-widest" style={{ color }}>{type}</p>
                     <p className="text-[10px] font-semibold text-[#8b8199]">
@@ -210,7 +237,11 @@ export function VendorsTab({ eventVendors, isAssigningVendor, handleOpenAssignVe
         })}
       </div>
 
-
+      {allServiceTypes.length === 0 && (
+        <div className="rounded-2xl border border-[#eadfec] bg-white px-6 py-12 text-center">
+          <p className="text-sm font-semibold text-[#8b8199]">No vendors found in the pool. Add vendors first to assign them to events.</p>
+        </div>
+      )}
     </section>
   );
 }

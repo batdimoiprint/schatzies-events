@@ -7,6 +7,7 @@ export const tabs: Array<{ id: PlannerTab; label: string }> = [
   { id: 'flow', label: 'Flow' },
   { id: 'checklist', label: 'Checklist' },
   { id: 'vendors', label: 'Vendors' },
+  { id: 'venue', label: 'Venue' },
   { id: 'costs', label: 'Cost Breakdown' },
 ];
 
