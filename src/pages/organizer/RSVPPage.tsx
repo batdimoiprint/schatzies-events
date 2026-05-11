@@ -370,35 +370,40 @@ export function RSVPPage() {
       (statusFilter === 'Attending' && rsvp.status === 'Attending') ||
       (statusFilter === 'Not Attending' && rsvp.status === 'Not Attending') ||
       (statusFilter === 'Arrived' && rsvp.isScanned);
-    return matchesSearch && matchesStatus && rsvp.isVerified;
+    return matchesSearch && matchesStatus && (rsvp.isVerified || rsvp.status === 'Not Attending');
   });
 
+  const pax = Number(selectedEvent?.pax || 150);
+  const displayRsvps = rsvps.filter((r) => r.isVerified || r.status === 'Not Attending');
   const verifiedRsvps = rsvps.filter((r) => r.isVerified);
-  const totalRSVPs = verifiedRsvps.length;
-  const attendingCount = verifiedRsvps.filter((r) => r.status === 'Attending').length;
-  const notAttendingCount = verifiedRsvps.filter((r) => r.status === 'Not Attending').length;
+
+  const totalRSVPs = displayRsvps.length;
+  const attendingCount = displayRsvps.filter(
+    (r) => r.status === 'Attending' && r.isVerified
+  ).length;
+  const notAttendingCount = displayRsvps.filter((r) => r.status === 'Not Attending').length;
   const arrivedCount = verifiedRsvps.filter((r) => r.isScanned).length;
-  const pendingVerificationCount = rsvps.length - verifiedRsvps.length;
+  const pendingCount = Math.max(0, pax - attendingCount - notAttendingCount);
 
   const stats = [
     {
       label: 'Confirmed',
       count: attendingCount,
-      pct: totalRSVPs > 0 ? `${(attendingCount / totalRSVPs) * 100}%` : '0%',
+      pct: pax > 0 ? `${(attendingCount / pax) * 100}%` : '0%',
       bar: 'bg-green-400',
       text: 'text-green-600',
     },
     {
       label: 'Declined',
       count: notAttendingCount,
-      pct: totalRSVPs > 0 ? `${(notAttendingCount / totalRSVPs) * 100}%` : '0%',
+      pct: pax > 0 ? `${(notAttendingCount / pax) * 100}%` : '0%',
       bar: 'bg-red-500',
       text: 'text-red-500',
     },
     {
-      label: 'Unverified',
-      count: pendingVerificationCount,
-      pct: rsvps.length > 0 ? `${(pendingVerificationCount / rsvps.length) * 100}%` : '0%',
+      label: 'Pending',
+      count: pendingCount,
+      pct: pax > 0 ? `${(pendingCount / pax) * 100}%` : '0%',
       bar: 'bg-orange-300',
       text: 'text-orange-600',
     },
@@ -599,33 +604,20 @@ export function RSVPPage() {
                   <div className="mt-6 flex justify-between items-center text-xs text-[#696373]">
                     <div className="flex gap-4">
                       <span>
-                        Capacity: <strong>150</strong>
+                        Capacity: <strong>{pax}</strong>
                       </span>
                       <span>
                         Arrived: <strong className="text-blue-600">{arrivedCount}</strong>
                       </span>
                     </div>
                     <span>
-                      Total Responses: <strong>{totalRSVPs}/150</strong>
+                      Total Responses:{' '}
+                      <strong>
+                        {totalRSVPs}/{pax}
+                      </strong>
                     </span>
                   </div>
                 </div>
-              </div>
-              <div className="mt-6 flex justify-between items-center text-xs text-[#696373]">
-                <div className="flex gap-4">
-                  <span>
-                    Capacity: <strong>{selectedEvent?.pax || 'TBA'}</strong>
-                  </span>
-                  <span>
-                    Arrived: <strong className="text-blue-600">{arrivedCount}</strong>
-                  </span>
-                </div>
-                <span>
-                  Total Responses:{' '}
-                  <strong>
-                    {totalRSVPs}/{selectedEvent?.pax || 'TBA'}
-                  </strong>
-                </span>
               </div>
             </div>
           )}
