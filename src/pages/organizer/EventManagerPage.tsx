@@ -27,6 +27,7 @@ import {
   ChevronsLeft,
   ChevronsRight,
   Search,
+  Eye,
 } from 'lucide-react';
 import { EventDetailsModal, type EventFormData } from '@/components/organizer/EventDetailsModal';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -77,16 +78,7 @@ function getStatusOption(status: string) {
   return STATUS_OPTIONS[0];
 }
 
-const pesoFormatter = new Intl.NumberFormat('en-PH', {
-  style: 'currency',
-  currency: 'PHP',
-  maximumFractionDigits: 0,
-});
 
-function formatMoney(value?: number | null) {
-  if (value === undefined || value === null || Number.isNaN(Number(value))) return '—';
-  return pesoFormatter.format(Number(value));
-}
 
 export function EventManagerPage() {
   const outletContext = useOutletContext<OrganizerLayoutOutletContext | undefined>();
@@ -196,7 +188,7 @@ export function EventManagerPage() {
         event.client,
         event.type,
         event.package,
-        String(event.packagePrice ?? event.packageInitialAmount ?? ''),
+        String(event.packageInitialAmount ?? event.packagePrice ?? ''),
         event.venue && !['', '-', '–', '—', 'n/a', 'tba'].includes(event.venue.trim().toLowerCase())
           ? event.venue
           : 'Venue Required',
@@ -234,8 +226,8 @@ export function EventManagerPage() {
             bVal = b.package.toLowerCase();
             break;
           case 'amount':
-            aVal = a.packagePrice ?? a.packageInitialAmount ?? 0;
-            bVal = b.packagePrice ?? b.packageInitialAmount ?? 0;
+            aVal = a.packageInitialAmount ?? a.packagePrice ?? 0;
+            bVal = b.packageInitialAmount ?? b.packagePrice ?? 0;
             break;
           case 'venue':
             aVal = a.venue.toLowerCase();
@@ -375,10 +367,15 @@ export function EventManagerPage() {
                     </div>
                   </TableHead>
                 ))}
+                <TableHead className="h-10 font-black text-[#211a2f] hidden md:table-cell">
+                  Actions
+                </TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {paginatedEvents.map((event) => (
+              {paginatedEvents.map((event) => {
+                const isMissingDateTime = !event.startDate || !event.startTime || !event.endTime;
+                return (
                 <TableRow
                   key={event.id}
                   onClick={() => {
@@ -387,12 +384,23 @@ export function EventManagerPage() {
                     setIsEventDetailsModalOpen(true);
                   }}
                   className={`group transition-all cursor-pointer border-b border-[#f6f4f9] ${
-                    selectedEventId === event.id
-                      ? 'bg-[#fdf2f8] border-l-4 border-l-[#df1b8b] shadow-sm'
-                      : 'hover:bg-[#faf9fc] border-l-4 border-l-transparent'
+                    isMissingDateTime
+                      ? 'bg-[#fff5f5] hover:bg-[#ffebeb] border-l-4 border-l-red-500 shadow-sm'
+                      : selectedEventId === event.id
+                        ? 'bg-[#fdf2f8] border-l-4 border-l-[#df1b8b] shadow-sm'
+                        : 'hover:bg-[#faf9fc] border-l-4 border-l-transparent'
                   }`}
                 >
-                  <TableCell className="py-4 font-bold text-[#5c546a]">{event.title}</TableCell>
+                  <TableCell className="py-4 font-bold text-[#5c546a]">
+                    <div className="flex items-center gap-2">
+                      {event.title}
+                      {isMissingDateTime && (
+                        <span className="inline-flex items-center rounded-full bg-red-100 px-1.5 py-0.5 text-[9px] font-bold text-red-600 uppercase tracking-wider">
+                          Action Required
+                        </span>
+                      )}
+                    </div>
+                  </TableCell>
                   <TableCell className="py-4 font-semibold text-[#5c546a]">{event.date}</TableCell>
                   <TableCell className="py-4 font-semibold text-[#5c546a] hidden md:table-cell">
                     {event.client}
@@ -468,11 +476,29 @@ export function EventManagerPage() {
                         })
                       : '-'}
                   </TableCell>
+                  <TableCell className="py-4 hidden md:table-cell">
+                    <div className="flex items-center gap-1.5">
+                      <button
+                        type="button"
+                        title="View Planner"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          const basePath = isAdmin ? '/admin/event-planner' : '/organizer/event-planner';
+                          navigate(`${basePath}?eventId=${event.id}`);
+                        }}
+                        className="inline-flex items-center gap-1 rounded-md px-2.5 py-1.5 text-[10px] font-bold text-purple-700 bg-purple-50 hover:bg-purple-100 transition-colors"
+                      >
+                        <Eye className="h-3 w-3" />
+                        Planner
+                      </button>
+                    </div>
+                  </TableCell>
                 </TableRow>
-              ))}
+              );
+              })}
               {paginatedEvents.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={8} className="py-12 text-center text-sm text-[#8f879f]">
+                  <TableCell colSpan={9} className="py-12 text-center text-sm text-[#8f879f]">
                     {isLoading ? 'Loading events...' : 'No events found.'}
                   </TableCell>
                 </TableRow>

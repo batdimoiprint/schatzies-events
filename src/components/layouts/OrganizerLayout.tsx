@@ -13,11 +13,6 @@ const organizerNavItems = [
     icon: '/Pictures/organizerpics/Timeline Vector calendar.png',
   },
   {
-    label: 'Event Planner',
-    to: '/organizer/event-planner',
-    icon: '/Pictures/organizerpics/event planner.png',
-  },
-  {
     label: 'Event Manager',
     to: '/organizer/event-manager',
     icon: '/Pictures/organizerpics/event manager.png',
@@ -31,11 +26,6 @@ const organizerNavItems = [
     label: 'Message',
     to: '/organizer/message',
     icon: '/Pictures/organizerpics/Message.png',
-  },
-  {
-    label: 'Cost Breakdown',
-    to: '/organizer/cost-breakdown',
-    icon: '/Pictures/organizerpics/Cost Breakdown.png',
   },
 ];
 

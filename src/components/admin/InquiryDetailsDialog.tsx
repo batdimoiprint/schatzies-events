@@ -156,13 +156,12 @@ export function InquiryDetailsDialog({
   const [venueVendors, setVenueVendors] = useState<{name: string; price: number | null}[]>([]);
   const [isLoadingVenues, setIsLoadingVenues] = useState(false);
 
-  const formatMoney = (amount?: number | null) => {
-    if (amount === undefined || amount === null || Number.isNaN(Number(amount))) return '—';
-    return new Intl.NumberFormat('en-PH', {
-      style: 'currency',
-      currency: String(selectedInquiry?.currency || 'PHP'),
+  const formatMoney = (val?: number) => {
+    if (val === undefined || isNaN(val)) return '—';
+    const formatter = new Intl.NumberFormat('en-US', {
       maximumFractionDigits: 0,
-    }).format(Number(amount));
+    });
+    return `Php ${formatter.format(val)}`;
   };
 
   const deleteInquiryMutation = useMutation({
@@ -238,14 +237,6 @@ export function InquiryDetailsDialog({
     if (!id) return;
     setIsSavingCustomPackageAmount(true);
     saveCustomPackageAmountMutation.mutate({ id, amount: Number(customPackageAmountInput) });
-  };
-
-  const handleSaveVenue = () => {
-    if (!selectedInquiry || !venueInput.trim()) return;
-    const id = String(selectedInquiry.id || selectedInquiry._id || '').trim();
-    if (!id) return;
-    setIsSavingVenue(true);
-    saveVenueMutation.mutate({ id, venue: venueInput.trim() });
   };
 
   const getInquiryKey = (inquiry?: InquiryRecord | null) =>

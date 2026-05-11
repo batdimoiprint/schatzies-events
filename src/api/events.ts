@@ -262,28 +262,15 @@ export async function getEventNotes(eventId: string): Promise<any[]> {
 export async function createEventNote(
   eventId: string,
   payload: any,
-  file?: File | null
+  _file?: File | null
 ): Promise<any> {
   const currentNotes = await getEventNotes(eventId);
   const newNote = { ...payload, id: payload.id || `note-${Date.now()}` };
   const updatedNotes = [...currentNotes, newNote];
 
-  const isFormData = !!file;
-  let requestData: any;
+  const requestData = { notes: JSON.stringify(updatedNotes) };
 
-  if (isFormData) {
-    requestData = new FormData();
-    requestData.append('notes', JSON.stringify(updatedNotes));
-    requestData.append('file', file); // Pa-check sa backend kung 'file' o 'image' ang key
-  } else {
-    requestData = { notes: JSON.stringify(updatedNotes) };
-  }
-
-  const response = await axiosInstance.put(`/events/${eventId}/notes`, requestData, {
-    headers: {
-      'Content-Type': isFormData ? 'multipart/form-data' : 'application/json',
-    },
-  });
+  const response = await axiosInstance.put(`/events/${eventId}/notes`, requestData);
 
   return response.data?.notes ? newNote : newNote;
 }
@@ -292,27 +279,14 @@ export async function updateEventNote(
   eventId: string,
   noteId: string,
   payload: any,
-  file?: File | null
+  _file?: File | null
 ): Promise<any> {
   const currentNotes = await getEventNotes(eventId);
   const updatedNotes = currentNotes.map((n: any) => (n.id === noteId ? { ...n, ...payload } : n));
 
-  const isFormData = !!file;
-  let requestData: any;
+  const requestData = { notes: JSON.stringify(updatedNotes) };
 
-  if (isFormData) {
-    requestData = new FormData();
-    requestData.append('notes', JSON.stringify(updatedNotes));
-    requestData.append('file', file);
-  } else {
-    requestData = { notes: JSON.stringify(updatedNotes) };
-  }
-
-  await axiosInstance.put(`/events/${eventId}/notes`, requestData, {
-    headers: {
-      'Content-Type': isFormData ? 'multipart/form-data' : 'application/json',
-    },
-  });
+  await axiosInstance.put(`/events/${eventId}/notes`, requestData);
 
   return { ...payload, id: noteId };
 }

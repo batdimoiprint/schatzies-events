@@ -3,21 +3,39 @@ import { FileText } from 'lucide-react';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { getEvents } from '@/api/events';
-import { getVendors, getVendorEntitiesByEventId, type Vendor } from '@/api/vendors';
+import { getVendorEntitiesByEventId, type Vendor } from '@/api/vendors';
 import {
   getCostBreakdown,
   type CostBreakdownResponse,
 } from '@/api/cost-breakdown';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import {
-  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
-} from '@/components/ui/select';
 
-const SERVICE_TYPES = ['Catering', 'Styling', 'Media', 'Venue'] as const;
-const SERVICE_COLORS: Record<string, string> = {
-  Catering: '#7a0bc0', Styling: '#ec89be', Media: '#5dbac0', Venue: '#f39c12',
-};
+/** Consistent color palette for any service type — cycles if more types exist */
+const TYPE_PALETTE = [
+  '#7a0bc0', '#ec89be', '#5dbac0', '#f39c12', '#e74c3c',
+  '#27ae60', '#2980b9', '#8e44ad', '#d35400', '#1abc9c',
+];
+
+function stringToHash(str: string): number {
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) {
+    hash = str.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  return Math.abs(hash);
+}
+
+function getServiceColor(serviceType: string): string {
+  const normalized = serviceType.trim().toLowerCase();
+  // Keep standard colors for backward compatibility
+  if (normalized === 'catering') return '#7a0bc0';
+  if (normalized === 'styling') return '#ec89be';
+  if (normalized === 'media') return '#5dbac0';
+  if (normalized === 'venue') return '#f39c12';
+  
+  const hash = stringToHash(normalized);
+  return TYPE_PALETTE[hash % TYPE_PALETTE.length];
+}
 
 const fmt = new Intl.NumberFormat('en-US', { maximumFractionDigits: 0 });
 const peso = (v: number) => `Php ${fmt.format(v)}`;
@@ -40,11 +58,13 @@ function calcPkgPrice(pkg: string, type: string, pax: number): number {
   return 0;
 }
 
-export function CostBreakdownPage() {
-  const [selectedEventId, setSelectedEventId] = useState('');
+interface CostBreakdownTabProps {
+  selectedEventId: string;
+}
+
+export function CostBreakdownTab({ selectedEventId }: CostBreakdownTabProps) {
   const [apiEvents, setApiEvents] = useState<any[]>([]);
   const [eventVendors, setEventVendors] = useState<Vendor[]>([]);
-  const [allVendors, setAllVendors] = useState<Vendor[]>([]);
   const [breakdown, setBreakdown] = useState<CostBreakdownResponse | null>(null);
 
   const ev = useMemo(() => apiEvents.find((e) => String(e?.id) === selectedEventId) ?? null, [apiEvents, selectedEventId]);
@@ -56,22 +76,11 @@ export function CostBreakdownPage() {
   const computedPkg = calcPkgPrice(evPkg, evType, evPax);
   const packagePrice = pkgInitial > 0 ? pkgInitial : computedPkg;
 
-  // Use backend breakdown if available, else compute locally
   const organizerShare = breakdown?.organizerShare ?? packagePrice * 0.2;
   const vendorBudget = breakdown?.vendorBudget ?? packagePrice * 0.8;
   const totalVendorCost = breakdown?.totalVendorCost ?? eventVendors.reduce((s, v) => s + (v.price ?? 0), 0);
   const vendorBalance = vendorBudget - totalVendorCost;
   const organizerTotal = organizerShare + Math.max(0, vendorBalance);
-
-  const poolByType = useMemo(() => {
-    const m: Record<string, Vendor[]> = {};
-    for (const t of SERVICE_TYPES) m[t] = [];
-    for (const v of allVendors) {
-      const n = SERVICE_TYPES.find((t) => t.toLowerCase() === (v.serviceType || '').toLowerCase());
-      if (n) m[n].push(v);
-    }
-    return m;
-  }, [allVendors]);
 
   const chartSegments = useMemo(() => {
     const total = totalVendorCost || 1;
@@ -81,8 +90,8 @@ export function CostBreakdownPage() {
       const cost = v.price ?? 0, pct = (cost / total) * 100;
       const sl = (pct / 100) * c, da = `${sl} ${Math.max(c - sl, 0)}`, doff = -((cum / 100) * c);
       cum += pct;
-      const nt = SERVICE_TYPES.find((t) => t.toLowerCase() === (v.serviceType || '').toLowerCase());
-      return { id: v.id, name: v.name, type: nt || v.serviceType, cost, pct, da, doff, color: SERVICE_COLORS[nt || ''] || '#8f23cf' };
+      const st = v.serviceType || 'Unknown';
+      return { id: v.id, name: v.name, type: st, cost, pct, da, doff, color: getServiceColor(st) };
     });
   }, [eventVendors, totalVendorCost]);
 
@@ -90,8 +99,7 @@ export function CostBreakdownPage() {
   const hovSeg = chartSegments.find((s) => s.id === hovId) ?? null;
 
   useEffect(() => {
-    getEvents().then((r) => { const a = Array.isArray(r) ? r : []; setApiEvents(a); if (a.length) setSelectedEventId(String(a[0]?.id)); }).catch(() => setApiEvents([]));
-    getVendors().then((v) => setAllVendors(v)).catch(() => setAllVendors([]));
+    getEvents().then((r) => { const a = Array.isArray(r) ? r : []; setApiEvents(a); }).catch(() => setApiEvents([]));
   }, []);
 
   useEffect(() => {
@@ -99,8 +107,6 @@ export function CostBreakdownPage() {
     getVendorEntitiesByEventId(selectedEventId).then(setEventVendors).catch(() => setEventVendors([]));
     getCostBreakdown(selectedEventId).then(setBreakdown).catch(() => setBreakdown(null));
   }, [selectedEventId]);
-
-
 
   const handlePdf = () => {
     if (!selectedEventId) return;
@@ -158,21 +164,26 @@ export function CostBreakdownPage() {
     doc.save(`${evName.toLowerCase().replace(/\s+/g, '-')}-cost-breakdown.pdf`);
   };
 
+
+
+  if (!selectedEventId) {
+    return (
+      <section className="rounded-2xl border border-[#ddd8e8] bg-white px-4 py-10 text-center">
+        <p className="text-sm font-semibold text-[#7c748f]">Select an event to view the cost breakdown.</p>
+      </section>
+    );
+  }
+
   return (
     <section className="max-w-full space-y-6 pb-6 overflow-x-hidden">
       {/* Header */}
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 rounded-3xl border border-[#eadfec] bg-white p-4 shadow-sm">
         <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
-          <Select value={selectedEventId} onValueChange={setSelectedEventId}>
-            <SelectTrigger className="h-11 w-full sm:w-[280px] rounded-2xl border-0 bg-gradient-to-r from-[#f34da7] to-[#8f1fd1] px-4 text-sm font-semibold text-white shadow-[0_10px_24px_rgba(165,44,180,0.3)]">
-              <SelectValue placeholder="Select an event" />
-            </SelectTrigger>
-            <SelectContent className="rounded-xl">
-              {apiEvents.map((e) => (<SelectItem key={String(e?.id)} value={String(e?.id)}>{e?.title || 'Untitled'}</SelectItem>))}
-            </SelectContent>
-          </Select>
           <div>
-            <span className="rounded-full border border-[#eadcf6] bg-[#f8f1fd] px-3 py-0.5 text-xs font-bold uppercase tracking-wide text-[#8f23cf]">{evType}</span>
+            <p className="text-lg font-black text-[#2d2834]">{evName}</p>
+            <div className="flex items-center gap-2 mt-1">
+              <span className="rounded-full border border-[#eadcf6] bg-[#f8f1fd] px-3 py-0.5 text-xs font-bold uppercase tracking-wide text-[#8f23cf]">{evType}</span>
+            </div>
           </div>
         </div>
         <div className="flex items-center gap-2">
@@ -288,45 +299,6 @@ export function CostBreakdownPage() {
             </div>
           </CardContent>
         </Card>
-      </div>
-
-      {/* Available Vendors Pool */}
-      <div className="space-y-3">
-        <h2 className="text-xl font-bold tracking-tight text-[#4a4157]">
-          Available Vendors <span className="text-sm font-semibold text-[#8b8199]">(prices may vary)</span>
-        </h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          {SERVICE_TYPES.map((type) => {
-            const vendors = poolByType[type] || [];
-            const color = SERVICE_COLORS[type];
-            return (
-              <Card key={type} className="border-[#e7dfef] bg-white py-0 shadow-sm overflow-hidden">
-                <div className="px-4 py-3 border-b border-[#ece6f3]" style={{ borderLeftWidth: 4, borderLeftColor: color }}>
-                  <p className="text-sm font-black uppercase tracking-widest" style={{ color }}>{type}</p>
-                  <p className="text-xs text-[#8b8199]">{vendors.length} vendor{vendors.length !== 1 ? 's' : ''}</p>
-                </div>
-                <CardContent className="px-0 py-0">
-                  <div className="max-h-[280px] overflow-y-auto">
-                    {vendors.length === 0 ? (
-                      <div className="px-4 py-6 text-center text-xs font-semibold text-[#b0a8be]">No vendors in this category</div>
-                    ) : vendors.map((v, i) => {
-                      const assigned = eventVendors.some((ev) => ev.id === v.id);
-                      return (
-                        <div key={v.id} className={`flex items-center justify-between px-4 py-2.5 text-sm border-b border-[#f6f2fa] last:border-b-0 ${assigned ? 'bg-[#f0fdf4]' : i % 2 === 0 ? 'bg-white' : 'bg-[#fcf9ff]'}`}>
-                          <div className="min-w-0 flex-1">
-                            <p className="font-semibold text-[#2f2939] truncate">{v.name}</p>
-                            {assigned && <span className="text-[10px] font-bold text-[#29bf4c] uppercase">Assigned</span>}
-                          </div>
-                          <span className="shrink-0 font-bold text-[#2f2939]">{v.price != null ? peso(v.price) : '—'}</span>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </CardContent>
-              </Card>
-            );
-          })}
-        </div>
       </div>
     </section>
   );
