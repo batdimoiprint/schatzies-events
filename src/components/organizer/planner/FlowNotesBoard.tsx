@@ -17,11 +17,11 @@ interface FlowNotesBoardProps {
 }
 
 export function FlowNotesBoard({ selectedEventId, eventDate, eventTime }: FlowNotesBoardProps) {
-  const timelineStartHour = 5;
-  const timelineEndHour = 11;
+  const timelineStartHour = 0;
+  const timelineEndHour = 23;
   const hourRowHeight = 58;
-  const minAllowedTime = '05:00';
-  const maxAllowedTime = '11:00';
+  const minAllowedTime = '00:00';
+  const maxAllowedTime = '23:59';
 
   const [timelineBlocks, setTimelineBlocks] = useState<any[]>([]);
 
@@ -225,11 +225,12 @@ export function FlowNotesBoard({ selectedEventId, eventDate, eventTime }: FlowNo
                 <input type="checkbox" checked={hideEmptySlots} onChange={(event) => setHideEmptySlots(event.target.checked)} className="size-3 cursor-pointer rounded border-[#c9c2d2]" />
               </label>
             </div>
-            <div className="grid grid-cols-[72px_minmax(0,1fr)] border-t border-[#ece8f0]">
+            <div className="grid grid-cols-[72px_minmax(0,1fr)] border-t border-[#ece8f0] max-h-[600px] overflow-y-auto [scrollbar-width:thin] scrollbar-thumb-[#ddd8e8] scrollbar-track-transparent">
               <div className="bg-[#fcfbfe]">
                 {visibleHours.map((hour) => {
-                  const labelHour = hour === 12 ? 12 : ((hour + 11) % 12) + 1;
-                  return (<div key={hour} className="flex items-start justify-end border-b border-[#ece8f0] pr-3 pt-2 text-[10px] font-semibold text-[#8e8796]" style={{ height: `${hourRowHeight}px` }}>{labelHour}AM</div>);
+                  const labelHour = hour % 12 || 12;
+                  const ampm = hour >= 12 ? 'PM' : 'AM';
+                  return (<div key={hour} className="flex items-start justify-end border-b border-[#ece8f0] pr-3 pt-2 text-[10px] font-semibold text-[#8e8796]" style={{ height: `${hourRowHeight}px` }}>{labelHour}{ampm}</div>);
                 })}
               </div>
               <div className="relative overflow-x-auto overflow-y-auto bg-[linear-gradient(180deg,#ffffff_0%,#faf7fc_100%)]">
