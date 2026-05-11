@@ -2,7 +2,6 @@ import { useMemo, useState, useEffect } from 'react';
 import { useEventData } from '@/hooks/event-planner/useEventData';
 import { useSelectedEvent } from '@/hooks/event-planner/useSelectedEvent';
 import { useBoardTasks } from '@/hooks/event-planner/useBoardTasks';
-import { useChecklist } from '@/hooks/event-planner/useChecklist';
 import { usePlannerNotes } from '@/hooks/event-planner/usePlannerNotes';
 import { useVendors } from '@/hooks/event-planner/useVendors';
 import { PlannerHeader } from '@/components/organizer/planner/PlannerHeader';
@@ -11,13 +10,11 @@ import { FlowNotesBoard } from '@/components/organizer/planner/FlowNotesBoard';
 import { OverviewTab } from '@/components/organizer/planner/tabs/OverviewTab';
 import { TaskTab } from '@/components/organizer/planner/tabs/TaskTab';
 import { NotesTab } from '@/components/organizer/planner/tabs/NotesTab';
-import { ChecklistTab } from '@/components/organizer/planner/tabs/ChecklistTab';
 import { VendorsTab } from '@/components/organizer/planner/tabs/VendorsTab';
 import { CostBreakdownTab } from '@/components/organizer/planner/tabs/CostBreakdownTab';
 import { VenueTab } from '@/components/organizer/planner/tabs/VenueTab';
 import { NoteDialog } from '@/components/organizer/planner/dialogs/NoteDialog';
 import { TaskPreviewDialog } from '@/components/organizer/planner/dialogs/TaskPreviewDialog';
-import { ChecklistDeleteDialog } from '@/components/organizer/planner/dialogs/ChecklistDeleteDialog';
 import { AssignVendorDialog } from '@/components/organizer/planner/dialogs/AssignVendorDialog';
 import type { PlannerTab } from '@/types/planner';
 
@@ -25,7 +22,6 @@ export function AdminEventPlannerPage() {
   const { projectSlots, selectedEventId } = useEventData();
   const { selectedEventDetails, currentClientName, eventAllocation, eventMeetings, overviewFlows } = useSelectedEvent(selectedEventId, projectSlots);
   const boardTasks = useBoardTasks(selectedEventId);
-  const checklist = useChecklist(selectedEventId);
   const notes = usePlannerNotes(selectedEventId);
   const vendors = useVendors(selectedEventId);
 
@@ -54,7 +50,6 @@ export function AdminEventPlannerPage() {
                 selectedEventDetails={selectedEventDetails}
                 eventAllocation={eventAllocation}
                 eventMeetings={eventMeetings}
-                checklistItems={checklist.checklistItems}
                 overviewFlows={overviewFlows}
               />
             )}
@@ -93,16 +88,6 @@ export function AdminEventPlannerPage() {
                 handleNoteDragEnd={notes.handleNoteDragEnd}
                 handleNoteDrop={notes.handleNoteDrop}
                 handleEditPlannerNote={notes.handleEditPlannerNote}
-              />
-            )}
-            {activeTab === 'checklist' && (
-              <ChecklistTab
-                checklistItems={checklist.checklistItems}
-                checklistProgress={checklist.checklistProgress}
-                handleToggleChecklistItem={checklist.handleToggleChecklistItem}
-                handleUpdateChecklistLabel={checklist.handleUpdateChecklistLabel}
-                openChecklistDeleteValidation={checklist.openChecklistDeleteValidation}
-                handleAddChecklistItem={checklist.handleAddChecklistItem}
               />
             )}
             {activeTab === 'vendors' && (
@@ -161,16 +146,6 @@ export function AdminEventPlannerPage() {
         handleSaveTaskPreview={boardTasks.handleSaveTaskPreview}
         handleToggleBoardTaskChecklistItem={boardTasks.handleToggleBoardTaskChecklistItem}
         formatChecklistTimestamp={boardTasks.formatChecklistTimestamp}
-      />
-      <ChecklistDeleteDialog
-        isOpen={!!checklist.checklistDeleteTarget}
-        onOpenChange={(open) => { if (!open) checklist.closeChecklistDeleteValidation(); }}
-        checklistDeleteTarget={checklist.checklistDeleteTarget}
-        checklistDeleteValidation={checklist.checklistDeleteValidation}
-        setChecklistDeleteValidation={checklist.setChecklistDeleteValidation}
-        checklistDeleteError={checklist.checklistDeleteError}
-        handleSubmit={(e) => { e.preventDefault(); checklist.handleConfirmChecklistDelete(); }}
-        onClose={checklist.closeChecklistDeleteValidation}
       />
       <AssignVendorDialog
         isOpen={vendors.isAssignVendorModalOpen}

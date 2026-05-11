@@ -5,11 +5,10 @@ interface OverviewTabProps {
   selectedEventDetails: any;
   eventAllocation: any;
   eventMeetings: any[];
-  checklistItems: any[];
   overviewFlows: any[];
 }
 
-export function OverviewTab({ selectedProject, selectedEventDetails, eventAllocation, eventMeetings, checklistItems, overviewFlows }: OverviewTabProps) {
+export function OverviewTab({ selectedProject, selectedEventDetails, eventAllocation, eventMeetings, overviewFlows }: OverviewTabProps) {
   const dynamicOverviewCards = [
     { id: 'overview-package', label: 'Event Package', value: selectedEventDetails?.package?.name || selectedEventDetails?.eventPackage || selectedEventDetails?.eventPackageKey || selectedProject.eventPackage || 'N/A', imageSrc: '/Pictures/organizerpics/event-package-illustration.png', accent: 'text-[#6b2aa5] bg-[#fbf6ff] border-[#eee3fb]', valueClassName: 'text-[14px] font-semibold leading-[1.15] text-[#6d677b]' },
     { id: 'overview-pax', label: 'Event Pax', value: String(selectedEventDetails?.package?.pax || selectedEventDetails?.eventPax || selectedProject.eventPax || '0'), imageSrc: '/Pictures/organizerpics/event-pax-illustration.png', accent: 'text-[#88511a] bg-[#fff8ef] border-[#f3e2cc]', valueClassName: 'text-[32px] font-semibold leading-none tracking-tight text-[#4f4a58]' },
@@ -42,24 +41,15 @@ export function OverviewTab({ selectedProject, selectedEventDetails, eventAlloca
           </div>
         </article>
         <article className="min-h-[400px] flex flex-col rounded-lg border border-[#ded9e7] bg-white p-4 shadow-[0_2px_6px_rgba(31,18,54,0.05)]">
-          <p className="text-[14px] font-bold text-[#5e586d] border-b border-[#f0ecf4] pb-2 mb-3">Checklist &amp; Meeting</p>
+          <p className="text-[14px] font-bold text-[#5e586d] border-b border-[#f0ecf4] pb-2 mb-3">Meetings</p>
           <div className="flex-1 space-y-3 text-[12px] leading-snug text-[#6f687f] overflow-y-auto pr-1 [scrollbar-width:thin]">
             <div className="min-h-[120px] rounded-md border border-[#ece8f0] bg-[#fbf9fe] p-3">
-              <p className="text-[12px] font-black text-[#3a3442] mb-2">Meetings</p>
               {eventMeetings.length > 0 ? (<div className="space-y-2">{eventMeetings.map((meeting, index) => (
                 <div key={meeting.id || meeting._id || `meeting-${index}`} className="flex justify-between items-start border-b border-[#f0ecf4] pb-2 last:border-0 last:pb-0">
                   <p className="font-semibold text-[#5a546a]">{meeting.title}</p>
                   <p className="text-[11px] font-bold text-[#8c8498] bg-white px-2 py-0.5 rounded border border-[#ece8f0]">{meeting.startTime || meeting.time || ''} {meeting.endTime ? `- ${meeting.endTime}` : ''}</p>
                 </div>
               ))}</div>) : (<p className="italic text-[#8b84a0]">No scheduled meetings yet.</p>)}
-            </div>
-            <div className="rounded-md border border-[#ece8f0] bg-[#fbf9fe] p-3">
-              <p className="text-[12px] font-black text-[#3a3442] mb-2 flex items-center justify-between"><span>Checked Items</span><span className="text-[10px] bg-[#e4f6e6] text-[#2ba045] px-2 py-0.5 rounded-full">{checklistItems.filter((item) => item.done).length} completed</span></p>
-              <div className="space-y-1.5">
-                {checklistItems.filter((item) => item.done).length > 0 ? checklistItems.filter((item) => item.done).map((item) => (
-                  <div key={item.id} className="flex items-center gap-2 text-[#5a546a]"><span className="text-[#2ec24f] text-[14px]">✓</span><span>{item.label}</span></div>
-                )) : (<p className="italic text-[#8b84a0]">No completed checklist items.</p>)}
-              </div>
             </div>
           </div>
         </article>
