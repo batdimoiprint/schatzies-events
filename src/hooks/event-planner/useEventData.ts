@@ -40,6 +40,7 @@ export function useEventData() {
             rawStartDate: e.startDate || e.eventDate || '',
             rawEndDate: e.endDate || '',
             eventTime: e.eventTime || e.startTime || '',
+            eventEndTime: e.endTime || '',
             eventType: e.eventType,
             eventPackage: e.eventPackage,
             eventPax: e.eventPax || 0,

@@ -1,4 +1,4 @@
-export type PlannerTab = 'overview' | 'task' | 'notes' | 'flow' | 'checklist' | 'vendors' | 'costs' | 'venue';
+export type PlannerTab = 'overview' | 'task' | 'notes' | 'flow' | 'vendors' | 'costs';
 
 export type ProjectSlot = {
   id: string;
@@ -8,6 +8,7 @@ export type ProjectSlot = {
   rawStartDate?: string;
   rawEndDate?: string;
   eventTime?: string;
+  eventEndTime?: string;
   eventType?: string;
   eventPackage?: string;
   eventPax?: number;

@@ -486,9 +486,9 @@ export function EventManagerPage() {
                           const basePath = isAdmin ? '/admin/event-planner' : '/organizer/event-planner';
                           navigate(`${basePath}?eventId=${event.id}`);
                         }}
-                        className="inline-flex items-center gap-1 rounded-md px-2.5 py-1.5 text-[10px] font-bold text-purple-700 bg-purple-50 hover:bg-purple-100 transition-colors"
+                        className="inline-flex items-center gap-1.5 rounded-md px-4 py-2 text-xs font-bold text-white bg-gradient-to-r from-[#f34da7] to-[#8f1fd1] hover:opacity-90 shadow-sm transition-opacity"
                       >
-                        <Eye className="h-3 w-3" />
+                        <Eye className="h-4 w-4" />
                         Planner
                       </button>
                     </div>

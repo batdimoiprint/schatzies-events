@@ -69,7 +69,7 @@ export function CostBreakdownTab({ selectedEventId }: CostBreakdownTabProps) {
 
   const ev = useMemo(() => apiEvents.find((e) => String(e?.id) === selectedEventId) ?? null, [apiEvents, selectedEventId]);
   const evName = String(ev?.title ?? 'Unknown Event');
-  const evPkg = String(ev?.eventPackage ?? 'No package');
+  const evPkg = String(ev?.eventPackageKey || ev?.eventPackage || 'Custom Package');
   const evType = String(ev?.eventType ?? 'Unknown');
   const evPax = Number(ev?.eventPax ?? 0);
   const pkgInitial = Number(ev?.packageInitialAmount ?? 0);
@@ -112,54 +112,148 @@ export function CostBreakdownTab({ selectedEventId }: CostBreakdownTabProps) {
     if (!selectedEventId) return;
     const doc = new jsPDF();
     
-    // Header
-    doc.setFontSize(22);
-    doc.setTextColor('#8f1fd1');
-    doc.text('SCHATZIES EVENTS', 14, 22);
+    const pageWidth = doc.internal.pageSize.getWidth();
+    const pageHeight = doc.internal.pageSize.getHeight();
     
-    doc.setFontSize(16);
+    // Header section
+    // Company Name
+    doc.setFontSize(24);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor('#8f1fd1');
+    doc.text('SCHATZIES EVENTS MANAGEMENT', 14, 24);
+    
+    // Company Details
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor('#666666');
+    doc.text('27 Novaliches Mendoza Village Project 8, Quezon City', 14, 32);
+    doc.text('Phone: +63 933 380 7868 / 917 502 3538 | Email: schatziesevents@gmail.com', 14, 38);
+    
+    // Divider line
+    doc.setDrawColor(220, 220, 220);
+    doc.setLineWidth(0.5);
+    doc.line(14, 44, pageWidth - 14, 44);
+
+    // Document Title
+    doc.setFontSize(18);
+    doc.setFont('helvetica', 'bold');
     doc.setTextColor('#333333');
-    doc.text('Cost Breakdown Report', 14, 32);
+    doc.text('Cost Breakdown Report', 14, 56);
+    
+    // Date of report
+    const currentDate = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'normal');
+    doc.text(`Generated on: ${currentDate}`, pageWidth - 14, 56, { align: 'right' });
+    
+    // Event Details box
+    doc.setFillColor(248, 241, 253); // Light purple background
+    doc.roundedRect(14, 62, pageWidth - 28, 36, 3, 3, 'F');
     
     doc.setFontSize(11);
-    doc.text(`Event: ${evName}`, 14, 42);
-    doc.text(`Event Type: ${evType}`, 14, 48);
-    doc.text(`Pax: ${evPax}`, 14, 54);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor('#2d2834');
+    doc.text('Event Information', 20, 72);
     
-    // Summary
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor('#4a4157');
+    doc.text(`Event Name: ${evName}`, 20, 80);
+    doc.text(`Event Type: ${evType}`, 20, 86);
+    
+    doc.text(`Package: ${evPkg}`, pageWidth / 2, 80);
+    doc.text(`Pax: ${evPax}`, pageWidth / 2, 86);
+    
+    let currentY = 106;
+
+    // Summary block (AutoTable)
     autoTable(doc, {
-      startY: 62,
-      head: [['Summary', 'Amount']],
+      startY: currentY,
+      head: [['Budget Summary', 'Amount']],
       body: [
-        ['Package Price', peso(packagePrice)],
+        ['Total Package Price', peso(packagePrice)],
         ['Organizer Share (20%)', peso(organizerShare)],
-        ['Vendor Budget (80%)', peso(vendorBudget)],
+        ['Vendor Budget Allocation (80%)', peso(vendorBudget)],
       ],
       theme: 'grid',
-      headStyles: { fillColor: [143, 31, 209] }
+      headStyles: { fillColor: [143, 31, 209], textColor: [255, 255, 255], fontStyle: 'bold' },
+      bodyStyles: { textColor: [50, 50, 50] },
+      alternateRowStyles: { fillColor: [250, 248, 252] },
+      margin: { left: 14, right: 14 },
+    });
+    
+    currentY = (doc as any).lastAutoTable.finalY + 12;
+
+    // Vendors Breakdown
+    doc.setFontSize(14);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor('#333333');
+    doc.text('Vendor Cost Breakdown', 14, currentY);
+    
+    currentY += 6;
+
+    const vendorBody = eventVendors.length > 0 
+      ? eventVendors.map(v => [v.serviceType || '-', v.name, peso(v.price ?? 0)])
+      : [['-', 'No vendors assigned', '-']];
+
+    autoTable(doc, {
+      startY: currentY,
+      head: [['Service Type', 'Vendor Name', 'Assigned Price']],
+      body: vendorBody,
+      theme: 'grid',
+      headStyles: { fillColor: [243, 77, 167], textColor: [255, 255, 255], fontStyle: 'bold' },
+      bodyStyles: { textColor: [50, 50, 50] },
+      alternateRowStyles: { fillColor: [255, 244, 248] },
+      margin: { left: 14, right: 14 },
+    });
+    
+    currentY = (doc as any).lastAutoTable.finalY + 12;
+    
+    // Totals & Balances
+    autoTable(doc, {
+      startY: currentY,
+      body: [
+        ['Total Assigned Vendor Cost', peso(totalVendorCost)],
+        ['Remaining Vendor Budget', peso(vendorBalance)],
+        ['Total Organizer Earnings (Share + Remaining Budget)', peso(organizerTotal)],
+      ],
+      theme: 'plain',
+      styles: { fontStyle: 'bold', fontSize: 11, textColor: [45, 40, 52] },
+      columnStyles: { 
+        0: { cellWidth: 120, halign: 'left' },
+        1: { halign: 'right' }
+      },
+      margin: { left: 14, right: 14 },
     });
 
-    // Vendors
-    autoTable(doc, {
-      startY: (doc as any).lastAutoTable.finalY + 10,
-      head: [['Service Type', 'Vendor Name', 'Price']],
-      body: eventVendors.map(v => [v.serviceType || '-', v.name, peso(v.price ?? 0)]),
-      theme: 'grid',
-      headStyles: { fillColor: [243, 77, 167] }
-    });
-    
-    // Totals
-    autoTable(doc, {
-      startY: (doc as any).lastAutoTable.finalY + 10,
-      body: [
-        ['Total Vendor Cost', peso(totalVendorCost)],
-        ['Remaining Budget', peso(vendorBalance)],
-        ['Organizer Total Earnings', peso(organizerTotal)],
-      ],
-      theme: 'grid',
-      styles: { fontStyle: 'bold' },
-      columnStyles: { 0: { cellWidth: 100 } }
-    });
+    // Add footer to every page
+    const pageCount = (doc as any).internal.getNumberOfPages();
+    for (let i = 1; i <= pageCount; i++) {
+      doc.setPage(i);
+      
+      // Footer divider
+      doc.setDrawColor(220, 220, 220);
+      doc.setLineWidth(0.5);
+      doc.line(14, pageHeight - 24, pageWidth - 14, pageHeight - 24);
+      
+      // Footer text
+      doc.setFontSize(8);
+      doc.setFont('helvetica', 'italic');
+      doc.setTextColor('#888888');
+      doc.text(
+        'Creating unforgettable moments and turning your dream events into reality with precision, passion, and perfection.',
+        pageWidth / 2, pageHeight - 16, { align: 'center' }
+      );
+      
+      doc.setFont('helvetica', 'normal');
+      doc.text(
+        `© ${new Date().getFullYear()} Schatzies Events Management. All rights reserved.`,
+        pageWidth / 2, pageHeight - 10, { align: 'center' }
+      );
+      
+      // Page number
+      doc.text(`Page ${i} of ${pageCount}`, pageWidth - 14, pageHeight - 10, { align: 'right' });
+    }
 
     doc.save(`${evName.toLowerCase().replace(/\s+/g, '-')}-cost-breakdown.pdf`);
   };

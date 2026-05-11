@@ -12,7 +12,6 @@ import { TaskTab } from '@/components/organizer/planner/tabs/TaskTab';
 import { NotesTab } from '@/components/organizer/planner/tabs/NotesTab';
 import { VendorsTab } from '@/components/organizer/planner/tabs/VendorsTab';
 import { CostBreakdownTab } from '@/components/organizer/planner/tabs/CostBreakdownTab';
-import { VenueTab } from '@/components/organizer/planner/tabs/VenueTab';
 import { NoteDialog } from '@/components/organizer/planner/dialogs/NoteDialog';
 import { TaskPreviewDialog } from '@/components/organizer/planner/dialogs/TaskPreviewDialog';
 import { AssignVendorDialog } from '@/components/organizer/planner/dialogs/AssignVendorDialog';
@@ -20,7 +19,7 @@ import type { PlannerTab } from '@/types/planner';
 
 export function AdminEventPlannerPage() {
   const { projectSlots, selectedEventId } = useEventData();
-  const { selectedEventDetails, currentClientName, eventAllocation, eventMeetings, overviewFlows } = useSelectedEvent(selectedEventId, projectSlots);
+  const { selectedEventDetails, eventAllocation, eventMeetings, overviewFlows } = useSelectedEvent(selectedEventId, projectSlots);
   const boardTasks = useBoardTasks(selectedEventId);
   const notes = usePlannerNotes(selectedEventId);
   const vendors = useVendors(selectedEventId);
@@ -41,7 +40,7 @@ export function AdminEventPlannerPage() {
     <div className="flex h-[calc(100vh-100px)] w-full max-w-full flex-col gap-4 overflow-hidden p-2 sm:p-4 lg:p-6 text-[#302c39]">
       <div className="flex min-h-0 flex-1 flex-col gap-4">
         <section className="flex min-h-0 flex-1 flex-col space-y-3">
-          <PlannerHeader selectedProject={selectedProject} currentClientName={currentClientName} />
+          <PlannerHeader selectedProject={selectedProject} />
           <PlannerTabs activeTab={activeTab} onTabChange={setActiveTab} />
           <div className="flex-1 overflow-y-auto rounded-xl pb-6 pr-1 [scrollbar-width:thin] scrollbar-thumb-[#ddd8e8] scrollbar-track-transparent">
             {activeTab === 'overview' && (
@@ -97,9 +96,6 @@ export function AdminEventPlannerPage() {
                 handleOpenAssignVendorModal={vendors.handleOpenAssignVendorModal}
                 handleUnassignVendor={vendors.handleUnassignVendor}
               />
-            )}
-            {activeTab === 'venue' && (
-              <VenueTab venue={selectedEventDetails?.venue || selectedProject.venue || ''} />
             )}
             {activeTab === 'flow' && (
               <FlowNotesBoard
