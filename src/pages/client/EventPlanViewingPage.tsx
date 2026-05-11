@@ -11,6 +11,7 @@ import {
   getEventUser,
   getEventAllocation,
   getEventFlow,
+  getEventChecklist,
 } from '@/api/events';
 import { getCalendarEntries } from '@/api/calendar';
 import { useAuth } from '@/hooks/useAuth';
@@ -59,6 +60,7 @@ export function EventPlanViewingPage() {
   const [eventData, setEventData] = useState<any>(null);
   const [allocation, setAllocation] = useState<any>(null);
   const [meetings, setMeetings] = useState<any[]>([]);
+  const [checklist, setChecklist] = useState<any[]>([]);
   const [flow, setFlow] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -159,18 +161,19 @@ export function EventPlanViewingPage() {
             (fullEvent as any).package?.pax ||
             0;
 
-          // Cost logic: Use packageInitialAmount for custom events ("Others")
+          // Cost logic: Use packageInitialAmount if available
           let costValue = (fullEvent as any).cost || 'TBD';
-          if (rawPkgName === 'Others' && (fullEvent as any).packageInitialAmount) {
+          if ((fullEvent as any).packageInitialAmount) {
             costValue = `₱${Number((fullEvent as any).packageInitialAmount).toLocaleString()}`;
           }
 
           // Fetch additional data modules
           try {
-            const [allocRes, flowRes, calRes] = await Promise.all([
+            const [allocRes, flowRes, calRes, checklistRes] = await Promise.all([
               getEventAllocation(userEventBase.id).catch(() => null),
               getEventFlow(userEventBase.id).catch(() => []),
               getCalendarEntries().catch(() => []),
+              getEventChecklist(userEventBase.id).catch(() => []),
             ]);
 
             if (isMounted) {
@@ -207,6 +210,7 @@ export function EventPlanViewingPage() {
                   item.eventId === userEventBase.id && item.label?.toUpperCase() === 'MEETING'
               );
               setMeetings(eventMeetings);
+              setChecklist(checklistRes || []);
             }
           } catch (e) {
             console.error('Error fetching event extra details:', e);
@@ -257,6 +261,34 @@ export function EventPlanViewingPage() {
       isMounted = false;
     };
   }, [user]);
+
+  const handleExportFlow = () => {
+    if (!flow || flow.length === 0) return;
+
+    // Build CSV headers and rows
+    const headers = ['Time From', 'Time To', 'Activity', 'Description'];
+    const rows = flow.map((item) => [
+      item.from,
+      item.to,
+      item.title,
+      item.description || '',
+    ]);
+
+    // Format as CSV string
+    const csvContent = [headers, ...rows]
+      .map((row) => row.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(','))
+      .join('\n');
+
+    // Create download link
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', `${eventData?.title || 'Event'}_Program_Flow.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
 
   if (isLoading) {
     return (
@@ -478,7 +510,10 @@ export function EventPlanViewingPage() {
             <div className="flex flex-wrap items-center justify-between gap-2 mb-4">
               <span className="text-pink-500 font-semibold text-sm min-w-0">Program Flow</span>
               <div className="flex items-center gap-2 shrink-0">
-                <button className="flex items-center gap-1 border border-gray-200 text-gray-500 rounded-full px-3 py-1 text-[10px] font-bold shadow-sm hover:bg-gray-50 transition-colors">
+                <button
+                  onClick={handleExportFlow}
+                  className="flex items-center gap-1 border border-gray-200 text-gray-500 rounded-full px-3 py-1 text-[10px] font-bold shadow-sm hover:bg-gray-50 transition-colors"
+                >
                   <svg className="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path
                       strokeLinecap="round"
@@ -531,12 +566,28 @@ export function EventPlanViewingPage() {
       </div>
 
       {/* ── Modals ────────────────────────────────────────────────────────── */}
-      {showServiceReq && <ServiceRequirementsModal onClose={() => setShowServiceReq(false)} />}
-      {showAllocationRes && (
-        <AllocationResourcesModal onClose={() => setShowAllocationRes(false)} />
+      {showServiceReq && (
+        <ServiceRequirementsModal
+          allocation={allocation}
+          onClose={() => setShowServiceReq(false)}
+        />
       )}
-      {showChecklist && <ChecklistMeetingModal onClose={() => setShowChecklist(false)} />}
-      {showProgramFlow && <ProgramFlowModal onClose={() => setShowProgramFlow(false)} />}
+      {showAllocationRes && (
+        <AllocationResourcesModal
+          allocation={allocation}
+          onClose={() => setShowAllocationRes(false)}
+        />
+      )}
+      {showChecklist && (
+        <ChecklistMeetingModal
+          meetings={meetings}
+          checklist={checklist}
+          onClose={() => setShowChecklist(false)}
+        />
+      )}
+      {showProgramFlow && (
+        <ProgramFlowModal flow={flow} onClose={() => setShowProgramFlow(false)} />
+      )}
     </div>
   );
 }

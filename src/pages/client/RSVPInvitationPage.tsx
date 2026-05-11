@@ -52,6 +52,8 @@ export function RSVPInvitationPage({
   // Get event type (wedding, debut, etc.)
   const eventType = (selectedEvent.description || 'wedding').toLowerCase();
 
+  const isGenericEvent = eventType.includes('others') || eventType.includes('option');
+
   // Get dynamic messages based on event type
   const getEventTypeLabel = () => {
     if (eventType.includes('debut')) {
@@ -61,6 +63,9 @@ export function RSVPInvitationPage({
   };
 
   const getEventTypeMessage = () => {
+    if (isGenericEvent) {
+      return 'We would be honored to have your presence at this special event!';
+    }
     if (eventType.includes('debut')) {
       return 'Together with their family and friends invites you to celebrate their debutante ball!';
     }
@@ -92,7 +97,7 @@ export function RSVPInvitationPage({
         </p>
         <div className="mb-5 w-3/4 h-px bg-gradient-to-r from-transparent via-pink-300 to-transparent" />
         <p className="mb-3 text-xs sm:text-sm tracking-wide text-gray-600">
-          The {eventTypeLabel} of
+          {isGenericEvent ? 'You are invited to' : `The ${eventTypeLabel} of`}
         </p>
         <h2 className="font-serif text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold leading-tight text-pink-600 mb-1">
           {name1}

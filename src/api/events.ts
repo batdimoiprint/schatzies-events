@@ -24,6 +24,7 @@ export interface EventManagerEvent {
   clientId: string;
   organizerId: string;
   organizerName: string;
+  pax?: number;
   createdAt: string;
 }
 
@@ -159,6 +160,7 @@ function mapToManagerRow(baseEvent: BackendEvent, userMap: Map<string, string>):
     clientId: baseEvent.clientId || '',
     organizerId: orgId || '',
     organizerName,
+    pax: packagePax,
     createdAt: baseEvent.createdAt || '',
   };
 }
