@@ -2,17 +2,14 @@ import { X } from 'lucide-react';
 
 interface Props {
   onClose: () => void;
+  allocation?: any;
 }
 
-const TECHNICALS = [
-  { num: 1, label: 'Audio Cue' },
-  { num: 2, label: 'Lighting Cue' },
-  { num: 3, label: 'Visual/Screen Cue' },
-  { num: 4, label: 'System Tech/Troubleshooter' },
-  { num: 5, label: 'Dry-run date' },
-];
+export function AllocationResourcesModal({ onClose, allocation }: Props) {
+  const manpower = allocation?.manpower || [];
+  const vendors = allocation?.vendors || [];
+  const hasData = manpower.length > 0 || vendors.length > 0;
 
-export function AllocationResourcesModal({ onClose }: Props) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
       <div className="relative flex max-h-[85vh] w-full max-w-md flex-col overflow-hidden rounded-2xl bg-white shadow-2xl">
@@ -30,45 +27,52 @@ export function AllocationResourcesModal({ onClose }: Props) {
 
         {/* Scrollable body */}
         <div className="flex flex-col gap-4 overflow-y-auto p-6">
-          {/* Event Coordinator */}
-          <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
-            <div className="mb-2 flex items-center gap-2">
-              <span className="h-2.5 w-2.5 rounded-full bg-pink-500" />
-              <h3 className="text-base font-bold text-gray-800">Event Coordinator</h3>
+          {!hasData ? (
+            <div className="flex flex-col items-center justify-center py-10 text-center">
+              <p className="text-sm italic text-gray-400">No resources allocated yet.</p>
             </div>
-            <p className="text-sm text-gray-700">Ken Chan</p>
-            <p className="text-xs text-gray-400">00:00 – 00:00</p>
-          </div>
-
-          {/* Host */}
-          <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
-            <div className="mb-2 flex items-center gap-2">
-              <span className="h-2.5 w-2.5 rounded-full bg-orange-400" />
-              <h3 className="text-base font-bold text-gray-800">Host</h3>
-            </div>
-            <p className="text-sm text-gray-700">Angel U. Nicorn</p>
-            <p className="text-xs text-gray-400">00:00 – 00:00</p>
-          </div>
-
-          {/* Technicals */}
-          <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
-            <div className="mb-4 flex items-center gap-2">
-              <span className="h-2.5 w-2.5 rounded-full bg-red-500" />
-              <h3 className="text-base font-bold text-gray-800">Technicals</h3>
-            </div>
-            <div className="flex flex-col gap-3">
-              {TECHNICALS.map((item) => (
-                <div key={item.num}>
-                  <p className="text-sm font-semibold text-gray-800">
-                    {item.num}. {item.label}
-                  </p>
-                  <p className="text-xs leading-relaxed text-gray-500">
-                    Add manpower &amp; specific things huhuhu
-                  </p>
+          ) : (
+            <>
+              {/* Vendors card */}
+              {vendors.length > 0 && (
+                <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
+                  <div className="mb-4 flex items-center gap-2">
+                    <span className="h-2.5 w-2.5 rounded-full bg-pink-500" />
+                    <h3 className="text-base font-bold text-gray-800">Vendors</h3>
+                  </div>
+                  <div className="flex flex-col gap-3">
+                    {vendors.map((vendor: any, i: number) => (
+                      <div key={i} className="flex flex-col">
+                        <p className="text-sm font-semibold text-gray-800">{vendor.name}</p>
+                        {vendor.service && <p className="text-xs text-gray-500">{vendor.service}</p>}
+                      </div>
+                    ))}
+                  </div>
                 </div>
-              ))}
-            </div>
-          </div>
+              )}
+
+              {/* Manpower card */}
+              {manpower.length > 0 && (
+                <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
+                  <div className="mb-4 flex items-center gap-2">
+                    <span className="h-2.5 w-2.5 rounded-full bg-orange-400" />
+                    <h3 className="text-base font-bold text-gray-800">Manpower</h3>
+                  </div>
+                  <div className="flex flex-col gap-3">
+                    {manpower.map((person: any, i: number) => (
+                      <div key={i} className="flex flex-col">
+                        <p className="text-sm font-semibold text-gray-800">{person.name || person.role}</p>
+                        {person.name && person.role && (
+                          <p className="text-xs text-gray-500">{person.role}</p>
+                        )}
+                        {person.time && <p className="text-xs text-gray-400">{person.time}</p>}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </>
+          )}
         </div>
       </div>
     </div>

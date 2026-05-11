@@ -8,7 +8,15 @@ import { ChecklistMeetingModal } from '@/components/client/ChecklistMeetingModal
 import { ProgramFlowModal } from '@/components/client/ProgramFlowModal';
 import { GuestListModal } from '@/components/client/GuestListModal';
 import { getRSVPList } from '@/api/rsvp';
-import { getEventManagerEvents, getEventById, getEventUser } from '@/api/events';
+import {
+  getEventManagerEvents,
+  getEventById,
+  getEventUser,
+  getEventAllocation,
+  getEventFlow,
+  getEventChecklist,
+} from '@/api/events';
+import { getCalendarEntries } from '@/api/calendar';
 import { useAuth } from '@/hooks/useAuth';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 
@@ -30,6 +38,10 @@ export function ClientDashboardPage() {
   const [guests, setGuests] = useState<Array<{ name: string; status: string }>>([]);
   const [isLoadingGuests, setIsLoadingGuests] = useState(true);
   const [eventData, setEventData] = useState<any>(null);
+  const [allocation, setAllocation] = useState<any>(null);
+  const [meetings, setMeetings] = useState<any[]>([]);
+  const [checklist, setChecklist] = useState<any[]>([]);
+  const [flow, setFlow] = useState<any[]>([]);
   const [isLoadingEvent, setIsLoadingEvent] = useState(true);
 
   const handleCloseWelcome = () => {
@@ -134,9 +146,9 @@ export function ClientDashboardPage() {
             (fullEvent as any).package?.pax ||
             0;
 
-          // Cost logic: Use packageInitialAmount for custom events ("Others")
+          // Cost logic: Use packageInitialAmount if available
           let costValue = (fullEvent as any).cost || 'TBD';
-          if (rawPkgName === 'Others' && (fullEvent as any).packageInitialAmount) {
+          if ((fullEvent as any).packageInitialAmount) {
             costValue = `₱${Number((fullEvent as any).packageInitialAmount).toLocaleString()}`;
           }
 
@@ -200,6 +212,53 @@ export function ClientDashboardPage() {
             });
 
           setGuests(mappedGuests);
+
+          // Fetch additional data for modals
+          try {
+            const [allocRes, flowRes, calRes, checklistRes] = await Promise.all([
+              getEventAllocation(userEventBase.id).catch(() => null),
+              getEventFlow(userEventBase.id).catch(() => []),
+              getCalendarEntries().catch(() => []),
+              getEventChecklist(userEventBase.id).catch(() => []),
+            ]);
+
+            setAllocation(allocRes);
+
+            const formatDisplayTime = (val: any) => {
+              if (!val) return '00:00';
+              if (typeof val === 'string' && val.includes(':')) {
+                const [h, m] = val.split(':');
+                let hours = parseInt(h, 10);
+                const ampm = hours >= 12 ? 'PM' : 'AM';
+                hours = hours % 12 || 12;
+                return `${hours}:${m} ${ampm}`;
+              }
+              return val;
+            };
+
+            const mappedFlows = Array.isArray(flowRes)
+              ? flowRes
+                  .map((item: any) => ({
+                    id: item.id || Math.random().toString(),
+                    title: item.title || item.activity || 'Activity',
+                    from: formatDisplayTime(item.startTime || item.start),
+                    to: formatDisplayTime(item.endTime || item.end),
+                    description: item.description || '',
+                    startHour: parseFloat(item.startHour) || 0,
+                  }))
+                  .sort((a: any, b: any) => a.startHour - b.startHour)
+              : [];
+            setFlow(mappedFlows);
+
+            const eventMeetings = (calRes || []).filter(
+              (item: any) =>
+                item.eventId === userEventBase.id && item.label?.toUpperCase() === 'MEETING'
+            );
+            setMeetings(eventMeetings);
+            setChecklist(checklistRes || []);
+          } catch (e) {
+            console.error('Error fetching dashboard extra details:', e);
+          }
         }
       } catch (error) {
         console.error('Overview Data Error:', error);
@@ -508,13 +567,35 @@ export function ClientDashboardPage() {
         </div>
       </ScrollReveal>
 
-      {showServiceReq && <ServiceRequirementsModal onClose={() => setShowServiceReq(false)} />}
-      {showAllocationRes && (
-        <AllocationResourcesModal onClose={() => setShowAllocationRes(false)} />
+      {showServiceReq && (
+        <ServiceRequirementsModal
+          allocation={allocation}
+          onClose={() => setShowServiceReq(false)}
+        />
       )}
-      {showChecklist && <ChecklistMeetingModal onClose={() => setShowChecklist(false)} />}
-      {showProgramFlow && <ProgramFlowModal onClose={() => setShowProgramFlow(false)} />}
-      {showGuestListModal && <GuestListModal onClose={() => setShowGuestListModal(false)} />}
+      {showAllocationRes && (
+        <AllocationResourcesModal
+          allocation={allocation}
+          onClose={() => setShowAllocationRes(false)}
+        />
+      )}
+      {showChecklist && (
+        <ChecklistMeetingModal
+          meetings={meetings}
+          checklist={checklist}
+          onClose={() => setShowChecklist(false)}
+        />
+      )}
+      {showProgramFlow && (
+        <ProgramFlowModal flow={flow} onClose={() => setShowProgramFlow(false)} />
+      )}
+      {showGuestListModal && (
+        <GuestListModal
+          guests={guests}
+          isLoading={isLoadingGuests}
+          onClose={() => setShowGuestListModal(false)}
+        />
+      )}
 
       {/* ── Welcome modal overlay ─────────────────────────────────────────── */}
       {showWelcome && (

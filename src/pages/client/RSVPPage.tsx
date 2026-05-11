@@ -85,7 +85,7 @@ export function RSVPPage() {
             name2: '',
           },
           organizerName: organizerName,
-          description: eventData.eventType || '',
+          description: `${eventData.eventType || ''} ${eventData.eventPackageKey || ''}`.trim(),
         });
       } catch (error) {
         console.error('Error fetching event from API:', error);

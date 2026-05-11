@@ -2,9 +2,14 @@ import { X } from 'lucide-react';
 
 interface Props {
   onClose: () => void;
+  allocation?: any;
 }
 
-export function ServiceRequirementsModal({ onClose }: Props) {
+export function ServiceRequirementsModal({ onClose, allocation }: Props) {
+  const hasFood = !!allocation?.food_package;
+  const hasFlow = !!allocation?.flow_type;
+  const hasRequirements = hasFood || hasFlow || (allocation?.requirements && allocation.requirements.length > 0);
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
       <div className="relative flex max-h-[85vh] w-full max-w-md flex-col overflow-hidden rounded-2xl bg-white shadow-2xl">
@@ -22,58 +27,52 @@ export function ServiceRequirementsModal({ onClose }: Props) {
 
         {/* Scrollable body */}
         <div className="flex flex-col gap-6 overflow-y-auto p-6">
-          {/* Food card */}
-          <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
-            <div className="mb-4 flex items-center gap-2">
-              <span className="h-2.5 w-2.5 rounded-full bg-blue-500" />
-              <h3 className="text-lg font-bold text-gray-800">Food</h3>
+          {!hasRequirements ? (
+            <div className="flex flex-col items-center justify-center py-10 text-center">
+              <p className="text-sm italic text-gray-400">No service requirements specified yet.</p>
             </div>
-            <p className="mb-3 text-sm font-medium text-gray-700">Classic Buffet</p>
-            <div className="pl-2">
-              <p className="text-sm font-semibold text-gray-800">1. Appetizer</p>
-              <p className="mb-3 text-xs leading-relaxed text-gray-500">
-                1 light bite (e.g., finger foods, soup, or a fresh salad)
-              </p>
-              <p className="text-sm font-semibold text-gray-800">2. Main Course</p>
-              <p className="mb-3 text-xs leading-relaxed text-gray-500">
-                1 chicken dish (e.g., Cordon Bleu, Baked Chicken, or Garlic Parmesan Chicken)
-              </p>
-              <p className="text-sm font-semibold text-gray-800">3. Dessert</p>
-              <p className="mb-3 text-xs leading-relaxed text-gray-500">
-                1 to 2 sweet treats (e.g., Mango Bravo style cakes, panna cotta, or a chocolate
-                fountain)
-              </p>
-            </div>
-            <p className="mt-4 text-sm font-semibold text-gray-800">Manpower</p>
-            <p className="mb-1 text-xs leading-relaxed text-gray-500">
-              (2) head of facilitating
-              <br />
-              (4) stand-by server of the dishes
-              <br />
-              (5) servers for the customers
-            </p>
-            <p className="mt-4 text-sm font-semibold text-gray-800">Resources</p>
-            <p className="text-xs leading-relaxed text-gray-500">
-              MCuisine for Main Course
-              <br />
-              KataBanas for Dessert
-              <br />
-              HomeOfAppetizer for Appetizer
-            </p>
-          </div>
+          ) : (
+            <>
+              {/* Food card */}
+              {hasFood && (
+                <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
+                  <div className="mb-4 flex items-center gap-2">
+                    <span className="h-2.5 w-2.5 rounded-full bg-blue-500" />
+                    <h3 className="text-lg font-bold text-gray-800">Food</h3>
+                  </div>
+                  <p className="mb-3 text-sm font-medium text-gray-700">{allocation.food_package}</p>
+                </div>
+              )}
 
-          {/* Decorations card */}
-          <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
-            <div className="mb-4 flex items-center gap-2">
-              <span className="h-2.5 w-2.5 rounded-full bg-purple-500" />
-              <h3 className="text-lg font-bold text-gray-800">Decorations</h3>
-            </div>
-            <p className="mb-3 text-sm font-medium text-gray-700">Theme: Enchanted Forest</p>
-            <p className="text-xs leading-relaxed text-gray-500">
-              Heavy greenery, hanging vines, fairy lights, wood accents, and white or pastel
-              flowers.
-            </p>
-          </div>
+              {/* Flow/Theme card */}
+              {hasFlow && (
+                <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
+                  <div className="mb-4 flex items-center gap-2">
+                    <span className="h-2.5 w-2.5 rounded-full bg-purple-500" />
+                    <h3 className="text-lg font-bold text-gray-800">Flow Type</h3>
+                  </div>
+                  <p className="text-sm font-medium text-gray-700">{allocation.flow_type}</p>
+                </div>
+              )}
+
+              {/* Requirements list */}
+              {allocation?.requirements && allocation.requirements.length > 0 && (
+                <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
+                  <div className="mb-4 flex items-center gap-2">
+                    <span className="h-2.5 w-2.5 rounded-full bg-green-500" />
+                    <h3 className="text-lg font-bold text-gray-800">Other Requirements</h3>
+                  </div>
+                  <ul className="space-y-2">
+                    {allocation.requirements.map((req: any, i: number) => (
+                      <li key={i} className="text-sm text-gray-700">
+                        {typeof req === 'string' ? req : req.label || req.name}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </>
+          )}
         </div>
       </div>
     </div>

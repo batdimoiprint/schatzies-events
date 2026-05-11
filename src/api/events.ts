@@ -24,6 +24,7 @@ export interface EventManagerEvent {
   clientId: string;
   organizerId: string;
   organizerName: string;
+  pax?: number;
   createdAt: string;
 }
 
@@ -70,8 +71,6 @@ export interface CreateEventPayload {
   clientId?: string;
   organizer_id?: string;
   organizerId?: string;
-  inquiryId?: string;
-  inquiry_id?: string;
   inquiryId?: string;
   inquiry_id?: string;
   eventPackageKey?: string;
@@ -161,6 +160,7 @@ function mapToManagerRow(baseEvent: BackendEvent, userMap: Map<string, string>):
     clientId: baseEvent.clientId || '',
     organizerId: orgId || '',
     organizerName,
+    pax: packagePax,
     createdAt: baseEvent.createdAt || '',
   };
 }
