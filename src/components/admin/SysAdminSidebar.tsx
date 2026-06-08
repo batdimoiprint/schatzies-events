@@ -1,7 +1,15 @@
 import { useState, useEffect } from 'react';
 import { NavLink, useNavigate, useLocation } from 'react-router-dom';
 import {
-  Package,
+  LayoutDashboard,
+  Calendar,
+  CalendarCheck,
+  Briefcase,
+  UsersRound,
+  UserCheck,
+  MailQuestion,
+  MessageSquareDotIcon,
+  DatabaseBackup,
   LogOut,
   Menu,
   X,
@@ -9,18 +17,26 @@ import {
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/hooks/useAuth';
 
-const adminNavItems = [
-  { label: 'Package Management', to: '/admin', icon: Package },
+const sysAdminNavItems = [
+  { label: 'Dashboard', to: '/sysadmin', icon: LayoutDashboard },
+  { label: 'Inquiries', to: '/sysadmin/inquiries', icon: MailQuestion },
+  { label: 'Message', to: '/sysadmin/message', icon: MessageSquareDotIcon },
+  { label: 'Event Manager', to: '/sysadmin/event-manager', icon: CalendarCheck },
+  { label: 'RSVP', to: '/sysadmin/rsvp', icon: UserCheck },
+  { label: 'User Management', to: '/sysadmin/users', icon: UsersRound },
+  { label: 'Calendar', to: '/sysadmin/calendar', icon: Calendar },
+  { label: 'Vendor Pool', to: '/sysadmin/vendors', icon: Briefcase },
+  { label: 'Data Backup', to: '/sysadmin/data-backup', icon: DatabaseBackup },
 ];
 
-export default function AdminSidebar() {
+export default function SysAdminSidebar() {
   const navigate = useNavigate();
   const location = useLocation();
   const { logout } = useAuth();
   const [isLoggingOut, setIsLoggingOut] = useState(false);
 
   const [expanded, setExpanded] = useState(() => {
-    const saved = localStorage.getItem('adminSidebarExpanded');
+    const saved = localStorage.getItem('sysAdminSidebarExpanded');
     return saved !== null ? saved === 'true' : true;
   });
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -34,7 +50,7 @@ export default function AdminSidebar() {
   const toggleExpanded = () => {
     setExpanded((v) => {
       const next = !v;
-      localStorage.setItem('adminSidebarExpanded', String(next));
+      localStorage.setItem('sysAdminSidebarExpanded', String(next));
       return next;
     });
   };
@@ -62,11 +78,11 @@ export default function AdminSidebar() {
           <div className="flex items-center gap-3">
             <img
               src="/Pictures/organizerpics/Logo.png.png"
-              alt="Admin logo"
+              alt="SysAdmin logo"
               className="size-12 rounded-full border-2 border-[#df2b80] bg-white object-cover"
             />
             <div className="leading-tight">
-              <p className="font-heading text-base font-bold text-[#df2b80]">Admin</p>
+              <p className="font-heading text-base font-bold text-[#df2b80]">SysAdmin</p>
               <p className="font-heading text-base font-bold text-[#9a1eb9]">Panel</p>
             </div>
           </div>
@@ -74,14 +90,14 @@ export default function AdminSidebar() {
           <div className="size-10 overflow-hidden rounded-full border-2 border-[#df2b80] bg-white">
             <img
               src="/Pictures/organizerpics/Logo.png.png"
-              alt="Admin logo"
+              alt="SysAdmin logo"
               className="h-full w-full object-cover"
             />
           </div>
         )}
         {(isMobile || expanded) && (
           <p className="mt-3 text-center text-xs font-semibold tracking-wide text-[#7f7889]">
-            Your <span className="text-[#df2b80]">ADMIN</span> dashboard!
+            Your <span className="text-[#df2b80]">SYSADMIN</span> dashboard!
           </p>
         )}
       </div>
@@ -91,11 +107,11 @@ export default function AdminSidebar() {
         className={`flex flex-1 w-full flex-col overflow-y-auto pb-3 ${isMobile || expanded ? 'gap-0.5 px-3' : 'items-center gap-1.5 px-2'
           }`}
       >
-        {adminNavItems.map((item) => (
+        {sysAdminNavItems.map((item) => (
           <NavLink
             key={item.to}
             to={item.to}
-            end={item.to === '/admin'}
+            end={item.to === '/sysadmin'}
             title={!isMobile && !expanded ? item.label : undefined}
             className={({ isActive }) =>
               isMobile || expanded

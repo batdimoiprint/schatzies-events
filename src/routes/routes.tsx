@@ -1,6 +1,7 @@
 import { createBrowserRouter, RouterProvider } from 'react-router-dom';
 import { PublicLayout } from '@/components/layouts/PublicLayout';
 import { AdminLayout } from '@/components/layouts/AdminLayout';
+import { SysAdminLayout } from '@/components/layouts/SysAdminLayout';
 import { OrganizerLayout } from '@/components/layouts/OrganizerLayout';
 import { ClientLayout } from '@/components/layouts/ClientLayout';
 import { LandingPage } from '@/pages/public/LandingPage';
@@ -26,6 +27,7 @@ import { AdminNotificationsPage } from '@/pages/admin/AdminNotificationsPage';
 import { AdminSettingsPage } from '@/pages/admin/AdminSettingsPage';
 import { AdminDataBackupPage } from '@/pages/admin/AdminDataBackupPage';
 import { ProfilePage } from '@/pages/admin/ProfilePage';
+import { PackageManagementPage } from '@/pages/admin/PackageManagementPage';
 
 // Organizer Pages
 import { OrganizerDashboard } from '@/pages/organizer/OrganizerDashboard';
@@ -127,6 +129,20 @@ const router = createBrowserRouter(
     {
       path: 'admin',
       Component: AdminLayout,
+      children: [
+        {
+          index: true,
+          Component: PackageManagementPage,
+        },
+        {
+          path: 'profile',
+          Component: ProfilePage,
+        },
+      ],
+    },
+    {
+      path: 'sysadmin',
+      Component: SysAdminLayout,
       children: [
         {
           index: true,

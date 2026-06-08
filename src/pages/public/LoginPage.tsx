@@ -46,6 +46,9 @@ export function LoginPage() {
 
     if (user) {
       switch (user.role) {
+        case 'SYSADMIN':
+          navigate('/sysadmin', { replace: true });
+          break;
         case 'ADMIN':
           navigate('/admin', { replace: true });
           break;
