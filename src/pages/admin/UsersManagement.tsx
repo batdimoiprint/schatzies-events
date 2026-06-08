@@ -47,6 +47,7 @@ import {
   UserCircle,
   Briefcase,
   Shield,
+  ShieldCheck,
   ChevronLeft,
   ChevronRight,
   ChevronsLeft,
@@ -258,6 +259,7 @@ export function UsersManagement() {
   const totalClients = users.filter((u) => u.role === 'CLIENT').length;
   const totalOrganizers = users.filter((u) => u.role === 'ORGANIZER').length;
   const totalAdmins = users.filter((u) => u.role === 'ADMIN').length;
+  const totalSysAdmins = users.filter((u) => u.role === 'SYSADMIN').length;
 
   // Filtered + sorted + paginated users
   const filteredUsers = useMemo(() => {
@@ -502,6 +504,7 @@ export function UsersManagement() {
                       <SelectItem value="CLIENT">Client</SelectItem>
                       <SelectItem value="ORGANIZER">Organizer</SelectItem>
                       <SelectItem value="ADMIN">Admin</SelectItem>
+                      <SelectItem value="SYSADMIN">SysAdmin</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -569,7 +572,7 @@ export function UsersManagement() {
 
       {activeTab === 'users' && (
         <>
-          <div className="grid gap-4 md:grid-cols-4">
+          <div className="grid gap-4 md:grid-cols-5">
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">Total Users</CardTitle>
@@ -604,6 +607,15 @@ export function UsersManagement() {
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">{totalAdmins}</div>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">SysAdmins</CardTitle>
+                <ShieldCheck className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{totalSysAdmins}</div>
               </CardContent>
             </Card>
           </div>
@@ -710,6 +722,7 @@ export function UsersManagement() {
                                 <SelectItem value="CLIENT">CLIENT</SelectItem>
                                 <SelectItem value="ORGANIZER">ORGANIZER</SelectItem>
                                 <SelectItem value="ADMIN">ADMIN</SelectItem>
+                                <SelectItem value="SYSADMIN">SYSADMIN</SelectItem>
                               </SelectContent>
                             </Select>
                           </div>
