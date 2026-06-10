@@ -16,11 +16,7 @@ export function PublicLayout() {
         <Outlet />
       </main>
 
-      <Footer
-        onCookiePolicyOpen={() => setCookiePolicyOpen(true)}
-        cookiePolicyOpen={cookiePolicyOpen}
-        onCookiePolicyClose={() => setCookiePolicyOpen(false)}
-      />
+      <Footer />
       <ChatWidget />
       <CookieConsentBanner onOpenCookiePolicy={() => setCookiePolicyOpen(true)} />
     </div>
