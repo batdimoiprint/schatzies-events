@@ -153,7 +153,7 @@ export function InquiryDetailsDialog({
   const [isSavingCustomPackageAmount, setIsSavingCustomPackageAmount] = useState(false);
   const [venueInput, setVenueInput] = useState('');
   const [isSavingVenue, setIsSavingVenue] = useState(false);
-  const [venueVendors, setVenueVendors] = useState<{name: string; price: number | null}[]>([]);
+  const [venueVendors, setVenueVendors] = useState<{ name: string; price: number | null }[]>([]);
   const [isLoadingVenues, setIsLoadingVenues] = useState(false);
 
   const formatMoney = (val?: number) => {
@@ -290,10 +290,7 @@ export function InquiryDetailsDialog({
       .then((allVendors) => {
         const venues = allVendors
           .filter(
-            (v) =>
-              v.serviceType.toLowerCase() === 'venue' &&
-              v.name &&
-              v.name !== 'Unnamed vendor'
+            (v) => v.serviceType.toLowerCase() === 'venue' && v.name && v.name !== 'Unnamed vendor'
           )
           .map((v) => ({ name: v.name, price: v.price }));
         // Deduplicate by name
@@ -1081,9 +1078,7 @@ export function InquiryDetailsDialog({
                                       type="number"
                                       placeholder="Enter custom amount"
                                       value={customPackageAmountInput}
-                                      onChange={(e) =>
-                                        setCustomPackageAmountInput(e.target.value)
-                                      }
+                                      onChange={(e) => setCustomPackageAmountInput(e.target.value)}
                                       disabled={
                                         currentStatusValue === INQUIRY_STATUS_OPTIONS.DECLINED ||
                                         currentStatusValue === INQUIRY_STATUS_OPTIONS.APPROVED
@@ -1119,7 +1114,9 @@ export function InquiryDetailsDialog({
                                     onValueChange={(value) => {
                                       setVenueInput(value);
                                       // Auto-save on selection
-                                      const id = String(selectedInquiry.id || selectedInquiry._id || '').trim();
+                                      const id = String(
+                                        selectedInquiry.id || selectedInquiry._id || ''
+                                      ).trim();
                                       if (id && value.trim()) {
                                         setIsSavingVenue(true);
                                         saveVenueMutation.mutate({ id, venue: value.trim() });
@@ -1132,12 +1129,19 @@ export function InquiryDetailsDialog({
                                     }
                                   >
                                     <SelectTrigger className="h-9 flex-1 bg-white border-[#ebe3f5] text-xs font-bold disabled:opacity-50">
-                                      <SelectValue placeholder={isLoadingVenues ? 'Loading venues...' : 'Select venue...'} />
+                                      <SelectValue
+                                        placeholder={
+                                          isLoadingVenues ? 'Loading venues...' : 'Select venue...'
+                                        }
+                                      />
                                     </SelectTrigger>
                                     <SelectContent className="rounded-xl border-[#e5ddee]">
                                       {venueVendors.map((venue) => (
                                         <SelectItem key={venue.name} value={venue.name}>
-                                          {venue.name} {venue.price !== null && venue.price !== undefined ? `(₱${venue.price.toLocaleString('en-PH')})` : ''}
+                                          {venue.name}{' '}
+                                          {venue.price !== null && venue.price !== undefined
+                                            ? `(₱${venue.price.toLocaleString('en-PH')})`
+                                            : ''}
                                         </SelectItem>
                                       ))}
                                       {venueVendors.length === 0 && !isLoadingVenues && (

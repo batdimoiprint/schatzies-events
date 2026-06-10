@@ -1,5 +1,10 @@
 import { useState } from 'react';
-import { getVendors, getVendorsByEventId, assignVendorToEvent, unassignVendorFromEvent } from '@/api/vendors';
+import {
+  getVendors,
+  getVendorsByEventId,
+  assignVendorToEvent,
+  unassignVendorFromEvent,
+} from '@/api/vendors';
 import type { EventManagerVendor, Vendor } from '@/api/vendors';
 
 export function useVendors(selectedEventId: string) {
@@ -8,7 +13,8 @@ export function useVendors(selectedEventId: string) {
   const [isAssignVendorModalOpen, setIsAssignVendorModalOpen] = useState(false);
   const [isAssigningVendor, setIsAssigningVendor] = useState(false);
 
-  const normalizeStatus = (status: string) => String(status).trim().toLowerCase() === 'active' ? 'active' : 'inactive';
+  const normalizeStatus = (status: string) =>
+    String(status).trim().toLowerCase() === 'active' ? 'active' : 'inactive';
 
   const loadVendors = async () => {
     if (!selectedEventId) {
@@ -73,7 +79,15 @@ export function useVendors(selectedEventId: string) {
   };
 
   return {
-    eventVendors, setEventVendors, vendorPool, isAssignVendorModalOpen, setIsAssignVendorModalOpen, isAssigningVendor,
-    handleOpenAssignVendorModal, handleAssignVendor, handleUnassignVendor, loadVendors
+    eventVendors,
+    setEventVendors,
+    vendorPool,
+    isAssignVendorModalOpen,
+    setIsAssignVendorModalOpen,
+    isAssigningVendor,
+    handleOpenAssignVendorModal,
+    handleAssignVendor,
+    handleUnassignVendor,
+    loadVendors,
   };
 }

@@ -10,22 +10,19 @@ export default function ContactPage() {
     <>
       <LoadingScreen />
       {/* ── Hero Section ── */}
-      <ScrollReveal>
+      <ScrollReveal variant="fade">
         <section
           className="relative -mt-[88px] flex min-h-[60vh] flex-col overflow-hidden bg-cover bg-center bg-no-repeat sm:-mt-[110px] md:min-h-[70vh] lg:-mt-[173px] lg:min-h-screen"
           style={{ backgroundImage: `url(${heroImage})` }}
         >
           {/* Overall white overlay to lighten the whole image */}
-          <div className="absolute inset-0 bg-white/40" />
+          <div className="absolute inset-0 bg-white/10" />
 
           {/* Stronger white wash at the top behind navbar */}
-          <div className="absolute top-0 left-0 right-0 h-[200px] sm:h-[260px] lg:h-[320px] bg-gradient-to-b from-white via-white/80 to-transparent z-[5]" />
+          <div className="absolute top-0 left-0 right-0 h-[300px] sm:h-[400px] lg:h-[500px] bg-gradient-to-b from-white via-white/70 via-white/30 to-transparent z-[5]" />
 
-          {/* Spacer that matches navbar height */}
-          <div className="h-[88px] shrink-0 sm:h-[110px] lg:h-[173px]" />
-
-          {/* Centered hero text */}
-          <div className="relative z-10 flex flex-1 flex-col items-center justify-center px-4 pb-12 text-center sm:px-6 sm:pb-16 lg:pb-[173px] animate-fade-in-up">
+          {/* Content centered in middle of section */}
+          <div className="relative z-10 flex h-full flex-col items-center justify-center px-4 py-[280px] text-center sm:px-6 sm:py-[360px] lg:py-[420px] animate-fade-in-up">
             <h1
               className="font-heading text-[clamp(2rem,8vw,5rem)] font-bold leading-tight bg-gradient-to-r text-transparent bg-clip-text animate-fade-in"
               style={{
@@ -39,37 +36,91 @@ export default function ContactPage() {
               team is ready to listen.
             </p>
           </div>
+
+          {/* Wave at bottom — textured dark wave into Get in Touch */}
+          <div className="absolute bottom-0 left-0 w-full overflow-hidden leading-[0] z-20 transform translate-y-[1px]">
+            <svg
+              className="relative block w-full h-[60px] sm:h-[90px] lg:h-[120px]"
+              viewBox="0 0 1440 120"
+              preserveAspectRatio="none"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <defs>
+                <pattern
+                  id="contact-wave-tex"
+                  patternUnits="userSpaceOnUse"
+                  width="1440"
+                  height="120"
+                >
+                  <image
+                    href={textureImage}
+                    x="0"
+                    y="0"
+                    width="1440"
+                    height="120"
+                    preserveAspectRatio="none"
+                  />
+                </pattern>
+              </defs>
+              <path
+                d="M0,60 C320,130 720,10 1080,80 C1260,105 1380,95 1440,75 L1440,120 L0,120 Z"
+                fill="url(#contact-wave-tex)"
+              />
+              <path
+                d="M0,60 C320,130 720,10 1080,80 C1260,105 1380,95 1440,75 L1440,120 L0,120 Z"
+                fill="black"
+                fillOpacity="0.45"
+              />
+            </svg>
+          </div>
         </section>
+      </ScrollReveal>
 
-        {/* ── Get in Touch Section ── */}
-        <section 
-          className="relative py-12 sm:py-20 lg:py-28 bg-cover bg-center bg-no-repeat"
-          style={{ backgroundImage: 'url(/Pictures/texture.jpg)' }}
+      {/* ── Get in Touch Header — Dark textured band ── */}
+      <ScrollReveal variant="fade">
+        <section
+          className="relative py-10 sm:py-14 lg:py-18 bg-cover bg-center bg-no-repeat"
+          style={{ backgroundImage: `url(${textureImage})` }}
         >
-          {/* Overlay for better text readability */}
-          <div className="absolute inset-0 bg-white/95" />
-          
-          <div className="relative z-10 mx-auto max-w-[90rem] px-4 sm:px-6 lg:px-20">
-            {/* Section Header */}
-            <div className="text-center mb-8 sm:mb-12 lg:mb-16">
-              <h2 className="font-heading text-[clamp(2rem,5vw,3rem)] font-bold text-[#FF0066] mb-3 sm:mb-4">
-                Get in touch
-              </h2>
-              <p className="mx-auto max-w-[45rem] text-[clamp(0.9rem,1.5vw,1.1rem)] leading-[1.6] text-[#4A1053]">
-                Reach out to us through any of these channels and let's start planning your dream event.
-              </p>
-            </div>
+          {/* Dark overlay */}
+          <div className="absolute inset-0 bg-black/50 pointer-events-none" />
 
-            {/* Contact Cards Grid */}
-            <div className="grid grid-cols-1 gap-6 sm:gap-8 md:grid-cols-3 lg:gap-10">
-              {/* Phone Card */}
-              <div className="flex flex-col items-center p-6 sm:p-8 lg:p-10 rounded-2xl bg-white border border-[#FFB6D9]/30 shadow-md hover:shadow-lg transition-all duration-300">
+          <div className="relative z-10 mx-auto max-w-[90rem] px-4 sm:px-6 lg:px-20 text-center">
+            <h2 className="font-heading text-[clamp(2rem,5vw,3rem)] font-bold text-[#FF0066] mb-3 sm:mb-4">
+              Get in touch
+            </h2>
+            <p className="mx-auto max-w-[45rem] text-[clamp(0.9rem,1.5vw,1.1rem)] leading-[1.6] text-gray-200">
+              Reach out to us through any of these channels and let's start planning your dream
+              event.
+            </p>
+          </div>
+
+          {/* White wave at bottom */}
+          <div className="absolute bottom-0 left-0 w-full overflow-hidden leading-[0] transform translate-y-[1px] z-20">
+            <svg
+              className="relative block w-full h-[60px] sm:h-[90px] lg:h-[120px]"
+              viewBox="0 0 1440 120"
+              preserveAspectRatio="none"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M0,80 C360,130 720,20 1080,80 C1260,100 1380,95 1440,75 L1440,120 L0,120 Z"
+                fill="white"
+              />
+            </svg>
+          </div>
+        </section>
+      </ScrollReveal>
+
+      {/* ── Contact Cards Section — White ── */}
+      <section className="bg-white px-4 py-16 sm:px-6 sm:py-20 lg:px-20 lg:py-24">
+        <div className="mx-auto max-w-[90rem]">
+          <div className="grid grid-cols-1 gap-6 sm:gap-8 md:grid-cols-3 lg:gap-10">
+            {/* Phone Card */}
+            <ScrollReveal variant="up" delay={0}>
+              <div className="flex flex-col items-center p-6 sm:p-8 lg:p-10 rounded-2xl bg-white border border-gray-100 shadow-md hover:shadow-xl hover:-translate-y-2 transition-all duration-300">
                 <div className="flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-[#FF0066]/10 to-[#4A1053]/10 mb-4 sm:mb-6">
-                  <svg
-                    viewBox="0 0 24 24"
-                    className="h-8 w-8 sm:h-9 sm:w-9"
-                    fill="none"
-                  >
+                  <svg viewBox="0 0 24 24" className="h-8 w-8 sm:h-9 sm:w-9" fill="none">
                     <defs>
                       <linearGradient id="phoneGrad2" x1="0" y1="0" x2="0" y2="1">
                         <stop offset="0%" stopColor="#FF0066" />
@@ -100,15 +151,13 @@ export default function ContactPage() {
                   </a>
                 </p>
               </div>
+            </ScrollReveal>
 
-              {/* Facebook Card */}
-              <div className="flex flex-col items-center p-6 sm:p-8 lg:p-10 rounded-2xl bg-white border border-[#FFB6D9]/30 shadow-md hover:shadow-lg transition-all duration-300">
+            {/* Facebook Card */}
+            <ScrollReveal variant="up" delay={150}>
+              <div className="flex flex-col items-center p-6 sm:p-8 lg:p-10 rounded-2xl bg-white border border-gray-100 shadow-md hover:shadow-xl hover:-translate-y-2 transition-all duration-300">
                 <div className="flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-[#FF0066]/10 to-[#4A1053]/10 mb-4 sm:mb-6">
-                  <svg
-                    viewBox="0 0 24 24"
-                    className="h-8 w-8 sm:h-9 sm:w-9"
-                    fill="none"
-                  >
+                  <svg viewBox="0 0 24 24" className="h-8 w-8 sm:h-9 sm:w-9" fill="none">
                     <defs>
                       <linearGradient id="fbGrad2" x1="0" y1="0" x2="0" y2="1">
                         <stop offset="0%" stopColor="#FF0066" />
@@ -134,15 +183,13 @@ export default function ContactPage() {
                   Schatzies Events PH
                 </a>
               </div>
+            </ScrollReveal>
 
-              {/* Email Card */}
-              <div className="flex flex-col items-center p-6 sm:p-8 lg:p-10 rounded-2xl bg-white border border-[#FFB6D9]/30 shadow-md hover:shadow-lg transition-all duration-300">
+            {/* Email Card */}
+            <ScrollReveal variant="up" delay={300}>
+              <div className="flex flex-col items-center p-6 sm:p-8 lg:p-10 rounded-2xl bg-white border border-gray-100 shadow-md hover:shadow-xl hover:-translate-y-2 transition-all duration-300">
                 <div className="flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-[#FF0066]/10 to-[#4A1053]/10 mb-4 sm:mb-6">
-                  <svg
-                    viewBox="0 0 24 24"
-                    className="h-8 w-8 sm:h-9 sm:w-9"
-                    fill="none"
-                  >
+                  <svg viewBox="0 0 24 24" className="h-8 w-8 sm:h-9 sm:w-9" fill="none">
                     <defs>
                       <linearGradient id="emailGrad2" x1="0" y1="0" x2="0" y2="1">
                         <stop offset="0%" stopColor="#FF0066" />
@@ -163,100 +210,153 @@ export default function ContactPage() {
                   schatziesevents@gmail.com
                 </a>
               </div>
-            </div>
+            </ScrollReveal>
+          </div>
+        </div>
+      </section>
+
+      {/* ── Visit Our Office — Dark textured band with waves ── */}
+      <ScrollReveal variant="up">
+        <div className="relative z-10">
+          {/* Textured wave at top */}
+          <div className="relative w-full overflow-hidden leading-[0] z-20">
+            <svg
+              className="relative block w-full h-[60px] sm:h-[90px] lg:h-[120px]"
+              viewBox="0 0 1440 120"
+              preserveAspectRatio="none"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <defs>
+                <pattern
+                  id="office-wave-tex"
+                  patternUnits="userSpaceOnUse"
+                  width="1440"
+                  height="120"
+                >
+                  <image
+                    href={textureImage}
+                    x="0"
+                    y="0"
+                    width="1440"
+                    height="120"
+                    preserveAspectRatio="none"
+                  />
+                </pattern>
+              </defs>
+              <path
+                d="M0,80 C360,130 720,20 1080,80 C1260,100 1380,95 1440,75 L1440,120 L0,120 Z"
+                fill="url(#office-wave-tex)"
+              />
+              <path
+                d="M0,80 C360,130 720,20 1080,80 C1260,100 1380,95 1440,75 L1440,120 L0,120 Z"
+                fill="black"
+                fillOpacity="0.45"
+              />
+            </svg>
           </div>
 
-          {/* Wave divider */}
-          <svg
-            className="absolute bottom-0 left-0 w-full h-auto"
-            viewBox="0 0 1200 120"
-            preserveAspectRatio="none"
+          <section
+            className="relative py-10 sm:py-14 lg:py-18 bg-cover bg-center bg-no-repeat"
+            style={{ backgroundImage: `url(${textureImage})` }}
           >
-            <path
-              d="M0,30 Q300,80 600,30 T1200,30 L1200,120 L0,120 Z"
-              fill="#000000"
-            />
-          </svg>
-        </section>
+            {/* Dark overlay */}
+            <div className="absolute inset-0 bg-black/50 pointer-events-none" />
 
-        {/* ── Visit Our Office Section Header ── */}
-        <section 
-          className="relative py-8 sm:py-12 lg:py-16 bg-cover bg-center bg-no-repeat"
-          style={{ backgroundImage: `url(${textureImage})` }}
-        >
-          {/* Dark overlay for better text readability */}
-          <div className="absolute inset-0 bg-black/50 pointer-events-none" />
-          
-          <div className="relative z-10 mx-auto max-w-[90rem] px-4 sm:px-6 lg:px-20 text-center">
-            <h2 className="font-heading text-[clamp(2rem,5vw,3rem)] font-bold text-[#FF0066] mb-3 sm:mb-4">
-              Visit Our Office
-            </h2>
-            <p className="mx-auto max-w-[45rem] text-[clamp(0.9rem,1.5vw,1.1rem)] leading-[1.6] text-white">
-              We have dedicated office spaces in both Quezon City and Tagaytay, designed for comfortable consultation.
-            </p>
-          </div>
-        </section>
+            <div className="relative z-10 mx-auto max-w-[90rem] px-4 sm:px-6 lg:px-20 text-center">
+              <h2 className="font-heading text-[clamp(2rem,5vw,3rem)] font-bold text-[#FF0066] mb-3 sm:mb-4">
+                Visit Our Office
+              </h2>
+              <p className="mx-auto max-w-[45rem] text-[clamp(0.9rem,1.5vw,1.1rem)] leading-[1.6] text-gray-200">
+                We have dedicated office spaces in both Quezon City and Tagaytay, designed for
+                comfortable consultation.
+              </p>
+            </div>
 
-        {/* ── Map Section ── */}
-        <section
-          className="relative min-h-[50vh] sm:min-h-[60vh] lg:min-h-[80vh] bg-cover bg-center bg-no-repeat"
-          style={{ backgroundImage: 'url(/map.png)' }}
-        >
-          {/* Overlay */}
-          <div className="absolute inset-0 bg-black/30" />
+            {/* White wave at bottom */}
+            <div className="absolute bottom-0 left-0 w-full overflow-hidden leading-[0] transform translate-y-[1px] z-20">
+              <svg
+                className="relative block w-full h-[60px] sm:h-[90px] lg:h-[120px]"
+                viewBox="0 0 1440 120"
+                preserveAspectRatio="none"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="M0,60 C320,130 720,10 1080,80 C1260,105 1380,95 1440,75 L1440,120 L0,120 Z"
+                  fill="white"
+                />
+              </svg>
+            </div>
+          </section>
+        </div>
+      </ScrollReveal>
 
-          {/* Location Cards */}
-          <div className="relative z-10 flex items-center justify-center min-h-[50vh] sm:min-h-[60vh] lg:min-h-[80vh] px-4 py-12 sm:py-20 lg:py-28">
-            <div className="w-full max-w-[90rem] mx-auto">
-              <div className="bg-white rounded-3xl p-8 sm:p-10 lg:p-12 shadow-2xl">
-                <div className="grid grid-cols-1 gap-8 sm:gap-10 md:grid-cols-2">
-                  {/* QC Location Card */}
-                  <div className="flex items-start gap-4 sm:gap-6">
-                    <div className="flex h-12 w-12 sm:h-14 sm:w-14 shrink-0 items-center justify-center rounded-full bg-[#FF0066]">
-                      <svg
-                        viewBox="0 0 24 24"
-                        className="h-6 w-6 sm:h-7 sm:w-7"
-                        fill="white"
-                      >
+      {/* ── Map Section ── */}
+      <ScrollReveal variant="scale">
+        <section className="relative bg-white">
+          <div
+            className="relative min-h-[50vh] sm:min-h-[60vh] lg:min-h-[70vh] mx-4 sm:mx-6 lg:mx-20 rounded-2xl overflow-hidden shadow-xl bg-cover bg-center bg-no-repeat"
+            style={{ backgroundImage: 'url(/map.png)' }}
+          >
+            {/* Location Cards Overlay */}
+            <div className="absolute inset-0 flex items-center justify-center px-4 py-8 pointer-events-none">
+              <div className="bg-white/95 backdrop-blur-sm rounded-2xl p-6 sm:p-8 lg:p-10 shadow-2xl max-w-[600px] w-full pointer-events-auto">
+                <div className="space-y-6 sm:space-y-8">
+                  {/* QC Location */}
+                  <div className="flex items-start gap-4 sm:gap-5">
+                    <div className="flex h-10 w-10 sm:h-12 sm:w-12 shrink-0 items-center justify-center rounded-full bg-[#FF0066]">
+                      <svg viewBox="0 0 24 24" className="h-5 w-5 sm:h-6 sm:w-6" fill="white">
                         <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z" />
                         <circle cx="12" cy="9" r="2.5" fill="#000" />
                       </svg>
                     </div>
                     <div>
-                      <h3 className="text-[1.05rem] sm:text-[1.15rem] lg:text-[1.2rem] font-bold text-[#FF0066]">
+                      <h3 className="text-[1.05rem] sm:text-[1.15rem] font-bold text-[#FF0066]">
                         Quezon City Branch
                       </h3>
-                      <p className="mt-2 text-[0.8rem] sm:text-[0.85rem] lg:text-[0.9rem] text-[#4A1053] leading-[1.6]">
+                      <a
+                        href="https://www.google.com/maps/search/27+Novaliches+Mendoza+Village+Project+8+Quezon+City"
+                        target="_blank"
+                        rel="noreferrer"
+                        className="mt-1.5 block text-[0.8rem] sm:text-[0.85rem] text-gray-600 leading-[1.6] hover:text-[#FF0066] transition-colors"
+                      >
                         27, Novaliches, Mendoza Village, Project 8, Quezon City, Metro Manila
-                      </p>
+                      </a>
                     </div>
                   </div>
 
-                  {/* Tagaytay Location Card */}
-                  <div className="flex items-start gap-4 sm:gap-6">
-                    <div className="flex h-12 w-12 sm:h-14 sm:w-14 shrink-0 items-center justify-center rounded-full bg-[#FF0066]">
-                      <svg
-                        viewBox="0 0 24 24"
-                        className="h-6 w-6 sm:h-7 sm:w-7"
-                        fill="white"
-                      >
+                  {/* Divider */}
+                  <div className="border-t border-gray-200" />
+
+                  {/* Tagaytay Location */}
+                  <div className="flex items-start gap-4 sm:gap-5">
+                    <div className="flex h-10 w-10 sm:h-12 sm:w-12 shrink-0 items-center justify-center rounded-full bg-[#FF0066]">
+                      <svg viewBox="0 0 24 24" className="h-5 w-5 sm:h-6 sm:w-6" fill="white">
                         <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z" />
                         <circle cx="12" cy="9" r="2.5" fill="#000" />
                       </svg>
                     </div>
                     <div>
-                      <h3 className="text-[1.05rem] sm:text-[1.15rem] lg:text-[1.2rem] font-bold text-[#FF0066]">
+                      <h3 className="text-[1.05rem] sm:text-[1.15rem] font-bold text-[#FF0066]">
                         Tagaytay Branch
                       </h3>
-                      <p className="mt-2 text-[0.8rem] sm:text-[0.85rem] lg:text-[0.9rem] text-[#4A1053] leading-[1.6]">
-                        Ministop bldg Marasigan st Tagaytay Nasugbu High way Brgy. Mendez, Tagaytay City, 4120 Cavite
-                      </p>
+                      <a
+                        href="https://www.google.com/maps/search/Ministop+Marasigan+st+Tagaytay+Nasugbu+Highway+Brgy+Mendez+Tagaytay+City+Cavite"
+                        target="_blank"
+                        rel="noreferrer"
+                        className="mt-1.5 block text-[0.8rem] sm:text-[0.85rem] text-gray-600 leading-[1.6] hover:text-[#FF0066] transition-colors"
+                      >
+                        Ministop bldg Marasigan st Tagaytay Nasugbu High way Brgy. Mendez, Tagaytay
+                        City, 4120 Cavite
+                      </a>
                     </div>
                   </div>
                 </div>
               </div>
             </div>
           </div>
+
+          {/* Bottom spacing */}
+          <div className="h-16 sm:h-20 lg:h-24 bg-white" />
         </section>
       </ScrollReveal>
     </>

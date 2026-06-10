@@ -31,27 +31,25 @@ export function Navbar() {
         {/* Desktop Navbar */}
         <div className="hidden lg:flex items-center justify-between relative h-24">
           {/* Logo */}
-          <div className="flex items-center">
+          <div className="flex items-center ml-19">
             <Link to="/">
-              <img 
-                src="/Pictures/business-logo.png" 
-                alt="Schatzies Events" 
+              <img
+                src="/Pictures/business-logo.png"
+                alt="Schatzies Events"
                 className="h-20 lg:h-24 w-auto object-contain transition-transform hover:scale-105"
               />
             </Link>
           </div>
 
           {/* Centered Menu Pill */}
-          <div className="absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-white/90 backdrop-blur-md rounded-full px-12 py-4 shadow-lg border border-white/20">
-            <div className="flex items-center gap-10">
+          <div className="absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-white/90 backdrop-blur-md rounded-full px-20 py-4 shadow-lg border border-white/20 min-w-[800px]">
+            <div className="flex items-center justify-between">
               {navMenuItems.map((item) => (
                 <Link
                   key={item.href}
                   to={item.href}
                   className={`text-[15px] font-semibold transition-colors duration-200 ${
-                    isActive(item.href) 
-                      ? 'text-[#FF0066]' 
-                      : 'text-[#1E002C] hover:text-[#FF0066]'
+                    isActive(item.href) ? 'text-[#FF0066]' : 'text-[#1E002C] hover:text-[#FF0066]'
                   }`}
                   style={{ fontFamily: "'Montserrat', sans-serif" }}
                 >
@@ -66,15 +64,15 @@ export function Navbar() {
         <div className="lg:hidden flex items-center justify-between h-16">
           {/* Logo */}
           <Link to="/">
-            <img 
-              src="/Pictures/business-logo.png" 
-              alt="Schatzies Events" 
+            <img
+              src="/Pictures/business-logo.png"
+              alt="Schatzies Events"
               className="h-16 w-auto object-contain"
             />
           </Link>
 
           {/* Mobile Menu Button */}
-          <button 
+          <button
             onClick={() => setMobileOpen(!mobileOpen)}
             className="p-2 hover:bg-white/20 rounded-lg transition"
           >
@@ -104,9 +102,7 @@ export function Navbar() {
                   to={item.href}
                   onClick={() => setMobileOpen(false)}
                   className={`text-sm font-semibold transition-colors ${
-                    isActive(item.href)
-                      ? 'text-[#FF0066]'
-                      : 'text-[#1E002C] hover:text-[#FF0066]'
+                    isActive(item.href) ? 'text-[#FF0066]' : 'text-[#1E002C] hover:text-[#FF0066]'
                   }`}
                   style={{ fontFamily: "'Montserrat', sans-serif" }}
                 >

@@ -403,10 +403,11 @@ export function AdminVendorPoolPage() {
             <button
               type="button"
               onClick={() => setViewMode('cards')}
-              className={`rounded-md px-2.5 py-1.5 transition-colors ${viewMode === 'cards'
+              className={`rounded-md px-2.5 py-1.5 transition-colors ${
+                viewMode === 'cards'
                   ? 'bg-[#f3e8ff] text-[#8f1fd1]'
                   : 'text-[#7c7390] hover:text-[#4e445e]'
-                }`}
+              }`}
               title="Card view"
             >
               <LayoutGrid className="h-4 w-4" />
@@ -414,10 +415,11 @@ export function AdminVendorPoolPage() {
             <button
               type="button"
               onClick={() => setViewMode('table')}
-              className={`rounded-md px-2.5 py-1.5 transition-colors ${viewMode === 'table'
+              className={`rounded-md px-2.5 py-1.5 transition-colors ${
+                viewMode === 'table'
                   ? 'bg-[#f3e8ff] text-[#8f1fd1]'
                   : 'text-[#7c7390] hover:text-[#4e445e]'
-                }`}
+              }`}
               title="Table view"
             >
               <List className="h-4 w-4" />
@@ -824,7 +826,9 @@ export function AdminVendorPoolPage() {
           </div>
 
           <div className="p-6">
-            <div className={`grid gap-8 ${dialogMode === 'edit' ? 'md:grid-cols-[1.2fr_1fr]' : 'grid-cols-1 max-w-2xl mx-auto'}`}>
+            <div
+              className={`grid gap-8 ${dialogMode === 'edit' ? 'md:grid-cols-[1.2fr_1fr]' : 'grid-cols-1 max-w-2xl mx-auto'}`}
+            >
               {/* ──── LEFT COLUMN: Vendor Form ──── */}
               <div className="space-y-6">
                 {/* Basic Information */}
@@ -843,7 +847,10 @@ export function AdminVendorPoolPage() {
                           placeholder="e.g. Bloom Studio"
                           value={vendorForm.vendorName}
                           onChange={(event) =>
-                            setVendorForm((current) => ({ ...current, vendorName: event.target.value }))
+                            setVendorForm((current) => ({
+                              ...current,
+                              vendorName: event.target.value,
+                            }))
                           }
                           className="h-10 bg-white border-[#ebe3f5] focus-visible:ring-[#8C6bB1] font-semibold text-[#2e2837]"
                         />
@@ -856,7 +863,10 @@ export function AdminVendorPoolPage() {
                           placeholder="e.g. Photography, Catering"
                           value={vendorForm.serviceType}
                           onChange={(event) =>
-                            setVendorForm((current) => ({ ...current, serviceType: event.target.value }))
+                            setVendorForm((current) => ({
+                              ...current,
+                              serviceType: event.target.value,
+                            }))
                           }
                           className="h-10 bg-white border-[#ebe3f5] focus-visible:ring-[#8C6bB1] font-semibold text-[#2e2837]"
                         />
@@ -870,7 +880,10 @@ export function AdminVendorPoolPage() {
                         placeholder="e.g. Maria Santos"
                         value={vendorForm.contactPerson || ''}
                         onChange={(event) =>
-                          setVendorForm((current) => ({ ...current, contactPerson: event.target.value }))
+                          setVendorForm((current) => ({
+                            ...current,
+                            contactPerson: event.target.value,
+                          }))
                         }
                         className="h-10 bg-white border-[#ebe3f5] focus-visible:ring-[#8C6bB1] font-semibold text-[#2e2837]"
                       />
@@ -907,7 +920,10 @@ export function AdminVendorPoolPage() {
                         placeholder="+63 912 345 6789"
                         value={vendorForm.contactNumber || ''}
                         onChange={(event) =>
-                          setVendorForm((current) => ({ ...current, contactNumber: event.target.value }))
+                          setVendorForm((current) => ({
+                            ...current,
+                            contactNumber: event.target.value,
+                          }))
                         }
                         className="h-10 bg-white border-[#ebe3f5] focus-visible:ring-[#8C6bB1] font-semibold text-[#2e2837]"
                       />
@@ -931,7 +947,10 @@ export function AdminVendorPoolPage() {
                           placeholder="e.g. Flowers, Equipment"
                           value={vendorForm.typeOfSupply || ''}
                           onChange={(event) =>
-                            setVendorForm((current) => ({ ...current, typeOfSupply: event.target.value }))
+                            setVendorForm((current) => ({
+                              ...current,
+                              typeOfSupply: event.target.value,
+                            }))
                           }
                           className="h-10 bg-white border-[#ebe3f5] focus-visible:ring-[#8C6bB1] font-semibold text-[#2e2837]"
                         />
@@ -944,7 +963,10 @@ export function AdminVendorPoolPage() {
                           placeholder="e.g. Full coverage, Setup & teardown"
                           value={vendorForm.servicesOffered || ''}
                           onChange={(event) =>
-                            setVendorForm((current) => ({ ...current, servicesOffered: event.target.value }))
+                            setVendorForm((current) => ({
+                              ...current,
+                              servicesOffered: event.target.value,
+                            }))
                           }
                           className="h-10 bg-white border-[#ebe3f5] focus-visible:ring-[#8C6bB1] font-semibold text-[#2e2837]"
                         />
@@ -969,7 +991,10 @@ export function AdminVendorPoolPage() {
                           placeholder="e.g. Per event, Hourly"
                           value={vendorForm.pricing || ''}
                           onChange={(event) =>
-                            setVendorForm((current) => ({ ...current, pricing: event.target.value }))
+                            setVendorForm((current) => ({
+                              ...current,
+                              pricing: event.target.value,
+                            }))
                           }
                           className="h-10 bg-white border-[#ebe3f5] focus-visible:ring-[#8C6bB1] font-semibold text-[#2e2837]"
                         />
@@ -1036,7 +1061,10 @@ export function AdminVendorPoolPage() {
                           placeholder="e.g. Santos-Reyes Wedding"
                           value={vendorForm.lastEventHandled || ''}
                           onChange={(event) =>
-                            setVendorForm((current) => ({ ...current, lastEventHandled: event.target.value }))
+                            setVendorForm((current) => ({
+                              ...current,
+                              lastEventHandled: event.target.value,
+                            }))
                           }
                           className="h-10 bg-white border-[#ebe3f5] focus-visible:ring-[#8C6bB1] font-semibold text-[#2e2837]"
                         />
@@ -1289,7 +1317,9 @@ function VendorSidepanel({
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
-                <label className="text-[10px] font-black uppercase tracking-wider text-[#857a98]">Role</label>
+                <label className="text-[10px] font-black uppercase tracking-wider text-[#857a98]">
+                  Role
+                </label>
                 <Input
                   placeholder="e.g. Lead"
                   value={newWorkerForm.role}
@@ -1298,7 +1328,9 @@ function VendorSidepanel({
                 />
               </div>
               <div className="space-y-1.5">
-                <label className="text-[10px] font-black uppercase tracking-wider text-[#857a98]">Job Title</label>
+                <label className="text-[10px] font-black uppercase tracking-wider text-[#857a98]">
+                  Job Title
+                </label>
                 <Input
                   placeholder="e.g. Photographer"
                   value={newWorkerForm.jobTitle}
@@ -1309,7 +1341,9 @@ function VendorSidepanel({
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
-                <label className="text-[10px] font-black uppercase tracking-wider text-[#857a98]">Email</label>
+                <label className="text-[10px] font-black uppercase tracking-wider text-[#857a98]">
+                  Email
+                </label>
                 <Input
                   placeholder="worker@email.com"
                   value={newWorkerForm.email}
@@ -1318,11 +1352,15 @@ function VendorSidepanel({
                 />
               </div>
               <div className="space-y-1.5">
-                <label className="text-[10px] font-black uppercase tracking-wider text-[#857a98]">Phone</label>
+                <label className="text-[10px] font-black uppercase tracking-wider text-[#857a98]">
+                  Phone
+                </label>
                 <Input
                   placeholder="+63 912 345 6789"
                   value={newWorkerForm.contactNumber}
-                  onChange={(e) => setNewWorkerForm((f) => ({ ...f, contactNumber: e.target.value }))}
+                  onChange={(e) =>
+                    setNewWorkerForm((f) => ({ ...f, contactNumber: e.target.value }))
+                  }
                   className="h-9 text-sm bg-white border-[#ebe3f5] focus-visible:ring-[#8C6bB1] font-semibold"
                 />
               </div>
@@ -1349,7 +1387,9 @@ function VendorSidepanel({
             <div className="rounded-2xl border border-dashed border-[#e1d5eb] bg-[#faf9fc] py-8 text-center">
               <Briefcase className="mx-auto mb-2 h-6 w-6 text-[#d4c5e3]" />
               <p className="text-xs font-semibold text-[#8b839c]">No workers yet</p>
-              <p className="text-[10px] text-[#b5aec3] mt-0.5">Click "+ Add Worker" to get started</p>
+              <p className="text-[10px] text-[#b5aec3] mt-0.5">
+                Click "+ Add Worker" to get started
+              </p>
             </div>
           ) : (
             workers.map((worker) => (
@@ -1373,12 +1413,18 @@ function VendorSidepanel({
                   </div>
                 </div>
                 <div className="flex items-center gap-2 ml-2">
-                  <span className={`flex items-center gap-1 text-[9px] font-bold px-2 py-0.5 rounded-full ${worker.status.toLowerCase() === 'active'
-                      ? 'bg-[#e6f9ec] text-[#1e7e34]'
-                      : 'bg-[#f3f0f7] text-[#7c7390]'
-                    }`}>
-                    <span className={`h-1.5 w-1.5 rounded-full ${worker.status.toLowerCase() === 'active' ? 'bg-[#29bf4c]' : 'bg-[#b5aec3]'
-                      }`} />
+                  <span
+                    className={`flex items-center gap-1 text-[9px] font-bold px-2 py-0.5 rounded-full ${
+                      worker.status.toLowerCase() === 'active'
+                        ? 'bg-[#e6f9ec] text-[#1e7e34]'
+                        : 'bg-[#f3f0f7] text-[#7c7390]'
+                    }`}
+                  >
+                    <span
+                      className={`h-1.5 w-1.5 rounded-full ${
+                        worker.status.toLowerCase() === 'active' ? 'bg-[#29bf4c]' : 'bg-[#b5aec3]'
+                      }`}
+                    />
                     {worker.status}
                   </span>
                   <button
@@ -1452,7 +1498,9 @@ function VendorSidepanel({
             <div className="rounded-2xl border border-dashed border-[#e1d5eb] bg-[#faf9fc] py-8 text-center">
               <CalendarDays className="mx-auto mb-2 h-6 w-6 text-[#d4c5e3]" />
               <p className="text-xs font-semibold text-[#8b839c]">No events assigned yet</p>
-              <p className="text-[10px] text-[#b5aec3] mt-0.5">Use the selector above to assign an event</p>
+              <p className="text-[10px] text-[#b5aec3] mt-0.5">
+                Use the selector above to assign an event
+              </p>
             </div>
           ) : (
             vendorEvents.map((evt) => {
@@ -1463,22 +1511,23 @@ function VendorSidepanel({
               const dateStr = evt.startDate || evt.eventDate;
               const formattedDate = dateStr
                 ? new Date(dateStr).toLocaleDateString('en-US', {
-                  timeZone: 'UTC',
-                  month: 'short',
-                  day: 'numeric',
-                  year: 'numeric',
-                })
+                    timeZone: 'UTC',
+                    month: 'short',
+                    day: 'numeric',
+                    year: 'numeric',
+                  })
                 : 'Date TBD';
 
               return (
                 <div
                   key={evt.eventId}
-                  className={`flex items-center justify-between rounded-xl border px-3.5 py-3 transition-all ${isExecution
+                  className={`flex items-center justify-between rounded-xl border px-3.5 py-3 transition-all ${
+                    isExecution
                       ? 'border-[#df1b8b]/20 bg-[#fff8fb] shadow-sm'
                       : isCompleted
                         ? 'border-[#f1eef5] bg-[#faf9fc] opacity-70'
                         : 'border-[#f1eef5] bg-white hover:border-[#df1b8b]/25 hover:shadow-sm'
-                    }`}
+                  }`}
                 >
                   <div className="min-w-0 flex-1">
                     <p className="text-sm font-bold text-[#2e2837] truncate">{evt.title}</p>
@@ -1488,18 +1537,24 @@ function VendorSidepanel({
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
-                    <span className={`flex items-center gap-1 text-[9px] font-bold px-2 py-0.5 rounded-full ${isExecution
-                        ? 'bg-[#ffe6f1] text-[#df1b8b]'
-                        : isCompleted
-                          ? 'bg-[#f4e6fc] text-[#8637c3]'
-                          : 'bg-[#fff5d3] text-[#b68c17]'
-                      }`}>
-                      <span className={`h-1.5 w-1.5 rounded-full ${isExecution
-                          ? 'bg-[#df1b8b]'
+                    <span
+                      className={`flex items-center gap-1 text-[9px] font-bold px-2 py-0.5 rounded-full ${
+                        isExecution
+                          ? 'bg-[#ffe6f1] text-[#df1b8b]'
                           : isCompleted
-                            ? 'bg-[#8637c3]'
-                            : 'bg-[#b68c17]'
-                        }`} />
+                            ? 'bg-[#f4e6fc] text-[#8637c3]'
+                            : 'bg-[#fff5d3] text-[#b68c17]'
+                      }`}
+                    >
+                      <span
+                        className={`h-1.5 w-1.5 rounded-full ${
+                          isExecution
+                            ? 'bg-[#df1b8b]'
+                            : isCompleted
+                              ? 'bg-[#8637c3]'
+                              : 'bg-[#b68c17]'
+                        }`}
+                      />
                       {evt.status}
                     </span>
                     <button
@@ -1520,4 +1575,3 @@ function VendorSidepanel({
     </div>
   );
 }
-

@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Navbar } from '@/components/Navbar';
+import ScrollReveal from '@/components/ui/ScrollReveal';
 
 // Gallery images
 const galleryRow1 = [
@@ -71,15 +73,6 @@ export function LandingPage() {
       </main>
 
       {/* Floating Chat Widget */}
-      <div className="fixed bottom-6 right-6 z-50">
-        <button className="relative flex h-16 w-16 items-center justify-center rounded-full bg-[#FF0066] text-white shadow-2xl hover:scale-110 active:scale-95 transition-transform duration-200 focus:outline-none">
-          {/* Crescent Moon & Star Icon */}
-          <svg className="h-8 w-8 text-white" fill="currentColor" viewBox="0 0 24 24">
-            <path d="M12 3c.132 0 .263 0 .393.007a7.5 7.5 0 0 0 7.92 12.446A9 9 0 1 1 12 3z" />
-            <path d="M19 6.5l.55 1.1 1.2.1-.85.85.2 1.2-1.1-.6-1.1.6.2-1.2-.85-.85 1.2-.1z" />
-          </svg>
-        </button>
-      </div>
     </>
   );
 }
@@ -104,9 +97,12 @@ function HeroSection() {
         style={{ backgroundImage: `url('${heroImages[currentImageIndex]}')` }}
       >
         {/* Responsive Gradient Overlay */}
-        <div 
+        <div
           className="absolute inset-0"
-          style={{ background: 'linear-gradient(to right, rgba(255,255,255,0.95) 0%, rgba(255,255,255,0.85) 15%, rgba(255,255,255,0.4) 25%, transparent 40%)' }} 
+          style={{
+            background:
+              'linear-gradient(to right, rgba(255,255,255,0.95) 0%, rgba(255,255,255,0.85) 15%, rgba(255,255,255,0.4) 25%, transparent 40%)',
+          }}
         />
       </div>
 
@@ -114,7 +110,7 @@ function HeroSection() {
       <div className="relative flex items-center h-full min-h-screen px-6 sm:px-8 lg:px-[8%] w-full z-10">
         <div className="w-full lg:w-[52%] pt-32 pb-24 lg:pt-40 lg:pb-32 space-y-8">
           {/* Main Heading */}
-          <div className="space-y-3">
+          <div className="space-y-3 animate-fade-in-up">
             <p
               className="text-[#1E002C] text-3xl sm:text-4xl lg:text-[44px] font-normal leading-tight"
               style={{ fontFamily: "'Libre Baskerville', serif" }}
@@ -127,7 +123,7 @@ function HeroSection() {
                 fontFamily: "'Libre Baskerville', serif",
                 background: 'linear-gradient(99.67deg, #700F81 16.53%, #FF0066 45.5%)',
                 WebkitBackgroundClip: 'text',
-                WebkitTextFillColor: 'transparent'
+                WebkitTextFillColor: 'transparent',
               }}
             >
               Schatzies Events!
@@ -136,7 +132,7 @@ function HeroSection() {
 
           {/* Subtitle */}
           <p
-            className="text-xl sm:text-2xl lg:text-[28px] font-semibold text-[#1E002C] leading-normal"
+            className="text-xl sm:text-2xl lg:text-[28px] font-semibold text-[#1E002C] leading-normal animate-fade-in-up animation-delay-200"
             style={{ fontFamily: "'Montserrat', sans-serif" }}
           >
             Your{' '}
@@ -145,7 +141,7 @@ function HeroSection() {
               style={{
                 background: 'linear-gradient(99.67deg, #700F81 16.53%, #FF0066 45.5%)',
                 WebkitBackgroundClip: 'text',
-                WebkitTextFillColor: 'transparent'
+                WebkitTextFillColor: 'transparent',
               }}
             >
               MOST TRUSTED
@@ -155,7 +151,7 @@ function HeroSection() {
 
           {/* Description */}
           <p
-            className="text-black text-base sm:text-lg lg:text-[18px] leading-relaxed max-w-xl"
+            className="text-black text-base sm:text-lg lg:text-[18px] leading-relaxed max-w-xl animate-fade-in-up animation-delay-400"
             style={{ fontFamily: "'Source Sans Pro', sans-serif" }}
           >
             Premium wedding and debut planning for those who want to be a guest at their own
@@ -163,7 +159,7 @@ function HeroSection() {
           </p>
 
           {/* Social Links */}
-          <div className="pt-4 space-y-3">
+          <div className="pt-4 space-y-3 animate-fade-in-up animation-delay-600">
             <p
               className="text-gray-400 text-sm font-medium tracking-wide"
               style={{ fontFamily: "'Montserrat', sans-serif" }}
@@ -187,8 +183,18 @@ function HeroSection() {
                 href="mailto:schatziesevents@gmail.com"
                 className="flex h-10 w-10 items-center justify-center rounded-[10px] bg-[#FF0066] text-white hover:scale-110 transition-transform duration-200 shadow-md"
               >
-                <svg className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                <svg
+                  className="h-5 w-5"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
+                  />
                 </svg>
               </a>
               {/* Phone */}
@@ -212,9 +218,7 @@ function HeroSection() {
             key={index}
             onClick={() => setCurrentImageIndex(index)}
             className={`h-2 rounded-full transition-all duration-300 ${
-              index === currentImageIndex 
-                ? 'w-8 bg-[#FF0066]' 
-                : 'w-2 bg-white/50 hover:bg-white/75'
+              index === currentImageIndex ? 'w-8 bg-[#FF0066]' : 'w-2 bg-white/50 hover:bg-white/75'
             }`}
             aria-label={`Go to image ${index + 1}`}
           />
@@ -241,27 +245,49 @@ function HeroSection() {
 
 /* Spotlight Section */
 function SpotlightSection() {
-  const row1Loop = [...galleryRow1, ...galleryRow1, ...galleryRow1, ...galleryRow1, ...galleryRow1, ...galleryRow1, ...galleryRow1, ...galleryRow1];
-  const row2Loop = [...galleryRow2, ...galleryRow2, ...galleryRow2, ...galleryRow2, ...galleryRow2, ...galleryRow2, ...galleryRow2, ...galleryRow2];
+  const navigate = useNavigate();
+  const row1Loop = [
+    ...galleryRow1,
+    ...galleryRow1,
+    ...galleryRow1,
+    ...galleryRow1,
+    ...galleryRow1,
+    ...galleryRow1,
+    ...galleryRow1,
+    ...galleryRow1,
+  ];
+  const row2Loop = [
+    ...galleryRow2,
+    ...galleryRow2,
+    ...galleryRow2,
+    ...galleryRow2,
+    ...galleryRow2,
+    ...galleryRow2,
+    ...galleryRow2,
+    ...galleryRow2,
+  ];
 
   return (
     <section className="relative overflow-hidden bg-white py-20 lg:py-28">
       {/* Heading & Subtitle inside the standard padding container */}
       <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-[8%] text-center mb-16">
-        <h2 
-          className="text-4xl sm:text-5xl lg:text-[52px] font-bold leading-tight tracking-tight text-[#1E002C]"
-          style={{ fontFamily: "'Libre Baskerville', serif" }}
-        >
-          Step Into the <span className="text-[#FF0066]">Spotlight</span>,<br />We'll Handle the <span className="text-[#FF0066]">Stage</span>.
-        </h2>
-        <p 
-          className="mt-6 text-base sm:text-lg lg:text-[18px] text-gray-600 max-w-3xl mx-auto leading-relaxed"
-          style={{ fontFamily: "'Montserrat', sans-serif" }}
-        >
-          Your milestone is a masterpiece in the making. While you focus on making memories and
-          greeting your guests, our team ensures every light, sound, and moment is executed to
-          perfection.
-        </p>
+        <ScrollReveal variant="up">
+          <h2
+            className="text-4xl sm:text-5xl lg:text-[52px] font-bold leading-tight tracking-tight text-[#1E002C]"
+            style={{ fontFamily: "'Libre Baskerville', serif" }}
+          >
+            Step Into the <span className="text-[#FF0066]">Spotlight</span>,<br />
+            We'll Handle the <span className="text-[#FF0066]">Stage</span>.
+          </h2>
+          <p
+            className="mt-6 text-base sm:text-lg lg:text-[18px] text-gray-600 max-w-3xl mx-auto leading-relaxed"
+            style={{ fontFamily: "'Montserrat', sans-serif" }}
+          >
+            Your milestone is a masterpiece in the making. While you focus on making memories and
+            greeting your guests, our team ensures every light, sound, and moment is executed to
+            perfection.
+          </p>
+        </ScrollReveal>
       </div>
 
       {/* Gallery Carousel - Maxed out to the screen width (outside container) */}
@@ -315,14 +341,14 @@ function SpotlightSection() {
 
       {/* Button & Wave Container */}
       <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-[8%] text-center pb-12">
-        <Button 
+        <Button
+          onClick={() => navigate('/gallery')}
           className="bg-[#FF0066] hover:bg-[#D80054] text-white px-8 py-6 rounded-lg text-lg font-semibold shadow-lg shadow-pink-500/20 transition-all duration-200"
           style={{ fontFamily: "'Montserrat', sans-serif" }}
         >
           View Gallery
         </Button>
       </div>
-
     </section>
   );
 }
@@ -330,7 +356,7 @@ function SpotlightSection() {
 /* Services Section */
 function ServicesSection() {
   return (
-    <section 
+    <section
       id="services"
       className="relative bg-cover bg-center bg-no-repeat pt-0 pb-24 lg:pb-36 overflow-hidden"
       style={{ backgroundImage: "url('/Pictures/texture.jpg')" }}
@@ -354,18 +380,17 @@ function ServicesSection() {
       </div>
 
       <div className="relative max-w-7xl mx-auto px-6 sm:px-8 lg:px-[8%] w-full z-10 space-y-24 lg:space-y-36">
-        
         {/* Service Feature 1: Love Story (Wedding) */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20 items-center">
           {/* Left: Text */}
-          <div className="space-y-6">
-            <h3 
+          <ScrollReveal variant="left" className="space-y-6">
+            <h3
               className="text-3xl sm:text-4xl lg:text-[44px] font-bold leading-tight text-white"
               style={{ fontFamily: "'Libre Baskerville', serif" }}
             >
               A <span className="text-[#FF0066]">Love Story</span> Told in Every Detail
             </h3>
-            <p 
+            <p
               className="text-base sm:text-lg lg:text-[18px] text-gray-300 leading-relaxed font-normal"
               style={{ fontFamily: "'Montserrat', sans-serif" }}
             >
@@ -373,36 +398,43 @@ function ServicesSection() {
               ballrooms, we ensure the only thing you focus on is the person at the end of the
               aisle.
             </p>
-          </div>
+          </ScrollReveal>
           {/* Right: Image */}
-          <div className="relative overflow-hidden rounded-2xl border-4 border-white shadow-[0_25px_60px_rgba(0,0,0,0.8)] max-w-full lg:max-w-lg justify-self-center lg:justify-self-end">
-            <img 
-              src="/Pictures/service-wedding.jpg" 
-              alt="A Love Story Told in Every Detail" 
+          <ScrollReveal
+            variant="right"
+            className="relative overflow-hidden rounded-2xl border-4 border-white shadow-[0_25px_60px_rgba(0,0,0,0.8)] max-w-full lg:max-w-lg justify-self-center lg:justify-self-end"
+          >
+            <img
+              src="/Pictures/service-wedding.jpg"
+              alt="A Love Story Told in Every Detail"
               className="w-full h-auto object-cover transition-transform duration-500 hover:scale-105"
             />
-          </div>
+          </ScrollReveal>
         </div>
 
         {/* Service Feature 2: 18th Milestone (Debut) */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20 items-center">
           {/* Left: Image (on mobile order-2, on desktop order-1) */}
-          <div className="relative overflow-hidden rounded-2xl border-4 border-white shadow-[0_25px_60px_rgba(0,0,0,0.8)] max-w-full lg:max-w-lg justify-self-center lg:justify-self-start order-2 lg:order-1">
-            <img 
-              src="/Pictures/service-debut.jpg" 
-              alt="Your 18th: More Than a Birthday, It's a Milestone" 
+          <ScrollReveal
+            variant="left"
+            className="relative overflow-hidden rounded-2xl border-4 border-white shadow-[0_25px_60px_rgba(0,0,0,0.8)] max-w-full lg:max-w-lg justify-self-center lg:justify-self-start order-2 lg:order-1"
+          >
+            <img
+              src="/Pictures/service-debut.jpg"
+              alt="Your 18th: More Than a Birthday, It's a Milestone"
               className="w-full h-auto object-cover transition-transform duration-500 hover:scale-105"
             />
-          </div>
+          </ScrollReveal>
           {/* Right: Text (on mobile order-1, on desktop order-2) */}
-          <div className="space-y-6 order-1 lg:order-2">
-            <h3 
+          <ScrollReveal variant="right" className="space-y-6 order-1 lg:order-2">
+            <h3
               className="text-3xl sm:text-4xl lg:text-[44px] font-bold leading-tight text-white"
               style={{ fontFamily: "'Libre Baskerville', serif" }}
             >
-              <span className="text-[#FF0066]">Your 18th:</span> More Than a Birthday, It's a <span className="text-[#FF0066]">Milestone</span>
+              <span className="text-[#FF0066]">Your 18th:</span> More Than a Birthday, It's a{' '}
+              <span className="text-[#FF0066]">Milestone</span>
             </h3>
-            <p 
+            <p
               className="text-base sm:text-lg lg:text-[18px] text-gray-300 leading-relaxed font-normal"
               style={{ fontFamily: "'Montserrat', sans-serif" }}
             >
@@ -410,7 +442,7 @@ function ServicesSection() {
               into a cinematic celebration that captures exactly who you are and who you're
               becoming.
             </p>
-          </div>
+          </ScrollReveal>
         </div>
       </div>
 
@@ -438,21 +470,21 @@ function TestimonialsSection() {
     <section className="bg-[#f5f0f0] py-20 lg:py-28">
       <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-[8%]">
         {/* Section Title */}
-        <div className="mb-14 text-center">
-          <h2 
+        <ScrollReveal variant="up" className="mb-14 text-center">
+          <h2
             className="text-4xl sm:text-5xl lg:text-[52px] font-bold leading-tight tracking-tight text-[#1E002C]"
             style={{ fontFamily: "'Libre Baskerville', serif" }}
           >
             The Schatzies <span className="text-[#FF0066]">Experience</span>.
           </h2>
-          <p 
+          <p
             className="mt-5 text-base sm:text-lg lg:text-[18px] text-gray-600 max-w-2xl mx-auto leading-relaxed"
             style={{ fontFamily: "'Montserrat', sans-serif" }}
           >
-            Celebrating 15 years of flawless events through the words of those who
-            experienced the magic firsthand.
+            Celebrating 15 years of flawless events through the words of those who experienced the
+            magic firsthand.
           </p>
-        </div>
+        </ScrollReveal>
 
         {/* Testimonials 2-Column Grid */}
         <div className="grid gap-6 sm:grid-cols-2">
@@ -471,20 +503,18 @@ function TestimonialsSection() {
                     </svg>
                   </div>
                   <div>
-                    <h4 
+                    <h4
                       className="font-bold text-[#1E002C] text-sm lg:text-base"
                       style={{ fontFamily: "'Montserrat', sans-serif" }}
                     >
                       {testimonial.name}
                     </h4>
-                    <p className="text-xs font-semibold text-[#FF0066]">
-                      Recommends!
-                    </p>
+                    <p className="text-xs font-semibold text-[#FF0066]">Recommends!</p>
                   </div>
                 </div>
 
                 {/* Large Pink Quote Mark */}
-                <span 
+                <span
                   className="text-[#FF0066] text-5xl lg:text-6xl font-bold leading-none select-none -mt-2"
                   style={{ fontFamily: "'Libre Baskerville', serif" }}
                 >
@@ -493,7 +523,7 @@ function TestimonialsSection() {
               </div>
 
               {/* Testimonial Text */}
-              <p 
+              <p
                 className="text-gray-700 text-sm lg:text-[15px] leading-relaxed"
                 style={{ fontFamily: "'Montserrat', sans-serif" }}
               >

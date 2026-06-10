@@ -1,5 +1,11 @@
 import { useState } from 'react';
-import { getBoardTasks, createBoardTask, updateBoardTask, deleteBoardTask, moveBoardTask } from '@/api/planner-tasks';
+import {
+  getBoardTasks,
+  createBoardTask,
+  updateBoardTask,
+  deleteBoardTask,
+  moveBoardTask,
+} from '@/api/planner-tasks';
 import { mapLaneToBackendStatus } from '@/utils/planner-flow';
 import type { PlannerBoardTask, TaskLane } from '@/types/planner';
 import type { DragEvent } from 'react';
@@ -32,7 +38,10 @@ export function useBoardTasks(selectedEventId: string) {
           if (Array.isArray(tasksInGroup)) {
             tasksInGroup.forEach((task: any) => {
               const taskId = String(task.id || task._id || `task-${Date.now()}-${Math.random()}`);
-              const rawStatus = String(task.status || groupName).trim().toLowerCase().replace(/[^a-z0-9]/g, '');
+              const rawStatus = String(task.status || groupName)
+                .trim()
+                .toLowerCase()
+                .replace(/[^a-z0-9]/g, '');
               let lane: TaskLane = 'todo';
               if (rawStatus.includes('progress')) lane = 'in-progress';
               else if (rawStatus.includes('complete')) lane = 'completed';
@@ -50,7 +59,10 @@ export function useBoardTasks(selectedEventId: string) {
       } else if (Array.isArray(response)) {
         response.forEach((task: any) => {
           const taskId = String(task.id || task._id || `task-${Date.now()}-${Math.random()}`);
-          const rawStatus = String(task.status || 'todo').trim().toLowerCase().replace(/[^a-z0-9]/g, '');
+          const rawStatus = String(task.status || 'todo')
+            .trim()
+            .toLowerCase()
+            .replace(/[^a-z0-9]/g, '');
           let lane: TaskLane = 'todo';
           if (rawStatus.includes('progress')) lane = 'in-progress';
           else if (rawStatus.includes('complete')) lane = 'completed';
@@ -110,7 +122,10 @@ export function useBoardTasks(selectedEventId: string) {
         if (task.lane === 'todo' && lane === 'in-progress') {
           const hasChecklist = Array.isArray(task.checklist) && task.checklist.length > 0;
           if (!hasChecklist) {
-            const items = task.details.split('\n').map((s) => s.trim()).filter(Boolean)
+            const items = task.details
+              .split('\n')
+              .map((s) => s.trim())
+              .filter(Boolean)
               .map((line, idx) => ({ id: `${task.id}-chk-${idx}`, label: line, done: false }));
             if (items.length === 0) {
               items.push({ id: `${task.id}-chk-0`, label: 'New checklist item', done: false });
@@ -120,13 +135,29 @@ export function useBoardTasks(selectedEventId: string) {
         }
         if (lane === 'completed') {
           const timestamp = new Date().toISOString();
-          const checklistSource: any[] = Array.isArray(task.checklist) && task.checklist.length > 0
-            ? task.checklist
-            : task.details.split('\n').map((s) => s.trim()).filter(Boolean)
-              .map((line, idx) => ({ id: `${task.id}-chk-${idx}`, label: line, done: false }));
-          const checklist = checklistSource.length > 0
-            ? checklistSource.map((item) => ({ ...item, done: true, doneAt: (item as any).doneAt ?? timestamp }))
-            : [{ id: `${task.id}-chk-0`, label: 'Task completed', done: true, doneAt: timestamp }];
+          const checklistSource: any[] =
+            Array.isArray(task.checklist) && task.checklist.length > 0
+              ? task.checklist
+              : task.details
+                  .split('\n')
+                  .map((s) => s.trim())
+                  .filter(Boolean)
+                  .map((line, idx) => ({ id: `${task.id}-chk-${idx}`, label: line, done: false }));
+          const checklist =
+            checklistSource.length > 0
+              ? checklistSource.map((item) => ({
+                  ...item,
+                  done: true,
+                  doneAt: (item as any).doneAt ?? timestamp,
+                }))
+              : [
+                  {
+                    id: `${task.id}-chk-0`,
+                    label: 'Task completed',
+                    done: true,
+                    doneAt: timestamp,
+                  },
+                ];
           return { ...task, lane, checklist };
         }
         return { ...task, lane };
@@ -138,7 +169,10 @@ export function useBoardTasks(selectedEventId: string) {
       if (taskStrId.startsWith('board-task-')) {
         throw new Error('Please edit and save this new task first before moving it.');
       }
-      await moveBoardTask(selectedEventId, taskStrId, { newStatus: mapLaneToBackendStatus(lane), newOrder: 1 });
+      await moveBoardTask(selectedEventId, taskStrId, {
+        newStatus: mapLaneToBackendStatus(lane),
+        newOrder: 1,
+      });
     } catch (error) {
       setBoardTasks(previousTasksState);
       alert(error instanceof Error ? error.message : 'Failed to move task. Please try again.');
@@ -154,8 +188,15 @@ export function useBoardTasks(selectedEventId: string) {
       selectedTask?.lane === 'todo'
         ? selectedTask?.checklist?.length
           ? selectedTask.checklist
-          : (selectedTask?.details ?? '').split('\n').map((line) => line.trim()).filter(Boolean)
-              .map((line, index) => ({ id: `${selectedTask?.id ?? taskId}-chk-${index}`, label: line, done: false }))
+          : (selectedTask?.details ?? '')
+              .split('\n')
+              .map((line) => line.trim())
+              .filter(Boolean)
+              .map((line, index) => ({
+                id: `${selectedTask?.id ?? taskId}-chk-${index}`,
+                label: line,
+                done: false,
+              }))
         : (selectedTask?.checklist ?? []).map((item) => ({ ...item, doneAt: item.doneAt }))
     );
     setTaskActionMessage(`Editing ${selectedTask?.title || 'task'}.`);
@@ -170,7 +211,8 @@ export function useBoardTasks(selectedEventId: string) {
       .filter((item) => item.label.length > 0)
       .map((item) => ({ id: item.id, label: item.label, done: false }));
     const normalizedDetails = taskPreviewDetails.trim();
-    const finalDetails = normalizedDetails || normalizedChecklist.map((item) => item.label).join('\n');
+    const finalDetails =
+      normalizedDetails || normalizedChecklist.map((item) => item.label).join('\n');
     const payload = { title: taskPreviewTitle.trim(), description: finalDetails };
     try {
       let savedTask;
@@ -184,7 +226,13 @@ export function useBoardTasks(selectedEventId: string) {
       setBoardTasks((previousTasks) =>
         previousTasks.map((task) =>
           String(task.id) === String(selectedBoardTaskId)
-            ? { ...task, id: String(newId), title: payload.title, details: finalDetails, checklist: normalizedChecklist }
+            ? {
+                ...task,
+                id: String(newId),
+                title: payload.title,
+                details: finalDetails,
+                checklist: normalizedChecklist,
+              }
             : task
         )
       );
@@ -205,7 +253,9 @@ export function useBoardTasks(selectedEventId: string) {
       if (!taskStrId.startsWith('board-task-')) {
         await deleteBoardTask(selectedEventId, taskStrId);
       }
-      setBoardTasks((previousTasks) => previousTasks.filter((task) => String(task.id) !== taskStrId));
+      setBoardTasks((previousTasks) =>
+        previousTasks.filter((task) => String(task.id) !== taskStrId)
+      );
       setTaskCardMenuOpenFor(null);
       setTaskActionMessage(`Deleted ${targetTask?.title || 'task'} successfully.`);
       setTaskActionTone('error');
@@ -220,7 +270,9 @@ export function useBoardTasks(selectedEventId: string) {
     const targetTask = boardTasks.find((t) => String(t.id) === String(taskId));
     if (!targetTask || !Array.isArray(targetTask.checklist)) return;
     const updatedChecklist = targetTask.checklist.map((item) =>
-      item.id === itemId ? { ...item, done: !item.done, doneAt: !item.done ? timestamp : undefined } : item
+      item.id === itemId
+        ? { ...item, done: !item.done, doneAt: !item.done ? timestamp : undefined }
+        : item
     );
     const previousTasksState = [...boardTasks];
     setBoardTasks((previousTasks) =>
@@ -243,29 +295,63 @@ export function useBoardTasks(selectedEventId: string) {
     }
   };
 
-  const selectedBoardTask = boardTasks.find((task) => String(task.id) === String(selectedBoardTaskId)) ?? null;
+  const selectedBoardTask =
+    boardTasks.find((task) => String(task.id) === String(selectedBoardTaskId)) ?? null;
 
   return {
-    boardTasks, setBoardTasks,
-    isTaskPreviewOpen, setIsTaskPreviewOpen,
-    selectedBoardTaskId, setSelectedBoardTaskId,
+    boardTasks,
+    setBoardTasks,
+    isTaskPreviewOpen,
+    setIsTaskPreviewOpen,
+    selectedBoardTaskId,
+    setSelectedBoardTaskId,
     selectedBoardTask,
-    taskPreviewTitle, setTaskPreviewTitle,
-    taskPreviewDetails, setTaskPreviewDetails,
-    taskPreviewChecklist, setTaskPreviewChecklist,
-    taskActionMessage, setTaskActionMessage,
-    taskActionTone, setTaskActionTone,
-    taskCardMenuOpenFor, setTaskCardMenuOpenFor,
-    draggedTaskId, setDraggedTaskId,
-    handleDragTaskStart, handleDragTaskEnd, handleLaneDragOver, handleDropTaskToLane,
-    openTaskPreview, handleSaveTaskPreview, handleDeleteBoardTask, handleToggleBoardTaskChecklistItem,
-    loadTasks, handleAddEmptyTask: () => setBoardTasks(prev => [{ id: `board-task-${Date.now()}`, title: '', details: '', editorType: 'Text', lane: 'todo' }, ...prev]),
-    handleAddTodoChecklistItem: () => setTaskPreviewChecklist(prev => [...prev, { id: `todo-item-${Date.now()}`, label: '', done: false }]),
-    handleUpdateTodoChecklistItem: (itemId: string, label: string) => setTaskPreviewChecklist(prev => prev.map(i => i.id === itemId ? { ...i, label } : i)),
-    handleRemoveTodoChecklistItem: (itemId: string) => setTaskPreviewChecklist(prev => prev.filter(i => i.id !== itemId)),
+    taskPreviewTitle,
+    setTaskPreviewTitle,
+    taskPreviewDetails,
+    setTaskPreviewDetails,
+    taskPreviewChecklist,
+    setTaskPreviewChecklist,
+    taskActionMessage,
+    setTaskActionMessage,
+    taskActionTone,
+    setTaskActionTone,
+    taskCardMenuOpenFor,
+    setTaskCardMenuOpenFor,
+    draggedTaskId,
+    setDraggedTaskId,
+    handleDragTaskStart,
+    handleDragTaskEnd,
+    handleLaneDragOver,
+    handleDropTaskToLane,
+    openTaskPreview,
+    handleSaveTaskPreview,
+    handleDeleteBoardTask,
+    handleToggleBoardTaskChecklistItem,
+    loadTasks,
+    handleAddEmptyTask: () =>
+      setBoardTasks((prev) => [
+        {
+          id: `board-task-${Date.now()}`,
+          title: '',
+          details: '',
+          editorType: 'Text',
+          lane: 'todo',
+        },
+        ...prev,
+      ]),
+    handleAddTodoChecklistItem: () =>
+      setTaskPreviewChecklist((prev) => [
+        ...prev,
+        { id: `todo-item-${Date.now()}`, label: '', done: false },
+      ]),
+    handleUpdateTodoChecklistItem: (itemId: string, label: string) =>
+      setTaskPreviewChecklist((prev) => prev.map((i) => (i.id === itemId ? { ...i, label } : i))),
+    handleRemoveTodoChecklistItem: (itemId: string) =>
+      setTaskPreviewChecklist((prev) => prev.filter((i) => i.id !== itemId)),
     formatChecklistTimestamp: (value?: string) => {
       if (!value) return 'Pending';
       return new Date(value).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' });
-    }
+    },
   };
 }

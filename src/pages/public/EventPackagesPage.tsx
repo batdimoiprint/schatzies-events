@@ -1,10 +1,8 @@
-import { useRef, useState, useEffect } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useRef, useEffect } from 'react';
+import { useSearchParams, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { ChevronLeft, ChevronRight, ChevronUp, Sparkles, Flower2, Users } from 'lucide-react';
 import { PackageCard } from '@/components/PackageCard';
-import { PackageModal } from '@/components/PackageModal';
-import { InquiryForm } from '@/components/InquiryForm';
 import LoadingScreen from '@/components/ui/LoadingScreen';
 import ScrollReveal from '@/components/ui/ScrollReveal';
 import { weddingPackages, debutPackages } from '@/data/packages';
@@ -76,15 +74,10 @@ function PackageCarousel({
 }
 
 export default function EventPackagesPage() {
-  const [modal, setModal] = useState<{ packages: PackageWithModal[]; index: number } | null>(null);
-  const [inquiryOpen, setInquiryOpen] = useState(false);
-  const [selectedPackageData, setSelectedPackageData] = useState<{
-    packageId: number;
-    eventType: string;
-  } | null>(null);
   const weddingRef = useRef<HTMLDivElement>(null);
   const debutRef = useRef<HTMLDivElement>(null);
   const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
 
   // Auto-scroll to section based on query parameter
   useEffect(() => {
@@ -96,35 +89,24 @@ export default function EventPackagesPage() {
     }
   }, [searchParams]);
 
-
-
-  const handleInquireFromPackage = () => {
-    if (modal) {
-      const eventType = modal.packages === weddingPackages ? 'Wedding' : 'Debut';
-      const pkg = modal.packages[modal.index];
-      setSelectedPackageData({ packageId: pkg.id, eventType });
-      setInquiryOpen(true);
-    }
-  };
-
   return (
     <>
       <LoadingScreen />
       <div>
         {/* ── Section 1: Hero ── */}
-        <ScrollReveal>
+        <ScrollReveal variant="fade">
           <section
-            className="relative -mt-[88px] flex min-h-[60vh] flex-col overflow-hidden bg-cover bg-center bg-no-repeat sm:-mt-[110px] md:min-h-[70vh] lg:-mt-[173px] lg:min-h-screen"
+            className="relative -mt-[88px] flex min-h-[60vh] flex-col overflow-hidden bg-contain bg-center bg-no-repeat sm:-mt-[110px] md:min-h-[70vh] lg:-mt-[173px] lg:min-h-screen"
             style={{ backgroundImage: `url(${heroImage})` }}
           >
             {/* Overall white overlay to lighten the whole image */}
-            <div className="absolute inset-0 bg-white/30" />
+            <div className="absolute inset-0 bg-white/5" />
 
             {/* Stronger white wash at the top behind navbar */}
-            <div className="absolute top-0 left-0 right-0 h-[200px] sm:h-[260px] lg:h-[320px] bg-gradient-to-b from-white via-white/80 to-transparent z-[5]" />
+            <div className="absolute top-0 left-0 right-0 h-[300px] sm:h-[400px] lg:h-[500px] bg-gradient-to-b from-white via-white/70 via-white/30 to-transparent z-[5]" />
 
-            {/* Content centered with spacing to start below navbar */}
-            <div className="relative z-10 flex flex-col items-center px-4 pt-[180px] pb-[200px] text-center sm:px-6 sm:pt-[240px] sm:pb-[240px] lg:pt-[320px] lg:pb-[320px] animate-fade-in-up">
+            {/* Content centered in middle of section */}
+            <div className="relative z-10 flex h-full flex-col items-center justify-center px-4 py-[280px] text-center sm:px-6 sm:py-[360px] lg:py-[420px] animate-fade-in-up">
               <h1
                 className="font-heading text-[clamp(2.5rem,6vw,5rem)] font-bold leading-tight bg-gradient-to-r from-[#FF0066] via-[#FF0066] to-[#4A1053] text-transparent bg-clip-text animate-fade-in animation-delay-200"
                 style={{
@@ -143,15 +125,12 @@ export default function EventPackagesPage() {
                 first photo to your final dance.
               </p>
             </div>
-
-
           </section>
+        </ScrollReveal>
 
-          {/* ── Section 2: Wedding Packages ── */}
-          <div
-            ref={weddingRef}
-            className="relative -mt-[60px] sm:-mt-[90px] lg:-mt-[120px] z-10"
-          >
+        {/* ── Section 2: Wedding Packages ── */}
+        <ScrollReveal variant="up">
+          <div ref={weddingRef} className="relative -mt-[60px] sm:-mt-[90px] lg:-mt-[120px] z-10">
             {/* Textured SVG Wave at the top — sweeps into the hero */}
             <div className="relative w-full overflow-hidden leading-[0] z-20">
               <svg
@@ -161,8 +140,20 @@ export default function EventPackagesPage() {
                 xmlns="http://www.w3.org/2000/svg"
               >
                 <defs>
-                  <pattern id="satin-wave-pattern" patternUnits="userSpaceOnUse" width="1440" height="120">
-                    <image href={textureImage} x="0" y="0" width="1440" height="120" preserveAspectRatio="none" />
+                  <pattern
+                    id="satin-wave-pattern"
+                    patternUnits="userSpaceOnUse"
+                    width="1440"
+                    height="120"
+                  >
+                    <image
+                      href={textureImage}
+                      x="0"
+                      y="0"
+                      width="1440"
+                      height="120"
+                      preserveAspectRatio="none"
+                    />
                   </pattern>
                 </defs>
                 <path
@@ -229,13 +220,15 @@ export default function EventPackagesPage() {
               <div className="w-full">
                 <PackageCarousel
                   packages={weddingPackages}
-                  onView={(i) => setModal({ packages: weddingPackages, index: i })}
+                  onView={(i) => navigate(`/packages/wedding/${weddingPackages[i].id}`)}
                 />
               </div>
             </section>
           </div>
+        </ScrollReveal>
 
-          {/* ── Section 3: Debut Packages ── */}
+        {/* ── Section 3: Debut Packages ── */}
+        <ScrollReveal variant="up">
           <div ref={debutRef}>
             {/* Debut header with texture background */}
             <section
@@ -304,15 +297,17 @@ export default function EventPackagesPage() {
               <div className="w-full">
                 <PackageCarousel
                   packages={debutPackages}
-                  onView={(i) => setModal({ packages: debutPackages, index: i })}
+                  onView={(i) => navigate(`/packages/debut/${debutPackages[i].id}`)}
                 />
               </div>
             </section>
           </div>
+        </ScrollReveal>
 
-          {/* ── Section 4: Seamless Planning ── */}
+        {/* ── Section 4: Seamless Planning ── */}
+        <ScrollReveal variant="scale">
           <section className="relative overflow-hidden bg-white px-4 pb-16 pt-12 sm:px-6 sm:pt-16 sm:pb-20 lg:px-28 lg:pt-20 lg:pb-24">
-            <div className="text-center">
+            <ScrollReveal variant="up" className="text-center">
               <h2 className="font-heading text-[clamp(1.8rem,5vw,3.5rem)] font-bold leading-tight">
                 <span className="bg-gradient-to-r from-[#FF0066] to-[#4A1053] bg-clip-text text-transparent">
                   Seamless Planning,
@@ -324,7 +319,7 @@ export default function EventPackagesPage() {
               <p className="mt-3 text-[clamp(1rem,1.8vw,1.3rem)] font-bold font-sans text-[#4A1053] sm:mt-4">
                 Your Journey to a Flawless Celebration Starts Here
               </p>
-            </div>
+            </ScrollReveal>
 
             <div className="mx-auto mt-10 grid max-w-[80rem] grid-cols-1 gap-6 px-2 sm:mt-14 sm:grid-cols-3 sm:gap-8 sm:px-4 lg:mt-16 lg:gap-10">
               {[
@@ -346,7 +341,7 @@ export default function EventPackagesPage() {
               ].map(({ Icon, title, body }, index) => (
                 <div
                   key={title}
-                  className="flex flex-col items-center rounded-3xl bg-white p-8 text-center shadow-[0_2px_20px_rgba(0,0,0,0.08)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_8px_30px_rgba(0,0,0,0.12)] sm:hover:-translate-y-2 sm:p-10 lg:p-12 animate-fade-in-up"
+                  className="flex flex-col items-center rounded-3xl bg-white p-8 pb-12 text-center shadow-[0_8px_35px_rgba(0,0,0,0.15)] transition-all duration-300 hover:-translate-y-2 hover:shadow-[0_15px_45px_rgba(0,0,0,0.2)] sm:hover:-translate-y-3 sm:p-10 sm:pb-14 lg:p-12 lg:pb-16 animate-fade-in-up"
                   style={{ animationDelay: `${index * 150}ms` }}
                 >
                   <div className="flex h-16 w-16 items-center justify-center sm:h-20 sm:w-20 lg:h-24 lg:w-24">
@@ -377,26 +372,6 @@ export default function EventPackagesPage() {
           </section>
         </ScrollReveal>
       </div>
-
-      {/* ── Package detail modal ── */}
-      {modal && (
-        <PackageModal
-          packages={modal!.packages}
-          activeIndex={modal!.index}
-          onClose={() => setModal(null)}
-          onNavigate={(i) => setModal((prev) => (prev ? { ...prev, index: i } : null))}
-          onInquire={() => handleInquireFromPackage()}
-        />
-      )}
-
-      {/* ── Inquiry Form Modal ── */}
-      {inquiryOpen && (
-        <InquiryForm
-          onClose={() => setInquiryOpen(false)}
-          selectedPackageId={selectedPackageData?.packageId}
-          selectedEventType={selectedPackageData?.eventType}
-        />
-      )}
     </>
   );
 }

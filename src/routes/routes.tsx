@@ -6,6 +6,11 @@ import { OrganizerLayout } from '@/components/layouts/OrganizerLayout';
 import { ClientLayout } from '@/components/layouts/ClientLayout';
 import { LandingPage } from '@/pages/public/LandingPage';
 import EventPackagesPage from '@/pages/public/EventPackagesPage';
+import PackageDetailsPage from '@/pages/public/PackageDetailsPage';
+import GalleryPage from '@/pages/public/GalleryPage';
+import PrivacyPolicyPage from '@/pages/public/PrivacyPolicyPage';
+import TermsOfServicePage from '@/pages/public/TermsOfServicePage';
+import CookiePolicyPage from '@/pages/public/CookiePolicyPage';
 import { LoginPage } from '@/pages/public/LoginPage';
 import { ForgotPasswordPage } from '@/pages/public/ForgotPasswordPage';
 import { ForceResetPasswordPage } from '@/pages/public/ForceResetPasswordPage';
@@ -94,6 +99,26 @@ const router = createBrowserRouter(
         {
           path: 'event-packages',
           Component: EventPackagesPage,
+        },
+        {
+          path: 'packages/:eventType/:packageId',
+          Component: PackageDetailsPage,
+        },
+        {
+          path: 'gallery',
+          Component: GalleryPage,
+        },
+        {
+          path: 'privacy-policy',
+          Component: PrivacyPolicyPage,
+        },
+        {
+          path: 'terms-of-service',
+          Component: TermsOfServicePage,
+        },
+        {
+          path: 'cookie-policy',
+          Component: CookiePolicyPage,
         },
         {
           path: 'services',

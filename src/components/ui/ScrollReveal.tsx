@@ -5,6 +5,10 @@ interface ScrollRevealProps {
   className?: string;
   threshold?: number;
   rootMargin?: string;
+  /** Animation variant: 'up' (default), 'left', 'right', 'scale', 'fade' */
+  variant?: 'up' | 'left' | 'right' | 'scale' | 'fade';
+  /** Delay in ms before starting animation */
+  delay?: number;
 }
 
 export default function ScrollReveal({
@@ -12,6 +16,8 @@ export default function ScrollReveal({
   className = '',
   threshold = 0.12,
   rootMargin = '0px 0px -12% 0px',
+  variant = 'up',
+  delay = 0,
 }: ScrollRevealProps) {
   const ref = useRef<HTMLDivElement>(null);
   const [isVisible, setIsVisible] = useState(false);
@@ -40,7 +46,11 @@ export default function ScrollReveal({
   }, [threshold, rootMargin]);
 
   return (
-    <div ref={ref} className={`${className} scroll-reveal ${isVisible ? 'visible' : ''}`}>
+    <div
+      ref={ref}
+      className={`${className} scroll-reveal scroll-reveal--${variant} ${isVisible ? 'visible' : ''}`}
+      style={{ transitionDelay: delay ? `${delay}ms` : undefined }}
+    >
       {children}
     </div>
   );

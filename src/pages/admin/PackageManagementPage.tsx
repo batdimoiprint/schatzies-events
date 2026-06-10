@@ -22,7 +22,8 @@ export function PackageManagementPage() {
           </div>
           <h2 className="text-lg font-semibold text-[#2d1b3d]">Package Management</h2>
           <p className="mt-2 max-w-md text-sm text-[#7f7889]">
-            Manage your event packages here. Create new packages, update pricing, and configure package details.
+            Manage your event packages here. Create new packages, update pricing, and configure
+            package details.
           </p>
         </div>
       </div>

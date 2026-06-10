@@ -19,7 +19,10 @@ import type { PlannerTab } from '@/types/planner';
 
 export function AdminEventPlannerPage() {
   const { projectSlots, selectedEventId } = useEventData();
-  const { selectedEventDetails, eventAllocation, eventMeetings, overviewFlows } = useSelectedEvent(selectedEventId, projectSlots);
+  const { selectedEventDetails, eventAllocation, eventMeetings, overviewFlows } = useSelectedEvent(
+    selectedEventId,
+    projectSlots
+  );
   const boardTasks = useBoardTasks(selectedEventId);
   const notes = usePlannerNotes(selectedEventId);
   const vendors = useVendors(selectedEventId);
@@ -27,7 +30,9 @@ export function AdminEventPlannerPage() {
   const [activeTab, setActiveTab] = useState<PlannerTab>('overview');
 
   const selectedProject = useMemo(() => {
-    return projectSlots.find((p) => p.id === selectedEventId) ?? projectSlots[0] ?? { id: '', title: '' };
+    return (
+      projectSlots.find((p) => p.id === selectedEventId) ?? projectSlots[0] ?? { id: '', title: '' }
+    );
   }, [selectedEventId, projectSlots]);
 
   // Load initial data when event changes
@@ -101,12 +106,15 @@ export function AdminEventPlannerPage() {
               <FlowNotesBoard
                 selectedEventId={selectedEventId}
                 eventDate={selectedProject.rawStartDate || ''}
-                eventTime={selectedProject.eventTime || (selectedProject.rawStartDate?.includes('T') ? selectedProject.rawStartDate.split('T')[1].substring(0, 5) : undefined)}
+                eventTime={
+                  selectedProject.eventTime ||
+                  (selectedProject.rawStartDate?.includes('T')
+                    ? selectedProject.rawStartDate.split('T')[1].substring(0, 5)
+                    : undefined)
+                }
               />
             )}
-            {activeTab === 'costs' && (
-              <CostBreakdownTab selectedEventId={selectedEventId} />
-            )}
+            {activeTab === 'costs' && <CostBreakdownTab selectedEventId={selectedEventId} />}
           </div>
         </section>
       </div>

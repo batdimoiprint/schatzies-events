@@ -1,13 +1,11 @@
 // Replace with your actual services hero photo placed in public/Pictures/
-const heroImage = '/Pictures/services-hero.jpg';
+const heroImage = '/Pictures/Services.png';
 const textureImage = '/Pictures/texture.jpg';
 
 import { useState } from 'react';
 import LoadingScreen from '@/components/ui/LoadingScreen';
 import ScrollReveal from '@/components/ui/ScrollReveal';
 import { GalleryModal } from '@/components/GalleryModal';
-import { Button } from '@/components/ui/button';
-import { Camera } from 'lucide-react';
 
 /* ── Gallery Data ──────────────────────────────────────────── */
 const galleryData = [
@@ -245,13 +243,15 @@ const services = [
     Icon: CalendarIcon,
     id: 'event-planning',
     title: 'Event Planning and Coordination',
-    description: 'Assistance in organizing and managing your event from preparation to the actual day.',
+    description:
+      'Assistance in organizing and managing your event from preparation to the actual day.',
   },
   {
     Icon: VenueIcon,
     id: 'venue-styling',
     title: 'Elegant Venue Setup and Styling',
-    description: "Beautiful decorations and designs tailored to match your event's theme and style.",
+    description:
+      "Beautiful decorations and designs tailored to match your event's theme and style.",
   },
   {
     Icon: CateringIcon,
@@ -263,19 +263,22 @@ const services = [
     Icon: CameraIcon,
     id: 'photo-video',
     title: 'Photo and Video Coverage',
-    description: 'Professional coverage that beautifully captures every special moment of your event.',
+    description:
+      'Professional coverage that beautifully captures every special moment of your event.',
   },
   {
     Icon: CeilingIcon,
     id: 'ceiling-design',
     title: 'Ceiling Treatment and Venue Design',
-    description: 'Decorative ceiling setups that enhance the beauty and overall style of your venue.',
+    description:
+      'Decorative ceiling setups that enhance the beauty and overall style of your venue.',
   },
   {
     Icon: CoordinationIcon,
     id: 'full-coordination',
     title: 'Full Event Coordination',
-    description: 'A dedicated team that manages the program flow and ensures your event runs smoothly from start to finish.',
+    description:
+      'A dedicated team that manages the program flow and ensures your event runs smoothly from start to finish.',
   },
 ];
 
@@ -292,19 +295,19 @@ export default function ServicesPage() {
       <LoadingScreen />
 
       {/* ── Section 1: Hero ── */}
-      <ScrollReveal>
+      <ScrollReveal variant="fade">
         <section
-          className="relative -mt-[88px] flex min-h-[60vh] flex-col overflow-hidden bg-cover bg-center bg-no-repeat sm:-mt-[110px] md:min-h-[70vh] lg:-mt-[173px] lg:min-h-screen"
+          className="relative -mt-[88px] flex min-h-[60vh] flex-col overflow-hidden bg-contain bg-center bg-no-repeat sm:-mt-[110px] md:min-h-[70vh] lg:-mt-[173px] lg:min-h-screen"
           style={{ backgroundImage: `url(${heroImage})` }}
         >
           {/* Overall white overlay to lighten the whole image */}
-          <div className="absolute inset-0 bg-white/30" />
+          <div className="absolute inset-0 bg-white/10" />
 
           {/* Stronger white wash at the top behind navbar */}
-          <div className="absolute top-0 left-0 right-0 h-[200px] sm:h-[260px] lg:h-[320px] bg-gradient-to-b from-white via-white/80 to-transparent z-[5]" />
+          <div className="absolute top-0 left-0 right-0 h-[300px] sm:h-[400px] lg:h-[500px] bg-gradient-to-b from-white via-white/70 via-white/30 to-transparent z-[5]" />
 
-          {/* Content centered with spacing to start below navbar */}
-          <div className="relative z-10 flex flex-col items-center px-4 pt-[180px] pb-[200px] text-center sm:px-6 sm:pt-[240px] sm:pb-[240px] lg:pt-[320px] lg:pb-[320px] animate-fade-in-up">
+          {/* Content centered in middle of section */}
+          <div className="relative z-10 flex h-full flex-col items-center justify-center px-4 py-[280px] text-center sm:px-6 sm:py-[360px] lg:py-[420px] animate-fade-in-up">
             <h1
               className="font-heading text-[clamp(2rem,8vw,5rem)] font-bold leading-tight bg-gradient-to-r text-transparent bg-clip-text animate-fade-in"
               style={{
@@ -322,8 +325,10 @@ export default function ServicesPage() {
             </p>
           </div>
         </section>
+      </ScrollReveal>
 
-        {/* ── Section 2: Services Offered (texture bg) ── */}
+      {/* ── Section 2: Services Offered (texture bg) ── */}
+      <ScrollReveal variant="up">
         <div className="relative -mt-[60px] sm:-mt-[90px] lg:-mt-[120px] z-10">
           {/* Textured SVG Wave at the top — sweeps into the hero */}
           <div className="relative w-full overflow-hidden leading-[0] z-20">
@@ -334,8 +339,20 @@ export default function ServicesPage() {
               xmlns="http://www.w3.org/2000/svg"
             >
               <defs>
-                <pattern id="satin-wave-pattern" patternUnits="userSpaceOnUse" width="1440" height="120">
-                  <image href={textureImage} x="0" y="0" width="1440" height="120" preserveAspectRatio="none" />
+                <pattern
+                  id="satin-wave-pattern"
+                  patternUnits="userSpaceOnUse"
+                  width="1440"
+                  height="120"
+                >
+                  <image
+                    href={textureImage}
+                    x="0"
+                    y="0"
+                    width="1440"
+                    height="120"
+                    preserveAspectRatio="none"
+                  />
                 </pattern>
               </defs>
               <path
@@ -362,14 +379,15 @@ export default function ServicesPage() {
               <h2
                 className="font-heading text-[clamp(1.8rem,6vw,4rem)] font-bold leading-[1.1] tracking-tight text-transparent bg-clip-text animate-fade-in"
                 style={{
-                  backgroundImage: 'linear-gradient(to right, #FF0066 0%, #FF0066 46%, #FF0066 100%)',
+                  backgroundImage:
+                    'linear-gradient(to right, #FF0066 0%, #FF0066 46%, #FF0066 100%)',
                 }}
               >
                 Services Offered
               </h2>
               <p className="mx-auto mt-3 max-w-[45rem] text-[clamp(0.9rem,1.6vw,1.2rem)] leading-[1.6] font-sans text-gray-300 sm:mt-4 lg:max-w-[50rem] lg:text-[1.3rem] animate-slide-in-left animation-delay-200">
-                Schatzies Events offers complete event packages that include all the essential services
-                for weddings and debut celebrations.
+                Schatzies Events offers complete event packages that include all the essential
+                services for weddings and debut celebrations.
               </p>
             </div>
 
@@ -389,35 +407,32 @@ export default function ServicesPage() {
             </div>
           </section>
         </div>
+      </ScrollReveal>
 
-        {/* ── Section 3: Service Cards Grid ── */}
-        <section className="bg-white px-4 py-16 sm:px-6 sm:py-24 lg:px-20 lg:py-28">
-          <div className="mx-auto grid max-w-[80rem] grid-cols-1 gap-y-20 gap-x-8 sm:grid-cols-2 lg:grid-cols-3 lg:gap-x-12 lg:gap-y-24">
-            {services.map(({ Icon, id, title, description }, index) => (
-              <div
-                key={id}
-                onClick={() => setActiveGallery(id)}
-                className="group relative flex cursor-pointer flex-col items-center bg-white px-6 pb-10 pt-16 text-center shadow-[0_4px_25px_rgba(0,0,0,0.08)] transition-all duration-300 hover:-translate-y-2 hover:shadow-[0_12px_35px_rgba(0,0,0,0.12)] border border-gray-100 sm:px-8 sm:pb-12 animate-fade-in-up"
-                style={{ animationDelay: `${index * 100}ms` }}
-              >
+      {/* ── Section 3: Service Cards Grid ── */}
+      <section className="bg-white px-4 py-16 sm:px-6 sm:py-24 lg:px-20 lg:py-28">
+        <div className="mx-auto grid max-w-[80rem] grid-cols-1 gap-y-20 gap-x-8 sm:grid-cols-2 lg:grid-cols-3 lg:gap-x-12 lg:gap-y-24">
+          {services.map(({ Icon, id, title, description }, index) => (
+            <ScrollReveal key={id} variant="up" delay={index * 100}>
+              <div className="group relative flex flex-col items-center bg-white px-6 pb-32 pt-28 text-center shadow-[0_8px_35px_rgba(0,0,0,0.15)] transition-all duration-300 hover:-translate-y-2 hover:shadow-[0_15px_50px_rgba(0,0,0,0.2)] border border-gray-100 sm:px-8 sm:pb-36">
                 {/* Icon Circle overlapping the top */}
-                <div className="absolute -top-12 left-1/2 flex h-24 w-24 -translate-x-1/2 items-center justify-center rounded-full bg-white shadow-[0_4px_20px_rgba(0,0,0,0.1)] transition-transform duration-300 group-hover:scale-110">
+                <div className="absolute -top-14 left-1/2 flex h-28 w-28 -translate-x-1/2 items-center justify-center rounded-full bg-white shadow-[0_8px_30px_rgba(0,0,0,0.2)] transition-transform duration-300">
                   <div className="flex h-12 w-12 items-center justify-center text-[#FF0066] [&>svg]:!h-full [&>svg]:!w-full">
                     <Icon />
                   </div>
                 </div>
 
-                <h3 className="mt-2 text-[1.1rem] font-bold text-[#FF0066] sm:text-[1.2rem]">
+                <h3 className="mt-2 text-[1.3rem] font-bold text-[#FF0066] sm:text-[1.5rem] lg:text-[1.6rem]">
                   {title}
                 </h3>
-                <p className="mt-3 text-[0.9rem] leading-[1.6] text-gray-600 sm:text-[0.95rem]">
+                <p className="mt-3 text-[0.95rem] leading-[1.7] text-gray-600 sm:text-[1.05rem] lg:text-[1.1rem]">
                   {description}
                 </p>
               </div>
-            ))}
-          </div>
-        </section>
-      </ScrollReveal>
+            </ScrollReveal>
+          ))}
+        </div>
+      </section>
 
       {/* ── Gallery Modal ── */}
       {gallery && (
