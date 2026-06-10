@@ -2,7 +2,6 @@ import { useMemo, useState, useEffect } from 'react';
 import { useEventData } from '@/hooks/event-planner/useEventData';
 import { useSelectedEvent } from '@/hooks/event-planner/useSelectedEvent';
 import { useBoardTasks } from '@/hooks/event-planner/useBoardTasks';
-import { useChecklist } from '@/hooks/event-planner/useChecklist';
 import { usePlannerNotes } from '@/hooks/event-planner/usePlannerNotes';
 import { useVendors } from '@/hooks/event-planner/useVendors';
 import { PlannerHeader } from '@/components/organizer/planner/PlannerHeader';
@@ -11,28 +10,29 @@ import { FlowNotesBoard } from '@/components/organizer/planner/FlowNotesBoard';
 import { OverviewTab } from '@/components/organizer/planner/tabs/OverviewTab';
 import { TaskTab } from '@/components/organizer/planner/tabs/TaskTab';
 import { NotesTab } from '@/components/organizer/planner/tabs/NotesTab';
-import { ChecklistTab } from '@/components/organizer/planner/tabs/ChecklistTab';
 import { VendorsTab } from '@/components/organizer/planner/tabs/VendorsTab';
 import { CostBreakdownTab } from '@/components/organizer/planner/tabs/CostBreakdownTab';
-import { VenueTab } from '@/components/organizer/planner/tabs/VenueTab';
 import { NoteDialog } from '@/components/organizer/planner/dialogs/NoteDialog';
 import { TaskPreviewDialog } from '@/components/organizer/planner/dialogs/TaskPreviewDialog';
-import { ChecklistDeleteDialog } from '@/components/organizer/planner/dialogs/ChecklistDeleteDialog';
 import { AssignVendorDialog } from '@/components/organizer/planner/dialogs/AssignVendorDialog';
 import type { PlannerTab } from '@/types/planner';
 
 export function AdminEventPlannerPage() {
   const { projectSlots, selectedEventId } = useEventData();
-  const { selectedEventDetails, currentClientName, eventAllocation, eventMeetings, overviewFlows } = useSelectedEvent(selectedEventId, projectSlots);
+  const { selectedEventDetails, eventAllocation, eventMeetings, overviewFlows } = useSelectedEvent(
+    selectedEventId,
+    projectSlots
+  );
   const boardTasks = useBoardTasks(selectedEventId);
-  const checklist = useChecklist(selectedEventId);
   const notes = usePlannerNotes(selectedEventId);
   const vendors = useVendors(selectedEventId);
 
   const [activeTab, setActiveTab] = useState<PlannerTab>('overview');
 
   const selectedProject = useMemo(() => {
-    return projectSlots.find((p) => p.id === selectedEventId) ?? projectSlots[0] ?? { id: '', title: '' };
+    return (
+      projectSlots.find((p) => p.id === selectedEventId) ?? projectSlots[0] ?? { id: '', title: '' }
+    );
   }, [selectedEventId, projectSlots]);
 
   // Load initial data when event changes
@@ -45,7 +45,7 @@ export function AdminEventPlannerPage() {
     <div className="flex h-[calc(100vh-100px)] w-full max-w-full flex-col gap-4 overflow-hidden p-2 sm:p-4 lg:p-6 text-[#302c39]">
       <div className="flex min-h-0 flex-1 flex-col gap-4">
         <section className="flex min-h-0 flex-1 flex-col space-y-3">
-          <PlannerHeader selectedProject={selectedProject} currentClientName={currentClientName} />
+          <PlannerHeader selectedProject={selectedProject} />
           <PlannerTabs activeTab={activeTab} onTabChange={setActiveTab} />
           <div className="flex-1 overflow-y-auto rounded-xl pb-6 pr-1 [scrollbar-width:thin] scrollbar-thumb-[#ddd8e8] scrollbar-track-transparent">
             {activeTab === 'overview' && (
@@ -54,7 +54,6 @@ export function AdminEventPlannerPage() {
                 selectedEventDetails={selectedEventDetails}
                 eventAllocation={eventAllocation}
                 eventMeetings={eventMeetings}
-                checklistItems={checklist.checklistItems}
                 overviewFlows={overviewFlows}
               />
             )}
@@ -95,16 +94,6 @@ export function AdminEventPlannerPage() {
                 handleEditPlannerNote={notes.handleEditPlannerNote}
               />
             )}
-            {activeTab === 'checklist' && (
-              <ChecklistTab
-                checklistItems={checklist.checklistItems}
-                checklistProgress={checklist.checklistProgress}
-                handleToggleChecklistItem={checklist.handleToggleChecklistItem}
-                handleUpdateChecklistLabel={checklist.handleUpdateChecklistLabel}
-                openChecklistDeleteValidation={checklist.openChecklistDeleteValidation}
-                handleAddChecklistItem={checklist.handleAddChecklistItem}
-              />
-            )}
             {activeTab === 'vendors' && (
               <VendorsTab
                 eventVendors={vendors.eventVendors}
@@ -113,19 +102,19 @@ export function AdminEventPlannerPage() {
                 handleUnassignVendor={vendors.handleUnassignVendor}
               />
             )}
-            {activeTab === 'venue' && (
-              <VenueTab venue={selectedEventDetails?.venue || selectedProject.venue || ''} />
-            )}
             {activeTab === 'flow' && (
               <FlowNotesBoard
                 selectedEventId={selectedEventId}
                 eventDate={selectedProject.rawStartDate || ''}
-                eventTime={selectedProject.eventTime || (selectedProject.rawStartDate?.includes('T') ? selectedProject.rawStartDate.split('T')[1].substring(0, 5) : undefined)}
+                eventTime={
+                  selectedProject.eventTime ||
+                  (selectedProject.rawStartDate?.includes('T')
+                    ? selectedProject.rawStartDate.split('T')[1].substring(0, 5)
+                    : undefined)
+                }
               />
             )}
-            {activeTab === 'costs' && (
-              <CostBreakdownTab selectedEventId={selectedEventId} />
-            )}
+            {activeTab === 'costs' && <CostBreakdownTab selectedEventId={selectedEventId} />}
           </div>
         </section>
       </div>
@@ -161,16 +150,6 @@ export function AdminEventPlannerPage() {
         handleSaveTaskPreview={boardTasks.handleSaveTaskPreview}
         handleToggleBoardTaskChecklistItem={boardTasks.handleToggleBoardTaskChecklistItem}
         formatChecklistTimestamp={boardTasks.formatChecklistTimestamp}
-      />
-      <ChecklistDeleteDialog
-        isOpen={!!checklist.checklistDeleteTarget}
-        onOpenChange={(open) => { if (!open) checklist.closeChecklistDeleteValidation(); }}
-        checklistDeleteTarget={checklist.checklistDeleteTarget}
-        checklistDeleteValidation={checklist.checklistDeleteValidation}
-        setChecklistDeleteValidation={checklist.setChecklistDeleteValidation}
-        checklistDeleteError={checklist.checklistDeleteError}
-        handleSubmit={(e) => { e.preventDefault(); checklist.handleConfirmChecklistDelete(); }}
-        onClose={checklist.closeChecklistDeleteValidation}
       />
       <AssignVendorDialog
         isOpen={vendors.isAssignVendorModalOpen}

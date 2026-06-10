@@ -7,6 +7,8 @@ export const weddingPackages: PackageWithModal[] = [
     description:
       'Professionally styled reception backdrops, full photo and video coverage, and signature welcome treats like our Iced Coffee Bar.',
     image: '/Pictures/pkg-blooms.jpg',
+    detailsHeroImage: '/Pictures/pkg-blooms.jpg',
+    detailsImage: '/Pictures/_EventPics/BnC2.jpg',
     modal: {
       note: 'A comprehensive all-in-one collection designed for a seamless event experience. This package includes our full standard of service and professional coordination for up to 200 guests.',
       categories: [
@@ -55,6 +57,8 @@ export const weddingPackages: PackageWithModal[] = [
     description:
       'A cinematic experience featuring high-end storytelling through drone coverage, LED visuals, and a professional magnetic leatherette album.',
     image: '/Pictures/pkg-fascinating.jpg',
+    detailsHeroImage: '/Pictures/pkg-deluxe.jpg',
+    detailsImage: '/Pictures/_EventPics/V2.jpg',
     modal: {
       note: 'A premium visual-focused collection designed for cinematic storytelling. This package includes our full standard of service and professional coordination for up to 200 guests.',
       categories: [
@@ -107,6 +111,8 @@ export const weddingPackages: PackageWithModal[] = [
     description:
       'An enchanted atmosphere brought to life with signature fairy-light dance floors, entrance tunnels, and immersive overhead ceiling treatments.',
     image: '/Pictures/pkg-windy.jpg',
+    detailsHeroImage: '/Pictures/pkg-deluxe.jpg',
+    detailsImage: '/Pictures/_EventPics/EPC2.jpg',
     modal: {
       note: 'An immersive atmosphere-focused collection designed for a magical, light-filled experience. This package includes our full standard of service and professional coordination for up to 200 guests.',
       categories: [
@@ -159,6 +165,8 @@ export const weddingPackages: PackageWithModal[] = [
     description:
       'Sophisticated luxury defined by premium guest experiences, featuring a chauffeured Mercedes Benz and a free-flowing cocktail mobile bar.',
     image: '/Pictures/pkg-deluxe.jpg',
+    detailsHeroImage: '/Pictures/pkg-deluxe.jpg',
+    detailsImage: '/Pictures/_EventPics/FEC2.jpg',
     modal: {
       note: 'A high-end hospitality collection designed for a refined and sophisticated celebration. This package includes our full standard of service and professional coordination for up to 200 guests.',
       categories: [
@@ -211,6 +219,8 @@ export const weddingPackages: PackageWithModal[] = [
     description:
       'The ultimate luxury wedding experience with white-glove service and exclusive VIP features.',
     image: '/Pictures/pkg-grandezza.jpg',
+    detailsHeroImage: '/Pictures/pkg-fascinating.jpg',
+    detailsImage: '/Pictures/_EventPics/C2.jpg',
     modal: {
       note: 'Our most premium collection designed for the most discerning couples. This ultra-luxury package includes concierge-level service and professional coordination for up to 300+ guests.',
       categories: [
@@ -266,6 +276,8 @@ export const debutPackages: PackageWithModal[] = [
     description:
       'Professionally styled reception backdrops, full photo and video coverage, and signature welcome treats.',
     image: '/Pictures/hero-1.jpg',
+    detailsHeroImage: '/Pictures/_EventPics/PC.jpg',
+    detailsImage: '/Pictures/_EventPics/PC2.jpg',
     modal: {
       note: 'A chic and stylish collection designed to handle your traditions with professional grace. This package includes our full standard of service and professional coordination for up to 200 guests.',
       categories: [
@@ -318,6 +330,8 @@ export const debutPackages: PackageWithModal[] = [
     description:
       'A glamorous experience featuring LED visuals, drone coverage, and premium photography services for all angles.',
     image: '/Pictures/hero-4.jpg',
+    detailsHeroImage: '/Pictures/_EventPics/BnC3.jpg',
+    detailsImage: '/Pictures/_EventPics/BnC4.jpg',
     modal: {
       note: 'A premium visual-focused collection designed for stunning imagery. This package includes our full standard of service and professional coordination for up to 200 guests.',
       categories: [
@@ -370,6 +384,8 @@ export const debutPackages: PackageWithModal[] = [
     description:
       'An enchanted gathering with fairy-light installations, premium styling, and immersive lighting designs.',
     image: '/Pictures/hero-5.jpg',
+    detailsHeroImage: '/Pictures/_EventPics/V3.jpg',
+    detailsImage: '/Pictures/_EventPics/V4.jpg',
     modal: {
       note: 'An immersive atmosphere-focused collection designed for a magical experience. This package includes our full standard of service and professional coordination for up to 200 guests.',
       categories: [
@@ -422,6 +438,8 @@ export const debutPackages: PackageWithModal[] = [
     description:
       'Premium luxury debut with Mercedes transportation, exclusive bar service, and high-definition visuals.',
     image: '/Pictures/hero-7.jpg',
+    detailsHeroImage: '/Pictures/_EventPics/EPC3.jpg',
+    detailsImage: '/Pictures/_EventPics/EPC4.jpg',
     modal: {
       note: 'A high-end hospitality collection designed for a refined celebration. This package includes our full standard of service and professional coordination for up to 200 guests.',
       categories: [
@@ -474,6 +492,8 @@ export const debutPackages: PackageWithModal[] = [
     description:
       'The ultimate luxury debut collection with premium everything - VIP service, premium bar, and luxury touches.',
     image: '/Pictures/hero-11.jpg',
+    detailsHeroImage: '/Pictures/_EventPics/PC3.jpg',
+    detailsImage: '/Pictures/_EventPics/PC4.jpg',
     modal: {
       note: 'Our most premium debut collection designed for the most discerning debutantes. This ultra-luxury package includes concierge-level service and professional coordination for up to 300+ guests.',
       categories: [

@@ -6,14 +6,17 @@ interface VenueTabProps {
 }
 
 export function VenueTab({ venue }: VenueTabProps) {
-  const isVenueSet = venue && !['', '-', '–', '—', 'n/a', 'tba'].includes(venue.trim().toLowerCase());
+  const isVenueSet =
+    venue && !['', '-', '–', '—', 'n/a', 'tba'].includes(venue.trim().toLowerCase());
 
   return (
     <section className="space-y-6 pb-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 rounded-2xl border border-[#eadfec] bg-white p-4 shadow-sm">
         <div>
           <h3 className="text-lg font-black tracking-tight text-[#1f1f21]">Event Venue</h3>
-          <p className="text-xs font-semibold text-[#6e687d]">Details about the location of the event</p>
+          <p className="text-xs font-semibold text-[#6e687d]">
+            Details about the location of the event
+          </p>
         </div>
       </div>
 
@@ -24,7 +27,9 @@ export function VenueTab({ venue }: VenueTabProps) {
               V
             </span>
             <div>
-              <p className="text-sm font-black uppercase tracking-widest text-[#f39c12]">Venue Location</p>
+              <p className="text-sm font-black uppercase tracking-widest text-[#f39c12]">
+                Venue Location
+              </p>
             </div>
           </div>
         </div>

@@ -78,8 +78,6 @@ function getStatusOption(status: string) {
   return STATUS_OPTIONS[0];
 }
 
-
-
 export function EventManagerPage() {
   const outletContext = useOutletContext<OrganizerLayoutOutletContext | undefined>();
   const navigate = useNavigate();
@@ -376,125 +374,129 @@ export function EventManagerPage() {
               {paginatedEvents.map((event) => {
                 const isMissingDateTime = !event.startDate || !event.startTime || !event.endTime;
                 return (
-                <TableRow
-                  key={event.id}
-                  onClick={() => {
-                    setSelectedEventId(event.id);
-                    setSelectedEventForDetails(event);
-                    setIsEventDetailsModalOpen(true);
-                  }}
-                  className={`group transition-all cursor-pointer border-b border-[#f6f4f9] ${
-                    isMissingDateTime
-                      ? 'bg-[#fff5f5] hover:bg-[#ffebeb] border-l-4 border-l-red-500 shadow-sm'
-                      : selectedEventId === event.id
-                        ? 'bg-[#fdf2f8] border-l-4 border-l-[#df1b8b] shadow-sm'
-                        : 'hover:bg-[#faf9fc] border-l-4 border-l-transparent'
-                  }`}
-                >
-                  <TableCell className="py-4 font-bold text-[#5c546a]">
-                    <div className="flex items-center gap-2">
-                      {event.title}
-                      {isMissingDateTime && (
-                        <span className="inline-flex items-center rounded-full bg-red-100 px-1.5 py-0.5 text-[9px] font-bold text-red-600 uppercase tracking-wider">
-                          Action Required
+                  <TableRow
+                    key={event.id}
+                    onClick={() => {
+                      setSelectedEventId(event.id);
+                      setSelectedEventForDetails(event);
+                      setIsEventDetailsModalOpen(true);
+                    }}
+                    className={`group transition-all cursor-pointer border-b border-[#f6f4f9] ${
+                      isMissingDateTime
+                        ? 'bg-[#fff5f5] hover:bg-[#ffebeb] border-l-4 border-l-red-500 shadow-sm'
+                        : selectedEventId === event.id
+                          ? 'bg-[#fdf2f8] border-l-4 border-l-[#df1b8b] shadow-sm'
+                          : 'hover:bg-[#faf9fc] border-l-4 border-l-transparent'
+                    }`}
+                  >
+                    <TableCell className="py-4 font-bold text-[#5c546a]">
+                      <div className="flex items-center gap-2">
+                        {event.title}
+                        {isMissingDateTime && (
+                          <span className="inline-flex items-center rounded-full bg-red-100 px-1.5 py-0.5 text-[9px] font-bold text-red-600 uppercase tracking-wider">
+                            Action Required
+                          </span>
+                        )}
+                      </div>
+                    </TableCell>
+                    <TableCell className="py-4 font-semibold text-[#5c546a]">
+                      {event.date}
+                    </TableCell>
+                    <TableCell className="py-4 font-semibold text-[#5c546a] hidden md:table-cell">
+                      {event.client}
+                    </TableCell>
+                    <TableCell className="py-4 font-semibold text-[#5c546a] hidden md:table-cell">
+                      {event.type}
+                    </TableCell>
+                    <TableCell className="py-4 font-semibold text-[#5c546a] hidden md:table-cell">
+                      {event.package}
+                    </TableCell>
+                    <TableCell className="py-4 font-semibold text-[#5c546a] hidden md:table-cell">
+                      {event.venue &&
+                      !['', '-', '–', '—', 'n/a', 'tba'].includes(
+                        event.venue.trim().toLowerCase()
+                      ) ? (
+                        event.venue
+                      ) : (
+                        <span className="font-extrabold text-red-600 uppercase tracking-tight">
+                          Venue Required
                         </span>
                       )}
-                    </div>
-                  </TableCell>
-                  <TableCell className="py-4 font-semibold text-[#5c546a]">{event.date}</TableCell>
-                  <TableCell className="py-4 font-semibold text-[#5c546a] hidden md:table-cell">
-                    {event.client}
-                  </TableCell>
-                  <TableCell className="py-4 font-semibold text-[#5c546a] hidden md:table-cell">
-                    {event.type}
-                  </TableCell>
-                  <TableCell className="py-4 font-semibold text-[#5c546a] hidden md:table-cell">
-                    {event.package}
-                  </TableCell>
-                  <TableCell className="py-4 font-semibold text-[#5c546a] hidden md:table-cell">
-                    {event.venue &&
-                    !['', '-', '–', '—', 'n/a', 'tba'].includes(
-                      event.venue.trim().toLowerCase()
-                    ) ? (
-                      event.venue
-                    ) : (
-                      <span className="font-extrabold text-red-600 uppercase tracking-tight">
-                        Venue Required
-                      </span>
-                    )}
-                  </TableCell>
-                  <TableCell className="py-4 hidden md:table-cell">
-                    <div className="relative">
-                      <button
-                        ref={(el) => {
-                          if (el && statusDropdownEventId === event.id) {
-                            statusButtonRef.current = el;
-                          }
-                        }}
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          if (statusDropdownEventId === event.id) {
-                            setStatusDropdownEventId('');
-                          } else {
-                            const rect = e.currentTarget.getBoundingClientRect();
-                            setDropdownPosition({
-                              top: rect.bottom + 4,
-                              left: rect.right - 160,
-                            });
-                            setStatusDropdownEventId(event.id);
-                          }
-                        }}
-                        disabled={updateEventMutation.isPending}
-                        className={`inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-[10px] font-black tracking-wide transition-all hover:ring-2 hover:ring-[#df1b8b]/20 disabled:opacity-50 ${getStatusOption(event.status).bg} ${getStatusOption(event.status).text}`}
-                      >
-                        <span
-                          className={`h-1.5 w-1.5 rounded-full ${getStatusOption(event.status).dot}`}
-                        ></span>
-                        {getStatusOption(event.status).label.toUpperCase()}
-                        <svg
-                          width="8"
-                          height="8"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth="3"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
+                    </TableCell>
+                    <TableCell className="py-4 hidden md:table-cell">
+                      <div className="relative">
+                        <button
+                          ref={(el) => {
+                            if (el && statusDropdownEventId === event.id) {
+                              statusButtonRef.current = el;
+                            }
+                          }}
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            if (statusDropdownEventId === event.id) {
+                              setStatusDropdownEventId('');
+                            } else {
+                              const rect = e.currentTarget.getBoundingClientRect();
+                              setDropdownPosition({
+                                top: rect.bottom + 4,
+                                left: rect.right - 160,
+                              });
+                              setStatusDropdownEventId(event.id);
+                            }
+                          }}
+                          disabled={updateEventMutation.isPending}
+                          className={`inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-[10px] font-black tracking-wide transition-all hover:ring-2 hover:ring-[#df1b8b]/20 disabled:opacity-50 ${getStatusOption(event.status).bg} ${getStatusOption(event.status).text}`}
                         >
-                          <path d="m6 9 6 6 6-6" />
-                        </svg>
-                      </button>
-                    </div>
-                  </TableCell>
-                  <TableCell className="py-4 font-semibold text-[#8f879f] hidden md:table-cell">
-                    {event.createdAt
-                      ? new Date(event.createdAt).toLocaleDateString('en-US', {
-                          month: 'short',
-                          day: 'numeric',
-                          year: 'numeric',
-                        })
-                      : '-'}
-                  </TableCell>
-                  <TableCell className="py-4 hidden md:table-cell">
-                    <div className="flex items-center gap-1.5">
-                      <button
-                        type="button"
-                        title="View Planner"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          const basePath = isAdmin ? '/admin/event-planner' : '/organizer/event-planner';
-                          navigate(`${basePath}?eventId=${event.id}`);
-                        }}
-                        className="inline-flex items-center gap-1 rounded-md px-2.5 py-1.5 text-[10px] font-bold text-purple-700 bg-purple-50 hover:bg-purple-100 transition-colors"
-                      >
-                        <Eye className="h-3 w-3" />
-                        Planner
-                      </button>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              );
+                          <span
+                            className={`h-1.5 w-1.5 rounded-full ${getStatusOption(event.status).dot}`}
+                          ></span>
+                          {getStatusOption(event.status).label.toUpperCase()}
+                          <svg
+                            width="8"
+                            height="8"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="3"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          >
+                            <path d="m6 9 6 6 6-6" />
+                          </svg>
+                        </button>
+                      </div>
+                    </TableCell>
+                    <TableCell className="py-4 font-semibold text-[#8f879f] hidden md:table-cell">
+                      {event.createdAt
+                        ? new Date(event.createdAt).toLocaleDateString('en-US', {
+                            month: 'short',
+                            day: 'numeric',
+                            year: 'numeric',
+                          })
+                        : '-'}
+                    </TableCell>
+                    <TableCell className="py-4 hidden md:table-cell">
+                      <div className="flex items-center gap-1.5">
+                        <button
+                          type="button"
+                          title="View Planner"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            const basePath = isAdmin
+                              ? '/admin/event-planner'
+                              : '/organizer/event-planner';
+                            navigate(`${basePath}?eventId=${event.id}`);
+                          }}
+                          className="inline-flex items-center gap-1.5 rounded-md px-4 py-2 text-xs font-bold text-white bg-gradient-to-r from-[#f34da7] to-[#8f1fd1] hover:opacity-90 shadow-sm transition-opacity"
+                        >
+                          <Eye className="h-4 w-4" />
+                          Planner
+                        </button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                );
               })}
               {paginatedEvents.length === 0 && (
                 <TableRow>
@@ -577,52 +579,50 @@ export function EventManagerPage() {
       </div>
 
       {/* Fixed-position status dropdown portal */}
-      {statusDropdownEventId && (() => {
-        const dropdownEvent = paginatedEvents.find(e => e.id === statusDropdownEventId);
-        if (!dropdownEvent) return null;
-        return (
-          <>
-            <div
-              className="fixed inset-0 z-[999]"
-              onClick={() => setStatusDropdownEventId('')}
-            />
-            <div
-              className="fixed z-[1000] w-40 overflow-hidden rounded-xl border border-[#f1eef5] bg-white py-1 shadow-xl animate-in fade-in zoom-in-95"
-              style={{ top: dropdownPosition.top, left: dropdownPosition.left }}
-              onClick={(e) => e.stopPropagation()}
-            >
-              {STATUS_OPTIONS.map((opt) => (
-                <button
-                  key={opt.value}
-                  type="button"
-                  onClick={() => handleInlineStatusChange(dropdownEvent.id, opt.value)}
-                  className={`flex w-full items-center gap-2 px-4 py-2.5 text-left text-xs font-bold transition-colors hover:bg-[#faf9fc] hover:text-[#df1b8b] ${
-                    getStatusOption(dropdownEvent.status).value === opt.value
-                      ? 'text-[#df1b8b] bg-[#fdf2f8]'
-                      : 'text-[#5c546a]'
-                  }`}
-                >
-                  <span className={`h-1.5 w-1.5 rounded-full ${opt.dot}`}></span>
-                  {opt.label}
-                  {getStatusOption(dropdownEvent.status).value === opt.value && (
-                    <svg
-                      className="ml-auto h-3 w-3"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="3"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    >
-                      <path d="M20 6 9 17l-5-5" />
-                    </svg>
-                  )}
-                </button>
-              ))}
-            </div>
-          </>
-        );
-      })()}
+      {statusDropdownEventId &&
+        (() => {
+          const dropdownEvent = paginatedEvents.find((e) => e.id === statusDropdownEventId);
+          if (!dropdownEvent) return null;
+          return (
+            <>
+              <div className="fixed inset-0 z-[999]" onClick={() => setStatusDropdownEventId('')} />
+              <div
+                className="fixed z-[1000] w-40 overflow-hidden rounded-xl border border-[#f1eef5] bg-white py-1 shadow-xl animate-in fade-in zoom-in-95"
+                style={{ top: dropdownPosition.top, left: dropdownPosition.left }}
+                onClick={(e) => e.stopPropagation()}
+              >
+                {STATUS_OPTIONS.map((opt) => (
+                  <button
+                    key={opt.value}
+                    type="button"
+                    onClick={() => handleInlineStatusChange(dropdownEvent.id, opt.value)}
+                    className={`flex w-full items-center gap-2 px-4 py-2.5 text-left text-xs font-bold transition-colors hover:bg-[#faf9fc] hover:text-[#df1b8b] ${
+                      getStatusOption(dropdownEvent.status).value === opt.value
+                        ? 'text-[#df1b8b] bg-[#fdf2f8]'
+                        : 'text-[#5c546a]'
+                    }`}
+                  >
+                    <span className={`h-1.5 w-1.5 rounded-full ${opt.dot}`}></span>
+                    {opt.label}
+                    {getStatusOption(dropdownEvent.status).value === opt.value && (
+                      <svg
+                        className="ml-auto h-3 w-3"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="3"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      >
+                        <path d="M20 6 9 17l-5-5" />
+                      </svg>
+                    )}
+                  </button>
+                ))}
+              </div>
+            </>
+          );
+        })()}
 
       {/* Event Details Modal */}
       {selectedEventForDetails && (

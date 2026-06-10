@@ -165,7 +165,9 @@ export function EventDetailsModal({
   const [downpaymentError, setDownpaymentError] = useState<string>('');
 
   // Venue vendors state
-  const [venueVendors, setVenueVendors] = useState<{ id: string; name: string; price: number | null }[]>([]);
+  const [venueVendors, setVenueVendors] = useState<
+    { id: string; name: string; price: number | null }[]
+  >([]);
   const [isLoadingVenues, setIsLoadingVenues] = useState(false);
   const [isSavingVenue, setIsSavingVenue] = useState(false);
 
@@ -211,11 +213,29 @@ export function EventDetailsModal({
           };
           processData(data);
           const mapped = flatArray.map((item: any) => {
-            const fName = String(item.firstName || item.first_name || item.guestfirstName || '').replace(/undefined/gi, '').trim();
-            const lName = String(item.lastName || item.last_name || item.guestlastName || '').replace(/undefined/gi, '').trim();
-            const statusStr = String(item.status || '').trim().toUpperCase();
-            const isAttending = item.isScanned === true || item.isScanned === 'true' || statusStr === 'ATTENDING' || statusStr === 'CONFIRMED';
-            return { id: item.id || item.guestId || item.SK || Math.random().toString(), firstName: fName || 'Guest', lastName: lName, isScanned: isAttending, scannedAt: item.updatedAt || item.scannedAt || item.createdAt || '', contactNumber: item.contactNumber || item.contact_number || '', message: item.message || '' };
+            const fName = String(item.firstName || item.first_name || item.guestfirstName || '')
+              .replace(/undefined/gi, '')
+              .trim();
+            const lName = String(item.lastName || item.last_name || item.guestlastName || '')
+              .replace(/undefined/gi, '')
+              .trim();
+            const statusStr = String(item.status || '')
+              .trim()
+              .toUpperCase();
+            const isAttending =
+              item.isScanned === true ||
+              item.isScanned === 'true' ||
+              statusStr === 'ATTENDING' ||
+              statusStr === 'CONFIRMED';
+            return {
+              id: item.id || item.guestId || item.SK || Math.random().toString(),
+              firstName: fName || 'Guest',
+              lastName: lName,
+              isScanned: isAttending,
+              scannedAt: item.updatedAt || item.scannedAt || item.createdAt || '',
+              contactNumber: item.contactNumber || item.contact_number || '',
+              message: item.message || '',
+            };
           });
           setRsvpGuests(mapped);
         })
@@ -226,8 +246,13 @@ export function EventDetailsModal({
       setIsLoadingVenues(true);
       getVendors()
         .then((all) => {
-          const venues = all.filter(v => v.serviceType.toLowerCase() === 'venue' && v.name && v.name !== 'Unnamed vendor').map(v => ({ id: v.id, name: v.name, price: v.price }));
-          setVenueVendors(Array.from(new Map(venues.map(v => [v.name, v])).values()));
+          const venues = all
+            .filter(
+              (v) =>
+                v.serviceType.toLowerCase() === 'venue' && v.name && v.name !== 'Unnamed vendor'
+            )
+            .map((v) => ({ id: v.id, name: v.name, price: v.price }));
+          setVenueVendors(Array.from(new Map(venues.map((v) => [v.name, v])).values()));
         })
         .catch(() => setVenueVendors([]))
         .finally(() => setIsLoadingVenues(false));
@@ -259,14 +284,17 @@ export function EventDetailsModal({
   return (
     <div className="fixed inset-0 z-1000 flex min-h-full items-center justify-center bg-[#1a1423]/60 backdrop-blur-md p-4 overflow-auto">
       <div className="relative w-full max-w-5xl animate-in zoom-in-95 fade-in rounded-3xl bg-white shadow-2xl max-h-[90vh] overflow-y-auto">
-
         {/* ──── Header with Actions ──── */}
         <div className="sticky top-0 z-10 bg-white/95 backdrop-blur-sm border-b border-[#f1eef5] px-8 py-4 rounded-t-3xl">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <h2 className="text-2xl font-black text-[#2e2837]">Event Details</h2>
-              <Badge className={`${statusCfg.bg} ${statusCfg.text} text-[10px] font-black tracking-wide px-2.5 py-1 shadow-none`}>
-                <span className={`inline-block h-1.5 w-1.5 rounded-full mr-1.5 ${statusCfg.dot}`}></span>
+              <Badge
+                className={`${statusCfg.bg} ${statusCfg.text} text-[10px] font-black tracking-wide px-2.5 py-1 shadow-none`}
+              >
+                <span
+                  className={`inline-block h-1.5 w-1.5 rounded-full mr-1.5 ${statusCfg.dot}`}
+                ></span>
                 {statusCfg.label}
               </Badge>
             </div>
@@ -276,27 +304,69 @@ export function EventDetailsModal({
                   {showDeleteConfirm ? (
                     <div className="flex items-center gap-2">
                       <span className="text-xs font-bold text-[#c5221f]">Delete?</span>
-                      <Button type="button" size="sm" onClick={() => void handleDelete()} disabled={isDeleting} className="h-7 bg-[#c5221f] px-3 text-[10px] font-bold text-white hover:bg-[#a31b18]">
+                      <Button
+                        type="button"
+                        size="sm"
+                        onClick={() => void handleDelete()}
+                        disabled={isDeleting}
+                        className="h-7 bg-[#c5221f] px-3 text-[10px] font-bold text-white hover:bg-[#a31b18]"
+                      >
                         {isDeleting ? 'Deleting...' : 'Yes'}
                       </Button>
-                      <Button type="button" size="sm" variant="ghost" onClick={() => setShowDeleteConfirm(false)} disabled={isDeleting} className="h-7 px-3 text-[10px] font-bold text-[#696373]">
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => setShowDeleteConfirm(false)}
+                        disabled={isDeleting}
+                        className="h-7 px-3 text-[10px] font-bold text-[#696373]"
+                      >
                         No
                       </Button>
                     </div>
                   ) : (
-                    <Button type="button" variant="ghost" size="sm" onClick={() => setShowDeleteConfirm(true)} disabled={isUpdating} className="h-8 text-xs font-bold text-[#c5221f] hover:bg-[#fce8e6]">
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setShowDeleteConfirm(true)}
+                      disabled={isUpdating}
+                      className="h-8 text-xs font-bold text-[#c5221f] hover:bg-[#fce8e6]"
+                    >
                       <Trash2 className="mr-1 h-3.5 w-3.5" /> Delete
                     </Button>
                   )}
                 </>
               )}
-              <Button type="button" onClick={onClose} disabled={isUpdating} variant="outline" className="h-8 px-4 text-xs font-bold text-[#696373] border-[#e1d5eb]">
+              <Button
+                type="button"
+                onClick={onClose}
+                disabled={isUpdating}
+                variant="outline"
+                className="h-8 px-4 text-xs font-bold text-[#696373] border-[#e1d5eb]"
+              >
                 Cancel
               </Button>
-              <Button type="submit" form="event-details-form" disabled={isUpdating} className="h-8 bg-linear-to-r from-[#df1b8b] to-[#9f1baf] px-5 text-xs font-bold text-white shadow-sm disabled:opacity-50">
-                {isUpdating ? <><Loader2 className="mr-1 h-3.5 w-3.5 animate-spin" /> Updating...</> : 'Update Event'}
+              <Button
+                type="submit"
+                form="event-details-form"
+                disabled={isUpdating}
+                className="h-8 bg-linear-to-r from-[#df1b8b] to-[#9f1baf] px-5 text-xs font-bold text-white shadow-sm disabled:opacity-50"
+              >
+                {isUpdating ? (
+                  <>
+                    <Loader2 className="mr-1 h-3.5 w-3.5 animate-spin" /> Updating...
+                  </>
+                ) : (
+                  'Update Event'
+                )}
               </Button>
-              <button type="button" onClick={onClose} disabled={isUpdating || isDeleting} className="text-[#a69eb5] hover:text-[#df1b8b] transition-colors disabled:opacity-50 ml-1">
+              <button
+                type="button"
+                onClick={onClose}
+                disabled={isUpdating || isDeleting}
+                className="text-[#a69eb5] hover:text-[#df1b8b] transition-colors disabled:opacity-50 ml-1"
+              >
                 <X className="size-5" />
               </button>
             </div>
@@ -304,7 +374,6 @@ export function EventDetailsModal({
         </div>
 
         <div className="px-8 pt-6 pb-0">
-
           {/* ──── Info Cards ──── */}
           <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mt-4 mb-6">
             <div className="rounded-xl border border-[#f1eef5] bg-[#faf9fc] px-3 py-3">
@@ -327,10 +396,13 @@ export function EventDetailsModal({
               </span>
               <p className="text-sm font-bold text-[#2e2837] truncate">{event.date}</p>
             </div>
-            <div className={`rounded-xl border px-3 py-3 ${isEditingEventPrice
-                ? 'border-[#df1b8b]/30 bg-[#fdf2f8]'
-                : 'border-[#f1eef5] bg-[#faf9fc]'
-              }`}>
+            <div
+              className={`rounded-xl border px-3 py-3 ${
+                isEditingEventPrice
+                  ? 'border-[#df1b8b]/30 bg-[#fdf2f8]'
+                  : 'border-[#f1eef5] bg-[#faf9fc]'
+              }`}
+            >
               <div className="flex items-center justify-between mb-1">
                 <span className="text-[10px] font-black uppercase tracking-widest text-[#8b839c]">
                   Event Price
@@ -379,9 +451,25 @@ export function EventDetailsModal({
                       title="Save price"
                     >
                       {isSavingEventPrice ? (
-                        <svg className="animate-spin size-3.5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        <svg
+                          className="animate-spin size-3.5"
+                          xmlns="http://www.w3.org/2000/svg"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                        >
+                          <circle
+                            className="opacity-25"
+                            cx="12"
+                            cy="12"
+                            r="10"
+                            stroke="currentColor"
+                            strokeWidth="4"
+                          ></circle>
+                          <path
+                            className="opacity-75"
+                            fill="currentColor"
+                            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                          ></path>
                         </svg>
                       ) : (
                         <Check className="size-3.5" />
@@ -414,16 +502,21 @@ export function EventDetailsModal({
                   placeholder="0"
                 />
               ) : (
-                <p className="text-sm font-bold text-[#2e2837] truncate">{formatMoney(eventPrice)}</p>
+                <p className="text-sm font-bold text-[#2e2837] truncate">
+                  {formatMoney(eventPrice)}
+                </p>
               )}
               {eventPriceError && (
                 <p className="text-[10px] font-bold text-[#c5221f] mt-1">{eventPriceError}</p>
               )}
             </div>
-            <div className={`rounded-xl border px-3 py-3 ${isEditingDownpayment
-                ? 'border-[#df1b8b]/30 bg-[#fdf2f8]'
-                : 'border-[#f1eef5] bg-[#faf9fc]'
-              }`}>
+            <div
+              className={`rounded-xl border px-3 py-3 ${
+                isEditingDownpayment
+                  ? 'border-[#df1b8b]/30 bg-[#fdf2f8]'
+                  : 'border-[#f1eef5] bg-[#faf9fc]'
+              }`}
+            >
               <div className="flex items-center justify-between mb-1">
                 <span className="text-[10px] font-black uppercase tracking-widest text-[#8b839c]">
                   Downpayment
@@ -463,7 +556,9 @@ export function EventDetailsModal({
                           event.downpaymentAmount = parsedDown;
                           setIsEditingDownpayment(false);
                         } catch (err: any) {
-                          setDownpaymentError(err?.response?.data?.error || 'Failed to save downpayment');
+                          setDownpaymentError(
+                            err?.response?.data?.error || 'Failed to save downpayment'
+                          );
                         } finally {
                           setIsSavingDownpayment(false);
                         }
@@ -472,9 +567,25 @@ export function EventDetailsModal({
                       title="Save downpayment"
                     >
                       {isSavingDownpayment ? (
-                        <svg className="animate-spin size-3.5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        <svg
+                          className="animate-spin size-3.5"
+                          xmlns="http://www.w3.org/2000/svg"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                        >
+                          <circle
+                            className="opacity-25"
+                            cx="12"
+                            cy="12"
+                            r="10"
+                            stroke="currentColor"
+                            strokeWidth="4"
+                          ></circle>
+                          <path
+                            className="opacity-75"
+                            fill="currentColor"
+                            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                          ></path>
                         </svg>
                       ) : (
                         <Check className="size-3.5" />
@@ -660,21 +771,29 @@ export function EventDetailsModal({
                 </div>
                 <div className="space-y-2">
                   <Label className="text-sm font-bold text-[#2e2837]">
-                    Venue {isSavingVenue && <Loader2 className="inline ml-1 h-3 w-3 animate-spin text-[#df1b8b]" />}
+                    Venue{' '}
+                    {isSavingVenue && (
+                      <Loader2 className="inline ml-1 h-3 w-3 animate-spin text-[#df1b8b]" />
+                    )}
                   </Label>
                   <Select
                     value={watch('venue') || undefined}
                     onValueChange={async (value) => {
                       setValue('venue', value);
                       // Auto-assign the selected venue vendor to this event
-                      const selectedVenueVendor = venueVendors.find(v => v.name === value);
+                      const selectedVenueVendor = venueVendors.find((v) => v.name === value);
                       if (selectedVenueVendor) {
                         setIsSavingVenue(true);
                         try {
                           // First unassign any existing venue vendor
                           const currentVendors = await getVendorEntitiesByEventId(event.id);
-                          const existingVenueVendor = currentVendors.find(v => v.serviceType.toLowerCase() === 'venue');
-                          if (existingVenueVendor && existingVenueVendor.id !== selectedVenueVendor.id) {
+                          const existingVenueVendor = currentVendors.find(
+                            (v) => v.serviceType.toLowerCase() === 'venue'
+                          );
+                          if (
+                            existingVenueVendor &&
+                            existingVenueVendor.id !== selectedVenueVendor.id
+                          ) {
                             // No need to unassign, just reassign
                           }
                           await assignVendorToEvent(selectedVenueVendor.id, event.id);
@@ -688,16 +807,21 @@ export function EventDetailsModal({
                     disabled={isUpdating || isLoadingVenues}
                   >
                     <SelectTrigger className="border-[#e1d5eb] focus:border-[#df1b8b] focus:ring-[#df1b8b]">
-                      <SelectValue placeholder={isLoadingVenues ? 'Loading venues...' : 'Select venue...'} />
+                      <SelectValue
+                        placeholder={isLoadingVenues ? 'Loading venues...' : 'Select venue...'}
+                      />
                     </SelectTrigger>
                     <SelectContent>
                       {venueVendors.map((venue) => (
                         <SelectItem key={venue.id} value={venue.name}>
-                          {venue.name}{venue.price != null ? ` (₱${venue.price.toLocaleString('en-PH')})` : ''}
+                          {venue.name}
+                          {venue.price != null ? ` (₱${venue.price.toLocaleString('en-PH')})` : ''}
                         </SelectItem>
                       ))}
                       {venueVendors.length === 0 && !isLoadingVenues && (
-                        <div className="px-3 py-2 text-xs text-[#8f879f] italic">No venue vendors found</div>
+                        <div className="px-3 py-2 text-xs text-[#8f879f] italic">
+                          No venue vendors found
+                        </div>
                       )}
                     </SelectContent>
                   </Select>
@@ -739,7 +863,6 @@ export function EventDetailsModal({
                   disabled={isUpdating}
                 />
               </div>
-
             </form>
           </div>
         </div>
@@ -747,4 +870,3 @@ export function EventDetailsModal({
     </div>
   );
 }
-

@@ -1,10 +1,16 @@
 import { createBrowserRouter, RouterProvider } from 'react-router-dom';
 import { PublicLayout } from '@/components/layouts/PublicLayout';
 import { AdminLayout } from '@/components/layouts/AdminLayout';
+import { SysAdminLayout } from '@/components/layouts/SysAdminLayout';
 import { OrganizerLayout } from '@/components/layouts/OrganizerLayout';
 import { ClientLayout } from '@/components/layouts/ClientLayout';
 import { LandingPage } from '@/pages/public/LandingPage';
 import EventPackagesPage from '@/pages/public/EventPackagesPage';
+import PackageDetailsPage from '@/pages/public/PackageDetailsPage';
+import GalleryPage from '@/pages/public/GalleryPage';
+import PrivacyPolicyPage from '@/pages/public/PrivacyPolicyPage';
+import TermsOfServicePage from '@/pages/public/TermsOfServicePage';
+import CookiePolicyPage from '@/pages/public/CookiePolicyPage';
 import { LoginPage } from '@/pages/public/LoginPage';
 import { ForgotPasswordPage } from '@/pages/public/ForgotPasswordPage';
 import { ForceResetPasswordPage } from '@/pages/public/ForceResetPasswordPage';
@@ -26,6 +32,7 @@ import { AdminNotificationsPage } from '@/pages/admin/AdminNotificationsPage';
 import { AdminSettingsPage } from '@/pages/admin/AdminSettingsPage';
 import { AdminDataBackupPage } from '@/pages/admin/AdminDataBackupPage';
 import { ProfilePage } from '@/pages/admin/ProfilePage';
+import { PackageManagementPage } from '@/pages/admin/PackageManagementPage';
 
 // Organizer Pages
 import { OrganizerDashboard } from '@/pages/organizer/OrganizerDashboard';
@@ -94,6 +101,26 @@ const router = createBrowserRouter(
           Component: EventPackagesPage,
         },
         {
+          path: 'packages/:eventType/:packageId',
+          Component: PackageDetailsPage,
+        },
+        {
+          path: 'gallery',
+          Component: GalleryPage,
+        },
+        {
+          path: 'privacy-policy',
+          Component: PrivacyPolicyPage,
+        },
+        {
+          path: 'terms-of-service',
+          Component: TermsOfServicePage,
+        },
+        {
+          path: 'cookie-policy',
+          Component: CookiePolicyPage,
+        },
+        {
           path: 'services',
           Component: ServicesPage,
         },
@@ -127,6 +154,20 @@ const router = createBrowserRouter(
     {
       path: 'admin',
       Component: AdminLayout,
+      children: [
+        {
+          index: true,
+          Component: PackageManagementPage,
+        },
+        {
+          path: 'profile',
+          Component: ProfilePage,
+        },
+      ],
+    },
+    {
+      path: 'sysadmin',
+      Component: SysAdminLayout,
       children: [
         {
           index: true,
