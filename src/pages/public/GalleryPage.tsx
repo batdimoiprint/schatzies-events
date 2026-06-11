@@ -35,7 +35,7 @@ export default function GalleryPage() {
       {/* ── Hero Section ── */}
       <ScrollReveal variant="fade">
         <section
-          className="relative -mt-[88px] flex min-h-[60vh] flex-col overflow-hidden bg-cover bg-center bg-no-repeat sm:-mt-[110px] md:min-h-[70vh] lg:-mt-[173px] lg:min-h-screen"
+          className="relative -mt-[88px] flex min-h-[50vh] flex-col overflow-hidden bg-cover bg-center bg-no-repeat sm:-mt-[110px] md:min-h-[70vh] lg:-mt-[173px] lg:min-h-screen"
           style={{ backgroundImage: `url(${heroImage})` }}
         >
           {/* Dark overlay */}
@@ -54,7 +54,7 @@ export default function GalleryPage() {
           </button>
 
           {/* Content centered */}
-          <div className="relative z-10 flex h-full flex-col items-center justify-center px-4 py-[280px] text-center sm:px-6 sm:py-[360px] lg:py-[420px] animate-fade-in-up">
+          <div className="relative z-10 flex h-full flex-col items-center justify-center px-4 py-[160px] sm:py-[260px] md:py-[360px] lg:py-[420px] text-center sm:px-6 animate-fade-in-up">
             <h1 className="font-heading text-[clamp(2.5rem,8vw,5rem)] font-bold leading-tight text-white drop-shadow-lg">
               GALLERY
             </h1>

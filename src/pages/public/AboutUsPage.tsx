@@ -15,7 +15,7 @@ export default function AboutUsPage() {
       {/* ── Section 1: Hero ── */}
       <ScrollReveal variant="fade">
         <section
-          className="relative -mt-[88px] flex min-h-[70vh] flex-col overflow-hidden bg-cover bg-center bg-no-repeat sm:-mt-[110px] md:min-h-[75vh] lg:-mt-[173px] lg:min-h-screen"
+          className="relative -mt-[88px] flex min-h-[50vh] flex-col overflow-hidden bg-cover bg-center bg-no-repeat sm:-mt-[110px] md:min-h-[70vh] lg:-mt-[173px] lg:min-h-screen"
           style={{ backgroundImage: `url(${heroImage})` }}
         >
           {/* Overall white overlay to lighten the whole image */}
@@ -25,7 +25,7 @@ export default function AboutUsPage() {
           <div className="absolute top-0 left-0 right-0 h-[300px] sm:h-[400px] lg:h-[500px] bg-gradient-to-b from-white via-white/70 via-white/30 to-transparent z-[5]" />
 
           {/* Content centered in middle of section */}
-          <div className="relative z-10 flex h-full flex-col items-center justify-center px-4 py-[280px] text-center sm:px-6 sm:py-[360px] lg:py-[420px] animate-fade-in-up">
+          <div className="relative z-10 flex h-full flex-col items-center justify-center px-4 py-[160px] sm:py-[260px] md:py-[360px] lg:py-[420px] text-center sm:px-6 animate-fade-in-up">
             <h1
               className="font-heading text-[clamp(2.5rem,6vw,5rem)] font-bold leading-tight bg-gradient-to-r text-transparent bg-clip-text animate-fade-in drop-shadow-[0_4px_4px_rgba(0,0,0,0.25)]"
               style={{
@@ -283,7 +283,7 @@ export default function AboutUsPage() {
             </div>
 
             {/* Team Grid - Centered */}
-            <div className="flex flex-col sm:flex-row justify-center items-start gap-4 sm:gap-5 lg:gap-6 mx-auto pt-[120px] sm:pt-[140px]">
+            <div className="flex flex-col sm:flex-row justify-center items-center sm:items-start gap-y-[180px] sm:gap-y-0 sm:gap-x-5 lg:gap-x-6 mx-auto pt-[120px] sm:pt-[140px]">
               {/* Member 1 */}
               <div className="relative w-full max-w-[320px] sm:max-w-[340px] lg:max-w-[360px]">
                 <div className="relative rounded-[2rem] bg-white shadow-[0_12px_40px_rgba(0,0,0,0.18)] border border-gray-100 transition-all duration-300 hover:shadow-[0_20px_50px_rgba(0,0,0,0.25)] hover:-translate-y-2 overflow-visible">
