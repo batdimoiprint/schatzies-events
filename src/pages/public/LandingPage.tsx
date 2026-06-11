@@ -84,7 +84,7 @@ function HeroSection() {
   useEffect(() => {
     const interval = setInterval(() => {
       setCurrentImageIndex((prevIndex) => (prevIndex + 1) % heroImages.length);
-    }, 5000); // Change image every 5 seconds
+    }, 8000); // Change image every 8 seconds
 
     return () => clearInterval(interval);
   }, []);
@@ -402,12 +402,12 @@ function ServicesSection() {
           {/* Right: Image */}
           <ScrollReveal
             variant="right"
-            className="relative overflow-hidden rounded-2xl border-4 border-white shadow-[0_25px_60px_rgba(0,0,0,0.8)] max-w-full lg:max-w-lg justify-self-center lg:justify-self-end"
+            className="relative overflow-hidden rounded-2xl border-4 border-white shadow-[0_25px_60px_rgba(0,0,0,0.8)] max-w-full lg:max-w-lg justify-self-center lg:justify-self-end aspect-[4/3]"
           >
             <img
               src="/Pictures/service-wedding.jpg"
               alt="A Love Story Told in Every Detail"
-              className="w-full h-auto object-cover transition-transform duration-500 hover:scale-105"
+              className="w-full h-full object-cover transition-transform duration-500 hover:scale-105"
             />
           </ScrollReveal>
         </div>
@@ -417,12 +417,12 @@ function ServicesSection() {
           {/* Left: Image (on mobile order-2, on desktop order-1) */}
           <ScrollReveal
             variant="left"
-            className="relative overflow-hidden rounded-2xl border-4 border-white shadow-[0_25px_60px_rgba(0,0,0,0.8)] max-w-full lg:max-w-lg justify-self-center lg:justify-self-start order-2 lg:order-1"
+            className="relative overflow-hidden rounded-2xl border-4 border-white shadow-[0_25px_60px_rgba(0,0,0,0.8)] max-w-full lg:max-w-lg justify-self-center lg:justify-self-start order-2 lg:order-1 aspect-[4/3]"
           >
             <img
               src="/Pictures/service-debut.jpg"
               alt="Your 18th: More Than a Birthday, It's a Milestone"
-              className="w-full h-auto object-cover transition-transform duration-500 hover:scale-105"
+              className="w-full h-full object-cover transition-transform duration-500 hover:scale-105"
             />
           </ScrollReveal>
           {/* Right: Text (on mobile order-1, on desktop order-2) */}

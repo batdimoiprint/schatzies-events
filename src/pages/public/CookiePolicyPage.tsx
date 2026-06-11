@@ -17,7 +17,7 @@ export default function CookiePolicyPage() {
         >
           <div className="absolute inset-0 bg-black/60" />
 
-          <div className="relative z-10 flex h-full flex-col items-center justify-center px-4 py-[200px] text-center sm:px-6 sm:py-[250px] lg:py-[300px] animate-fade-in-up">
+          <div className="relative z-10 flex h-full flex-col items-center justify-center px-4 py-[140px] sm:py-[200px] md:py-[250px] lg:py-[300px] text-center sm:px-6 animate-fade-in-up">
             <h1 className="font-heading text-[clamp(2.5rem,6vw,4rem)] font-bold leading-tight text-white">
               Cookie Policy
             </h1>

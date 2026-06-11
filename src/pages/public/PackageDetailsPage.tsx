@@ -47,7 +47,7 @@ export default function PackageDetailsPage() {
   }
 
   const modal = pkg.modal;
-  const heroImage = pkg.detailsHeroImage || pkg.image;
+  const heroImage = pkg.image;
   const sideImage = pkg.detailsImage || pkg.image;
 
   // Prev/Next package navigation
@@ -66,7 +66,7 @@ export default function PackageDetailsPage() {
 
       <ScrollReveal>
         {/* ── Hero Section ── */}
-        <section className="relative -mt-[88px] flex min-h-[60vh] flex-col overflow-hidden sm:-mt-[110px] md:min-h-[70vh] lg:-mt-[173px] lg:min-h-screen">
+        <section className="relative -mt-[88px] flex min-h-[50vh] flex-col overflow-hidden sm:-mt-[110px] md:min-h-[70vh] lg:-mt-[173px] lg:min-h-screen">
           {/* Full-bleed hero image */}
           <div className="absolute inset-0">
             <img src={heroImage} alt={pkg.name} className="w-full h-full object-cover" />
@@ -98,7 +98,7 @@ export default function PackageDetailsPage() {
           )}
 
           {/* Content centered */}
-          <div className="relative z-10 flex h-full flex-1 flex-col items-center justify-center px-4 pt-[270px] pb-[160px] text-center sm:px-6 sm:pt-[310px] sm:pb-[200px] lg:pt-[380px] lg:pb-[240px] animate-fade-in-up">
+          <div className="relative z-10 flex h-full flex-1 flex-col items-center justify-center px-4 pt-[160px] pb-[100px] sm:pt-[220px] sm:pb-[140px] md:pt-[310px] md:pb-[200px] lg:pt-[380px] lg:pb-[240px] text-center sm:px-6 animate-fade-in-up">
             <h1
               className="font-heading text-[clamp(2.5rem,8vw,5.5rem)] font-bold leading-[1.1] text-white"
               style={{ textShadow: '0 4px 20px rgba(0,0,0,0.3)' }}
@@ -199,17 +199,15 @@ export default function PackageDetailsPage() {
                             </span>
                           </div>
                           <ChevronDown
-                            className={`h-5 w-5 flex-shrink-0 transition-transform duration-300 text-white/50 ${
-                              isExpanded ? 'rotate-180' : ''
-                            }`}
+                            className={`h-5 w-5 flex-shrink-0 transition-transform duration-300 text-white/50 ${isExpanded ? 'rotate-180' : ''
+                              }`}
                           />
                         </button>
 
                         {/* Content - Expandable */}
                         <div
-                          className={`grid transition-all duration-300 ease-in-out ${
-                            isExpanded ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]'
-                          }`}
+                          className={`grid transition-all duration-300 ease-in-out ${isExpanded ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]'
+                            }`}
                         >
                           <div className="overflow-hidden">
                             <div className="bg-white px-5 sm:px-6 py-4 sm:py-5">
@@ -235,11 +233,10 @@ export default function PackageDetailsPage() {
                                         </svg>
                                       </span>
                                       <span
-                                        className={`leading-relaxed ${
-                                          isHighlight
+                                        className={`leading-relaxed ${isHighlight
                                             ? 'font-semibold text-[#FF0066]'
                                             : 'text-gray-600'
-                                        }`}
+                                          }`}
                                       >
                                         {text}
                                       </span>

@@ -96,7 +96,7 @@ export default function EventPackagesPage() {
         {/* ── Section 1: Hero ── */}
         <ScrollReveal variant="fade">
           <section
-            className="relative -mt-[88px] flex min-h-[60vh] flex-col overflow-hidden bg-contain bg-center bg-no-repeat sm:-mt-[110px] md:min-h-[70vh] lg:-mt-[173px] lg:min-h-screen"
+            className="relative -mt-[88px] flex min-h-[50vh] flex-col overflow-hidden bg-cover bg-center bg-no-repeat sm:-mt-[110px] md:min-h-[70vh] lg:-mt-[173px] lg:min-h-screen"
             style={{ backgroundImage: `url(${heroImage})` }}
           >
             {/* Overall white overlay to lighten the whole image */}
@@ -106,9 +106,9 @@ export default function EventPackagesPage() {
             <div className="absolute top-0 left-0 right-0 h-[300px] sm:h-[400px] lg:h-[500px] bg-gradient-to-b from-white via-white/70 via-white/30 to-transparent z-[5]" />
 
             {/* Content centered in middle of section */}
-            <div className="relative z-10 flex h-full flex-col items-center justify-center px-4 py-[280px] text-center sm:px-6 sm:py-[360px] lg:py-[420px] animate-fade-in-up">
+            <div className="relative z-10 flex h-full flex-col items-center justify-center px-4 py-[160px] sm:py-[260px] md:py-[360px] lg:py-[420px] text-center sm:px-6 animate-fade-in-up">
               <h1
-                className="font-heading text-[clamp(2.5rem,6vw,5rem)] font-bold leading-tight bg-gradient-to-r from-[#FF0066] via-[#FF0066] to-[#4A1053] text-transparent bg-clip-text animate-fade-in animation-delay-200"
+                className="font-heading text-[clamp(2.2rem,6vw,5rem)] font-bold leading-tight bg-gradient-to-r from-[#FF0066] via-[#FF0066] to-[#4A1053] text-transparent bg-clip-text animate-fade-in animation-delay-200"
                 style={{
                   backgroundImage:
                     'linear-gradient(to right, #FF0066 0%, #FF0066 46%, #4A1053 100%)',
