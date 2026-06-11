@@ -33,6 +33,8 @@ import { AdminSettingsPage } from '@/pages/admin/AdminSettingsPage';
 import { AdminDataBackupPage } from '@/pages/admin/AdminDataBackupPage';
 import { ProfilePage } from '@/pages/admin/ProfilePage';
 import { PackageManagementPage } from '@/pages/admin/PackageManagementPage';
+import { BusinessProfilePage } from '@/pages/admin/BusinessProfilePage';
+import { AdminGalleryPage } from '@/pages/admin/AdminGalleryPage';
 
 // Organizer Pages
 import { OrganizerDashboard } from '@/pages/organizer/OrganizerDashboard';
@@ -158,6 +160,14 @@ const router = createBrowserRouter(
         {
           index: true,
           Component: PackageManagementPage,
+        },
+        {
+          path: 'business-profile',
+          Component: BusinessProfilePage,
+        },
+        {
+          path: 'gallery',
+          Component: AdminGalleryPage,
         },
         {
           path: 'profile',

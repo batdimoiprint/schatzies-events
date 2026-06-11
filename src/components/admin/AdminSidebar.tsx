@@ -1,10 +1,14 @@
 import { useState, useEffect } from 'react';
 import { NavLink, useNavigate, useLocation } from 'react-router-dom';
-import { Package, LogOut, Menu, X } from 'lucide-react';
+import { Building2, Images, Package, LogOut, Menu, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/hooks/useAuth';
 
-const adminNavItems = [{ label: 'Package Management', to: '/admin', icon: Package }];
+const adminNavItems = [
+  { label: 'Event Packages', to: '/admin', icon: Package },
+  { label: 'Business Profile', to: '/admin/business-profile', icon: Building2 },
+  { label: 'Gallery', to: '/admin/gallery', icon: Images },
+];
 
 export default function AdminSidebar() {
   const navigate = useNavigate();
@@ -20,7 +24,6 @@ export default function AdminSidebar() {
 
   // Close mobile drawer on route change
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     setMobileOpen(false);
   }, [location.pathname]);
 
