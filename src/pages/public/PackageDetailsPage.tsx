@@ -27,7 +27,9 @@ export default function PackageDetailsPage() {
   const [expandedCategory, setExpandedCategory] = useState<string | null>(null);
 
   // Get the correct package data
-  const packages = eventType === 'debut' ? debutPackages : weddingPackages;
+  const packages = (eventType === 'debut' ? debutPackages : weddingPackages).filter(
+    (p) => p.name !== 'Blooms'
+  );
   const pkg = packages.find((p) => p.id === parseInt(packageId || '1'));
 
   if (!pkg) {
@@ -66,7 +68,7 @@ export default function PackageDetailsPage() {
 
       <ScrollReveal>
         {/* ── Hero Section ── */}
-        <section className="relative -mt-[88px] flex min-h-[50vh] flex-col overflow-hidden sm:-mt-[110px] md:min-h-[70vh] lg:-mt-[173px] lg:min-h-screen">
+        <section className="relative z-20 -mt-[88px] flex min-h-[50vh] flex-col overflow-hidden sm:-mt-[110px] md:min-h-[70vh] lg:-mt-[173px] lg:min-h-screen">
           {/* Full-bleed hero image */}
           <div className="absolute inset-0">
             <img src={heroImage} alt={pkg.name} className="w-full h-full object-cover" />
@@ -119,7 +121,7 @@ export default function PackageDetailsPage() {
           </div>
 
           {/* Bottom wave — curves downward into white section */}
-          <div className="absolute bottom-0 left-0 right-0 z-20">
+          <div className="absolute bottom-0 left-0 right-0 z-30">
             <svg
               className="block w-full h-[60px] sm:h-[80px] lg:h-[110px]"
               viewBox="0 0 1440 120"
@@ -135,130 +137,151 @@ export default function PackageDetailsPage() {
         </section>
 
         {/* ── Package Inclusions Section ── */}
-        <section className="relative bg-white px-4 py-8 sm:px-6 sm:py-12 lg:px-8 lg:py-16">
-          {/* Top wave — mirrors the bottom wave of the hero for a seamless join */}
-          <div className="absolute top-0 left-0 right-0 -translate-y-full z-10 pointer-events-none">
-            {/* This is handled by the hero's bottom wave already filling white */}
-          </div>
-
-          <div className="mx-auto max-w-[1200px]">
-            {/* Container: image left + content right */}
-            <div className="flex flex-col gap-8 lg:flex-row lg:gap-10 lg:items-start">
-              {/* LEFT: Image — full-height, flush with wave */}
-              <div className="hidden lg:block flex-shrink-0 w-full lg:w-[45%]">
-                <div className="relative">
-                  <img
-                    src={sideImage}
-                    alt={pkg.name}
-                    className="w-full h-[600px] object-cover rounded-2xl shadow-[0_16px_48px_rgba(0,0,0,0.12)]"
-                  />
+        <section className="relative z-10 bg-white py-8 sm:py-12 lg:py-16 overflow-hidden">
+          <div className="flex flex-col lg:flex-row lg:items-start">
+            {/* LEFT: Image — flush to left edge of viewport, slides under hero wave */}
+            <div className="hidden lg:block flex-shrink-0 lg:w-[45%] mt-[-110px]">
+              <div className="relative overflow-hidden rounded-br-2xl shadow-[0_16px_48px_rgba(0,0,0,0.12)]">
+                <img src={sideImage} alt={pkg.name} className="w-full h-[600px] object-cover" />
+                {/* Wave overlay on top — uses full viewport width so curve matches hero exactly */}
+                <div className="absolute top-0 left-0 z-10" style={{ width: '100vw' }}>
+                  <svg
+                    className="block w-full h-[60px] sm:h-[80px] lg:h-[110px]"
+                    viewBox="0 0 1440 120"
+                    preserveAspectRatio="none"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <path
+                      d="M0,0 L1440,0 L1440,40 C1200,60 960,30 720,70 C480,110 240,110 0,40 Z"
+                      fill="white"
+                    />
+                  </svg>
                 </div>
               </div>
+            </div>
 
-              {/* Mobile image */}
-              <div className="lg:hidden w-full">
+            {/* Mobile image — flush to left edge of viewport, slides under hero wave */}
+            <div className="lg:hidden w-full mt-[-60px] sm:mt-[-80px] pr-4 sm:pr-6">
+              <div className="relative overflow-hidden rounded-br-2xl shadow-lg">
                 <img
                   src={sideImage}
                   alt={pkg.name}
-                  className="w-full h-[250px] sm:h-[300px] object-cover rounded-xl shadow-lg"
+                  className="w-full h-[250px] sm:h-[300px] object-cover"
                 />
+                {/* Wave overlay on top — uses full viewport width so curve matches hero exactly */}
+                <div className="absolute top-0 left-0 z-10" style={{ width: '100vw' }}>
+                  <svg
+                    className="block w-full h-[60px] sm:h-[80px] lg:h-[110px]"
+                    viewBox="0 0 1440 120"
+                    preserveAspectRatio="none"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <path
+                      d="M0,0 L1440,0 L1440,40 C1200,60 960,30 720,70 C480,110 240,110 0,40 Z"
+                      fill="white"
+                    />
+                  </svg>
+                </div>
               </div>
+            </div>
 
-              {/* RIGHT: Content */}
-              <div className="w-full lg:w-[55%] flex flex-col">
-                <h2 className="font-heading text-[1.8rem] font-bold text-gray-900 sm:text-[2rem] lg:text-[2.3rem] mb-6 sm:mb-8">
-                  Package Inclusions
-                </h2>
+            {/* RIGHT: Content */}
+            <div className="w-full lg:w-[55%] flex flex-col px-4 sm:px-6 lg:px-10 lg:pr-[8%] mt-8 lg:mt-0">
+              <h2 className="font-heading text-[1.8rem] font-bold text-gray-900 sm:text-[2rem] lg:text-[2.3rem] mb-6 sm:mb-8">
+                Package Inclusions
+              </h2>
 
-                {/* Scrollable Categories Container */}
-                <div
-                  className="flex-1 overflow-y-auto pr-1 space-y-3 lg:max-h-[420px] package-inclusions-scroll"
-                  style={{
-                    scrollbarWidth: 'thin',
-                    scrollbarColor: '#FF0066 #f3f4f6',
-                  }}
-                >
-                  {modal.categories.map((cat) => {
-                    const Icon = iconMap[cat.iconName];
-                    const isExpanded = expandedCategory === cat.title;
+              {/* Scrollable Categories Container */}
+              <div
+                className="flex-1 overflow-y-auto pr-1 space-y-3 lg:max-h-[420px] package-inclusions-scroll"
+                style={{
+                  scrollbarWidth: 'thin',
+                  scrollbarColor: '#FF0066 #f3f4f6',
+                }}
+              >
+                {modal.categories.map((cat) => {
+                  const Icon = iconMap[cat.iconName];
+                  const isExpanded = expandedCategory === cat.title;
 
-                    return (
-                      <div
-                        key={cat.title}
-                        className="rounded-lg overflow-hidden border border-gray-200"
+                  return (
+                    <div
+                      key={cat.title}
+                      className="rounded-lg overflow-hidden border border-gray-200"
+                    >
+                      {/* Header - Clickable */}
+                      <button
+                        onClick={() => setExpandedCategory(isExpanded ? null : cat.title)}
+                        className="w-full flex items-center justify-between gap-3 bg-gray-900 text-white px-5 sm:px-6 py-4 sm:py-[18px] hover:bg-gray-800 transition-colors duration-200"
                       >
-                        {/* Header - Clickable */}
-                        <button
-                          onClick={() => setExpandedCategory(isExpanded ? null : cat.title)}
-                          className="w-full flex items-center justify-between gap-3 bg-gray-900 text-white px-5 sm:px-6 py-4 sm:py-[18px] hover:bg-gray-800 transition-colors duration-200"
-                        >
-                          <div className="flex items-center gap-3">
-                            <Icon className="h-5 w-5 flex-shrink-0 text-white/70" />
-                            <span className="font-bold text-[0.95rem] sm:text-[1.05rem] text-left">
-                              {cat.title}
-                            </span>
-                          </div>
-                          <ChevronDown
-                            className={`h-5 w-5 flex-shrink-0 transition-transform duration-300 text-white/50 ${isExpanded ? 'rotate-180' : ''
-                              }`}
-                          />
-                        </button>
+                        <div className="flex items-center gap-3">
+                          <Icon className="h-5 w-5 flex-shrink-0 text-white/70" />
+                          <span className="font-bold text-[0.95rem] sm:text-[1.05rem] text-left">
+                            {cat.title}
+                          </span>
+                        </div>
+                        <ChevronDown
+                          className={`h-5 w-5 flex-shrink-0 transition-transform duration-300 text-white/50 ${
+                            isExpanded ? 'rotate-180' : ''
+                          }`}
+                        />
+                      </button>
 
-                        {/* Content - Expandable */}
-                        <div
-                          className={`grid transition-all duration-300 ease-in-out ${isExpanded ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]'
-                            }`}
-                        >
-                          <div className="overflow-hidden">
-                            <div className="bg-white px-5 sm:px-6 py-4 sm:py-5">
-                              <ul className="space-y-2.5">
-                                {cat.items.map((item) => {
-                                  const isHighlight = typeof item === 'object';
-                                  const text = typeof item === 'object' ? item.text : item;
-                                  return (
-                                    <li
-                                      key={text}
-                                      className="flex items-start gap-3 text-[0.88rem] sm:text-[0.93rem]"
-                                    >
-                                      <span className="mt-[3px] flex h-[18px] w-[18px] flex-shrink-0 items-center justify-center rounded-full bg-[#FF0066]">
-                                        <svg
-                                          viewBox="0 0 10 10"
-                                          className="h-2.5 w-2.5 fill-none stroke-white stroke-[2]"
-                                        >
-                                          <polyline
-                                            points="1.5,5 4,7.5 8.5,2.5"
-                                            strokeLinecap="round"
-                                            strokeLinejoin="round"
-                                          />
-                                        </svg>
-                                      </span>
-                                      <span
-                                        className={`leading-relaxed ${isHighlight
-                                            ? 'font-semibold text-[#FF0066]'
-                                            : 'text-gray-600'
-                                          }`}
+                      {/* Content - Expandable */}
+                      <div
+                        className={`grid transition-all duration-300 ease-in-out ${
+                          isExpanded ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]'
+                        }`}
+                      >
+                        <div className="overflow-hidden">
+                          <div className="bg-white px-5 sm:px-6 py-4 sm:py-5">
+                            <ul className="space-y-2.5">
+                              {cat.items.map((item) => {
+                                const isHighlight = typeof item === 'object';
+                                const text = typeof item === 'object' ? item.text : item;
+                                return (
+                                  <li
+                                    key={text}
+                                    className="flex items-start gap-3 text-[0.88rem] sm:text-[0.93rem]"
+                                  >
+                                    <span className="mt-[3px] flex h-[18px] w-[18px] flex-shrink-0 items-center justify-center rounded-full bg-[#FF0066]">
+                                      <svg
+                                        viewBox="0 0 10 10"
+                                        className="h-2.5 w-2.5 fill-none stroke-white stroke-[2]"
                                       >
-                                        {text}
-                                      </span>
-                                    </li>
-                                  );
-                                })}
-                              </ul>
-                            </div>
+                                        <polyline
+                                          points="1.5,5 4,7.5 8.5,2.5"
+                                          strokeLinecap="round"
+                                          strokeLinejoin="round"
+                                        />
+                                      </svg>
+                                    </span>
+                                    <span
+                                      className={`leading-relaxed ${
+                                        isHighlight
+                                          ? 'font-semibold text-[#FF0066]'
+                                          : 'text-gray-600'
+                                      }`}
+                                    >
+                                      {text}
+                                    </span>
+                                  </li>
+                                );
+                              })}
+                            </ul>
                           </div>
                         </div>
                       </div>
-                    );
-                  })}
-                </div>
+                    </div>
+                  );
+                })}
+              </div>
 
-                {/* Note */}
-                <div className="mt-6 pt-5 border-t border-gray-200">
-                  <p className="text-[0.88rem] sm:text-[0.93rem] leading-relaxed text-gray-600">
-                    <span className="font-bold text-gray-800">NOTE: </span>
-                    {modal.note}
-                  </p>
-                </div>
+              {/* Note */}
+              <div className="mt-6 pt-5 border-t border-gray-200">
+                <p className="text-[0.88rem] sm:text-[0.93rem] leading-relaxed text-gray-600">
+                  <span className="font-bold text-gray-800">NOTE: </span>
+                  {modal.note}
+                </p>
               </div>
             </div>
           </div>

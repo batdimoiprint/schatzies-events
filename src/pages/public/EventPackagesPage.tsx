@@ -218,10 +218,15 @@ export default function EventPackagesPage() {
             {/* Wedding cards on white background */}
             <section className="bg-white px-4 py-10 sm:px-6 sm:py-16 lg:px-20 lg:py-20">
               <div className="w-full">
-                <PackageCarousel
-                  packages={weddingPackages}
-                  onView={(i) => navigate(`/packages/wedding/${weddingPackages[i].id}`)}
-                />
+                {(() => {
+                  const filteredWedding = weddingPackages.filter((p) => p.name !== 'Blooms');
+                  return (
+                    <PackageCarousel
+                      packages={filteredWedding}
+                      onView={(i) => navigate(`/packages/wedding/${filteredWedding[i].id}`)}
+                    />
+                  );
+                })()}
               </div>
             </section>
           </div>
