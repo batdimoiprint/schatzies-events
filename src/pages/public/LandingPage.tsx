@@ -91,20 +91,28 @@ function HeroSection() {
 
   return (
     <section className="relative min-h-screen w-full overflow-hidden bg-white">
-      {/* Background Image and Gradient Overlay */}
-      <div
-        className="absolute inset-0 bg-cover bg-right lg:bg-center bg-no-repeat transition-all duration-1000 ease-in-out"
-        style={{ backgroundImage: `url('${heroImages[currentImageIndex]}')` }}
-      >
-        {/* Responsive Gradient Overlay */}
-        <div
-          className="absolute inset-0"
+      {/* Background Images — all stacked, crossfade via opacity */}
+      {heroImages.map((src, index) => (
+        <img
+          key={src}
+          src={src}
+          alt=""
+          className="absolute inset-0 w-full h-full object-cover object-right lg:object-center"
           style={{
-            background:
-              'linear-gradient(to right, rgba(255,255,255,0.95) 0%, rgba(255,255,255,0.85) 15%, rgba(255,255,255,0.4) 25%, transparent 40%)',
+            opacity: index === currentImageIndex ? 1 : 0,
+            transition: 'opacity 1.5s ease-in-out',
           }}
         />
-      </div>
+      ))}
+
+      {/* Gradient Overlay — sits above all images */}
+      <div
+        className="absolute inset-0"
+        style={{
+          background:
+            'linear-gradient(to right, rgba(255,255,255,0.95) 0%, rgba(255,255,255,0.85) 15%, rgba(255,255,255,0.4) 25%, transparent 40%)',
+        }}
+      />
 
       {/* Content */}
       <div className="relative flex items-center h-full min-h-screen px-6 sm:px-8 lg:px-[8%] w-full z-10">
