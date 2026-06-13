@@ -8,7 +8,8 @@ interface Props {
 export function ServiceRequirementsModal({ onClose, allocation }: Props) {
   const hasFood = !!allocation?.food_package;
   const hasFlow = !!allocation?.flow_type;
-  const hasRequirements = hasFood || hasFlow || (allocation?.requirements && allocation.requirements.length > 0);
+  const hasRequirements =
+    hasFood || hasFlow || (allocation?.requirements && allocation.requirements.length > 0);
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
@@ -40,7 +41,9 @@ export function ServiceRequirementsModal({ onClose, allocation }: Props) {
                     <span className="h-2.5 w-2.5 rounded-full bg-blue-500" />
                     <h3 className="text-lg font-bold text-gray-800">Food</h3>
                   </div>
-                  <p className="mb-3 text-sm font-medium text-gray-700">{allocation.food_package}</p>
+                  <p className="mb-3 text-sm font-medium text-gray-700">
+                    {allocation.food_package}
+                  </p>
                 </div>
               )}
 

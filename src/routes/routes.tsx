@@ -6,6 +6,11 @@ import { OrganizerLayout } from '@/components/layouts/OrganizerLayout';
 import { ClientLayout } from '@/components/layouts/ClientLayout';
 import { LandingPage } from '@/pages/public/LandingPage';
 import EventPackagesPage from '@/pages/public/EventPackagesPage';
+import PackageDetailsPage from '@/pages/public/PackageDetailsPage';
+import GalleryPage from '@/pages/public/GalleryPage';
+import PrivacyPolicyPage from '@/pages/public/PrivacyPolicyPage';
+import TermsOfServicePage from '@/pages/public/TermsOfServicePage';
+import CookiePolicyPage from '@/pages/public/CookiePolicyPage';
 import { LoginPage } from '@/pages/public/LoginPage';
 import { ForgotPasswordPage } from '@/pages/public/ForgotPasswordPage';
 import { ForceResetPasswordPage } from '@/pages/public/ForceResetPasswordPage';
@@ -28,6 +33,8 @@ import { AdminSettingsPage } from '@/pages/admin/AdminSettingsPage';
 import { AdminDataBackupPage } from '@/pages/admin/AdminDataBackupPage';
 import { ProfilePage } from '@/pages/admin/ProfilePage';
 import { PackageManagementPage } from '@/pages/admin/PackageManagementPage';
+import { BusinessProfilePage } from '@/pages/admin/BusinessProfilePage';
+import { AdminGalleryPage } from '@/pages/admin/AdminGalleryPage';
 
 // Organizer Pages
 import { OrganizerDashboard } from '@/pages/organizer/OrganizerDashboard';
@@ -96,6 +103,26 @@ const router = createBrowserRouter(
           Component: EventPackagesPage,
         },
         {
+          path: 'packages/:eventType/:packageId',
+          Component: PackageDetailsPage,
+        },
+        {
+          path: 'gallery',
+          Component: GalleryPage,
+        },
+        {
+          path: 'privacy-policy',
+          Component: PrivacyPolicyPage,
+        },
+        {
+          path: 'terms-of-service',
+          Component: TermsOfServicePage,
+        },
+        {
+          path: 'cookie-policy',
+          Component: CookiePolicyPage,
+        },
+        {
           path: 'services',
           Component: ServicesPage,
         },
@@ -133,6 +160,14 @@ const router = createBrowserRouter(
         {
           index: true,
           Component: PackageManagementPage,
+        },
+        {
+          path: 'business-profile',
+          Component: BusinessProfilePage,
+        },
+        {
+          path: 'gallery',
+          Component: AdminGalleryPage,
         },
         {
           path: 'profile',

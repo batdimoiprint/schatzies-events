@@ -44,7 +44,9 @@ export function AllocationResourcesModal({ onClose, allocation }: Props) {
                     {vendors.map((vendor: any, i: number) => (
                       <div key={i} className="flex flex-col">
                         <p className="text-sm font-semibold text-gray-800">{vendor.name}</p>
-                        {vendor.service && <p className="text-xs text-gray-500">{vendor.service}</p>}
+                        {vendor.service && (
+                          <p className="text-xs text-gray-500">{vendor.service}</p>
+                        )}
                       </div>
                     ))}
                   </div>
@@ -61,7 +63,9 @@ export function AllocationResourcesModal({ onClose, allocation }: Props) {
                   <div className="flex flex-col gap-3">
                     {manpower.map((person: any, i: number) => (
                       <div key={i} className="flex flex-col">
-                        <p className="text-sm font-semibold text-gray-800">{person.name || person.role}</p>
+                        <p className="text-sm font-semibold text-gray-800">
+                          {person.name || person.role}
+                        </p>
                         {person.name && person.role && (
                           <p className="text-xs text-gray-500">{person.role}</p>
                         )}

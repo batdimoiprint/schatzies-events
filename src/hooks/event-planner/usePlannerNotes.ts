@@ -29,7 +29,9 @@ export function usePlannerNotes(selectedEventId: string) {
       }
     };
     fetchNotes();
-    return () => { isMounted = false; };
+    return () => {
+      isMounted = false;
+    };
   }, [selectedEventId]);
 
   const resetNoteDraft = () => {
@@ -75,23 +77,35 @@ export function usePlannerNotes(selectedEventId: string) {
     const normalizedTitle = noteDraftTitle.trim();
     const normalizedBody = noteDraftBody.trim();
     if (!normalizedTitle && !normalizedBody && !noteDraftImageDataUrl) {
-      if (isNoteModalOpen) setNoteDraftError('Enter a title, note detail, or add an image before saving.');
+      if (isNoteModalOpen)
+        setNoteDraftError('Enter a title, note detail, or add an image before saving.');
       return;
     }
     try {
       if (editingPlannerNoteId) {
-        const updatedNote = await updateEventNote(selectedEventId, editingPlannerNoteId, {
-          title: normalizedTitle || 'Untitled',
-          body: normalizedBody || 'No details provided.',
-          imageDataUrl: noteDraftImageDataUrl ?? undefined,
-        }, noteDraftImageFile);
-        setPlannerNotes((prev) => prev.map((n) => (n.id === editingPlannerNoteId ? updatedNote : n)));
+        const updatedNote = await updateEventNote(
+          selectedEventId,
+          editingPlannerNoteId,
+          {
+            title: normalizedTitle || 'Untitled',
+            body: normalizedBody || 'No details provided.',
+            imageDataUrl: noteDraftImageDataUrl ?? undefined,
+          },
+          noteDraftImageFile
+        );
+        setPlannerNotes((prev) =>
+          prev.map((n) => (n.id === editingPlannerNoteId ? updatedNote : n))
+        );
       } else {
-        const newNote = await createEventNote(selectedEventId, {
-          title: normalizedTitle || 'Untitled',
-          body: normalizedBody || 'No details provided.',
-          imageDataUrl: noteDraftImageDataUrl ?? undefined,
-        }, noteDraftImageFile);
+        const newNote = await createEventNote(
+          selectedEventId,
+          {
+            title: normalizedTitle || 'Untitled',
+            body: normalizedBody || 'No details provided.',
+            imageDataUrl: noteDraftImageDataUrl ?? undefined,
+          },
+          noteDraftImageFile
+        );
         setPlannerNotes((prev) => [newNote, ...prev]);
       }
       closePlannerNoteModal();
@@ -102,7 +116,8 @@ export function usePlannerNotes(selectedEventId: string) {
         const status = error.response.status;
         const serverMsg = error.response.data?.message || error.response.data?.error;
         if (status === 500) userMessage = 'Server error: Unable to save note at this time.';
-        else if (status === 400) userMessage = serverMsg ? `Bad request: ${serverMsg}` : 'Invalid note data.';
+        else if (status === 400)
+          userMessage = serverMsg ? `Bad request: ${serverMsg}` : 'Invalid note data.';
         else if (status === 404) userMessage = 'Event not found. Please refresh and try again.';
         else if (serverMsg) userMessage = `Error (${status}): ${serverMsg}`;
       } else if (error?.message) {
@@ -160,12 +175,34 @@ export function usePlannerNotes(selectedEventId: string) {
   };
 
   return {
-    plannerNotes, setPlannerNotes,
-    noteDraftTitle, setNoteDraftTitle, noteDraftBody, setNoteDraftBody, noteDraftImageDataUrl, setNoteDraftImageDataUrl,
-    noteDraftImageFile, setNoteDraftImageFile, noteDraftError, setNoteDraftError, editingPlannerNoteId,
-    isNoteModalOpen, setIsNoteModalOpen, isInlineNoteOpen, setIsInlineNoteOpen, draggedNoteId, setDraggedNoteId,
-    resetNoteDraft, closePlannerNoteModal, handlePlannerNoteImageChange, handleSavePlannerNote,
-    handleCloseInlineNote, handleEditPlannerNote, handleDeletePlannerNote,
-    handleNoteDragStart, handleNoteDragEnd, handleNoteDrop
+    plannerNotes,
+    setPlannerNotes,
+    noteDraftTitle,
+    setNoteDraftTitle,
+    noteDraftBody,
+    setNoteDraftBody,
+    noteDraftImageDataUrl,
+    setNoteDraftImageDataUrl,
+    noteDraftImageFile,
+    setNoteDraftImageFile,
+    noteDraftError,
+    setNoteDraftError,
+    editingPlannerNoteId,
+    isNoteModalOpen,
+    setIsNoteModalOpen,
+    isInlineNoteOpen,
+    setIsInlineNoteOpen,
+    draggedNoteId,
+    setDraggedNoteId,
+    resetNoteDraft,
+    closePlannerNoteModal,
+    handlePlannerNoteImageChange,
+    handleSavePlannerNote,
+    handleCloseInlineNote,
+    handleEditPlannerNote,
+    handleDeletePlannerNote,
+    handleNoteDragStart,
+    handleNoteDragEnd,
+    handleNoteDrop,
   };
 }

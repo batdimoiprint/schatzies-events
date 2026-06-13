@@ -1,9 +1,17 @@
 import { useState, useEffect } from 'react';
-import { getEventChecklist, updateEventChecklistItem, addEventChecklistItem, deleteEventChecklistItem } from '@/api/events';
+import {
+  getEventChecklist,
+  updateEventChecklistItem,
+  addEventChecklistItem,
+  deleteEventChecklistItem,
+} from '@/api/events';
 
 export function useChecklist(selectedEventId: string) {
   const [checklistItems, setChecklistItems] = useState<any[]>([]);
-  const [checklistDeleteTarget, setChecklistDeleteTarget] = useState<{ id: string; label: string } | null>(null);
+  const [checklistDeleteTarget, setChecklistDeleteTarget] = useState<{
+    id: string;
+    label: string;
+  } | null>(null);
   const [checklistDeleteValidation, setChecklistDeleteValidation] = useState('');
   const [checklistDeleteError, setChecklistDeleteError] = useState('');
 
@@ -23,20 +31,32 @@ export function useChecklist(selectedEventId: string) {
       }
     };
     fetchChecklist();
-    return () => { isMounted = false; };
+    return () => {
+      isMounted = false;
+    };
   }, [selectedEventId]);
 
   const handleToggleChecklistItem = async (itemId: string, currentDone: boolean) => {
     if (!selectedEventId) return;
     const newDone = !currentDone;
     const targetItem = checklistItems.find((i) => i.id === itemId);
-    setChecklistItems((prev) => prev.map((item) => (item.id === itemId ? { ...item, done: newDone } : item)));
+    setChecklistItems((prev) =>
+      prev.map((item) => (item.id === itemId ? { ...item, done: newDone } : item))
+    );
     try {
       if (!String(itemId).startsWith('temp-')) {
-        await updateEventChecklistItem(selectedEventId, 'overall', itemId, newDone, targetItem?.label || 'Task');
+        await updateEventChecklistItem(
+          selectedEventId,
+          'overall',
+          itemId,
+          newDone,
+          targetItem?.label || 'Task'
+        );
       }
     } catch (error) {
-      setChecklistItems((prev) => prev.map((item) => (item.id === itemId ? { ...item, done: currentDone } : item)));
+      setChecklistItems((prev) =>
+        prev.map((item) => (item.id === itemId ? { ...item, done: currentDone } : item))
+      );
       alert('Failed to update status.');
     }
   };
@@ -45,7 +65,13 @@ export function useChecklist(selectedEventId: string) {
     try {
       const targetItem = checklistItems.find((i) => i.id === itemId);
       if (targetItem && !String(itemId).startsWith('temp-')) {
-        await updateEventChecklistItem(selectedEventId, 'overall', itemId, targetItem.done, newLabel);
+        await updateEventChecklistItem(
+          selectedEventId,
+          'overall',
+          itemId,
+          targetItem.done,
+          newLabel
+        );
       }
     } catch (error) {
       console.error('Failed to sync label update', error);
@@ -102,12 +128,25 @@ export function useChecklist(selectedEventId: string) {
   };
 
   const checklistDoneCount = checklistItems.filter((it: any) => it.done).length;
-  const checklistProgress = checklistItems.length ? Math.round((checklistDoneCount / checklistItems.length) * 100) : 0;
+  const checklistProgress = checklistItems.length
+    ? Math.round((checklistDoneCount / checklistItems.length) * 100)
+    : 0;
 
   return {
-    checklistItems, setChecklistItems,
-    checklistDoneCount, checklistProgress,
-    handleToggleChecklistItem, handleUpdateChecklistLabel, handleAddChecklistItem, handleRemoveChecklistItem,
-    checklistDeleteTarget, closeChecklistDeleteValidation, checklistDeleteValidation, setChecklistDeleteValidation, checklistDeleteError, openChecklistDeleteValidation, handleConfirmChecklistDelete
+    checklistItems,
+    setChecklistItems,
+    checklistDoneCount,
+    checklistProgress,
+    handleToggleChecklistItem,
+    handleUpdateChecklistLabel,
+    handleAddChecklistItem,
+    handleRemoveChecklistItem,
+    checklistDeleteTarget,
+    closeChecklistDeleteValidation,
+    checklistDeleteValidation,
+    setChecklistDeleteValidation,
+    checklistDeleteError,
+    openChecklistDeleteValidation,
+    handleConfirmChecklistDelete,
   };
 }

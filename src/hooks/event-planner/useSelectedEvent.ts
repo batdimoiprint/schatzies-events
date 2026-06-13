@@ -41,10 +41,10 @@ export function useSelectedEvent(selectedEventId: string, projectSlots: ProjectS
           if (isMounted) {
             setCurrentClientName(
               userData?.name ||
-              userData?.firstName ||
-              userData?.realName ||
-              userData?.clientName ||
-              ''
+                userData?.firstName ||
+                userData?.realName ||
+                userData?.clientName ||
+                ''
             );
           }
         })
@@ -88,8 +88,8 @@ export function useSelectedEvent(selectedEventId: string, projectSlots: ProjectS
         if (isMounted) {
           const mappedFlows = Array.isArray(flowData)
             ? flowData
-              .map((item: any, index: number) => mapBackendFlowToUI(item, index))
-              .sort((a: any, b: any) => a.startHour - b.startHour)
+                .map((item: any, index: number) => mapBackendFlowToUI(item, index))
+                .sort((a: any, b: any) => a.startHour - b.startHour)
             : [];
           setOverviewFlows(mappedFlows);
         }

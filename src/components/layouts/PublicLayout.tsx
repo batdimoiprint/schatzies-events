@@ -1,12 +1,11 @@
-import { useState } from 'react';
-import { Outlet } from 'react-router-dom';
+import { useNavigate, Outlet } from 'react-router-dom';
 import { Navbar } from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { ChatWidget } from '@/components/ChatWidget';
 import { CookieConsentBanner } from '@/components/CookieConsentBanner';
 
 export function PublicLayout() {
-  const [cookiePolicyOpen, setCookiePolicyOpen] = useState(false);
+  const navigate = useNavigate();
 
   return (
     <div className="flex min-h-screen flex-col bg-[#f5f4f7] text-foreground">
@@ -16,13 +15,9 @@ export function PublicLayout() {
         <Outlet />
       </main>
 
-      <Footer
-        onCookiePolicyOpen={() => setCookiePolicyOpen(true)}
-        cookiePolicyOpen={cookiePolicyOpen}
-        onCookiePolicyClose={() => setCookiePolicyOpen(false)}
-      />
+      <Footer />
       <ChatWidget />
-      <CookieConsentBanner onOpenCookiePolicy={() => setCookiePolicyOpen(true)} />
+      <CookieConsentBanner onOpenCookiePolicy={() => navigate('/cookie-policy')} />
     </div>
   );
 }

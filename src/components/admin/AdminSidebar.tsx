@@ -1,16 +1,13 @@
 import { useState, useEffect } from 'react';
 import { NavLink, useNavigate, useLocation } from 'react-router-dom';
-import {
-  Package,
-  LogOut,
-  Menu,
-  X,
-} from 'lucide-react';
+import { Building2, Images, Package, LogOut, Menu, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/hooks/useAuth';
 
 const adminNavItems = [
-  { label: 'Package Management', to: '/admin', icon: Package },
+  { label: 'Event Packages', to: '/admin', icon: Package },
+  { label: 'Business Profile', to: '/admin/business-profile', icon: Building2 },
+  { label: 'Gallery', to: '/admin/gallery', icon: Images },
 ];
 
 export default function AdminSidebar() {
@@ -27,7 +24,6 @@ export default function AdminSidebar() {
 
   // Close mobile drawer on route change
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     setMobileOpen(false);
   }, [location.pathname]);
 
@@ -88,8 +84,9 @@ export default function AdminSidebar() {
 
       {/* Navigation */}
       <nav
-        className={`flex flex-1 w-full flex-col overflow-y-auto pb-3 ${isMobile || expanded ? 'gap-0.5 px-3' : 'items-center gap-1.5 px-2'
-          }`}
+        className={`flex flex-1 w-full flex-col overflow-y-auto pb-3 ${
+          isMobile || expanded ? 'gap-0.5 px-3' : 'items-center gap-1.5 px-2'
+        }`}
       >
         {adminNavItems.map((item) => (
           <NavLink
@@ -100,31 +97,30 @@ export default function AdminSidebar() {
             className={({ isActive }) =>
               isMobile || expanded
                 ? [
-                  'group flex w-full items-center gap-3 rounded-xl px-4 py-2.5 text-[15px] font-semibold transition-all duration-200 ease-in-out',
-                  isActive
-                    ? 'bg-gradient-to-r from-[#f347a5] to-[#8f1fd1] text-white shadow-[0_10px_20px_rgba(187,54,194,0.28)]'
-                    : 'text-[#4f4a56] hover:bg-[#f0e8f5] hover:text-[#8f1fd0] hover:translate-x-1',
-                ].join(' ')
+                    'group flex w-full items-center gap-3 rounded-xl px-4 py-2.5 text-[15px] font-semibold transition-all duration-200 ease-in-out',
+                    isActive
+                      ? 'bg-gradient-to-r from-[#f347a5] to-[#8f1fd1] text-white shadow-[0_10px_20px_rgba(187,54,194,0.28)]'
+                      : 'text-[#4f4a56] hover:bg-[#f0e8f5] hover:text-[#8f1fd0] hover:translate-x-1',
+                  ].join(' ')
                 : [
-                  'flex size-10 items-center justify-center rounded-xl transition-all',
-                  isActive
-                    ? 'bg-gradient-to-b from-[#f347a5] to-[#8f1fd1] text-white shadow-[0_6px_16px_rgba(187,54,194,0.3)]'
-                    : 'text-[#6b6279] hover:bg-[#f0e8f5] hover:text-[#8f1fd0]',
-                ].join(' ')
+                    'flex size-10 items-center justify-center rounded-xl transition-all',
+                    isActive
+                      ? 'bg-gradient-to-b from-[#f347a5] to-[#8f1fd1] text-white shadow-[0_6px_16px_rgba(187,54,194,0.3)]'
+                      : 'text-[#6b6279] hover:bg-[#f0e8f5] hover:text-[#8f1fd0]',
+                  ].join(' ')
             }
           >
             <item.icon className="size-[18px] shrink-0 transition-all duration-200" />
-            {(isMobile || expanded) && (
-              <span className="whitespace-nowrap">{item.label}</span>
-            )}
+            {(isMobile || expanded) && <span className="whitespace-nowrap">{item.label}</span>}
           </NavLink>
         ))}
       </nav>
 
       {/* Logout */}
       <div
-        className={`shrink-0 border-t border-[#ece7f2] py-3 ${isMobile || expanded ? 'px-3' : 'flex justify-center px-2'
-          }`}
+        className={`shrink-0 border-t border-[#ece7f2] py-3 ${
+          isMobile || expanded ? 'px-3' : 'flex justify-center px-2'
+        }`}
       >
         {isMobile || expanded ? (
           <Button
@@ -157,13 +153,15 @@ export default function AdminSidebar() {
     <>
       {/* ── Desktop Sidebar (hidden on mobile) ── */}
       <aside
-        className={`hidden md:flex h-full shrink-0 flex-col border-r border-[#ece7f2] bg-white transition-all duration-200 ${expanded ? 'w-64' : 'w-16 items-center'
-          }`}
+        className={`hidden md:flex h-full shrink-0 flex-col border-r border-[#ece7f2] bg-white transition-all duration-200 ${
+          expanded ? 'w-64' : 'w-16 items-center'
+        }`}
       >
         {/* Hamburger toggle */}
         <div
-          className={`flex w-full shrink-0 pt-3 pb-1 ${expanded ? 'justify-end px-3' : 'justify-center'
-            }`}
+          className={`flex w-full shrink-0 pt-3 pb-1 ${
+            expanded ? 'justify-end px-3' : 'justify-center'
+          }`}
         >
           <Button
             variant="ghost"

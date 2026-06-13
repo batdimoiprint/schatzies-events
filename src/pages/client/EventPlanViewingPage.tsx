@@ -243,9 +243,7 @@ export function EventPlanViewingPage() {
               startTime: formatTime12Hour(
                 fullEvent.startTime || (fullEvent as any).eventTime || ''
               ),
-              endTime: formatTime12Hour(
-                fullEvent.endTime || (fullEvent as any).eventTimeEnd || ''
-              ),
+              endTime: formatTime12Hour(fullEvent.endTime || (fullEvent as any).eventTimeEnd || ''),
             });
           }
         }
@@ -267,12 +265,7 @@ export function EventPlanViewingPage() {
 
     // Build CSV headers and rows
     const headers = ['Time From', 'Time To', 'Activity', 'Description'];
-    const rows = flow.map((item) => [
-      item.from,
-      item.to,
-      item.title,
-      item.description || '',
-    ]);
+    const rows = flow.map((item) => [item.from, item.to, item.title, item.description || '']);
 
     // Format as CSV string
     const csvContent = [headers, ...rows]

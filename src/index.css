@@ -281,11 +281,11 @@ body {
 }
 
 .animate-marquee {
-  animation: marquee 60s linear infinite;
+  animation: marquee 90s linear infinite;
 }
 
 .animate-marquee-reverse {
-  animation: marquee-reverse 60s linear infinite;
+  animation: marquee-reverse 90s linear infinite;
 }
 
 /* Loading Screen Styles - Popup Overlay */
@@ -571,16 +571,60 @@ body {
 
 .scroll-reveal {
   opacity: 0;
-  transform: translateY(2rem);
   transition:
     opacity 0.85s ease-out,
     transform 0.85s ease-out;
   will-change: opacity, transform;
 }
 
+/* Variant: up (default) */
+.scroll-reveal--up {
+  transform: translateY(2.5rem);
+}
+
+/* Variant: left */
+.scroll-reveal--left {
+  transform: translateX(-3rem);
+}
+
+/* Variant: right */
+.scroll-reveal--right {
+  transform: translateX(3rem);
+}
+
+/* Variant: scale */
+.scroll-reveal--scale {
+  transform: scale(0.92);
+}
+
+/* Variant: fade */
+.scroll-reveal--fade {
+  transform: none;
+}
+
+/* Visible state — resets all transforms */
 .scroll-reveal.visible {
   opacity: 1;
-  transform: translateY(0);
+  transform: translateY(0) translateX(0) scale(1);
+}
+
+/* Custom thin scrollbar for package inclusions */
+.overflow-y-auto::-webkit-scrollbar {
+  width: 4px;
+}
+
+.overflow-y-auto::-webkit-scrollbar-track {
+  background: #f3f4f6;
+  border-radius: 10px;
+}
+
+.overflow-y-auto::-webkit-scrollbar-thumb {
+  background: linear-gradient(to bottom, #ff0066, #4a1053);
+  border-radius: 10px;
+}
+
+.overflow-y-auto::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(to bottom, #e60060, #3d0e45);
 }
 
 /* ── Booked date highlighting on calendar ── */

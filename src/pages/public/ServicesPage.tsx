@@ -1,12 +1,11 @@
 // Replace with your actual services hero photo placed in public/Pictures/
-const heroImage = '/Pictures/services-hero.jpg';
+const heroImage = '/Pictures/Services.png';
+const textureImage = '/Pictures/texture.jpg';
 
 import { useState } from 'react';
 import LoadingScreen from '@/components/ui/LoadingScreen';
 import ScrollReveal from '@/components/ui/ScrollReveal';
 import { GalleryModal } from '@/components/GalleryModal';
-import { Button } from '@/components/ui/button';
-import { Camera } from 'lucide-react';
 
 /* ── Gallery Data ──────────────────────────────────────────── */
 const galleryData = [
@@ -238,6 +237,51 @@ function CoordinationIcon() {
   );
 }
 
+/* ── Service card data ─────────────────────────────────────── */
+const services = [
+  {
+    Icon: CalendarIcon,
+    id: 'event-planning',
+    title: 'Event Planning and Coordination',
+    description:
+      'Assistance in organizing and managing your event from preparation to the actual day.',
+  },
+  {
+    Icon: VenueIcon,
+    id: 'venue-styling',
+    title: 'Elegant Venue Setup and Styling',
+    description:
+      "Beautiful decorations and designs tailored to match your event's theme and style.",
+  },
+  {
+    Icon: CateringIcon,
+    id: 'catering',
+    title: 'Buffet Catering',
+    description: 'Food prepared and served for guests to enjoy during the event.',
+  },
+  {
+    Icon: CameraIcon,
+    id: 'photo-video',
+    title: 'Photo and Video Coverage',
+    description:
+      'Professional coverage that beautifully captures every special moment of your event.',
+  },
+  {
+    Icon: CeilingIcon,
+    id: 'ceiling-design',
+    title: 'Ceiling Treatment and Venue Design',
+    description:
+      'Decorative ceiling setups that enhance the beauty and overall style of your venue.',
+  },
+  {
+    Icon: CoordinationIcon,
+    id: 'full-coordination',
+    title: 'Full Event Coordination',
+    description:
+      'A dedicated team that manages the program flow and ensures your event runs smoothly from start to finish.',
+  },
+];
+
 export default function ServicesPage() {
   const [activeGallery, setActiveGallery] = useState<string | null>(null);
 
@@ -251,21 +295,19 @@ export default function ServicesPage() {
       <LoadingScreen />
 
       {/* ── Section 1: Hero ── */}
-      <ScrollReveal>
+      <ScrollReveal variant="fade">
         <section
-          className="relative -mt-[88px] flex min-h-[60vh] flex-col overflow-hidden bg-cover bg-center bg-no-repeat sm:-mt-[110px] md:min-h-[70vh] lg:-mt-[173px] lg:min-h-screen"
+          className="relative -mt-[88px] flex min-h-[50vh] flex-col overflow-hidden bg-cover bg-center bg-no-repeat sm:-mt-[110px] md:min-h-[70vh] lg:-mt-[173px] lg:min-h-screen"
           style={{ backgroundImage: `url(${heroImage})` }}
         >
-          {/* Gradient overlay from #FF589C to #FD78AD */}
-          <div className="absolute inset-0 bg-gradient-to-b from-white via-[#FF0066]/30 to-[#700F81]/40" />
-          {/* Subtle dark overlay for text readability */}
-          <div className="absolute inset-0 bg-black/20" />
+          {/* Overall white overlay to lighten the whole image */}
+          <div className="absolute inset-0 bg-white/10" />
 
-          {/* Spacer that matches navbar height */}
-          <div className="h-[88px] shrink-0 sm:h-[110px] lg:h-[173px]" />
+          {/* Stronger white wash at the top behind navbar */}
+          <div className="absolute top-0 left-0 right-0 h-[300px] sm:h-[400px] lg:h-[500px] bg-gradient-to-b from-white via-white/70 via-white/30 to-transparent z-[5]" />
 
-          {/* Centered content */}
-          <div className="relative z-10 flex flex-1 flex-col items-center justify-center px-4 pb-12 text-center sm:px-6 sm:pb-16 lg:pb-[173px] animate-fade-in-up">
+          {/* Content centered in middle of section */}
+          <div className="relative z-10 flex h-full flex-col items-center justify-center px-4 py-[160px] sm:py-[260px] md:py-[360px] lg:py-[420px] text-center sm:px-6 animate-fade-in-up">
             <h1
               className="font-heading text-[clamp(2rem,8vw,5rem)] font-bold leading-tight bg-gradient-to-r text-transparent bg-clip-text animate-fade-in"
               style={{
@@ -277,7 +319,7 @@ export default function ServicesPage() {
               Starts Here
             </h1>
 
-            <p className="mt-3 max-w-[40rem] text-[clamp(0.9rem,1.8vw,1.3rem)] leading-[1.7] font-sans text-white drop-shadow-lg sm:mt-4 sm:max-w-[45rem] lg:mt-6 lg:max-w-[50rem] lg:text-[1.4rem] animate-slide-in-left animation-delay-200">
+            <p className="mt-3 max-w-[40rem] text-[clamp(0.9rem,1.8vw,1.3rem)] leading-[1.7] font-sans text-black font-medium sm:mt-4 sm:max-w-[45rem] lg:mt-6 lg:max-w-[50rem] lg:text-[1.4rem] animate-slide-in-left animation-delay-200">
               From planning to execution, we offer everything you need to bring your dream event to
               life.
             </p>
@@ -285,190 +327,110 @@ export default function ServicesPage() {
         </section>
       </ScrollReveal>
 
-      {/* ── Section 2: Services Offered ── */}
-      <section className="bg-white pt-12 sm:pt-16 lg:pt-20">
-        {/* Heading */}
-        <div className="px-4 text-center sm:px-6">
-          <h2
-            className="font-heading text-[clamp(1.8rem,6vw,4rem)] font-bold leading-[1.1] tracking-tight bg-gradient-to-r text-transparent bg-clip-text animate-fade-in"
-            style={{
-              backgroundImage: 'linear-gradient(to right, #FF0066 0%, #FF0066 46%, #4A1053 100%)',
-            }}
+      {/* ── Section 2: Services Offered (texture bg) ── */}
+      <ScrollReveal variant="up">
+        <div className="relative -mt-[60px] sm:-mt-[90px] lg:-mt-[120px] z-10">
+          {/* Textured SVG Wave at the top — sweeps into the hero */}
+          <div className="relative w-full overflow-hidden leading-[0] z-20">
+            <svg
+              className="relative block w-full h-[60px] sm:h-[90px] lg:h-[120px]"
+              viewBox="0 0 1440 120"
+              preserveAspectRatio="none"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <defs>
+                <pattern
+                  id="satin-wave-pattern"
+                  patternUnits="userSpaceOnUse"
+                  width="1440"
+                  height="120"
+                >
+                  <image
+                    href={textureImage}
+                    x="0"
+                    y="0"
+                    width="1440"
+                    height="120"
+                    preserveAspectRatio="none"
+                  />
+                </pattern>
+              </defs>
+              <path
+                d="M0,80 C360,130 720,20 1080,80 C1260,100 1380,95 1440,75 L1440,120 L0,120 Z"
+                fill="url(#satin-wave-pattern)"
+              />
+              <path
+                d="M0,80 C360,130 720,20 1080,80 C1260,100 1380,95 1440,75 L1440,120 L0,120 Z"
+                fill="black"
+                fillOpacity="0.4"
+              />
+            </svg>
+          </div>
+
+          <section
+            className="relative overflow-hidden bg-cover bg-center bg-no-repeat"
+            style={{ backgroundImage: `url(${textureImage})` }}
           >
-            Services Offered
-          </h2>
-          <p className="mx-auto mt-3 max-w-[45rem] text-[clamp(0.9rem,1.6vw,1.2rem)] leading-[1.6] font-sans text-[#4A1053] sm:mt-4 lg:max-w-[50rem] lg:text-[1.3rem] animate-slide-in-left animation-delay-200">
-            Schatzies Events offers complete event packages that include all the essential services
-            for weddings and debut celebrations.
-          </p>
+            {/* Dark overlay for readability */}
+            <div className="absolute inset-0 bg-black/40 pointer-events-none" />
+
+            {/* Heading */}
+            <div className="relative z-10 px-4 pt-6 pb-8 text-center sm:px-6 sm:pt-10 sm:pb-12 lg:pt-12 lg:pb-16">
+              <h2
+                className="font-heading text-[clamp(1.8rem,6vw,4rem)] font-bold leading-[1.1] tracking-tight text-transparent bg-clip-text animate-fade-in"
+                style={{
+                  backgroundImage:
+                    'linear-gradient(to right, #FF0066 0%, #FF0066 46%, #FF0066 100%)',
+                }}
+              >
+                Services Offered
+              </h2>
+              <p className="mx-auto mt-3 max-w-[45rem] text-[clamp(0.9rem,1.6vw,1.2rem)] leading-[1.6] font-sans text-gray-300 sm:mt-4 lg:max-w-[50rem] lg:text-[1.3rem] animate-slide-in-left animation-delay-200">
+                Schatzies Events offers complete event packages that include all the essential
+                services for weddings and debut celebrations.
+              </p>
+            </div>
+
+            {/* White wave at the bottom — transition to cards */}
+            <div className="absolute bottom-0 left-0 w-full overflow-hidden leading-[0] transform translate-y-[1px] z-20">
+              <svg
+                className="relative block w-full h-[40px] sm:h-[60px] lg:h-[80px]"
+                viewBox="0 0 1440 120"
+                preserveAspectRatio="none"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="M0,80 C360,130 720,20 1080,80 C1260,100 1380,95 1440,75 L1440,120 L0,120 Z"
+                  fill="white"
+                />
+              </svg>
+            </div>
+          </section>
         </div>
+      </ScrollReveal>
 
-        {/* Service rows */}
-        <div className="mt-8 w-full sm:mt-12 lg:mt-16">
-          {/* ── Row 1 (LEFT): icon LEFT + text LEFT ── */}
-          <div className="w-full bg-[#fdf2f6] py-10 sm:py-16 lg:py-20">
-            <div className="mx-auto flex max-w-[900px] flex-col items-center gap-5 px-4 sm:flex-row sm:gap-8 sm:px-6 lg:max-w-[1000px] lg:gap-12 sm:justify-start">
-              <div className="shrink-0 transform transition-transform duration-300 hover:scale-110">
-                <CalendarIcon />
-              </div>
-              <div className="text-center sm:text-left">
-                <h3 className="text-[clamp(1.2rem,2.5vw,1.8rem)] font-bold text-[#FF0066]">
-                  Event Planning and Coordination
+      {/* ── Section 3: Service Cards Grid ── */}
+      <section className="bg-white px-4 py-16 sm:px-6 sm:py-24 lg:px-20 lg:py-28">
+        <div className="mx-auto grid max-w-[80rem] grid-cols-1 gap-y-20 gap-x-8 sm:grid-cols-2 lg:grid-cols-3 lg:gap-x-12 lg:gap-y-24">
+          {services.map(({ Icon, id, title, description }, index) => (
+            <ScrollReveal key={id} variant="up" delay={index * 100}>
+              <div className="group relative flex flex-col items-center bg-white px-6 pb-32 pt-28 text-center shadow-[0_8px_35px_rgba(0,0,0,0.15)] transition-all duration-300 hover:-translate-y-2 hover:shadow-[0_15px_50px_rgba(0,0,0,0.2)] border border-gray-100 sm:px-8 sm:pb-36">
+                {/* Icon Circle overlapping the top */}
+                <div className="absolute -top-14 left-1/2 flex h-28 w-28 -translate-x-1/2 items-center justify-center rounded-full bg-white shadow-[0_8px_30px_rgba(0,0,0,0.2)] transition-transform duration-300">
+                  <div className="flex h-12 w-12 items-center justify-center text-[#FF0066] [&>svg]:!h-full [&>svg]:!w-full">
+                    <Icon />
+                  </div>
+                </div>
+
+                <h3 className="mt-2 text-[1.3rem] font-bold text-[#FF0066] sm:text-[1.5rem] lg:text-[1.6rem]">
+                  {title}
                 </h3>
-                <p className="mt-2 text-[clamp(0.85rem,1.5vw,1.1rem)] leading-[1.6] text-[#4A1053] max-w-[500px] sm:mt-3">
-                  Assistance in organizing and managing your event from preparation to the actual
-                  day.
+                <p className="mt-3 text-[0.95rem] leading-[1.7] text-gray-600 sm:text-[1.05rem] lg:text-[1.1rem]">
+                  {description}
                 </p>
-                <Button
-                  onClick={() => setActiveGallery('event-planning')}
-                  className="mt-4 inline-flex items-center gap-2 bg-gradient-to-r from-[#FF0066] to-[#4A1053] px-6 py-2 rounded-full text-white font-medium hover:shadow-lg transition-all duration-300 sm:mt-5"
-                >
-                  <Camera className="h-4 w-4" />
-                  View Gallery
-                </Button>
               </div>
-            </div>
-          </div>
-
-          {/* Divider */}
-          <div className="h-[1px] w-full bg-gradient-to-r from-transparent via-[#FF0066]/40 to-transparent" />
-
-          {/* ── Row 2 (RIGHT): icon RIGHT + text RIGHT ── */}
-          <div className="w-full bg-white py-10 sm:py-16 lg:py-20">
-            <div className="mx-auto flex max-w-[900px] flex-col items-center gap-5 px-4 sm:flex-row sm:gap-8 sm:px-6 lg:max-w-[1000px] lg:gap-12 sm:justify-end">
-              <div className="text-center sm:text-right">
-                <h3 className="text-[clamp(1.2rem,2.5vw,1.8rem)] font-bold text-[#FF0066]">
-                  Elegant Venue Setup and Styling
-                </h3>
-                <p className="mt-2 text-[clamp(0.85rem,1.5vw,1.1rem)] leading-[1.6] text-[#4A1053] max-w-[500px] sm:mt-3 sm:ml-auto">
-                  Beautiful decorations and designs tailored to match your event's theme and style.
-                </p>
-                <Button
-                  onClick={() => setActiveGallery('venue-styling')}
-                  className="mt-4 inline-flex items-center gap-2 bg-gradient-to-r from-[#FF0066] to-[#4A1053] px-6 py-2 rounded-full text-white font-medium hover:shadow-lg transition-all duration-300 sm:mt-5 sm:ml-auto"
-                >
-                  <Camera className="h-4 w-4" />
-                  View Gallery
-                </Button>
-              </div>
-              <div className="shrink-0 transform transition-transform duration-300 hover:scale-110">
-                <VenueIcon />
-              </div>
-            </div>
-          </div>
-
-          {/* Divider */}
-          <div className="h-[1px] w-full bg-gradient-to-r from-transparent via-[#FF0066]/40 to-transparent" />
-
-          {/* ── Row 3 (LEFT): icon LEFT + text LEFT ── */}
-          <div className="w-full bg-[#fdf2f6] py-10 sm:py-16 lg:py-20">
-            <div className="mx-auto flex max-w-[900px] flex-col items-center gap-5 px-4 sm:flex-row sm:gap-8 sm:px-6 lg:max-w-[1000px] lg:gap-12 sm:justify-start">
-              <div className="shrink-0 transform transition-transform duration-300 hover:scale-110">
-                <CateringIcon />
-              </div>
-              <div className="text-center sm:text-left">
-                <h3 className="text-[clamp(1.2rem,2.5vw,1.8rem)] font-bold text-[#FF0066]">
-                  Buffet Catering
-                </h3>
-                <p className="mt-2 text-[clamp(0.85rem,1.5vw,1.1rem)] leading-[1.6] text-[#4A1053] max-w-[500px] sm:mt-3">
-                  Food prepared and served for guests to enjoy during the event.
-                </p>
-                <Button
-                  onClick={() => setActiveGallery('catering')}
-                  className="mt-4 inline-flex items-center gap-2 bg-gradient-to-r from-[#FF0066] to-[#4A1053] px-6 py-2 rounded-full text-white font-medium hover:shadow-lg transition-all duration-300 sm:mt-5"
-                >
-                  <Camera className="h-4 w-4" />
-                  View Gallery
-                </Button>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* ── Section 3: More Services + Logo Footer ── */}
-      <section className="bg-gradient-to-b from-white via-[#fce4ef] to-[#f9b8d4] pb-12 sm:pb-20 lg:pb-28">
-        {/* Service rows */}
-        <div className="w-full">
-          {/* ── Row 4 (RIGHT): icon RIGHT + text RIGHT ── */}
-          <div className="w-full py-10 sm:py-16 lg:py-20">
-            <div className="mx-auto flex max-w-[900px] flex-col items-center gap-5 px-4 sm:flex-row sm:gap-8 sm:px-6 lg:max-w-[1000px] lg:gap-12 sm:justify-end">
-              <div className="text-center sm:text-right">
-                <h3 className="text-[clamp(1.2rem,2.5vw,1.8rem)] font-bold text-[#FF0066]">
-                  Photo and Video Coverage
-                </h3>
-                <p className="mt-2 text-[clamp(0.85rem,1.5vw,1.1rem)] leading-[1.6] text-[#4A1053] max-w-[500px] sm:mt-3 sm:ml-auto">
-                  Professional coverage that beautifully captures every special moment of your
-                  event.
-                </p>
-                <Button
-                  onClick={() => setActiveGallery('photo-video')}
-                  className="mt-4 inline-flex items-center gap-2 bg-gradient-to-r from-[#FF0066] to-[#4A1053] px-6 py-2 rounded-full text-white font-medium hover:shadow-lg transition-all duration-300 sm:mt-5 sm:ml-auto"
-                >
-                  <Camera className="h-4 w-4" />
-                  View Gallery
-                </Button>
-              </div>
-              <div className="shrink-0 transform transition-transform duration-300 hover:scale-110">
-                <CameraIcon />
-              </div>
-            </div>
-          </div>
-
-          {/* Divider */}
-          <div className="h-[1px] w-full bg-gradient-to-r from-transparent via-[#FF0066]/40 to-transparent" />
-
-          {/* ── Row 5 (LEFT): icon LEFT + text LEFT ── */}
-          <div className="w-full py-10 sm:py-16 lg:py-20">
-            <div className="mx-auto flex max-w-[900px] flex-col items-center gap-5 px-4 sm:flex-row sm:gap-8 sm:px-6 lg:max-w-[1000px] lg:gap-12 sm:justify-start">
-              <div className="shrink-0 transform transition-transform duration-300 hover:scale-110">
-                <CeilingIcon />
-              </div>
-              <div className="text-center sm:text-left">
-                <h3 className="text-[clamp(1.2rem,2.5vw,1.8rem)] font-bold text-[#FF0066]">
-                  Ceiling Treatment and Venue Design
-                </h3>
-                <p className="mt-2 text-[clamp(0.85rem,1.5vw,1.1rem)] leading-[1.6] text-[#4A1053] max-w-[500px] sm:mt-3">
-                  Decorative ceiling setups that enhance the beauty and overall style of your venue.
-                </p>
-                <Button
-                  onClick={() => setActiveGallery('ceiling-design')}
-                  className="mt-4 inline-flex items-center gap-2 bg-gradient-to-r from-[#FF0066] to-[#4A1053] px-6 py-2 rounded-full text-white font-medium hover:shadow-lg transition-all duration-300 sm:mt-5"
-                >
-                  <Camera className="h-4 w-4" />
-                  View Gallery
-                </Button>
-              </div>
-            </div>
-          </div>
-
-          {/* Divider */}
-          <div className="h-[1px] w-full bg-gradient-to-r from-transparent via-[#FF0066]/40 to-transparent" />
-
-          {/* ── Row 6 (RIGHT): icon RIGHT + text RIGHT ── */}
-          <div className="w-full py-10 sm:py-16 lg:py-20">
-            <div className="mx-auto flex max-w-[900px] flex-col items-center gap-5 px-4 sm:flex-row sm:gap-8 sm:px-6 lg:max-w-[1000px] lg:gap-12 sm:justify-end">
-              <div className="text-center sm:text-right">
-                <h3 className="text-[clamp(1.2rem,2.5vw,1.8rem)] font-bold text-[#FF0066]">
-                  Full Event Coordination
-                </h3>
-                <p className="mt-2 text-[clamp(0.85rem,1.5vw,1.1rem)] leading-[1.6] text-[#4A1053] max-w-[500px] sm:mt-3 sm:ml-auto">
-                  A dedicated team that manages the program flow and ensures your event runs
-                  smoothly from start to finish.
-                </p>
-                <Button
-                  onClick={() => setActiveGallery('full-coordination')}
-                  className="mt-4 inline-flex items-center gap-2 bg-gradient-to-r from-[#FF0066] to-[#4A1053] px-6 py-2 rounded-full text-white font-medium hover:shadow-lg transition-all duration-300 sm:mt-5 sm:ml-auto"
-                >
-                  <Camera className="h-4 w-4" />
-                  View Gallery
-                </Button>
-              </div>
-              <div className="shrink-0 transform transition-transform duration-300 hover:scale-110">
-                <CoordinationIcon />
-              </div>
-            </div>
-          </div>
+            </ScrollReveal>
+          ))}
         </div>
       </section>
 

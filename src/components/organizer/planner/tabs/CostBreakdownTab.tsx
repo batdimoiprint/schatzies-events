@@ -4,17 +4,22 @@ import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { getEvents } from '@/api/events';
 import { getVendorEntitiesByEventId, type Vendor } from '@/api/vendors';
-import {
-  getCostBreakdown,
-  type CostBreakdownResponse,
-} from '@/api/cost-breakdown';
+import { getCostBreakdown, type CostBreakdownResponse } from '@/api/cost-breakdown';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 
 /** Consistent color palette for any service type — cycles if more types exist */
 const TYPE_PALETTE = [
-  '#7a0bc0', '#ec89be', '#5dbac0', '#f39c12', '#e74c3c',
-  '#27ae60', '#2980b9', '#8e44ad', '#d35400', '#1abc9c',
+  '#7a0bc0',
+  '#ec89be',
+  '#5dbac0',
+  '#f39c12',
+  '#e74c3c',
+  '#27ae60',
+  '#2980b9',
+  '#8e44ad',
+  '#d35400',
+  '#1abc9c',
 ];
 
 function stringToHash(str: string): number {
@@ -32,7 +37,7 @@ function getServiceColor(serviceType: string): string {
   if (normalized === 'styling') return '#ec89be';
   if (normalized === 'media') return '#5dbac0';
   if (normalized === 'venue') return '#f39c12';
-  
+
   const hash = stringToHash(normalized);
   return TYPE_PALETTE[hash % TYPE_PALETTE.length];
 }
@@ -41,9 +46,11 @@ const fmt = new Intl.NumberFormat('en-US', { maximumFractionDigits: 0 });
 const peso = (v: number) => `Php ${fmt.format(v)}`;
 
 function calcPkgPrice(pkg: string, type: string, pax: number): number {
-  const p = pkg.trim().toLowerCase(), t = type.trim().toLowerCase();
+  const p = pkg.trim().toLowerCase(),
+    t = type.trim().toLowerCase();
   if (t === 'wedding') {
-    if (p === 'blooms') return pax <= 50 ? 200000 : pax <= 100 ? 235000 : pax <= 150 ? 277500 : 320000;
+    if (p === 'blooms')
+      return pax <= 50 ? 200000 : pax <= 100 ? 235000 : pax <= 150 ? 277500 : 320000;
     if (p === 'fascinating') return pax <= 100 ? 295000 : pax <= 150 ? 342500 : 390000;
     if (p === 'windy') return pax <= 100 ? 420000 : pax <= 150 ? 480000 : 540000;
     if (p === 'de luxe') return pax <= 100 ? 520000 : pax <= 150 ? 585000 : 650000;
@@ -67,7 +74,10 @@ export function CostBreakdownTab({ selectedEventId }: CostBreakdownTabProps) {
   const [eventVendors, setEventVendors] = useState<Vendor[]>([]);
   const [breakdown, setBreakdown] = useState<CostBreakdownResponse | null>(null);
 
-  const ev = useMemo(() => apiEvents.find((e) => String(e?.id) === selectedEventId) ?? null, [apiEvents, selectedEventId]);
+  const ev = useMemo(
+    () => apiEvents.find((e) => String(e?.id) === selectedEventId) ?? null,
+    [apiEvents, selectedEventId]
+  );
   const evName = String(ev?.title ?? 'Unknown Event');
   const evPkg = String(ev?.eventPackageKey || ev?.eventPackage || 'Custom Package');
   const evType = String(ev?.eventType ?? 'Unknown');
@@ -78,57 +88,86 @@ export function CostBreakdownTab({ selectedEventId }: CostBreakdownTabProps) {
 
   const organizerShare = breakdown?.organizerShare ?? packagePrice * 0.2;
   const vendorBudget = breakdown?.vendorBudget ?? packagePrice * 0.8;
-  const totalVendorCost = breakdown?.totalVendorCost ?? eventVendors.reduce((s, v) => s + (v.price ?? 0), 0);
+  const totalVendorCost =
+    breakdown?.totalVendorCost ?? eventVendors.reduce((s, v) => s + (v.price ?? 0), 0);
   const vendorBalance = vendorBudget - totalVendorCost;
   const organizerTotal = organizerShare + Math.max(0, vendorBalance);
 
   const chartSegments = useMemo(() => {
     const total = totalVendorCost || 1;
-    const r = 62, c = 2 * Math.PI * r;
+    const r = 62,
+      c = 2 * Math.PI * r;
     let cum = 0;
-    return eventVendors.filter((v) => (v.price ?? 0) > 0).map((v) => {
-      const cost = v.price ?? 0, pct = (cost / total) * 100;
-      const sl = (pct / 100) * c, da = `${sl} ${Math.max(c - sl, 0)}`, doff = -((cum / 100) * c);
-      cum += pct;
-      const st = v.serviceType || 'Unknown';
-      return { id: v.id, name: v.name, type: st, cost, pct, da, doff, color: getServiceColor(st) };
-    });
+    return eventVendors
+      .filter((v) => (v.price ?? 0) > 0)
+      .map((v) => {
+        const cost = v.price ?? 0,
+          pct = (cost / total) * 100;
+        const sl = (pct / 100) * c,
+          da = `${sl} ${Math.max(c - sl, 0)}`,
+          doff = -((cum / 100) * c);
+        cum += pct;
+        const st = v.serviceType || 'Unknown';
+        return {
+          id: v.id,
+          name: v.name,
+          type: st,
+          cost,
+          pct,
+          da,
+          doff,
+          color: getServiceColor(st),
+        };
+      });
   }, [eventVendors, totalVendorCost]);
 
   const [hovId, setHovId] = useState<string | null>(null);
   const hovSeg = chartSegments.find((s) => s.id === hovId) ?? null;
 
   useEffect(() => {
-    getEvents().then((r) => { const a = Array.isArray(r) ? r : []; setApiEvents(a); }).catch(() => setApiEvents([]));
+    getEvents()
+      .then((r) => {
+        const a = Array.isArray(r) ? r : [];
+        setApiEvents(a);
+      })
+      .catch(() => setApiEvents([]));
   }, []);
 
   useEffect(() => {
-    if (!selectedEventId) { setEventVendors([]); setBreakdown(null); return; }
-    getVendorEntitiesByEventId(selectedEventId).then(setEventVendors).catch(() => setEventVendors([]));
-    getCostBreakdown(selectedEventId).then(setBreakdown).catch(() => setBreakdown(null));
+    if (!selectedEventId) {
+      setEventVendors([]);
+      setBreakdown(null);
+      return;
+    }
+    getVendorEntitiesByEventId(selectedEventId)
+      .then(setEventVendors)
+      .catch(() => setEventVendors([]));
+    getCostBreakdown(selectedEventId)
+      .then(setBreakdown)
+      .catch(() => setBreakdown(null));
   }, [selectedEventId]);
 
   const handlePdf = () => {
     if (!selectedEventId) return;
     const doc = new jsPDF();
-    
+
     const pageWidth = doc.internal.pageSize.getWidth();
     const pageHeight = doc.internal.pageSize.getHeight();
-    
+
     // Header section
     // Company Name
     doc.setFontSize(24);
     doc.setFont('helvetica', 'bold');
     doc.setTextColor('#8f1fd1');
     doc.text('SCHATZIES EVENTS MANAGEMENT', 14, 24);
-    
+
     // Company Details
     doc.setFontSize(10);
     doc.setFont('helvetica', 'normal');
     doc.setTextColor('#666666');
     doc.text('27 Novaliches Mendoza Village Project 8, Quezon City', 14, 32);
     doc.text('Phone: +63 933 380 7868 / 917 502 3538 | Email: schatziesevents@gmail.com', 14, 38);
-    
+
     // Divider line
     doc.setDrawColor(220, 220, 220);
     doc.setLineWidth(0.5);
@@ -139,31 +178,35 @@ export function CostBreakdownTab({ selectedEventId }: CostBreakdownTabProps) {
     doc.setFont('helvetica', 'bold');
     doc.setTextColor('#333333');
     doc.text('Cost Breakdown Report', 14, 56);
-    
+
     // Date of report
-    const currentDate = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+    const currentDate = new Date().toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+    });
     doc.setFontSize(10);
     doc.setFont('helvetica', 'normal');
     doc.text(`Generated on: ${currentDate}`, pageWidth - 14, 56, { align: 'right' });
-    
+
     // Event Details box
     doc.setFillColor(248, 241, 253); // Light purple background
     doc.roundedRect(14, 62, pageWidth - 28, 36, 3, 3, 'F');
-    
+
     doc.setFontSize(11);
     doc.setFont('helvetica', 'bold');
     doc.setTextColor('#2d2834');
     doc.text('Event Information', 20, 72);
-    
+
     doc.setFontSize(10);
     doc.setFont('helvetica', 'normal');
     doc.setTextColor('#4a4157');
     doc.text(`Event Name: ${evName}`, 20, 80);
     doc.text(`Event Type: ${evType}`, 20, 86);
-    
+
     doc.text(`Package: ${evPkg}`, pageWidth / 2, 80);
     doc.text(`Pax: ${evPax}`, pageWidth / 2, 86);
-    
+
     let currentY = 106;
 
     // Summary block (AutoTable)
@@ -181,7 +224,7 @@ export function CostBreakdownTab({ selectedEventId }: CostBreakdownTabProps) {
       alternateRowStyles: { fillColor: [250, 248, 252] },
       margin: { left: 14, right: 14 },
     });
-    
+
     currentY = (doc as any).lastAutoTable.finalY + 12;
 
     // Vendors Breakdown
@@ -189,12 +232,13 @@ export function CostBreakdownTab({ selectedEventId }: CostBreakdownTabProps) {
     doc.setFont('helvetica', 'bold');
     doc.setTextColor('#333333');
     doc.text('Vendor Cost Breakdown', 14, currentY);
-    
+
     currentY += 6;
 
-    const vendorBody = eventVendors.length > 0 
-      ? eventVendors.map(v => [v.serviceType || '-', v.name, peso(v.price ?? 0)])
-      : [['-', 'No vendors assigned', '-']];
+    const vendorBody =
+      eventVendors.length > 0
+        ? eventVendors.map((v) => [v.serviceType || '-', v.name, peso(v.price ?? 0)])
+        : [['-', 'No vendors assigned', '-']];
 
     autoTable(doc, {
       startY: currentY,
@@ -206,9 +250,9 @@ export function CostBreakdownTab({ selectedEventId }: CostBreakdownTabProps) {
       alternateRowStyles: { fillColor: [255, 244, 248] },
       margin: { left: 14, right: 14 },
     });
-    
+
     currentY = (doc as any).lastAutoTable.finalY + 12;
-    
+
     // Totals & Balances
     autoTable(doc, {
       startY: currentY,
@@ -219,9 +263,9 @@ export function CostBreakdownTab({ selectedEventId }: CostBreakdownTabProps) {
       ],
       theme: 'plain',
       styles: { fontStyle: 'bold', fontSize: 11, textColor: [45, 40, 52] },
-      columnStyles: { 
+      columnStyles: {
         0: { cellWidth: 120, halign: 'left' },
-        1: { halign: 'right' }
+        1: { halign: 'right' },
       },
       margin: { left: 14, right: 14 },
     });
@@ -230,27 +274,31 @@ export function CostBreakdownTab({ selectedEventId }: CostBreakdownTabProps) {
     const pageCount = (doc as any).internal.getNumberOfPages();
     for (let i = 1; i <= pageCount; i++) {
       doc.setPage(i);
-      
+
       // Footer divider
       doc.setDrawColor(220, 220, 220);
       doc.setLineWidth(0.5);
       doc.line(14, pageHeight - 24, pageWidth - 14, pageHeight - 24);
-      
+
       // Footer text
       doc.setFontSize(8);
       doc.setFont('helvetica', 'italic');
       doc.setTextColor('#888888');
       doc.text(
         'Creating unforgettable moments and turning your dream events into reality with precision, passion, and perfection.',
-        pageWidth / 2, pageHeight - 16, { align: 'center' }
+        pageWidth / 2,
+        pageHeight - 16,
+        { align: 'center' }
       );
-      
+
       doc.setFont('helvetica', 'normal');
       doc.text(
         `© ${new Date().getFullYear()} Schatzies Events Management. All rights reserved.`,
-        pageWidth / 2, pageHeight - 10, { align: 'center' }
+        pageWidth / 2,
+        pageHeight - 10,
+        { align: 'center' }
       );
-      
+
       // Page number
       doc.text(`Page ${i} of ${pageCount}`, pageWidth - 14, pageHeight - 10, { align: 'right' });
     }
@@ -258,12 +306,12 @@ export function CostBreakdownTab({ selectedEventId }: CostBreakdownTabProps) {
     doc.save(`${evName.toLowerCase().replace(/\s+/g, '-')}-cost-breakdown.pdf`);
   };
 
-
-
   if (!selectedEventId) {
     return (
       <section className="rounded-2xl border border-[#ddd8e8] bg-white px-4 py-10 text-center">
-        <p className="text-sm font-semibold text-[#7c748f]">Select an event to view the cost breakdown.</p>
+        <p className="text-sm font-semibold text-[#7c748f]">
+          Select an event to view the cost breakdown.
+        </p>
       </section>
     );
   }
@@ -276,12 +324,17 @@ export function CostBreakdownTab({ selectedEventId }: CostBreakdownTabProps) {
           <div>
             <p className="text-lg font-black text-[#2d2834]">{evName}</p>
             <div className="flex items-center gap-2 mt-1">
-              <span className="rounded-full border border-[#eadcf6] bg-[#f8f1fd] px-3 py-0.5 text-xs font-bold uppercase tracking-wide text-[#8f23cf]">{evType}</span>
+              <span className="rounded-full border border-[#eadcf6] bg-[#f8f1fd] px-3 py-0.5 text-xs font-bold uppercase tracking-wide text-[#8f23cf]">
+                {evType}
+              </span>
             </div>
           </div>
         </div>
         <div className="flex items-center gap-2">
-          <Button onClick={handlePdf} className="rounded-full bg-gradient-to-r from-[#f34da7] to-[#8f1fd1] px-6 text-white hover:opacity-95 font-bold shadow-[0_4px_14px_rgba(165,44,180,0.2)]">
+          <Button
+            onClick={handlePdf}
+            className="rounded-full bg-gradient-to-r from-[#f34da7] to-[#8f1fd1] px-6 text-white hover:opacity-95 font-bold shadow-[0_4px_14px_rgba(165,44,180,0.2)]"
+          >
             <FileText className="size-4 mr-2" /> Export PDF Report
           </Button>
         </div>
@@ -299,14 +352,23 @@ export function CostBreakdownTab({ selectedEventId }: CostBreakdownTabProps) {
           ].map((c) => (
             <div key={c.label} className="p-5">
               <p className="inline-flex items-center gap-2 text-sm font-semibold text-[#7a7186]">
-                <span className="size-2.5 shrink-0 rounded-full ring-2" style={{ backgroundColor: c.color, boxShadow: `0 0 0 2px ${c.color}22` }} />
+                <span
+                  className="size-2.5 shrink-0 rounded-full ring-2"
+                  style={{ backgroundColor: c.color, boxShadow: `0 0 0 2px ${c.color}22` }}
+                />
                 {c.label}
               </p>
-              <p className={`mt-4 text-3xl lg:text-4xl font-black tracking-tight ${c.highlight && c.value < 0 ? 'text-[#c03560]' : 'text-[#2d2834]'}`}>
+              <p
+                className={`mt-4 text-3xl lg:text-4xl font-black tracking-tight ${c.highlight && c.value < 0 ? 'text-[#c03560]' : 'text-[#2d2834]'}`}
+              >
                 {peso(c.value)}
               </p>
               {c.sub && <p className="mt-1 text-xs font-semibold text-[#898299]">{c.sub}</p>}
-              {c.highlight && c.value > 0 && <p className="mt-1 text-[10px] font-semibold text-[#898299]">Goes back to organizer</p>}
+              {c.highlight && c.value > 0 && (
+                <p className="mt-1 text-[10px] font-semibold text-[#898299]">
+                  Goes back to organizer
+                </p>
+              )}
             </div>
           ))}
         </div>
@@ -325,17 +387,29 @@ export function CostBreakdownTab({ selectedEventId }: CostBreakdownTabProps) {
       <div className="grid grid-cols-1 xl:grid-cols-[320px_minmax(0,1fr)] gap-4">
         <Card className="border-[#e7dfef] bg-white py-0 shadow-sm">
           <CardContent className="flex h-full flex-col px-5 py-5">
-            <p className="text-sm font-black uppercase tracking-widest text-[#7a7186] mb-4">Cost Distribution</p>
+            <p className="text-sm font-black uppercase tracking-widest text-[#7a7186] mb-4">
+              Cost Distribution
+            </p>
             <div className="flex flex-1 items-start justify-center pt-1">
               <div className="relative size-52">
                 <svg viewBox="0 0 160 160" className="size-full -rotate-90">
                   <circle cx="80" cy="80" r="62" fill="none" stroke="#f0e9f7" strokeWidth="32" />
                   {chartSegments.map((s) => (
-                    <circle key={s.id} cx="80" cy="80" r="62" fill="none" stroke={s.color} strokeWidth="32"
-                      strokeDasharray={s.da} strokeDashoffset={s.doff}
+                    <circle
+                      key={s.id}
+                      cx="80"
+                      cy="80"
+                      r="62"
+                      fill="none"
+                      stroke={s.color}
+                      strokeWidth="32"
+                      strokeDasharray={s.da}
+                      strokeDashoffset={s.doff}
                       className="cursor-pointer transition-opacity duration-150"
                       opacity={hovId && hovId !== s.id ? 0.35 : 1}
-                      onMouseEnter={() => setHovId(s.id)} onMouseLeave={() => setHovId(null)} />
+                      onMouseEnter={() => setHovId(s.id)}
+                      onMouseLeave={() => setHovId(null)}
+                    />
                   ))}
                 </svg>
                 <div className="pointer-events-none absolute inset-[40px] rounded-full bg-white ring-1 ring-[#eee5f6]" />
@@ -359,7 +433,8 @@ export function CostBreakdownTab({ selectedEventId }: CostBreakdownTabProps) {
               ))}
             </div>
             <div className="mt-4 flex w-full items-center justify-between rounded-xl bg-[#ff5b9f] px-5 py-3 text-sm font-bold text-white shadow-[0_8px_20px_rgba(255,91,159,0.3)]">
-              <span>Total Vendor Cost</span><span>{peso(totalVendorCost)}</span>
+              <span>Total Vendor Cost</span>
+              <span>{peso(totalVendorCost)}</span>
             </div>
           </CardContent>
         </Card>
@@ -369,25 +444,48 @@ export function CostBreakdownTab({ selectedEventId }: CostBreakdownTabProps) {
           <CardContent className="h-full px-0 py-0">
             <div className="overflow-hidden rounded-2xl">
               <div className="bg-gradient-to-r from-[#ff66a7] to-[#ff4b97] px-6 py-4 text-sm font-semibold text-white">
-                <div className="grid grid-cols-3 gap-4"><span>Service Type</span><span>Vendor Name</span><span className="text-right">Price</span></div>
+                <div className="grid grid-cols-3 gap-4">
+                  <span>Service Type</span>
+                  <span>Vendor Name</span>
+                  <span className="text-right">Price</span>
+                </div>
               </div>
               <div className="max-h-[360px] overflow-y-auto">
                 {eventVendors.length === 0 ? (
-                  <div className="px-6 py-12 text-center text-sm font-semibold text-[#8b8199]">No vendors assigned to this event yet.</div>
-                ) : eventVendors.map((v, i) => (
-                  <div key={v.id} className={`grid grid-cols-3 gap-4 px-6 py-3.5 text-sm border-b border-[#f3edf8] ${i % 2 === 0 ? 'bg-[#fff4f8]' : 'bg-white'} hover:bg-[#fcf9ff]`}>
-                    <span className="font-medium text-[#2f2939]">{v.serviceType || '-'}</span>
-                    <span className="text-[#2f2939]">{v.name}</span>
-                    <span className="text-right font-bold text-[#2f2939]">{v.price != null ? peso(v.price) : '—'}</span>
+                  <div className="px-6 py-12 text-center text-sm font-semibold text-[#8b8199]">
+                    No vendors assigned to this event yet.
                   </div>
-                ))}
+                ) : (
+                  eventVendors.map((v, i) => (
+                    <div
+                      key={v.id}
+                      className={`grid grid-cols-3 gap-4 px-6 py-3.5 text-sm border-b border-[#f3edf8] ${i % 2 === 0 ? 'bg-[#fff4f8]' : 'bg-white'} hover:bg-[#fcf9ff]`}
+                    >
+                      <span className="font-medium text-[#2f2939]">{v.serviceType || '-'}</span>
+                      <span className="text-[#2f2939]">{v.name}</span>
+                      <span className="text-right font-bold text-[#2f2939]">
+                        {v.price != null ? peso(v.price) : '—'}
+                      </span>
+                    </div>
+                  ))
+                )}
               </div>
               <div className="border-t-2 border-[#ece6f3] bg-[#faf7fd] px-6 py-3 space-y-1.5">
-                <div className="flex justify-between text-sm"><span className="font-semibold text-[#6f6780]">Vendor Budget (80%)</span><span className="font-bold text-[#2d2834]">{peso(vendorBudget)}</span></div>
-                <div className="flex justify-between text-sm"><span className="font-semibold text-[#6f6780]">Total Vendor Cost</span><span className="font-bold text-[#2d2834]">{peso(totalVendorCost)}</span></div>
+                <div className="flex justify-between text-sm">
+                  <span className="font-semibold text-[#6f6780]">Vendor Budget (80%)</span>
+                  <span className="font-bold text-[#2d2834]">{peso(vendorBudget)}</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="font-semibold text-[#6f6780]">Total Vendor Cost</span>
+                  <span className="font-bold text-[#2d2834]">{peso(totalVendorCost)}</span>
+                </div>
                 <div className="flex justify-between text-sm border-t border-[#ece6f3] pt-1.5">
                   <span className="font-bold text-[#4a4157]">Remaining</span>
-                  <span className={`font-black ${vendorBalance >= 0 ? 'text-[#29bf4c]' : 'text-[#c03560]'}`}>{peso(vendorBalance)}</span>
+                  <span
+                    className={`font-black ${vendorBalance >= 0 ? 'text-[#29bf4c]' : 'text-[#c03560]'}`}
+                  >
+                    {peso(vendorBalance)}
+                  </span>
                 </div>
               </div>
             </div>
