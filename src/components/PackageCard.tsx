@@ -1,7 +1,7 @@
 import { Button } from '@/components/ui/button';
 
 export interface PackageItem {
-  id: number;
+  id: string | number;
   name: string;
   description: string;
   image: string;

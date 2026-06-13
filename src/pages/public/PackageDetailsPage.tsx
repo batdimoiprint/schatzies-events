@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
 import {
   ChevronDown,
   ChevronLeft,
@@ -12,7 +13,18 @@ import {
 import { Button } from '@/components/ui/button';
 import LoadingScreen from '@/components/ui/LoadingScreen';
 import ScrollReveal from '@/components/ui/ScrollReveal';
-import { weddingPackages, debutPackages } from '@/data/packages';
+import {
+  getPackageById,
+  getPackages,
+  type EventPackage,
+  type EventType,
+} from '@/api/packages';
+import {
+  buildPackageNote,
+  groupInclusions,
+  packageImage,
+  sortPackages,
+} from '@/utils/package-display';
 
 const iconMap = {
   user: User,
@@ -26,9 +38,32 @@ export default function PackageDetailsPage() {
   const navigate = useNavigate();
   const [expandedCategory, setExpandedCategory] = useState<string | null>(null);
 
-  // Get the correct package data
-  const packages = eventType === 'debut' ? debutPackages : weddingPackages;
-  const pkg = packages.find((p) => p.id === parseInt(packageId || '1'));
+  const apiEventType: EventType = eventType === 'debut' ? 'Debut' : 'Wedding';
+
+  // Full package (metadata + pax + inclusions) for the current id.
+  const { data: pkg, isLoading } = useQuery<EventPackage>({
+    queryKey: ['packages', 'detail', packageId],
+    queryFn: () => getPackageById(packageId!),
+    enabled: !!packageId,
+  });
+
+  // Sibling packages of the same type, for prev/next navigation.
+  const { data: siblingsData = [] } = useQuery<EventPackage[]>({
+    queryKey: ['packages', apiEventType],
+    queryFn: () => getPackages(apiEventType),
+  });
+  const siblings = sortPackages(siblingsData);
+
+  if (isLoading) {
+    return (
+      <>
+        <LoadingScreen />
+        <div className="flex min-h-screen items-center justify-center">
+          <p className="text-gray-500">Loading package…</p>
+        </div>
+      </>
+    );
+  }
 
   if (!pkg) {
     return (
@@ -36,7 +71,7 @@ export default function PackageDetailsPage() {
         <div className="text-center">
           <h1 className="text-2xl font-bold text-gray-800">Package not found</h1>
           <Button
-            onClick={() => navigate('/packages')}
+            onClick={() => navigate('/event-packages')}
             className="mt-4 bg-[#FF0066] hover:bg-[#e60060] text-white"
           >
             Back to Packages
@@ -46,16 +81,22 @@ export default function PackageDetailsPage() {
     );
   }
 
-  const modal = pkg.modal;
-  const heroImage = pkg.image;
-  const sideImage = pkg.detailsImage || pkg.image;
+  const name = pkg.packageName;
+  const description = pkg.description ?? '';
+  const heroImage = packageImage(pkg, 0);
+  const sideImage = packageImage(pkg, 1);
+  const categories = groupInclusions(pkg.inclusions);
+  const note = buildPackageNote(pkg);
 
   // Prev/Next package navigation
-  const currentIndex = packages.findIndex((p) => p.id === pkg.id);
-  const prevPkg = currentIndex > 0 ? packages[currentIndex - 1] : null;
-  const nextPkg = currentIndex < packages.length - 1 ? packages[currentIndex + 1] : null;
+  const currentIndex = siblings.findIndex((p) => p.id === pkg.id);
+  const prevPkg = currentIndex > 0 ? siblings[currentIndex - 1] : null;
+  const nextPkg =
+    currentIndex >= 0 && currentIndex < siblings.length - 1
+      ? siblings[currentIndex + 1]
+      : null;
 
-  const goToPackage = (targetPkg: typeof pkg) => {
+  const goToPackage = (targetPkg: EventPackage) => {
     setExpandedCategory(null);
     navigate(`/packages/${eventType}/${targetPkg.id}`);
   };
@@ -69,7 +110,7 @@ export default function PackageDetailsPage() {
         <section className="relative -mt-[88px] flex min-h-[50vh] flex-col overflow-hidden sm:-mt-[110px] md:min-h-[70vh] lg:-mt-[173px] lg:min-h-screen">
           {/* Full-bleed hero image */}
           <div className="absolute inset-0">
-            <img src={heroImage} alt={pkg.name} className="w-full h-full object-cover" />
+            <img src={heroImage} alt={name} className="w-full h-full object-cover" />
           </div>
 
           {/* Dark overlay */}
@@ -79,7 +120,7 @@ export default function PackageDetailsPage() {
           {prevPkg && (
             <button
               onClick={() => goToPackage(prevPkg)}
-              aria-label={`Previous: ${prevPkg.name}`}
+              aria-label={`Previous: ${prevPkg.packageName}`}
               className="absolute left-3 sm:left-5 lg:left-8 top-1/2 -translate-y-1/2 z-20 flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-white/10 backdrop-blur-sm border border-white/20 text-white/80 hover:bg-white/25 hover:text-white transition-all duration-300 group"
             >
               <ChevronLeft className="h-5 w-5 sm:h-6 sm:w-6 group-hover:-translate-x-0.5 transition-transform" />
@@ -90,7 +131,7 @@ export default function PackageDetailsPage() {
           {nextPkg && (
             <button
               onClick={() => goToPackage(nextPkg)}
-              aria-label={`Next: ${nextPkg.name}`}
+              aria-label={`Next: ${nextPkg.packageName}`}
               className="absolute right-3 sm:right-5 lg:right-8 top-1/2 -translate-y-1/2 z-20 flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-white/10 backdrop-blur-sm border border-white/20 text-white/80 hover:bg-white/25 hover:text-white transition-all duration-300 group"
             >
               <ChevronRight className="h-5 w-5 sm:h-6 sm:w-6 group-hover:translate-x-0.5 transition-transform" />
@@ -103,11 +144,11 @@ export default function PackageDetailsPage() {
               className="font-heading text-[clamp(2.5rem,8vw,5.5rem)] font-bold leading-[1.1] text-white"
               style={{ textShadow: '0 4px 20px rgba(0,0,0,0.3)' }}
             >
-              {pkg.name}
+              {name}
             </h1>
 
             <p className="mt-4 max-w-[42rem] text-[clamp(0.9rem,1.8vw,1.2rem)] leading-[1.8] font-sans text-white/85 sm:mt-5 lg:mt-6 animate-fade-in-up animation-delay-200">
-              {pkg.description}
+              {description}
             </p>
 
             <Button
@@ -149,7 +190,7 @@ export default function PackageDetailsPage() {
                 <div className="relative">
                   <img
                     src={sideImage}
-                    alt={pkg.name}
+                    alt={name}
                     className="w-full h-[600px] object-cover rounded-2xl shadow-[0_16px_48px_rgba(0,0,0,0.12)]"
                   />
                 </div>
@@ -159,7 +200,7 @@ export default function PackageDetailsPage() {
               <div className="lg:hidden w-full">
                 <img
                   src={sideImage}
-                  alt={pkg.name}
+                  alt={name}
                   className="w-full h-[250px] sm:h-[300px] object-cover rounded-xl shadow-lg"
                 />
               </div>
@@ -178,7 +219,13 @@ export default function PackageDetailsPage() {
                     scrollbarColor: '#FF0066 #f3f4f6',
                   }}
                 >
-                  {modal.categories.map((cat) => {
+                  {categories.length === 0 && (
+                    <p className="py-6 text-center text-[0.9rem] text-gray-500">
+                      Inclusions for this package are being finalized. Please inquire for
+                      details.
+                    </p>
+                  )}
+                  {categories.map((cat) => {
                     const Icon = iconMap[cat.iconName];
                     const isExpanded = expandedCategory === cat.title;
 
@@ -256,7 +303,7 @@ export default function PackageDetailsPage() {
                 <div className="mt-6 pt-5 border-t border-gray-200">
                   <p className="text-[0.88rem] sm:text-[0.93rem] leading-relaxed text-gray-600">
                     <span className="font-bold text-gray-800">NOTE: </span>
-                    {modal.note}
+                    {note}
                   </p>
                 </div>
               </div>

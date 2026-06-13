@@ -1,12 +1,13 @@
 import { useRef, useEffect } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { ChevronLeft, ChevronRight, ChevronUp, Sparkles, Flower2, Users } from 'lucide-react';
-import { PackageCard } from '@/components/PackageCard';
+import { PackageCard, type PackageItem } from '@/components/PackageCard';
 import LoadingScreen from '@/components/ui/LoadingScreen';
 import ScrollReveal from '@/components/ui/ScrollReveal';
-import { weddingPackages, debutPackages } from '@/data/packages';
-import type { PackageWithModal } from '@/components/PackageModal';
+import { getPackages, type EventPackage } from '@/api/packages';
+import { sortPackages, toCardItem } from '@/utils/package-display';
 
 const heroImage = '/Pictures/packages-hero.jpg';
 const textureImage = '/Pictures/texture.jpg';
@@ -16,7 +17,7 @@ function PackageCarousel({
   packages,
   onView,
 }: {
-  packages: PackageWithModal[];
+  packages: PackageItem[];
   onView: (index: number) => void;
 }) {
   const trackRef = useRef<HTMLDivElement>(null);
@@ -73,11 +74,44 @@ function PackageCarousel({
   );
 }
 
+// ── Cards area: loading / empty / carousel ────────────────────
+function PackageCardsArea({
+  cards,
+  isLoading,
+  emptyLabel,
+  onView,
+}: {
+  cards: PackageItem[];
+  isLoading: boolean;
+  emptyLabel: string;
+  onView: (index: number) => void;
+}) {
+  if (isLoading) {
+    return <p className="py-12 text-center text-[#7f7889]">Loading packages…</p>;
+  }
+  if (cards.length === 0) {
+    return <p className="py-12 text-center text-[#7f7889]">{emptyLabel}</p>;
+  }
+  return <PackageCarousel packages={cards} onView={onView} />;
+}
+
 export default function EventPackagesPage() {
   const weddingRef = useRef<HTMLDivElement>(null);
   const debutRef = useRef<HTMLDivElement>(null);
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
+
+  const { data: weddingData = [], isLoading: weddingLoading } = useQuery<EventPackage[]>({
+    queryKey: ['packages', 'Wedding'],
+    queryFn: () => getPackages('Wedding'),
+  });
+  const { data: debutData = [], isLoading: debutLoading } = useQuery<EventPackage[]>({
+    queryKey: ['packages', 'Debut'],
+    queryFn: () => getPackages('Debut'),
+  });
+
+  const weddingPackages = sortPackages(weddingData).map(toCardItem);
+  const debutPackages = sortPackages(debutData).map(toCardItem);
 
   // Auto-scroll to section based on query parameter
   useEffect(() => {
@@ -218,8 +252,10 @@ export default function EventPackagesPage() {
             {/* Wedding cards on white background */}
             <section className="bg-white px-4 py-10 sm:px-6 sm:py-16 lg:px-20 lg:py-20">
               <div className="w-full">
-                <PackageCarousel
-                  packages={weddingPackages}
+                <PackageCardsArea
+                  cards={weddingPackages}
+                  isLoading={weddingLoading}
+                  emptyLabel="No wedding packages available yet."
                   onView={(i) => navigate(`/packages/wedding/${weddingPackages[i].id}`)}
                 />
               </div>
@@ -295,8 +331,10 @@ export default function EventPackagesPage() {
             {/* Debut cards on white background */}
             <section className="bg-white px-4 py-10 sm:px-6 sm:py-16 lg:px-20 lg:py-20">
               <div className="w-full">
-                <PackageCarousel
-                  packages={debutPackages}
+                <PackageCardsArea
+                  cards={debutPackages}
+                  isLoading={debutLoading}
+                  emptyLabel="No debut packages available yet."
                   onView={(i) => navigate(`/packages/debut/${debutPackages[i].id}`)}
                 />
               </div>

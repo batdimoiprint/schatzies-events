@@ -1,32 +1,73 @@
 import { useNavigate } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
 import { ArrowLeft } from 'lucide-react';
 import LoadingScreen from '@/components/ui/LoadingScreen';
 import ScrollReveal from '@/components/ui/ScrollReveal';
+import { getPackages, type EventPackage } from '@/api/packages';
+import { toGalleryItems, type GalleryItem } from '@/utils/package-display';
 
 const heroImage = '/Pictures/packages-hero.jpg';
 
-// Gallery data with random images
-const galleryData = {
-  weddings: [
-    { id: 1, title: 'Spectacular & Elegant', image: '/Pictures/_EventPics/V.jpg' },
-    { id: 2, title: 'Spectacular & Elegant', image: '/Pictures/_EventPics/V2.jpg' },
-    { id: 3, title: 'Spectacular & Elegant', image: '/Pictures/_EventPics/V3.jpg' },
-    { id: 4, title: 'Spectacular & Elegant', image: '/Pictures/_EventPics/V4.jpg' },
-    { id: 5, title: 'Spectacular & Elegant', image: '/Pictures/_EventPics/V5.jpg' },
-    { id: 6, title: 'Spectacular & Elegant', image: '/Pictures/_EventPics/PC.jpg' },
-  ],
-  debuts: [
-    { id: 1, title: 'Sophisticated & Glamorous', image: '/Pictures/_EventPics/C1.jpg' },
-    { id: 2, title: 'Sophisticated & Glamorous', image: '/Pictures/_EventPics/C2.jpg' },
-    { id: 3, title: 'Sophisticated & Glamorous', image: '/Pictures/_EventPics/C3.jpg' },
-    { id: 4, title: 'Sophisticated & Glamorous', image: '/Pictures/_EventPics/C4.jpg' },
-    { id: 5, title: 'Sophisticated & Glamorous', image: '/Pictures/_EventPics/C5.jpg' },
-    { id: 6, title: 'Sophisticated & Glamorous', image: '/Pictures/_EventPics/BnC.jpg' },
-  ],
-};
+// ── Gallery grid: loading / empty / cards ─────────────────────
+function GalleryGrid({
+  items,
+  isLoading,
+  emptyLabel,
+}: {
+  items: GalleryItem[];
+  isLoading: boolean;
+  emptyLabel: string;
+}) {
+  if (isLoading) {
+    return <p className="py-10 text-center text-gray-500">Loading photos…</p>;
+  }
+  if (items.length === 0) {
+    return <p className="py-10 text-center text-gray-500">{emptyLabel}</p>;
+  }
+  return (
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
+      {items.map((item, index) => (
+        <ScrollReveal key={item.key} variant="up" delay={index * 100}>
+          <div className="group relative overflow-hidden rounded-2xl shadow-md hover:shadow-2xl transition-all duration-300 hover:-translate-y-2 border border-gray-100">
+            {/* Image */}
+            <div className="relative w-full pt-[100%] overflow-hidden bg-gray-200">
+              <img
+                src={item.url}
+                alt={item.title}
+                loading="lazy"
+                className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+              />
+              {/* Dark overlay on hover */}
+              <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-colors duration-300" />
+            </div>
+
+            {/* Title */}
+            <div className="bg-white px-5 sm:px-6 py-4 sm:py-5">
+              <h3 className="font-semibold text-gray-800 text-[0.95rem] sm:text-[1rem] lg:text-[1.05rem] text-center font-['Montserrat',sans-serif]">
+                {item.title}
+              </h3>
+            </div>
+          </div>
+        </ScrollReveal>
+      ))}
+    </div>
+  );
+}
 
 export default function GalleryPage() {
   const navigate = useNavigate();
+
+  const { data: weddingPackages = [], isLoading: weddingLoading } = useQuery<EventPackage[]>({
+    queryKey: ['packages', 'Wedding'],
+    queryFn: () => getPackages('Wedding'),
+  });
+  const { data: debutPackages = [], isLoading: debutLoading } = useQuery<EventPackage[]>({
+    queryKey: ['packages', 'Debut'],
+    queryFn: () => getPackages('Debut'),
+  });
+
+  const weddingItems = toGalleryItems(weddingPackages);
+  const debutItems = toGalleryItems(debutPackages);
 
   return (
     <>
@@ -105,31 +146,11 @@ export default function GalleryPage() {
             </ScrollReveal>
 
             {/* Gallery Grid */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
-              {galleryData.weddings.map((item, index) => (
-                <ScrollReveal key={item.id} variant="up" delay={index * 100}>
-                  <div className="group relative overflow-hidden rounded-2xl shadow-md hover:shadow-2xl transition-all duration-300 hover:-translate-y-2 border border-gray-100">
-                    {/* Image */}
-                    <div className="relative w-full pt-[100%] overflow-hidden bg-gray-200">
-                      <img
-                        src={item.image}
-                        alt={item.title}
-                        className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                      />
-                      {/* Dark overlay on hover */}
-                      <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-colors duration-300" />
-                    </div>
-
-                    {/* Title */}
-                    <div className="bg-white px-5 sm:px-6 py-4 sm:py-5">
-                      <h3 className="font-semibold text-gray-800 text-[0.95rem] sm:text-[1rem] lg:text-[1.05rem] text-center font-['Montserrat',sans-serif]">
-                        {item.title}
-                      </h3>
-                    </div>
-                  </div>
-                </ScrollReveal>
-              ))}
-            </div>
+            <GalleryGrid
+              items={weddingItems}
+              isLoading={weddingLoading}
+              emptyLabel="Wedding photos are coming soon."
+            />
           </div>
         </section>
       </ScrollReveal>
@@ -150,31 +171,11 @@ export default function GalleryPage() {
             </ScrollReveal>
 
             {/* Gallery Grid */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
-              {galleryData.debuts.map((item, index) => (
-                <ScrollReveal key={item.id} variant="up" delay={index * 100}>
-                  <div className="group relative overflow-hidden rounded-2xl shadow-md hover:shadow-2xl transition-all duration-300 hover:-translate-y-2 border border-gray-100">
-                    {/* Image */}
-                    <div className="relative w-full pt-[100%] overflow-hidden bg-gray-200">
-                      <img
-                        src={item.image}
-                        alt={item.title}
-                        className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                      />
-                      {/* Dark overlay on hover */}
-                      <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-colors duration-300" />
-                    </div>
-
-                    {/* Title */}
-                    <div className="bg-white px-5 sm:px-6 py-4 sm:py-5">
-                      <h3 className="font-semibold text-gray-800 text-[0.95rem] sm:text-[1rem] lg:text-[1.05rem] text-center font-['Montserrat',sans-serif]">
-                        {item.title}
-                      </h3>
-                    </div>
-                  </div>
-                </ScrollReveal>
-              ))}
-            </div>
+            <GalleryGrid
+              items={debutItems}
+              isLoading={debutLoading}
+              emptyLabel="Debut photos are coming soon."
+            />
           </div>
         </section>
       </ScrollReveal>
