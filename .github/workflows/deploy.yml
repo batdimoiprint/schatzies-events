@@ -42,11 +42,9 @@ jobs:
         run: |
           BUCKET_NAME=$(aws cloudformation describe-stacks --stack-name $STACK_NAME --query "Stacks[0].Outputs[?OutputKey=='DeploymentBucketName'].OutputValue" --output text)
           CF_DIST_ID=$(aws cloudformation describe-stacks --stack-name $STACK_NAME --query "Stacks[0].Outputs[?OutputKey=='CloudFrontDistributionId'].OutputValue" --output text)
-          API_URL=$(aws cloudformation describe-stacks --stack-name $STACK_NAME --query "Stacks[0].Outputs[?OutputKey=='ApiEndpoint'].OutputValue" --output text)
 
           echo "bucket_name=${BUCKET_NAME}" >> $GITHUB_OUTPUT
           echo "cf_dist_id=${CF_DIST_ID}" >> $GITHUB_OUTPUT
-          echo "api_url=${API_URL}" >> $GITHUB_OUTPUT
 
       # ── PROD (master) ──────────────────────────────────────────
       - name: Build frontend (prod)
@@ -69,7 +67,7 @@ jobs:
         if: github.ref_name == 'dev'
         env:
           VITE_BASE_PATH: /staging/
-          VITE_API_URL: ${{ steps.stack.outputs.api_url }}/api
+          VITE_API_URL: /api
         run: pnpm build
 
       - name: Deploy to S3 (staging)
