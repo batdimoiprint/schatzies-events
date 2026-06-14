@@ -27,6 +27,9 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Build frontend
+        run: pnpm build
+
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v2
         with:
@@ -40,15 +43,16 @@ jobs:
           STACK_NAME: schatzies-events
         run: |
           STAGING_BUCKET=$(aws cloudformation describe-stacks --stack-name $STACK_NAME --query "Stacks[0].Outputs[?OutputKey=='StagingBucketName'].OutputValue" --output text)
-          API_URL=$(aws cloudformation describe-stacks --stack-name $STACK_NAME --query "Stacks[0].Outputs[?OutputKey=='ApiEndpoint'].OutputValue" --output text)
+          STAGING_CF_ID=$(aws cloudformation describe-stacks --stack-name $STACK_NAME --query "Stacks[0].Outputs[?OutputKey=='StagingDistributionId'].OutputValue" --output text)
 
           echo "staging_bucket=${STAGING_BUCKET}" >> $GITHUB_OUTPUT
-          echo "api_url=${API_URL}" >> $GITHUB_OUTPUT
+          echo "staging_cf_id=${STAGING_CF_ID}" >> $GITHUB_OUTPUT
 
-      - name: Build frontend (staging)
-        env:
-          VITE_API_URL: ${{ steps.stack.outputs.api_url }}/api
-        run: pnpm build
-
-      - name: Deploy to S3 (staging)
+      - name: Deploy to S3
         run: aws s3 sync dist s3://${{ steps.stack.outputs.staging_bucket }} --delete
+
+      - name: Invalidate CloudFront cache
+        run: |
+          aws cloudfront create-invalidation \
+            --distribution-id ${{ steps.stack.outputs.staging_cf_id }} \
+            --paths "/*"

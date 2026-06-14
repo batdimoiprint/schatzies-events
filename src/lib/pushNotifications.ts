@@ -11,7 +11,6 @@ const VAPID_PUBLIC_KEY =
  * In prod: uses VITE_API_URL (must be set in your deployment env, e.g. https://api.schatzies.com/api)
  */
 function getApiUrl(): string {
-  if (import.meta.env.VITE_API_URL) return import.meta.env.VITE_API_URL;
   return import.meta.env.MODE === 'development'
     ? 'http://localhost:3000/api'
     : `${import.meta.env.BASE_URL}/api`.replace(/\/+/g, '/');
