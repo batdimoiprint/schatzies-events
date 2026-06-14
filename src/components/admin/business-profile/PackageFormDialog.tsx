@@ -174,7 +174,7 @@ function PackageFormBody({
         {/* Header: serif title + Save & Close */}
         <div className="flex items-start justify-between gap-3 pr-8">
           <div>
-            <DialogTitle className="font-heading text-2xl font-bold text-[#1d1320]">
+            <DialogTitle className="font-heading text-2xl font-bold text-foreground">
               {pkg ? 'Edit Package' : `Add ${eventType} Package`}
             </DialogTitle>
             <DialogDescription className="sr-only">
@@ -186,7 +186,7 @@ function PackageFormBody({
           <Button
             type="submit"
             disabled={!packageName.trim() || saveMutation.isPending}
-            className="rounded-full bg-[#df2b80] px-5 text-xs font-bold text-white shadow-md hover:bg-[#c81e6f]"
+            className="rounded-full bg-brand px-5 text-xs font-bold text-white shadow-md hover:bg-brand"
           >
             {saveMutation.isPending ? 'Saving...' : pkg ? 'Save & Close' : 'Save & Continue'}
           </Button>
@@ -196,7 +196,7 @@ function PackageFormBody({
         <div className="grid gap-5 md:grid-cols-2">
           <div className="space-y-4">
             <div className="space-y-1.5">
-              <Label htmlFor="pkg-name" className="text-sm text-[#7f7889]">
+              <Label htmlFor="pkg-name" className="text-sm text-muted-foreground">
                 Package Name
               </Label>
               <Input
@@ -205,11 +205,11 @@ function PackageFormBody({
                 onChange={(e) => setPackageName(e.target.value)}
                 placeholder="Fascinating"
                 required
-                className="rounded-lg border-0 bg-[#efedf0] focus-visible:ring-[#df2b80]"
+                className="rounded-lg border-0 bg-[#efedf0] focus-visible:ring-brand"
               />
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="pkg-description" className="text-sm text-[#7f7889]">
+              <Label htmlFor="pkg-description" className="text-sm text-muted-foreground">
                 Description
               </Label>
               <Textarea
@@ -218,7 +218,7 @@ function PackageFormBody({
                 onChange={(e) => setDescription(e.target.value)}
                 placeholder="A cinematic experience featuring high-end storytelling..."
                 rows={5}
-                className="rounded-lg border-0 bg-[#efedf0] focus-visible:ring-[#df2b80]"
+                className="rounded-lg border-0 bg-[#efedf0] focus-visible:ring-brand"
               />
             </div>
           </div>
@@ -235,7 +235,7 @@ function PackageFormBody({
               <Button
                 type="button"
                 onClick={() => fileInputRef.current?.click()}
-                className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 rounded-lg border border-[#df2b80]/30 bg-white px-4 text-xs font-bold text-[#df2b80] shadow-md hover:bg-[#fdf2f8]"
+                className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 rounded-lg border border-brand/30 bg-white px-4 text-xs font-bold text-brand shadow-md hover:bg-brand/5"
               >
                 {coverUrl ? 'Change Cover' : 'Upload Photos'}
               </Button>
@@ -249,7 +249,7 @@ function PackageFormBody({
               onChange={(e) => setNewImages(Array.from(e.target.files ?? []))}
             />
             {newImages.length > 0 ? (
-              <p className="text-xs text-[#7f7889]">
+              <p className="text-xs text-muted-foreground">
                 {newImages.length} new photo(s) selected
                 {pkg && pkg.images.length > 0 && ' — will replace existing photos on save'}
               </p>
@@ -262,7 +262,7 @@ function PackageFormBody({
                       key={image.key}
                       src={image.url}
                       alt={pkg.packageName}
-                      className="size-12 rounded-md border border-[#ece7f2] object-cover"
+                      className="size-12 rounded-md border border-border object-cover"
                     />
                   ))}
                 </div>
@@ -278,7 +278,7 @@ function PackageFormBody({
             {/* Inclusions */}
             <section className="space-y-3">
               <div className="flex items-center justify-between gap-3">
-                <h3 className="text-lg font-semibold text-[#7f7889]">Inclusions</h3>
+                <h3 className="text-lg font-semibold text-muted-foreground">Inclusions</h3>
                 <Button
                   type="button"
                   variant="outline"
@@ -293,7 +293,7 @@ function PackageFormBody({
               {showInclusionForm && (
                 <div className="flex flex-wrap items-end gap-2 rounded-xl bg-[#f7f4f9] p-3">
                   <div className="w-56 space-y-1">
-                    <Label htmlFor="pkg-inclusion-type" className="text-xs text-[#7f7889]">
+                    <Label htmlFor="pkg-inclusion-type" className="text-xs text-muted-foreground">
                       Type
                     </Label>
                     <Input
@@ -311,7 +311,7 @@ function PackageFormBody({
                     </datalist>
                   </div>
                   <div className="min-w-40 flex-1 space-y-1">
-                    <Label htmlFor="pkg-inclusion" className="text-xs text-[#7f7889]">
+                    <Label htmlFor="pkg-inclusion" className="text-xs text-muted-foreground">
                       Inclusion
                     </Label>
                     <Input
@@ -331,7 +331,7 @@ function PackageFormBody({
                       !inclusionText.trim() ||
                       addInclusionMutation.isPending
                     }
-                    className="gap-1 rounded-full bg-[#df2b80] px-4 text-xs font-bold text-white hover:bg-[#c81e6f]"
+                    className="gap-1 rounded-full bg-brand px-4 text-xs font-bold text-white hover:bg-brand"
                   >
                     <Plus className="size-4" />
                     Add
@@ -340,7 +340,7 @@ function PackageFormBody({
               )}
 
               {inclusionGroups.length === 0 && !showInclusionForm && (
-                <p className="text-sm text-[#7f7889]">No inclusions yet.</p>
+                <p className="text-sm text-muted-foreground">No inclusions yet.</p>
               )}
 
               {inclusionGroups.map((group) => (
@@ -357,7 +357,7 @@ function PackageFormBody({
                           aria-label="Remove inclusion"
                           onClick={() => deleteInclusionMutation.mutate(item.id)}
                           disabled={deleteInclusionMutation.isPending}
-                          className="shrink-0 text-[#9b93a5] transition-colors hover:text-[#df2b80]"
+                          className="shrink-0 text-[#9b93a5] transition-colors hover:text-brand"
                         >
                           <Trash2 className="size-4" />
                         </button>
@@ -371,7 +371,7 @@ function PackageFormBody({
             {/* Pax tiers */}
             <section className="space-y-3">
               <div className="flex items-center justify-between gap-3">
-                <h3 className="text-lg font-semibold text-[#7f7889]">Pax Tiers</h3>
+                <h3 className="text-lg font-semibold text-muted-foreground">Pax Tiers</h3>
                 <Button
                   type="button"
                   variant="outline"
@@ -386,7 +386,7 @@ function PackageFormBody({
               {showPaxForm && (
                 <div className="flex flex-wrap items-end gap-2 rounded-xl bg-[#f7f4f9] p-3">
                   <div className="w-24 space-y-1">
-                    <Label htmlFor="pkg-pax" className="text-xs text-[#7f7889]">
+                    <Label htmlFor="pkg-pax" className="text-xs text-muted-foreground">
                       Pax
                     </Label>
                     <Input
@@ -399,7 +399,7 @@ function PackageFormBody({
                     />
                   </div>
                   <div className="w-32 space-y-1">
-                    <Label htmlFor="pkg-pax-price" className="text-xs text-[#7f7889]">
+                    <Label htmlFor="pkg-pax-price" className="text-xs text-muted-foreground">
                       Price (₱)
                     </Label>
                     <Input
@@ -412,7 +412,7 @@ function PackageFormBody({
                     />
                   </div>
                   <div className="min-w-32 flex-1 space-y-1">
-                    <Label htmlFor="pkg-pax-note" className="text-xs text-[#7f7889]">
+                    <Label htmlFor="pkg-pax-note" className="text-xs text-muted-foreground">
                       Note
                     </Label>
                     <Input
@@ -427,7 +427,7 @@ function PackageFormBody({
                     size="sm"
                     onClick={() => addPaxMutation.mutate()}
                     disabled={!paxCount || !paxPrice || addPaxMutation.isPending}
-                    className="gap-1 rounded-full bg-[#df2b80] px-4 text-xs font-bold text-white hover:bg-[#c81e6f]"
+                    className="gap-1 rounded-full bg-brand px-4 text-xs font-bold text-white hover:bg-brand"
                   >
                     <Plus className="size-4" />
                     Add
@@ -436,7 +436,7 @@ function PackageFormBody({
               )}
 
               {(pkg.pax ?? []).length === 0 && !showPaxForm ? (
-                <p className="text-sm text-[#7f7889]">No pax tiers yet.</p>
+                <p className="text-sm text-muted-foreground">No pax tiers yet.</p>
               ) : (
                 <ul className="space-y-1.5">
                   {(pkg.pax ?? []).map((tier) => (
@@ -454,7 +454,7 @@ function PackageFormBody({
                         aria-label="Remove pax tier"
                         onClick={() => deletePaxMutation.mutate(tier.id)}
                         disabled={deletePaxMutation.isPending}
-                        className="shrink-0 text-[#9b93a5] transition-colors hover:text-[#df2b80]"
+                        className="shrink-0 text-[#9b93a5] transition-colors hover:text-brand"
                       >
                         <Trash2 className="size-4" />
                       </button>
@@ -465,7 +465,7 @@ function PackageFormBody({
             </section>
           </>
         ) : (
-          <p className="text-xs text-[#7f7889]">
+          <p className="text-xs text-muted-foreground">
             Save the package to start adding inclusions and pax tiers.
           </p>
         )}

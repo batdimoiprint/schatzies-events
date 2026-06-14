@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { Check } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import LoadingScreen from '@/components/ui/LoadingScreen';
@@ -29,26 +29,21 @@ export function ForceResetPasswordPage() {
 
   const requirements = passwordRequirements(password);
 
-  // If no reset token, redirect to login
   if (!resetToken) {
     return (
-      <div className="relative min-h-screen overflow-hidden bg-gradient-to-b from-[#fff5fb] via-[#ffe3f1] to-[#ffd6e6] py-12 sm:py-16 lg:py-24">
-        <div className="relative mx-auto flex min-h-[calc(100vh-4rem)] max-w-2xl items-center justify-center px-4 sm:px-6 lg:px-8">
-          <Card className="w-full rounded-[2rem] border border-white/80 bg-white/95 p-6 shadow-[0_30px_80px_rgba(177,63,134,0.14)] backdrop-blur-sm sm:p-10">
-            <CardContent className="pt-10 text-center">
-              <h1 className="text-2xl font-bold text-[#24182f] mb-4">Session Expired</h1>
-              <p className="text-sm text-[#5a3f57] mb-6">
-                Your password reset session has expired or is invalid. Please log in again.
-              </p>
-              <Button
-                type="button"
-                onClick={() => navigate('/login')}
-                className="rounded-full bg-gradient-to-r from-[#ff5fa1] to-[#b049f0] px-6 py-3 text-sm font-bold text-white shadow-xl transition hover:brightness-110"
-              >
-                Go to Login
-              </Button>
-            </CardContent>
-          </Card>
+      <div className="bg-gradient-brand-soft flex min-h-screen items-center justify-center px-4 py-12">
+        <div className="w-full max-w-md rounded-2xl border border-border bg-card p-8 text-center">
+          <h1 className="font-heading text-3xl font-semibold text-ink">Session expired</h1>
+          <p className="mt-3 font-sans text-sm leading-relaxed text-ink/60">
+            Your password reset session has expired or is invalid. Please log in again.
+          </p>
+          <Button
+            type="button"
+            onClick={() => navigate('/login')}
+            className="bg-gradient-brand mt-8 h-12 w-full rounded-full font-ui text-sm font-semibold tracking-[0.1em] text-white uppercase transition hover:brightness-110"
+          >
+            Go to Login
+          </Button>
         </div>
       </div>
     );
@@ -57,19 +52,15 @@ export function ForceResetPasswordPage() {
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setError('');
-
     const allPassed = requirements.every((item) => item.test);
-
     if (!allPassed) {
       setError('Please meet all password requirements before continuing.');
       return;
     }
-
     if (password !== confirmPassword) {
       setError('Passwords do not match.');
       return;
     }
-
     setIsLoading(true);
     try {
       await forceChangePassword(resetToken, password);
@@ -93,118 +84,119 @@ export function ForceResetPasswordPage() {
     <>
       <LoadingScreen isLoading={isLoading} />
 
-      <div className="relative min-h-screen overflow-hidden bg-gradient-to-b from-[#fff5fb] via-[#ffe3f1] to-[#ffd6e6] py-12 sm:py-16 lg:py-24">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(255,255,255,0.95),_transparent_35%)]" />
-        <div className="absolute inset-x-0 top-0 h-72 bg-gradient-to-b from-white via-white/80 to-transparent" />
-        <div className="relative mx-auto flex min-h-[calc(100vh-4rem)] max-w-2xl items-center justify-center px-4 sm:px-6 lg:px-8">
-          <Card className="w-full rounded-[2rem] border border-white/80 bg-white/95 p-6 shadow-[0_30px_80px_rgba(177,63,134,0.14)] backdrop-blur-sm sm:p-10">
-            <CardHeader className="pb-0">
-              <div className="mb-8 flex items-center justify-end gap-4">
-                <span className="rounded-full bg-[#fff0f9] px-4 py-2 text-xs font-semibold uppercase tracking-[0.22em] text-[#d63384] shadow-sm">
-                  {success ? 'Done' : 'Reset Required'}
-                </span>
-              </div>
+      <div className="grid min-h-screen lg:grid-cols-2">
+        {/* Brand panel */}
+        <div className="relative hidden overflow-hidden lg:block">
+          <img src="/Pictures/hero-7.jpg" alt="" className="absolute inset-0 h-full w-full object-cover" />
+          <div className="absolute inset-0 bg-gradient-to-br from-brand/85 via-ink/70 to-brand-deep/80" />
+          <div className="relative z-10 flex h-full flex-col justify-between p-12">
+            <img
+              src="/Pictures/business-logo.png"
+              alt="Schatzies Events"
+              className="h-16 w-auto object-contain brightness-0 invert"
+            />
+            <div className="space-y-4">
+              <span className="eyebrow text-gold">Secure Your Account</span>
+              <h2 className="font-heading text-4xl leading-tight font-semibold text-ivory">
+                One last step <br />
+                before we begin.
+              </h2>
+              <p className="max-w-md font-sans text-base leading-relaxed text-ivory/80">
+                Set a fresh password and you&rsquo;re ready to manage your celebrations.
+              </p>
+            </div>
+          </div>
+        </div>
 
-              <div className="space-y-3 text-center">
-                <h1 className="text-3xl font-bold tracking-tight text-[#24182f] sm:text-4xl">
-                  {success ? 'Password Updated!' : 'Set a New Password'}
-                </h1>
-                <p className="mx-auto max-w-[26rem] text-sm leading-7 text-[#5a3f57] sm:text-base">
-                  {success
-                    ? 'Your password has been updated successfully. You can now log in with your new credentials.'
-                    : 'Your password needs to be reset. Please create a new password to continue.'}
-                </p>
-              </div>
-            </CardHeader>
+        {/* Form panel */}
+        <div className="bg-gradient-brand-soft relative flex items-center justify-center px-4 py-12 sm:px-8">
+          <div className="relative z-10 w-full max-w-md">
+            <span className="eyebrow text-brand">{success ? 'Complete' : 'Reset Required'}</span>
+            <h1 className="mt-3 font-heading text-4xl font-semibold text-ink">
+              {success ? 'Password updated' : 'Set a new password'}
+              <span className="text-brand">.</span>
+            </h1>
+            <p className="mt-3 font-sans text-sm leading-relaxed text-ink/60">
+              {success
+                ? 'Your password has been updated successfully. You can now log in with your new credentials.'
+                : 'Your password needs to be reset. Please create a new password to continue.'}
+            </p>
 
-            <CardContent className="pt-10">
+            <div className="mt-8">
               {!success ? (
-                <form onSubmit={handleSubmit} className="space-y-6">
-                  <div className="space-y-4">
-                    <div className="space-y-2">
-                      <Label
-                        htmlFor="force-new-password"
-                        className="block text-sm font-semibold text-[#4a1053]"
-                      >
-                        New Password
-                      </Label>
-                      <Input
-                        id="force-new-password"
-                        type="password"
-                        value={password}
-                        onChange={(event) => setPassword(event.target.value)}
-                        placeholder="Enter new password"
-                        className="h-14 rounded-3xl border border-[#f0d7e6] bg-[#faf4f8] px-5 text-sm text-[#392c41] focus:border-[#e460a7] focus:ring-[#e460a7]/20"
-                      />
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label
-                        htmlFor="force-confirm-password"
-                        className="block text-sm font-semibold text-[#4a1053]"
-                      >
-                        Confirm Password
-                      </Label>
-                      <Input
-                        id="force-confirm-password"
-                        type="password"
-                        value={confirmPassword}
-                        onChange={(event) => setConfirmPassword(event.target.value)}
-                        placeholder="Confirm new password"
-                        className="h-14 rounded-3xl border border-[#f0d7e6] bg-[#faf4f8] px-5 text-sm text-[#392c41] focus:border-[#e460a7] focus:ring-[#e460a7]/20"
-                      />
-                    </div>
+                <form onSubmit={handleSubmit} className="space-y-5">
+                  <div className="space-y-2">
+                    <Label htmlFor="force-new-password" className="font-ui text-xs font-semibold tracking-[0.1em] text-ink/70 uppercase">
+                      New Password
+                    </Label>
+                    <Input
+                      id="force-new-password"
+                      type="password"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      placeholder="Enter new password"
+                      className="h-12 rounded-xl"
+                    />
                   </div>
-
-                  <div className="space-y-3 rounded-3xl border border-[#f4dff0] bg-[#fff0f5] p-4 text-sm text-[#5a3f57]">
+                  <div className="space-y-2">
+                    <Label htmlFor="force-confirm-password" className="font-ui text-xs font-semibold tracking-[0.1em] text-ink/70 uppercase">
+                      Confirm Password
+                    </Label>
+                    <Input
+                      id="force-confirm-password"
+                      type="password"
+                      value={confirmPassword}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
+                      placeholder="Confirm new password"
+                      className="h-12 rounded-xl"
+                    />
+                  </div>
+                  <div className="space-y-2.5 rounded-xl border border-border bg-card p-4">
                     {requirements.map((item) => (
-                      <div key={item.label} className="flex items-center gap-3">
+                      <div key={item.label} className="flex items-center gap-3 font-sans text-sm">
                         <span
-                          className={`inline-flex h-6 w-6 items-center justify-center rounded-full text-xs ${item.test ? 'bg-[#c8f1d6] text-[#1f6a3e]' : 'bg-[#fbe7f2] text-[#af4a75]'}`}
+                          className={`inline-flex h-5 w-5 items-center justify-center rounded-full text-[10px] ${
+                            item.test ? 'bg-brand text-white' : 'bg-muted text-muted-foreground'
+                          }`}
                         >
-                          {item.test ? '✔' : '✕'}
+                          {item.test ? '✓' : ''}
                         </span>
-                        <span className={item.test ? 'text-[#3b1940]' : 'text-[#7d5c78]'}>
-                          {item.label}
-                        </span>
+                        <span className={item.test ? 'text-ink' : 'text-ink/55'}>{item.label}</span>
                       </div>
                     ))}
                   </div>
-
                   {error && (
-                    <p className="rounded-3xl bg-red-50 px-4 py-3 text-sm text-red-700">{error}</p>
+                    <p className="rounded-lg border border-destructive/20 bg-destructive/5 px-3 py-2 font-sans text-xs text-destructive">
+                      {error}
+                    </p>
                   )}
-
                   <Button
                     type="submit"
-                    className="w-full rounded-full bg-gradient-to-r from-[#ff5fa1] to-[#b049f0] px-6 py-4 text-sm font-bold text-white shadow-xl shadow-[#da89cd]/20 transition hover:brightness-110"
+                    className="bg-gradient-brand h-12 w-full rounded-full font-ui text-sm font-semibold tracking-[0.1em] text-white uppercase transition hover:brightness-110"
                   >
                     Set Password
                   </Button>
                 </form>
               ) : (
-                <div className="rounded-[1.75rem] border border-[#f7d8ea] bg-[#ffffff] p-8 shadow-[0_20px_50px_rgba(101,45,99,0.15)]">
-                  <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-[#d3fde1] text-[#1e6c3c] shadow-sm">
-                    <span className="text-3xl">✓</span>
+                <div className="rounded-2xl border border-border bg-card p-8 text-center">
+                  <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-brand text-white">
+                    <Check className="h-8 w-8" />
                   </div>
-                  <div className="space-y-4 text-center">
-                    <h2 className="text-2xl font-bold text-[#281a33]">You're All Set!</h2>
-                    <p className="mx-auto max-w-[24rem] text-sm leading-7 text-[#5a3f57]">
-                      Your password has been updated. You can now log in with your new credentials.
-                    </p>
-                  </div>
-
+                  <h2 className="font-heading text-2xl text-ink">You&rsquo;re all set!</h2>
+                  <p className="mx-auto mt-3 max-w-xs font-sans text-sm leading-relaxed text-ink/60">
+                    Your password has been updated. You can now log in with your new credentials.
+                  </p>
                   <Button
                     type="button"
                     onClick={() => navigate('/login')}
-                    className="mt-8 w-full rounded-full bg-[#32d77f] px-6 py-4 text-sm font-bold text-white shadow-xl shadow-[#90e3b0]/30 transition hover:brightness-105"
+                    className="bg-gradient-brand mt-8 h-12 w-full rounded-full font-ui text-sm font-semibold tracking-[0.1em] text-white uppercase transition hover:brightness-110"
                   >
                     Go to Login
                   </Button>
                 </div>
               )}
-            </CardContent>
-          </Card>
+            </div>
+          </div>
         </div>
       </div>
     </>

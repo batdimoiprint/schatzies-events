@@ -27,7 +27,7 @@ export function FlowNotesBoard({ selectedEventId, eventDate, eventTime }: FlowNo
   const minAllowedTime = '00:00';
   const maxAllowedTime = '23:59';
 
-  const [timelineBlocks, setTimelineBlocks] = useState<any[]>([]);
+  const [timelineBlocks, setTimelineBlocks] = useState<ReturnType<typeof mapBackendFlowToUI>[]>([]);
 
   useEffect(() => {
     let isMounted = true;
@@ -40,7 +40,7 @@ export function FlowNotesBoard({ selectedEventId, eventDate, eventTime }: FlowNo
         const flowData = await getEventFlow(selectedEventId);
         if (isMounted) {
           const mapped = Array.isArray(flowData)
-            ? flowData.map((item: any, index: number) => mapBackendFlowToUI(item, index))
+            ? flowData.map((item, index) => mapBackendFlowToUI(item, index))
             : [];
           setTimelineBlocks(mapped);
         }
@@ -311,8 +311,8 @@ export function FlowNotesBoard({ selectedEventId, eventDate, eventTime }: FlowNo
 
   return (
     <>
-      <section className="rounded-2xl border border-[#ddd8e8] bg-linear-to-b from-white to-[#fbf8fd] p-4 shadow-[0_6px_14px_rgba(31,18,54,0.05)]">
-        <div className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-[#e3ddea] bg-white px-4 py-3 shadow-[0_4px_10px_rgba(27,16,45,0.06)]">
+      <section className="rounded-2xl border border-border bg-linear-to-b from-white to-[#fbf8fd] p-4 shadow-[0_6px_14px_rgba(31,18,54,0.05)]">
+        <div className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-border bg-white px-4 py-3 shadow-[0_4px_10px_rgba(27,16,45,0.06)]">
           <p className="text-[11px] font-black uppercase tracking-[0.12em] text-[#8a8399]">Flow</p>
           <div className="flex items-center gap-2">
             <button
@@ -325,7 +325,7 @@ export function FlowNotesBoard({ selectedEventId, eventDate, eventTime }: FlowNo
             <button
               type="button"
               onClick={openCreateActivity}
-              className="inline-flex h-9 items-center gap-1.5 rounded-lg bg-linear-to-r from-[#f1589e] via-[#d735b3] to-[#8a1fd0] px-4 text-[11px] font-black text-white shadow-[0_10px_20px_rgba(125,31,186,0.24)] transition hover:brightness-105"
+              className="inline-flex h-9 items-center gap-1.5 rounded-lg bg-linear-to-r from-brand via-[#d735b3] to-brand-deep px-4 text-[11px] font-black text-white shadow-[0_10px_20px_rgba(125,31,186,0.24)] transition hover:brightness-105"
             >
               <Plus className="size-3.5" />
               Add
@@ -349,7 +349,7 @@ export function FlowNotesBoard({ selectedEventId, eventDate, eventTime }: FlowNo
           <article className="overflow-hidden rounded-2xl border border-[#e2dee9] bg-white shadow-[0_8px_18px_rgba(31,18,54,0.05)]">
             <div className="flex flex-wrap items-start justify-between gap-3 border-b border-[#eee9f2] bg-[#fcfbfe] px-5 py-4">
               <div>
-                <h4 className="text-[16px] font-black leading-tight text-[#2f2b39] uppercase">
+                <h4 className="text-[16px] font-black leading-tight text-foreground uppercase">
                   {eventDate
                     ? new Date(eventDate).toLocaleDateString('en-US', {
                         month: 'long',
@@ -367,7 +367,7 @@ export function FlowNotesBoard({ selectedEventId, eventDate, eventTime }: FlowNo
                   )}
                 </div>
               </div>
-              <label className="inline-flex items-center gap-2 rounded-full border border-[#e4ddea] bg-white px-3 py-1.5 text-[10px] font-semibold text-[#7a728d] shadow-[0_2px_5px_rgba(31,18,54,0.04)]">
+              <label className="inline-flex items-center gap-2 rounded-full border border-[#e4ddea] bg-white px-3 py-1.5 text-[10px] font-semibold text-muted-foreground shadow-[0_2px_5px_rgba(31,18,54,0.04)]">
                 <span>Hide empty time slots</span>
                 <input
                   type="checkbox"
@@ -377,7 +377,7 @@ export function FlowNotesBoard({ selectedEventId, eventDate, eventTime }: FlowNo
                 />
               </label>
             </div>
-            <div className="grid grid-cols-[72px_minmax(0,1fr)] border-t border-[#ece8f0] max-h-[600px] overflow-y-auto [scrollbar-width:thin] scrollbar-thumb-[#ddd8e8] scrollbar-track-transparent">
+            <div className="grid grid-cols-[72px_minmax(0,1fr)] border-t border-border max-h-[600px] overflow-y-auto [scrollbar-width:thin] scrollbar-thumb-[#ddd8e8] scrollbar-track-transparent">
               <div className="bg-[#fcfbfe]">
                 {visibleHours.map((hour) => {
                   const labelHour = hour % 12 || 12;
@@ -385,7 +385,7 @@ export function FlowNotesBoard({ selectedEventId, eventDate, eventTime }: FlowNo
                   return (
                     <div
                       key={hour}
-                      className="flex items-start justify-end border-b border-[#ece8f0] pr-3 pt-2 text-[10px] font-semibold text-[#8e8796]"
+                      className="flex items-start justify-end border-b border-border pr-3 pt-2 text-[10px] font-semibold text-[#8e8796]"
                       style={{ height: `${hourRowHeight}px` }}
                     >
                       {labelHour}
@@ -466,10 +466,10 @@ export function FlowNotesBoard({ selectedEventId, eventDate, eventTime }: FlowNo
                 <div key={summary.id} className="grid grid-cols-[92px_1fr] gap-4">
                   <p className="text-[10px] font-semibold text-[#6b6476]">{summary.timeRange}</p>
                   <div>
-                    <p className="text-[13px] font-black text-[#2f2b39] break-all whitespace-normal">
+                    <p className="text-[13px] font-black text-foreground break-all whitespace-normal">
                       {summary.title}
                     </p>
-                    <p className="mt-1 text-[11px] leading-relaxed text-[#8a8495] break-all whitespace-normal">
+                    <p className="mt-1 text-[11px] leading-relaxed text-muted-foreground break-all whitespace-normal">
                       {summary.body}
                     </p>
                   </div>
@@ -520,7 +520,7 @@ export function FlowNotesBoard({ selectedEventId, eventDate, eventTime }: FlowNo
                   <ChevronLeft className="size-5" />
                 </button>
                 <div>
-                  <h3 className="text-[30px] font-black leading-none tracking-tight text-[#1f1f21]">
+                  <h3 className="text-[30px] font-black leading-none tracking-tight text-foreground">
                     {isEditingActivity
                       ? selectedActivity
                         ? 'Edit Activity'
@@ -560,7 +560,7 @@ export function FlowNotesBoard({ selectedEventId, eventDate, eventTime }: FlowNo
                   </button>
                   <button
                     type="submit"
-                    className="inline-flex h-8 items-center rounded-full bg-linear-to-r from-[#f347a5] to-[#8f1fd1] px-4 text-xs font-black text-white"
+                    className="inline-flex h-8 items-center rounded-full bg-linear-to-r from-brand to-brand-deep px-4 text-xs font-black text-white"
                   >
                     Save
                   </button>
@@ -660,19 +660,19 @@ export function FlowNotesBoard({ selectedEventId, eventDate, eventTime }: FlowNo
               </div>
             ) : selectedActivity ? (
               <div className="space-y-4">
-                <div className="rounded-2xl bg-linear-to-r from-[#f1589e] via-[#d735b3] to-[#8a1fd0] px-4 py-3 text-base font-black leading-tight text-white shadow-[0_10px_20px_rgba(125,31,186,0.18)] break-all whitespace-normal">
+                <div className="rounded-2xl bg-linear-to-r from-brand via-[#d735b3] to-brand-deep px-4 py-3 text-base font-black leading-tight text-white shadow-[0_10px_20px_rgba(125,31,186,0.18)] break-all whitespace-normal">
                   {selectedActivity.title}
                 </div>
                 <div className="grid grid-cols-2 gap-3 rounded-2xl border border-[#ebe5f1] bg-[#faf8fc] px-4 py-3 text-sm">
                   <p>
                     <span className="font-bold text-[#9d97a8]">From</span>
-                    <span className="ml-2 font-black text-[#2f2b39]">
+                    <span className="ml-2 font-black text-foreground">
                       {formatDisplayTime(selectedActivity.from, selectedActivity.startHour)}
                     </span>
                   </p>
                   <p>
                     <span className="font-bold text-[#9d97a8]">To</span>
-                    <span className="ml-2 font-black text-[#2f2b39]">
+                    <span className="ml-2 font-black text-foreground">
                       {formatDisplayTime(selectedActivity.to, selectedActivity.endHour)}
                     </span>
                   </p>

@@ -8,7 +8,7 @@ export function PublicLayout() {
   const navigate = useNavigate();
 
   return (
-    <div className="flex min-h-screen flex-col bg-[#f5f4f7] text-foreground">
+    <div className="flex min-h-screen flex-col bg-background text-foreground">
       <Navbar />
 
       <main className="flex-1">

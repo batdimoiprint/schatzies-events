@@ -54,7 +54,7 @@ export default function PackageDetailsPage() {
       <>
         <LoadingScreen />
         <div className="flex min-h-screen items-center justify-center">
-          <p className="text-gray-500">Loading package…</p>
+          <p className="text-muted-foreground">Loading package…</p>
         </div>
       </>
     );
@@ -64,10 +64,10 @@ export default function PackageDetailsPage() {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">
-          <h1 className="text-2xl font-bold text-gray-800">Package not found</h1>
+          <h1 className="text-2xl font-bold text-foreground">Package not found</h1>
           <Button
             onClick={() => navigate('/event-packages')}
-            className="mt-4 bg-[#FF0066] hover:bg-[#e60060] text-white"
+            className="mt-4 bg-brand hover:bg-brand/90 text-white"
           >
             Back to Packages
           </Button>
@@ -146,7 +146,7 @@ export default function PackageDetailsPage() {
 
             <Button
               onClick={() => navigate('/')}
-              className="mt-8 h-11 rounded-full bg-[#FF0066] hover:bg-[#e60060] text-white px-8 sm:px-10 text-[0.9rem] sm:text-[0.95rem] font-bold transition-all shadow-[0_6px_20px_rgba(255,0,102,0.35)] hover:shadow-[0_8px_28px_rgba(255,0,102,0.45)] animate-fade-in-up animation-delay-400"
+              className="mt-8 h-11 rounded-full bg-brand hover:bg-brand/90 text-white px-8 sm:px-10 text-[0.9rem] sm:text-[0.95rem] font-bold transition-all shadow-[0_6px_20px_rgba(255,0,102,0.35)] hover:shadow-[0_8px_28px_rgba(255,0,102,0.45)] animate-fade-in-up animation-delay-400"
             >
               Back to home
             </Button>
@@ -219,7 +219,7 @@ export default function PackageDetailsPage() {
 
             {/* RIGHT: Content */}
             <div className="w-full lg:w-[55%] flex flex-col px-4 sm:px-6 lg:px-10 lg:pr-[8%] mt-8 lg:mt-0">
-              <h2 className="font-heading text-[1.8rem] font-bold text-gray-900 sm:text-[2rem] lg:text-[2.3rem] mb-6 sm:mb-8">
+              <h2 className="font-heading text-[1.8rem] font-bold text-ink sm:text-[2rem] lg:text-[2.3rem] mb-6 sm:mb-8">
                 Package Inclusions
               </h2>
 
@@ -232,7 +232,7 @@ export default function PackageDetailsPage() {
                 }}
               >
                 {categories.length === 0 && (
-                  <p className="py-6 text-center text-[0.9rem] text-gray-500">
+                  <p className="py-6 text-center text-[0.9rem] text-muted-foreground">
                     Inclusions for this package are being finalized. Please inquire for details.
                   </p>
                 )}
@@ -243,12 +243,12 @@ export default function PackageDetailsPage() {
                   return (
                     <div
                       key={cat.title}
-                      className="rounded-lg overflow-hidden border border-gray-200"
+                      className="rounded-lg overflow-hidden border border-border"
                     >
                       {/* Header - Clickable */}
                       <button
                         onClick={() => setExpandedCategory(isExpanded ? null : cat.title)}
-                        className="w-full flex items-center justify-between gap-3 bg-gray-900 text-white px-5 sm:px-6 py-4 sm:py-[18px] hover:bg-gray-800 transition-colors duration-200"
+                        className="w-full flex items-center justify-between gap-3 bg-ink text-white px-5 sm:px-6 py-4 sm:py-[18px] hover:bg-ink/90 transition-colors duration-200"
                       >
                         <div className="flex items-center gap-3">
                           <Icon className="h-5 w-5 flex-shrink-0 text-white/70" />
@@ -280,7 +280,7 @@ export default function PackageDetailsPage() {
                                     key={text}
                                     className="flex items-start gap-3 text-[0.88rem] sm:text-[0.93rem]"
                                   >
-                                    <span className="mt-[3px] flex h-[18px] w-[18px] flex-shrink-0 items-center justify-center rounded-full bg-[#FF0066]">
+                                    <span className="mt-[3px] flex h-[18px] w-[18px] flex-shrink-0 items-center justify-center rounded-full bg-brand">
                                       <svg
                                         viewBox="0 0 10 10"
                                         className="h-2.5 w-2.5 fill-none stroke-white stroke-[2]"
@@ -295,8 +295,8 @@ export default function PackageDetailsPage() {
                                     <span
                                       className={`leading-relaxed ${
                                         isHighlight
-                                          ? 'font-semibold text-[#FF0066]'
-                                          : 'text-gray-600'
+                                          ? 'font-semibold text-brand'
+                                          : 'text-muted-foreground'
                                       }`}
                                     >
                                       {text}
@@ -314,9 +314,9 @@ export default function PackageDetailsPage() {
               </div>
 
               {/* Note */}
-              <div className="mt-6 pt-5 border-t border-gray-200">
-                <p className="text-[0.88rem] sm:text-[0.93rem] leading-relaxed text-gray-600">
-                  <span className="font-bold text-gray-800">NOTE: </span>
+              <div className="mt-6 pt-5 border-t border-border">
+                <p className="text-[0.88rem] sm:text-[0.93rem] leading-relaxed text-muted-foreground">
+                  <span className="font-bold text-foreground">NOTE: </span>
                   {note}
                 </p>
               </div>

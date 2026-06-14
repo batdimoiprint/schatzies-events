@@ -6,8 +6,14 @@ import {
   deleteEventChecklistItem,
 } from '@/api/events';
 
+interface ChecklistRow {
+  id: string;
+  label?: string;
+  done?: boolean;
+}
+
 export function useChecklist(selectedEventId: string) {
-  const [checklistItems, setChecklistItems] = useState<any[]>([]);
+  const [checklistItems, setChecklistItems] = useState<ChecklistRow[]>([]);
   const [checklistDeleteTarget, setChecklistDeleteTarget] = useState<{
     id: string;
     label: string;
@@ -23,7 +29,7 @@ export function useChecklist(selectedEventId: string) {
         return;
       }
       try {
-        const checklistData = await getEventChecklist(selectedEventId);
+        const checklistData = (await getEventChecklist(selectedEventId)) as unknown as ChecklistRow[];
         if (isMounted) setChecklistItems(checklistData || []);
       } catch (error) {
         console.error('Failed to load checklist:', error);
@@ -53,7 +59,7 @@ export function useChecklist(selectedEventId: string) {
           targetItem?.label || 'Task'
         );
       }
-    } catch (error) {
+    } catch {
       setChecklistItems((prev) =>
         prev.map((item) => (item.id === itemId ? { ...item, done: currentDone } : item))
       );
@@ -69,7 +75,7 @@ export function useChecklist(selectedEventId: string) {
           selectedEventId,
           'overall',
           itemId,
-          targetItem.done,
+          targetItem.done ?? false,
           newLabel
         );
       }
@@ -83,8 +89,8 @@ export function useChecklist(selectedEventId: string) {
     try {
       await addEventChecklistItem(selectedEventId, 'New checklist item');
       const freshList = await getEventChecklist(selectedEventId);
-      setChecklistItems(freshList || []);
-    } catch (error) {
+      setChecklistItems((freshList as unknown as ChecklistRow[]) || []);
+    } catch {
       alert('Failed to add checklist item.');
     }
   };
@@ -97,7 +103,7 @@ export function useChecklist(selectedEventId: string) {
       if (!String(itemId).startsWith('temp-')) {
         await deleteEventChecklistItem(selectedEventId, itemId);
       }
-    } catch (error) {
+    } catch {
       setChecklistItems(previousState);
       alert('Failed to delete item.');
     }
@@ -127,7 +133,7 @@ export function useChecklist(selectedEventId: string) {
     closeChecklistDeleteValidation();
   };
 
-  const checklistDoneCount = checklistItems.filter((it: any) => it.done).length;
+  const checklistDoneCount = checklistItems.filter((it) => it.done).length;
   const checklistProgress = checklistItems.length
     ? Math.round((checklistDoneCount / checklistItems.length) * 100)
     : 0;

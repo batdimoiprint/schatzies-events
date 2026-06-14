@@ -10,6 +10,17 @@ import { mapLaneToBackendStatus } from '@/utils/planner-flow';
 import type { PlannerBoardTask, TaskLane } from '@/types/planner';
 import type { DragEvent } from 'react';
 
+type ChecklistEntry = NonNullable<PlannerBoardTask['checklist']>[number];
+
+interface RawBoardTaskItem {
+  id?: string | number;
+  _id?: string;
+  status?: string;
+  title?: string;
+  description?: string;
+  checklist?: ChecklistEntry[];
+}
+
 export function useBoardTasks(selectedEventId: string) {
   const [boardTasks, setBoardTasks] = useState<PlannerBoardTask[]>([]);
   const [isTaskPreviewOpen, setIsTaskPreviewOpen] = useState(false);
@@ -36,7 +47,7 @@ export function useBoardTasks(selectedEventId: string) {
       if (typeof taskGroups === 'object' && !Array.isArray(taskGroups)) {
         Object.entries(taskGroups).forEach(([groupName, tasksInGroup]) => {
           if (Array.isArray(tasksInGroup)) {
-            tasksInGroup.forEach((task: any) => {
+            tasksInGroup.forEach((task: RawBoardTaskItem) => {
               const taskId = String(task.id || task._id || `task-${Date.now()}-${Math.random()}`);
               const rawStatus = String(task.status || groupName)
                 .trim()
@@ -57,7 +68,7 @@ export function useBoardTasks(selectedEventId: string) {
           }
         });
       } else if (Array.isArray(response)) {
-        response.forEach((task: any) => {
+        response.forEach((task: RawBoardTaskItem) => {
           const taskId = String(task.id || task._id || `task-${Date.now()}-${Math.random()}`);
           const rawStatus = String(task.status || 'todo')
             .trim()
@@ -135,7 +146,7 @@ export function useBoardTasks(selectedEventId: string) {
         }
         if (lane === 'completed') {
           const timestamp = new Date().toISOString();
-          const checklistSource: any[] =
+          const checklistSource: ChecklistEntry[] =
             Array.isArray(task.checklist) && task.checklist.length > 0
               ? task.checklist
               : task.details
@@ -148,7 +159,7 @@ export function useBoardTasks(selectedEventId: string) {
               ? checklistSource.map((item) => ({
                   ...item,
                   done: true,
-                  doneAt: (item as any).doneAt ?? timestamp,
+                  doneAt: item.doneAt ?? timestamp,
                 }))
               : [
                   {
@@ -221,7 +232,12 @@ export function useBoardTasks(selectedEventId: string) {
       } else {
         savedTask = await updateBoardTask(selectedEventId, selectedBoardTaskId, payload);
       }
-      const actualTask = (savedTask as any)?.task || (savedTask as any)?.data || savedTask || {};
+      const wrapper = savedTask as {
+        task?: RawBoardTaskItem;
+        data?: RawBoardTaskItem;
+      } | null;
+      const actualTask: RawBoardTaskItem =
+        wrapper?.task || wrapper?.data || (savedTask as RawBoardTaskItem) || {};
       const newId = actualTask?.id || actualTask?._id || selectedBoardTaskId;
       setBoardTasks((previousTasks) =>
         previousTasks.map((task) =>

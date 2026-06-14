@@ -131,12 +131,12 @@ export default function VerifyEmailPage() {
   /* Loading state */
   if (status === 'loading') {
     return (
-      <div className="fixed inset-0 flex items-center justify-center bg-gradient-to-br from-[#1a1225] via-[#2a1640] to-[#1a1225] px-4">
+      <div className="fixed inset-0 flex items-center justify-center bg-gradient-to-br from-ink via-brand-deep to-ink px-4">
         <div className="w-full max-w-md rounded-2xl bg-white/95 p-8 text-center shadow-2xl backdrop-blur-sm">
           {/* Spinner */}
           <div className="mx-auto flex h-20 w-20 items-center justify-center">
             <svg
-              className="h-12 w-12 animate-spin text-[#e91e63]"
+              className="h-12 w-12 animate-spin text-brand"
               xmlns="http://www.w3.org/2000/svg"
               fill="none"
               viewBox="0 0 24 24"
@@ -157,8 +157,8 @@ export default function VerifyEmailPage() {
             </svg>
           </div>
 
-          <h1 className="mt-6 text-2xl font-bold text-[#1a1225]">Confirming your inquiry…</h1>
-          <p className="mt-3 text-sm leading-relaxed text-gray-600">
+          <h1 className="mt-6 font-heading text-3xl font-semibold text-foreground">Confirming your inquiry…</h1>
+          <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
             Please wait while we confirm your inquiry submission.
           </p>
         </div>
@@ -179,7 +179,7 @@ export default function VerifyEmailPage() {
   })();
 
   return (
-    <div className="fixed inset-0 flex items-center justify-center bg-gradient-to-br from-[#1a1225] via-[#2a1640] to-[#1a1225] px-4">
+    <div className="fixed inset-0 flex items-center justify-center bg-gradient-to-br from-ink via-brand-deep to-ink px-4">
       <div className="w-full max-w-md rounded-2xl bg-white/95 p-8 text-center shadow-2xl backdrop-blur-sm">
         {/* Icon */}
         {isSuccess ? (
@@ -216,12 +216,12 @@ export default function VerifyEmailPage() {
         )}
 
         {/* Heading */}
-        <h1 className="mt-6 text-2xl font-bold text-[#1a1225]">
+        <h1 className="mt-6 font-heading text-3xl font-semibold text-foreground">
           {isSuccess ? 'Inquiry Confirmed!' : 'Confirmation Failed'}
         </h1>
 
         {/* Body text */}
-        <p className="mt-3 text-sm leading-relaxed text-gray-600">
+        <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
           {isSuccess ? (
             <>
               Your inquiry has been confirmed and submitted successfully! Our team will review it
@@ -233,14 +233,14 @@ export default function VerifyEmailPage() {
         </p>
 
         {/* Countdown redirect notice */}
-        <p className="mt-5 text-xs text-gray-400">
-          Redirecting in <span className="font-bold text-[#700F81]">{countdown}</span> seconds…
+        <p className="mt-5 text-xs text-muted-foreground/70">
+          Redirecting in <span className="font-bold text-brand-deep">{countdown}</span> seconds…
         </p>
 
         {/* Manual redirect */}
         <button
           onClick={goHome}
-          className="mt-4 inline-flex h-10 items-center justify-center rounded-full bg-gradient-to-r from-[#FF0066] to-[#700F81] px-8 text-sm font-bold text-white shadow-lg transition hover:brightness-110 active:scale-[0.97]"
+          className="mt-4 inline-flex h-10 items-center justify-center rounded-full bg-gradient-to-r from-brand to-brand-deep px-8 text-sm font-bold text-white shadow-lg transition hover:brightness-110 active:scale-[0.97]"
         >
           {isSuccess ? 'Go to Homepage' : 'Back to Homepage'}
         </button>

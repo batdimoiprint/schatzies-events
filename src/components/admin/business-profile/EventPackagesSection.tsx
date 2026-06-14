@@ -74,7 +74,7 @@ export function EventPackagesSection() {
               </h2>
               <Button
                 onClick={() => setSelectedType(type)}
-                className="absolute bottom-4 right-4 rounded-lg bg-white px-5 text-xs font-bold text-[#df2b80] shadow-md hover:bg-[#fdf2f8] sm:bottom-5 sm:right-6"
+                className="absolute bottom-4 right-4 rounded-lg bg-white px-5 text-xs font-bold text-brand shadow-md hover:bg-brand/5 sm:bottom-5 sm:right-6"
               >
                 View Event
               </Button>
@@ -95,22 +95,22 @@ export function EventPackagesSection() {
             size="icon"
             aria-label="Back to event types"
             onClick={() => setSelectedType(null)}
-            className="mt-1 size-9 rounded-full text-[#3d2052] hover:bg-[#fdf2f8]"
+            className="mt-1 size-9 rounded-full text-brand-deep hover:bg-brand/5"
           >
             <ArrowLeft className="size-5" />
           </Button>
           <div>
-            <h2 className="font-heading text-2xl font-bold text-[#1d1320] sm:text-3xl">
+            <h2 className="font-heading text-2xl font-bold text-foreground sm:text-3xl">
               {selectedType} Packages
             </h2>
-            <p className="mt-1 text-sm text-[#7f7889]">
+            <p className="mt-1 text-sm text-muted-foreground">
               Manage your {selectedType.toLowerCase()} event packages
             </p>
           </div>
         </div>
         <Button
           onClick={openCreate}
-          className="gap-1.5 rounded-full bg-[#df2b80] px-5 text-xs font-bold text-white shadow-md hover:bg-[#c81e6f]"
+          className="gap-1.5 rounded-full bg-brand px-5 text-xs font-bold text-white shadow-md hover:bg-brand"
         >
           <PlusCircle className="size-4" />
           Add Package
@@ -118,15 +118,15 @@ export function EventPackagesSection() {
       </div>
 
       {isLoading ? (
-        <p className="py-10 text-center text-sm text-[#7f7889]">Loading packages...</p>
+        <p className="py-10 text-center text-sm text-muted-foreground">Loading packages...</p>
       ) : packages.length === 0 ? (
-        <p className="py-10 text-center text-sm text-[#7f7889]">
+        <p className="py-10 text-center text-sm text-muted-foreground">
           No {selectedType.toLowerCase()} packages yet. Click "Add Package" to create the first one.
         </p>
       ) : (
         <table className="w-full border-collapse">
           <thead>
-            <tr className="border-b border-[#d9d3e0] text-left text-sm font-medium text-[#7f7889]">
+            <tr className="border-b border-[#d9d3e0] text-left text-sm font-medium text-muted-foreground">
               <th className="py-2.5 pl-3 font-medium">Package Name</th>
               <th className="hidden py-2.5 text-center font-medium sm:table-cell">Date Added</th>
               <th className="py-2.5 pr-3 text-right font-medium">Update</th>
@@ -139,7 +139,7 @@ export function EventPackagesSection() {
                 className="border-b border-[#e8e2ee] transition-colors hover:bg-[#fdeef6]"
               >
                 <td className="py-3.5 pl-3">
-                  <p className="text-lg font-bold text-[#df2b80]">{pkg.packageName}</p>
+                  <p className="text-lg font-bold text-brand">{pkg.packageName}</p>
                   {pkg.description && (
                     <p className="mt-0.5 line-clamp-1 max-w-md text-xs text-[#5d5566]">
                       {pkg.description}
@@ -156,7 +156,7 @@ export function EventPackagesSection() {
                       size="icon"
                       aria-label={`Edit ${pkg.packageName}`}
                       onClick={() => openEdit(pkg)}
-                      className="size-9 rounded-full text-[#4f4a56] hover:bg-[#f0e8f5] hover:text-[#8f1fd1]"
+                      className="size-9 rounded-full text-foreground/80 hover:bg-[#f0e8f5] hover:text-brand-deep"
                     >
                       <SquarePen className="size-5" />
                     </Button>
@@ -170,7 +170,7 @@ export function EventPackagesSection() {
                         }
                       }}
                       disabled={deleteMutation.isPending}
-                      className="size-9 rounded-full text-[#4f4a56] hover:bg-[#fdf2f8] hover:text-[#df2b80]"
+                      className="size-9 rounded-full text-foreground/80 hover:bg-brand/5 hover:text-brand"
                     >
                       <Trash2 className="size-5" />
                     </Button>

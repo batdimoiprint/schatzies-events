@@ -41,7 +41,7 @@ function PackageCarousel({
         size="icon"
         className="absolute -left-2 top-1/2 z-10 -translate-y-1/2 h-10 w-10 rounded-full bg-white/70 shadow-lg backdrop-blur-sm transition hover:bg-white sm:-left-5 sm:h-12 sm:w-12"
       >
-        <ChevronLeft className="h-5 w-5 text-[#3d2052] sm:h-6 sm:w-6" />
+        <ChevronLeft className="h-5 w-5 text-brand-deep sm:h-6 sm:w-6" />
       </Button>
 
       {/* Scrollable track */}
@@ -68,7 +68,7 @@ function PackageCarousel({
         size="icon"
         className="absolute -right-2 top-1/2 z-10 -translate-y-1/2 h-10 w-10 rounded-full bg-white/70 shadow-lg backdrop-blur-sm transition hover:bg-white sm:-right-5 sm:h-12 sm:w-12"
       >
-        <ChevronRight className="h-5 w-5 text-[#3d2052] sm:h-6 sm:w-6" />
+        <ChevronRight className="h-5 w-5 text-brand-deep sm:h-6 sm:w-6" />
       </Button>
     </div>
   );
@@ -87,10 +87,10 @@ function PackageCardsArea({
   onView: (index: number) => void;
 }) {
   if (isLoading) {
-    return <p className="py-12 text-center text-[#7f7889]">Loading packages…</p>;
+    return <p className="py-12 text-center text-muted-foreground">Loading packages…</p>;
   }
   if (cards.length === 0) {
-    return <p className="py-12 text-center text-[#7f7889]">{emptyLabel}</p>;
+    return <p className="py-12 text-center text-muted-foreground">{emptyLabel}</p>;
   }
   return <PackageCarousel packages={cards} onView={onView} />;
 }
@@ -142,7 +142,7 @@ export default function EventPackagesPage() {
             {/* Content centered in middle of section */}
             <div className="relative z-10 flex h-full flex-col items-center justify-center px-4 py-[160px] sm:py-[260px] md:py-[360px] lg:py-[420px] text-center sm:px-6 animate-fade-in-up">
               <h1
-                className="font-heading text-[clamp(2.2rem,6vw,5rem)] font-bold leading-tight bg-gradient-to-r from-[#FF0066] via-[#FF0066] to-[#4A1053] text-transparent bg-clip-text animate-fade-in animation-delay-200"
+                className="font-heading text-[clamp(2.2rem,6vw,5rem)] font-bold leading-tight bg-gradient-to-r from-brand via-brand to-brand-deep text-transparent bg-clip-text animate-fade-in animation-delay-200"
                 style={{
                   backgroundImage:
                     'linear-gradient(to right, #FF0066 0%, #FF0066 46%, #4A1053 100%)',
@@ -347,14 +347,14 @@ export default function EventPackagesPage() {
           <section className="relative overflow-hidden bg-white px-4 pb-16 pt-12 sm:px-6 sm:pt-16 sm:pb-20 lg:px-28 lg:pt-20 lg:pb-24">
             <ScrollReveal variant="up" className="text-center">
               <h2 className="font-heading text-[clamp(1.8rem,5vw,3.5rem)] font-bold leading-tight">
-                <span className="bg-gradient-to-r from-[#FF0066] to-[#4A1053] bg-clip-text text-transparent">
+                <span className="bg-gradient-to-r from-brand to-brand-deep bg-clip-text text-transparent">
                   Seamless Planning,
                 </span>{' '}
-                <span className="bg-gradient-to-r from-[#4A1053] to-[#FF0066] bg-clip-text text-transparent">
+                <span className="bg-gradient-to-r from-brand-deep to-brand bg-clip-text text-transparent">
                   Proven Results
                 </span>
               </h2>
-              <p className="mt-3 text-[clamp(1rem,1.8vw,1.3rem)] font-bold font-sans text-[#4A1053] sm:mt-4">
+              <p className="mt-3 text-[clamp(1rem,1.8vw,1.3rem)] font-bold font-sans text-brand-deep sm:mt-4">
                 Your Journey to a Flawless Celebration Starts Here
               </p>
             </ScrollReveal>
@@ -384,14 +384,14 @@ export default function EventPackagesPage() {
                 >
                   <div className="flex h-16 w-16 items-center justify-center sm:h-20 sm:w-20 lg:h-24 lg:w-24">
                     <Icon
-                      className="h-10 w-10 text-[#FF0066] sm:h-14 sm:w-14 lg:h-16 lg:w-16"
+                      className="h-10 w-10 text-brand sm:h-14 sm:w-14 lg:h-16 lg:w-16"
                       strokeWidth={1.5}
                     />
                   </div>
-                  <h3 className="mt-4 text-[1rem] font-bold font-heading text-[#FF0066] sm:mt-5 sm:text-[1.2rem] lg:mt-6 lg:text-[1.3rem]">
+                  <h3 className="mt-4 text-[1rem] font-bold font-heading text-brand sm:mt-5 sm:text-[1.2rem] lg:mt-6 lg:text-[1.3rem]">
                     {title}
                   </h3>
-                  <p className="mt-2 max-w-[18rem] text-[0.85rem] leading-[1.6] font-sans text-[#3d2052] sm:mt-3 sm:text-[0.9rem] lg:mt-4 lg:text-[1rem]">
+                  <p className="mt-2 max-w-[18rem] text-[0.85rem] leading-[1.6] font-sans text-brand-deep sm:mt-3 sm:text-[0.9rem] lg:mt-4 lg:text-[1rem]">
                     {body}
                   </p>
                 </div>
@@ -405,7 +405,7 @@ export default function EventPackagesPage() {
               size="icon"
               className="absolute bottom-6 right-6 h-10 w-10 rounded-full bg-white/70 shadow-lg backdrop-blur-sm transition hover:bg-white sm:bottom-8 sm:right-8 sm:h-12 sm:w-12"
             >
-              <ChevronUp className="h-5 w-5 text-[#3d2052] sm:h-6 sm:w-6" />
+              <ChevronUp className="h-5 w-5 text-brand-deep sm:h-6 sm:w-6" />
             </Button>
           </section>
         </ScrollReveal>

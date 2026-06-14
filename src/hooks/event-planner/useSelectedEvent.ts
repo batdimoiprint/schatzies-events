@@ -6,17 +6,32 @@ import { getCalendarEntries } from '@/api/calendar';
 import { getEventFlow } from '@/api/events';
 import { mapBackendFlowToUI } from '@/utils/planner-flow';
 import type { ProjectSlot } from '@/types/planner';
+import type { ApiError } from '@/types/api-error';
+
+interface MeetingLike {
+  eventId?: string;
+  label?: string;
+  title?: string;
+  startTime?: string;
+  endTime?: string;
+  time?: string;
+}
 
 export function useSelectedEvent(selectedEventId: string, projectSlots: ProjectSlot[]) {
-  const [selectedEventDetails, setSelectedEventDetails] = useState<any>(null);
+  const [selectedEventDetails, setSelectedEventDetails] = useState<Awaited<
+    ReturnType<typeof getEventById>
+  > | null>(null);
   const [currentClientName, setCurrentClientName] = useState('');
-  const [eventAllocation, setEventAllocation] = useState<any>(null);
-  const [eventMeetings, setEventMeetings] = useState<any[]>([]);
-  const [overviewFlows, setOverviewFlows] = useState<any[]>([]);
+  const [eventAllocation, setEventAllocation] = useState<Awaited<
+    ReturnType<typeof getEventAllocation>
+  > | null>(null);
+  const [eventMeetings, setEventMeetings] = useState<MeetingLike[]>([]);
+  const [overviewFlows, setOverviewFlows] = useState<ReturnType<typeof mapBackendFlowToUI>[]>([]);
 
   useEffect(() => {
     let isMounted = true;
     if (!selectedEventId) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- intentional reset when no event is selected
       setSelectedEventDetails(null);
       setCurrentClientName('');
       setEventAllocation(null);
@@ -48,8 +63,8 @@ export function useSelectedEvent(selectedEventId: string, projectSlots: ProjectS
             );
           }
         })
-        .catch((e: any) => {
-          if (e?.response?.status !== 404) {
+        .catch((e) => {
+          if ((e as ApiError)?.response?.status !== 404) {
             console.error('Failed to fetch event user', e);
           }
           if (isMounted) setCurrentClientName('');
@@ -60,8 +75,8 @@ export function useSelectedEvent(selectedEventId: string, projectSlots: ProjectS
       .then((allocationData) => {
         if (isMounted) setEventAllocation(allocationData);
       })
-      .catch((e: any) => {
-        if (e?.response?.status !== 404) {
+      .catch((e) => {
+        if ((e as ApiError)?.response?.status !== 404) {
           console.error('Failed to fetch event allocation', e);
         }
         if (isMounted) setEventAllocation(null);
@@ -71,8 +86,8 @@ export function useSelectedEvent(selectedEventId: string, projectSlots: ProjectS
       .then((entries) => {
         if (isMounted) {
           setEventMeetings(
-            entries.filter(
-              (item: any) =>
+            (entries as MeetingLike[]).filter(
+              (item) =>
                 item.eventId === selectedEventId && item.label?.toUpperCase() === 'MEETING'
             )
           );
@@ -88,8 +103,8 @@ export function useSelectedEvent(selectedEventId: string, projectSlots: ProjectS
         if (isMounted) {
           const mappedFlows = Array.isArray(flowData)
             ? flowData
-                .map((item: any, index: number) => mapBackendFlowToUI(item, index))
-                .sort((a: any, b: any) => a.startHour - b.startHour)
+                .map((item, index) => mapBackendFlowToUI(item, index))
+                .sort((a, b) => a.startHour - b.startHour)
             : [];
           setOverviewFlows(mappedFlows);
         }

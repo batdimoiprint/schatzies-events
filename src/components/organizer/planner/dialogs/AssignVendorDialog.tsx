@@ -35,8 +35,8 @@ export function AssignVendorDialog({
         <DialogTitle className="sr-only">Assign Vendor</DialogTitle>
         <header className="flex items-center justify-between border-b border-[#eee9f2] bg-white px-5 py-4">
           <div>
-            <h3 className="text-lg font-black tracking-tight text-[#1f1f21]">Assign Vendor</h3>
-            <p className="text-[11px] font-semibold text-[#8b84a0]">
+            <h3 className="text-lg font-black tracking-tight text-foreground">Assign Vendor</h3>
+            <p className="text-[11px] font-semibold text-muted-foreground">
               Select a vendor from the active pool
             </p>
           </div>
@@ -61,8 +61,8 @@ export function AssignVendorDialog({
                     className="flex items-center justify-between rounded-xl border border-[#e3deeb] bg-white p-3 shadow-sm"
                   >
                     <div>
-                      <p className="text-[14px] font-black text-[#2f2b39]">{vendor.name}</p>
-                      <p className="text-[11px] font-semibold text-[#6f687f]">
+                      <p className="text-[14px] font-black text-foreground">{vendor.name}</p>
+                      <p className="text-[11px] font-semibold text-muted-foreground">
                         {vendor.serviceType || 'Service not specified'}
                       </p>
                     </div>
@@ -78,7 +78,7 @@ export function AssignVendorDialog({
                 );
               })
             ) : (
-              <div className="rounded-lg border border-dashed border-[#d8d2e2] bg-white/60 p-8 text-center text-sm font-semibold text-[#8b84a0]">
+              <div className="rounded-lg border border-dashed border-[#d8d2e2] bg-white/60 p-8 text-center text-sm font-semibold text-muted-foreground">
                 No active vendors found in the pool.
               </div>
             )}

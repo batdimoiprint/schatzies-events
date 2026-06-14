@@ -1,14 +1,14 @@
 import { Cookie, Eye, Settings, Zap, BarChart3, Info, AlertCircle, Clock } from 'lucide-react';
 
 export function CookiePolicyContent() {
-  const iconClass = 'h-5 w-5 text-[#FF0066]';
+  const iconClass = 'h-5 w-5 text-brand';
 
   return (
     <div className="space-y-4">
       <section className="flex gap-3">
         <Cookie className={`${iconClass} flex-shrink-0 mt-0.5`} />
         <div>
-          <h3 className="font-semibold text-[#3d2052] mb-2">What Are Cookies</h3>
+          <h3 className="font-semibold text-brand-deep mb-2">What Are Cookies</h3>
           <p className="text-sm">
             Cookies are small text files that are placed on your computer or mobile device when you
             visit our website. They allow us to remember your preferences and improve your browsing
@@ -21,7 +21,7 @@ export function CookiePolicyContent() {
       <section className="flex gap-3">
         <Zap className={`${iconClass} flex-shrink-0 mt-0.5`} />
         <div>
-          <h3 className="font-semibold text-[#3d2052] mb-2">How We Use Cookies</h3>
+          <h3 className="font-semibold text-brand-deep mb-2">How We Use Cookies</h3>
           <p className="text-sm mb-2">We use cookies for several purposes:</p>
           <ul className="list-disc list-inside text-sm space-y-1">
             <li>
@@ -47,10 +47,10 @@ export function CookiePolicyContent() {
       <section className="flex gap-3">
         <BarChart3 className={`${iconClass} flex-shrink-0 mt-0.5`} />
         <div>
-          <h3 className="font-semibold text-[#3d2052] mb-2">Types of Cookies We Use</h3>
+          <h3 className="font-semibold text-brand-deep mb-2">Types of Cookies We Use</h3>
           <div className="space-y-3">
             <div>
-              <h4 className="font-medium text-[#3d2052] flex items-center gap-2">
+              <h4 className="font-medium text-brand-deep flex items-center gap-2">
                 <Eye className="h-4 w-4" />
                 Session Cookies
               </h4>
@@ -60,7 +60,7 @@ export function CookiePolicyContent() {
               </p>
             </div>
             <div>
-              <h4 className="font-medium text-[#3d2052] flex items-center gap-2">
+              <h4 className="font-medium text-brand-deep flex items-center gap-2">
                 <Settings className="h-4 w-4" />
                 Persistent Cookies
               </h4>
@@ -70,7 +70,7 @@ export function CookiePolicyContent() {
               </p>
             </div>
             <div>
-              <h4 className="font-medium text-[#3d2052] flex items-center gap-2">
+              <h4 className="font-medium text-brand-deep flex items-center gap-2">
                 <Info className="h-4 w-4" />
                 Third-Party Cookies
               </h4>
@@ -86,7 +86,7 @@ export function CookiePolicyContent() {
       <section className="flex gap-3">
         <Settings className={`${iconClass} flex-shrink-0 mt-0.5`} />
         <div>
-          <h3 className="font-semibold text-[#3d2052] mb-2">Managing Cookies</h3>
+          <h3 className="font-semibold text-brand-deep mb-2">Managing Cookies</h3>
           <p className="text-sm mb-2">You can control and manage cookies in various ways:</p>
           <ul className="list-disc list-inside text-sm space-y-1">
             <li>Most web browsers allow you to control cookies through their settings</li>
@@ -100,7 +100,7 @@ export function CookiePolicyContent() {
       <section className="flex gap-3">
         <AlertCircle className={`${iconClass} flex-shrink-0 mt-0.5`} />
         <div>
-          <h3 className="font-semibold text-[#3d2052] mb-2">Third-Party Services</h3>
+          <h3 className="font-semibold text-brand-deep mb-2">Third-Party Services</h3>
           <p className="text-sm mb-2">
             We may use third-party services that have their own cookie policies. These include:
           </p>
@@ -118,7 +118,7 @@ export function CookiePolicyContent() {
       <section className="flex gap-3">
         <Clock className={`${iconClass} flex-shrink-0 mt-0.5`} />
         <div>
-          <h3 className="font-semibold text-[#3d2052] mb-2">Updates to This Policy</h3>
+          <h3 className="font-semibold text-brand-deep mb-2">Updates to This Policy</h3>
           <p className="text-sm">
             We may update this Cookie Policy from time to time to reflect changes in our practices
             or for other operational, legal, or regulatory reasons. We will notify you of any
@@ -130,7 +130,7 @@ export function CookiePolicyContent() {
       <section className="flex gap-3">
         <Info className={`${iconClass} flex-shrink-0 mt-0.5`} />
         <div>
-          <h3 className="font-semibold text-[#3d2052] mb-2">Contact Us</h3>
+          <h3 className="font-semibold text-brand-deep mb-2">Contact Us</h3>
           <p className="text-sm">
             If you have any questions about our use of cookies, please contact us at
             schatziesevents@gmail.com or through our Contact page.

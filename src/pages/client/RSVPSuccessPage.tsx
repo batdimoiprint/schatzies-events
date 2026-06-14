@@ -37,7 +37,7 @@ export function RSVPSuccessPage({
         </div>
         {/* Tagline */}
         <p className="mb-6 text-sm font-medium text-gray-600 text-center">
-          Your <span className="font-bold text-[#df2b80]">MOST TRUSTED</span> team!
+          Your <span className="font-bold text-brand">MOST TRUSTED</span> team!
         </p>
         {/* Spacer */}
         <div className="flex-1 flex flex-col items-center justify-center w-full max-w-sm">
@@ -118,7 +118,7 @@ export function RSVPSuccessPage({
 
               {/* Important notice */}
               <p className="text-xs text-gray-600 leading-relaxed">
-                <span className="font-bold text-[#df2b80]">Important Notice!</span> Please download
+                <span className="font-bold text-brand">Important Notice!</span> Please download
                 your digital invite QR code below. Having this ready on your phone will help us
                 verify your seat and welcome you quickly upon arrival.
               </p>

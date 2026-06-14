@@ -8,8 +8,8 @@ export function AdminSettingsPage() {
   return (
     <div className="p-6 space-y-6">
       <div className="flex flex-col gap-2">
-        <h1 className="text-3xl font-black text-[#2e2837]">Platform Settings</h1>
-        <p className="font-semibold text-[#8f879f]">
+        <h1 className="text-3xl font-black text-foreground">Platform Settings</h1>
+        <p className="font-semibold text-muted-foreground">
           Configure global preferences and system options
         </p>
       </div>
@@ -51,7 +51,7 @@ export function AdminSettingsPage() {
           <Card className="border-none shadow-sm">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <CreditCard className="h-5 w-5 text-[#db37b4]" />
+                <CreditCard className="h-5 w-5 text-brand-deep" />
                 Payment Integration
               </CardTitle>
             </CardHeader>

@@ -125,7 +125,7 @@ export function ChangePasswordModal({ onPasswordChanged }: ChangePasswordModalPr
                 value={currentPassword}
                 onChange={(e) => setCurrentPassword(e.target.value)}
                 placeholder="Enter your current password"
-                className="w-full rounded-lg border border-gray-300 bg-gray-50 py-2.5 pl-10 pr-10 text-sm text-gray-900 outline-none transition-colors focus:border-[#700F81] focus:bg-white focus:ring-2 focus:ring-[#700F81]/20"
+                className="w-full rounded-lg border border-gray-300 bg-gray-50 py-2.5 pl-10 pr-10 text-sm text-gray-900 outline-none transition-colors focus:border-brand-deep focus:bg-white focus:ring-2 focus:ring-brand-deep/20"
                 disabled={isSubmitting || success}
                 autoComplete="current-password"
               />
@@ -158,7 +158,7 @@ export function ChangePasswordModal({ onPasswordChanged }: ChangePasswordModalPr
                 value={newPassword}
                 onChange={(e) => setNewPassword(e.target.value)}
                 placeholder="Enter a new password"
-                className="w-full rounded-lg border border-gray-300 bg-gray-50 py-2.5 pl-10 pr-10 text-sm text-gray-900 outline-none transition-colors focus:border-[#700F81] focus:bg-white focus:ring-2 focus:ring-[#700F81]/20"
+                className="w-full rounded-lg border border-gray-300 bg-gray-50 py-2.5 pl-10 pr-10 text-sm text-gray-900 outline-none transition-colors focus:border-brand-deep focus:bg-white focus:ring-2 focus:ring-brand-deep/20"
                 disabled={isSubmitting || success}
                 autoComplete="new-password"
               />
@@ -197,7 +197,7 @@ export function ChangePasswordModal({ onPasswordChanged }: ChangePasswordModalPr
                 className={`w-full rounded-lg border bg-gray-50 py-2.5 pl-10 pr-10 text-sm text-gray-900 outline-none transition-colors focus:bg-white focus:ring-2 ${
                   confirmPassword.length > 0 && !passwordsMatch
                     ? 'border-red-400 focus:border-red-500 focus:ring-red-200'
-                    : 'border-gray-300 focus:border-[#700F81] focus:ring-[#700F81]/20'
+                    : 'border-gray-300 focus:border-brand-deep focus:ring-brand-deep/20'
                 }`}
                 disabled={isSubmitting || success}
                 autoComplete="new-password"

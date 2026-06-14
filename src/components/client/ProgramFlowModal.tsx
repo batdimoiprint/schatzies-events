@@ -1,8 +1,15 @@
 import { X } from 'lucide-react';
 
+interface ProgramFlowItem {
+  title?: string;
+  from?: string;
+  to?: string;
+  description?: string;
+}
+
 interface Props {
   onClose: () => void;
-  flow?: any[];
+  flow?: ProgramFlowItem[];
 }
 
 export function ProgramFlowModal({ onClose, flow = [] }: Props) {
@@ -34,17 +41,17 @@ export function ProgramFlowModal({ onClose, flow = [] }: Props) {
                   key={i}
                   className={`pb-6 ${i !== flow.length - 1 ? 'border-b border-gray-100' : ''}`}
                 >
-                  <p className="font-bold text-lg text-[#2d2834] leading-tight mb-3">
+                  <p className="font-bold text-lg text-foreground leading-tight mb-3">
                     {item.title}
                   </p>
                   <div className="flex gap-4 items-start">
-                    <div className="text-xs text-[#8a8697] shrink-0 w-16">
+                    <div className="text-xs text-muted-foreground shrink-0 w-16">
                       <p>{item.from}</p>
                       <p>{item.to}</p>
                     </div>
                     <div className="w-px bg-gray-200 self-stretch"></div>
                     <div className="flex-1">
-                      <p className="text-xs leading-relaxed text-[#8a8697]">
+                      <p className="text-xs leading-relaxed text-muted-foreground">
                         {item.description || 'No description provided.'}
                       </p>
                     </div>

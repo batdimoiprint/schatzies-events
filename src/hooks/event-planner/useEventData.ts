@@ -3,6 +3,28 @@ import { useLocation, useSearchParams } from 'react-router-dom';
 import { getEvents } from '@/api/events';
 import type { ProjectSlot } from '@/types/planner';
 
+/** Backend event fields read while mapping to a ProjectSlot (superset of the API type). */
+type EventSource = {
+  id: string;
+  clientId?: string;
+  client_id?: string;
+  clientRealName?: string;
+  clientName?: string;
+  title?: string;
+  startDate?: string;
+  eventDate?: string;
+  endDate?: string;
+  eventTime?: string;
+  startTime?: string;
+  endTime?: string;
+  eventType?: string;
+  eventPackage?: string;
+  eventPax?: number | null;
+  eventCost?: string | number;
+  cost?: string | number;
+  venue?: string;
+};
+
 export function useEventData() {
   const location = useLocation();
   const [searchParams] = useSearchParams();
@@ -28,7 +50,7 @@ export function useEventData() {
         };
         const isUUID = (str: string) =>
           /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(str);
-        const mapped = events.map((e: any) => {
+        const mapped = events.map((e: EventSource) => {
           const rawClientId = e.clientId || e.client_id;
           const clientVal = e.clientRealName || e.clientName || rawClientId;
           const displayClient = clientVal && isUUID(clientVal) ? 'Valued Client' : clientVal;
@@ -54,7 +76,7 @@ export function useEventData() {
         setProjectSlots(mapped);
         if (mapped.length > 0) {
           const targetId =
-            passedEventId && mapped.some((p: any) => p.id === passedEventId)
+            passedEventId && mapped.some((p) => p.id === passedEventId)
               ? passedEventId
               : mapped[0].id;
           setSelectedEventId(targetId);

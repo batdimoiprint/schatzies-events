@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Button } from '@/components/ui/button';
-import { Navbar } from '@/components/Navbar';
+import { FacebookLogo, EnvelopeSimple, Phone, ArrowRight, ArrowUpRight } from '@phosphor-icons/react';
 import ScrollReveal from '@/components/ui/ScrollReveal';
 
 // Gallery images
@@ -18,7 +17,6 @@ const galleryRow2 = [
   { src: '/Pictures/gallery-7.jpg', alt: 'Event gallery 7' },
 ];
 
-// Hero images carousel
 const heroImages = [
   '/Pictures/hero-1.jpg',
   '/Pictures/hero-2.jpg',
@@ -33,7 +31,6 @@ const heroImages = [
   '/Pictures/hero-11.jpg',
 ];
 
-// Testimonials
 const testimonials = [
   {
     name: 'Ainna O.',
@@ -64,233 +61,157 @@ const testimonials = [
 export function LandingPage() {
   return (
     <>
-      <Navbar />
-      <main>
-        <HeroSection />
-        <SpotlightSection />
-        <ServicesSection />
-        <TestimonialsSection />
-      </main>
-
-      {/* Floating Chat Widget */}
+      <HeroSection />
+      <SpotlightSection />
+      <ServicesSection />
+      <TestimonialsSection />
     </>
   );
 }
 
-/* Hero Section */
+/* ── Hero — editorial split ── */
 function HeroSection() {
-  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const navigate = useNavigate();
+  const [index, setIndex] = useState(0);
 
   useEffect(() => {
-    const interval = setInterval(() => {
-      setCurrentImageIndex((prevIndex) => (prevIndex + 1) % heroImages.length);
-    }, 8000); // Change image every 8 seconds
-
-    return () => clearInterval(interval);
+    const t = setInterval(() => setIndex((i) => (i + 1) % heroImages.length), 6000);
+    return () => clearInterval(t);
   }, []);
 
+  const socials = [
+    {
+      href: 'https://www.facebook.com/debutandweddingpackage',
+      label: 'Facebook',
+      Icon: FacebookLogo,
+      external: true,
+    },
+    { href: 'mailto:schatziesevents@gmail.com', label: 'Email', Icon: EnvelopeSimple, external: false },
+    { href: 'tel:+639333807868', label: 'Phone', Icon: Phone, external: false },
+  ];
+
   return (
-    <section className="relative min-h-screen w-full overflow-hidden bg-white">
-      {/* Background Images — all stacked, crossfade via opacity */}
-      {heroImages.map((src, index) => (
-        <img
-          key={src}
-          src={src}
-          alt=""
-          className="absolute inset-0 w-full h-full object-cover object-right lg:object-center"
-          style={{
-            opacity: index === currentImageIndex ? 1 : 0,
-            transition: 'opacity 1.5s ease-in-out',
-          }}
-        />
-      ))}
-
-      {/* Gradient Overlay — sits above all images */}
-      <div
-        className="absolute inset-0"
-        style={{
-          background:
-            'linear-gradient(to right, rgba(255,255,255,0.95) 0%, rgba(255,255,255,0.85) 15%, rgba(255,255,255,0.4) 25%, transparent 40%)',
-        }}
-      />
-
-      {/* Content */}
-      <div className="relative flex items-center h-full min-h-screen px-6 sm:px-8 lg:px-[8%] w-full z-10">
-        <div className="w-full lg:w-[52%] pt-32 pb-24 lg:pt-40 lg:pb-32 space-y-8">
-          {/* Main Heading */}
-          <div className="space-y-3 animate-fade-in-up">
-            <p
-              className="text-[#1E002C] text-3xl sm:text-4xl lg:text-[44px] font-normal leading-tight"
-              style={{ fontFamily: "'Libre Baskerville', serif" }}
-            >
-              Welcome to
-            </p>
-            <h1
-              className="text-5xl sm:text-7xl lg:text-[84px] font-bold leading-[1.05] tracking-tight bg-clip-text text-transparent"
-              style={{
-                fontFamily: "'Libre Baskerville', serif",
-                background: 'linear-gradient(99.67deg, #700F81 16.53%, #FF0066 45.5%)',
-                WebkitBackgroundClip: 'text',
-                WebkitTextFillColor: 'transparent',
-              }}
-            >
-              Schatzies Events!
-            </h1>
+    <section className="relative min-h-screen overflow-hidden bg-ivory">
+      <div className="page-gutter mx-auto grid min-h-screen max-w-[1500px] grid-cols-1 items-center gap-10 pt-28 pb-16 lg:grid-cols-[1.05fr_0.95fr] lg:gap-16 lg:pt-24 lg:pb-0">
+        {/* Left — type */}
+        <div className="relative z-10">
+          <div className="animate-fade-in-up flex items-center gap-4">
+            <span className="h-px w-12 bg-gold" />
+            <span className="eyebrow text-brand">Wedding &amp; Debut Atelier — Philippines</span>
           </div>
 
-          {/* Subtitle */}
-          <p
-            className="text-xl sm:text-2xl lg:text-[28px] font-semibold text-[#1E002C] leading-normal animate-fade-in-up animation-delay-200"
-            style={{ fontFamily: "'Montserrat', sans-serif" }}
-          >
-            Your{' '}
-            <span
-              className="font-bold bg-clip-text text-transparent"
-              style={{
-                background: 'linear-gradient(99.67deg, #700F81 16.53%, #FF0066 45.5%)',
-                WebkitBackgroundClip: 'text',
-                WebkitTextFillColor: 'transparent',
-              }}
-            >
-              MOST TRUSTED
-            </span>{' '}
-            team!
-          </p>
+          <h1 className="animate-fade-in-up animation-delay-200 mt-7 font-heading leading-[0.92] text-ink">
+            <span className="block text-2xl font-normal italic text-ink/60 sm:text-3xl">
+              Welcome to
+            </span>
+            <span className="mt-2 block text-[clamp(3rem,9vw,7rem)] font-semibold tracking-[-0.02em]">
+              Schatzies
+            </span>
+            <span className="block text-[clamp(3rem,9vw,7rem)] font-light italic tracking-[-0.02em] text-brand">
+              Events.
+            </span>
+          </h1>
 
-          {/* Description */}
-          <p
-            className="text-black text-base sm:text-lg lg:text-[18px] leading-relaxed max-w-xl animate-fade-in-up animation-delay-400"
-            style={{ fontFamily: "'Source Sans Pro', sans-serif" }}
-          >
+          <p className="animate-fade-in-up animation-delay-400 mt-8 max-w-md font-sans text-base leading-relaxed text-ink/70 sm:text-lg">
             Premium wedding and debut planning for those who want to be a guest at their own
-            celebration. We handle the stress; you handle the memories.
+            celebration. We handle the stress; you handle the memories. Your{' '}
+            <span className="font-semibold text-brand">most trusted</span> team.
           </p>
 
-          {/* Social Links */}
-          <div className="pt-4 space-y-3 animate-fade-in-up animation-delay-600">
-            <p
-              className="text-gray-400 text-sm font-medium tracking-wide"
-              style={{ fontFamily: "'Montserrat', sans-serif" }}
+          <div className="animate-fade-in-up animation-delay-600 mt-10 flex flex-wrap items-center gap-6">
+            <button
+              onClick={() => navigate('/event-packages')}
+              className="group inline-flex items-center gap-3 rounded-full bg-brand px-8 py-4 font-ui text-xs font-semibold tracking-[0.18em] text-primary-foreground uppercase transition-all duration-300 hover:bg-brand-deep"
             >
-              Connect with us:
-            </p>
+              View Packages
+              <ArrowRight
+                size={16}
+                weight="bold"
+                className="transition-transform duration-300 group-hover:translate-x-1"
+              />
+            </button>
+            <button
+              onClick={() => navigate('/about-us')}
+              className="group inline-flex items-center gap-2 font-ui text-xs font-semibold tracking-[0.18em] text-ink uppercase"
+            >
+              Our Story
+              <span className="h-px w-6 bg-ink transition-all duration-300 group-hover:w-10" />
+            </button>
+          </div>
+
+          <div className="animate-fade-in-up animation-delay-800 mt-12 flex items-center gap-5">
+            <span className="eyebrow text-ink/40">Connect</span>
             <div className="flex items-center gap-3">
-              {/* Facebook */}
-              <a
-                href="https://www.facebook.com/debutandweddingpackage"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex h-10 w-10 items-center justify-center rounded-full bg-[#FF0066] text-white hover:scale-110 transition-transform duration-200 shadow-md"
-              >
-                <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 24 24">
-                  <path d="M9 8h-3v4h3v12h5v-12h3.642l.358-4h-4v-1.667c0-.955.192-1.333 1.115-1.333h2.885v-5h-3.808c-3.596 0-5.192 1.583-5.192 4.615v3.385z" />
-                </svg>
-              </a>
-              {/* Email */}
-              <a
-                href="mailto:schatziesevents@gmail.com"
-                className="flex h-10 w-10 items-center justify-center rounded-[10px] bg-[#FF0066] text-white hover:scale-110 transition-transform duration-200 shadow-md"
-              >
-                <svg
-                  className="h-5 w-5"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  viewBox="0 0 24 24"
+              {socials.map(({ href, label, Icon, external }) => (
+                <a
+                  key={label}
+                  href={href}
+                  aria-label={label}
+                  {...(external ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
+                  className="flex h-10 w-10 items-center justify-center rounded-full border border-ink/15 text-ink transition-all duration-300 hover:border-brand hover:bg-brand hover:text-primary-foreground"
                 >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
-                  />
-                </svg>
-              </a>
-              {/* Phone */}
-              <a
-                href="tel:+639333807868"
-                className="flex h-10 w-10 items-center justify-center rounded-full bg-[#FF0066] text-white hover:scale-110 transition-transform duration-200 shadow-md"
-              >
-                <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 24 24">
-                  <path d="M20.01 15.38c-1.23 0-2.42-.2-3.53-.56a.977.977 0 0 0-1.01.24l-2.2 2.2a15.045 15.045 0 0 1-6.59-6.59l2.2-2.21a.96.96 0 0 0 .25-1A11.36 11.36 0 0 1 8.5 4c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1 0 9.39 7.61 17 17 17 .55 0 1-.45 1-1v-3.58c0-.56-.45-1-.99-1z" />
-                </svg>
-              </a>
+                  <Icon size={17} />
+                </a>
+              ))}
             </div>
           </div>
         </div>
-      </div>
 
-      {/* Image Indicators */}
-      <div className="absolute bottom-24 left-6 sm:left-8 lg:left-[8%] z-20 flex gap-2">
-        {heroImages.map((_, index) => (
-          <button
-            key={index}
-            onClick={() => setCurrentImageIndex(index)}
-            className={`h-2 rounded-full transition-all duration-300 ${
-              index === currentImageIndex ? 'w-8 bg-[#FF0066]' : 'w-2 bg-white/50 hover:bg-white/75'
-            }`}
-            aria-label={`Go to image ${index + 1}`}
-          />
-        ))}
-      </div>
+        {/* Right — editorial image frame */}
+        <div className="relative h-[55vh] w-full lg:h-[88vh]">
+          <span className="absolute -top-3 right-2 z-20 hidden font-heading text-sm italic tracking-[0.25em] text-gold lg:block [writing-mode:vertical-rl]">
+            Est. 2011
+          </span>
+          <div className="relative h-full w-full overflow-hidden rounded-t-[180px] rounded-b-md border border-gold/40 shadow-[0_30px_80px_-30px_rgba(34,26,20,0.45)]">
+            {heroImages.map((src, i) => (
+              <img
+                key={src}
+                src={src}
+                alt=""
+                className="absolute inset-0 h-full w-full object-cover transition-opacity duration-[1500ms] ease-in-out"
+                style={{ opacity: i === index ? 1 : 0 }}
+              />
+            ))}
+            <div className="absolute inset-0 bg-gradient-to-t from-ink/30 via-transparent to-transparent" />
+          </div>
 
-      {/* Wave Divider */}
-      <div className="absolute bottom-0 left-0 w-full overflow-hidden leading-[0] transform translate-y-[1px] z-10">
-        <svg
-          className="relative block w-full h-[60px] sm:h-[90px] lg:h-[120px]"
-          viewBox="0 0 1440 120"
-          preserveAspectRatio="none"
-          xmlns="http://www.w3.org/2000/svg"
-        >
-          <path
-            d="M0,60 C320,130 720,10 1080,80 C1260,105 1380,95 1440,75 L1440,120 L0,120 Z"
-            fill="white"
-          />
-        </svg>
+          {/* progress ticks */}
+          <div className="absolute bottom-6 left-1/2 z-20 flex -translate-x-1/2 gap-1.5">
+            {heroImages.map((_, i) => (
+              <button
+                key={i}
+                onClick={() => setIndex(i)}
+                aria-label={`Go to image ${i + 1}`}
+                className={`h-[3px] rounded-full transition-all duration-500 ${
+                  i === index ? 'w-7 bg-gold' : 'w-2 bg-ivory/60 hover:bg-ivory'
+                }`}
+              />
+            ))}
+          </div>
+        </div>
       </div>
     </section>
   );
 }
 
-/* Spotlight Section */
+/* ── Spotlight — portfolio marquee ── */
 function SpotlightSection() {
   const navigate = useNavigate();
-  const row1Loop = [
-    ...galleryRow1,
-    ...galleryRow1,
-    ...galleryRow1,
-    ...galleryRow1,
-    ...galleryRow1,
-    ...galleryRow1,
-    ...galleryRow1,
-    ...galleryRow1,
-  ];
-  const row2Loop = [
-    ...galleryRow2,
-    ...galleryRow2,
-    ...galleryRow2,
-    ...galleryRow2,
-    ...galleryRow2,
-    ...galleryRow2,
-    ...galleryRow2,
-    ...galleryRow2,
-  ];
+  const row1 = Array.from({ length: 8 }, () => galleryRow1).flat();
+  const row2 = Array.from({ length: 8 }, () => galleryRow2).flat();
 
   return (
-    <section className="relative overflow-hidden bg-white py-20 lg:py-28">
-      {/* Heading & Subtitle inside the standard padding container */}
-      <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-[8%] text-center mb-16">
+    <section className="overflow-hidden bg-ivory py-24 lg:py-32">
+      <div className="page-gutter mx-auto mb-16 max-w-5xl text-center">
         <ScrollReveal variant="up">
-          <h2
-            className="text-4xl sm:text-5xl lg:text-[52px] font-bold leading-tight tracking-tight text-[#1E002C]"
-            style={{ fontFamily: "'Libre Baskerville', serif" }}
-          >
-            Step Into the <span className="text-[#FF0066]">Spotlight</span>,<br />
-            We'll Handle the <span className="text-[#FF0066]">Stage</span>.
+          <p className="eyebrow text-brand">01 — The Portfolio</p>
+          <h2 className="mt-6 font-heading text-[clamp(2.25rem,5.5vw,4rem)] leading-[1.05] text-ink">
+            Step into the <span className="italic text-brand">spotlight</span>,
+            <br />
+            we&rsquo;ll handle the <span className="italic text-brand">stage</span>.
           </h2>
-          <p
-            className="mt-6 text-base sm:text-lg lg:text-[18px] text-gray-600 max-w-3xl mx-auto leading-relaxed"
-            style={{ fontFamily: "'Montserrat', sans-serif" }}
-          >
+          <div className="rule-gold mx-auto mt-8 w-40" />
+          <p className="mx-auto mt-8 max-w-2xl font-sans text-base leading-relaxed text-ink/65 lg:text-lg">
             Your milestone is a masterpiece in the making. While you focus on making memories and
             greeting your guests, our team ensures every light, sound, and moment is executed to
             perfection.
@@ -298,246 +219,146 @@ function SpotlightSection() {
         </ScrollReveal>
       </div>
 
-      {/* Gallery Carousel - Maxed out to the screen width (outside container) */}
-      <div className="w-full space-y-8 mb-16 relative">
-        {/* Row 1 - Scroll Right */}
-        <div className="group relative flex overflow-hidden">
-          {/* Gradient Overlays for screen edges */}
-          <div className="pointer-events-none absolute left-0 top-0 z-10 h-full w-24 bg-gradient-to-r from-white to-transparent" />
-          <div className="pointer-events-none absolute right-0 top-0 z-10 h-full w-24 bg-gradient-to-l from-white to-transparent" />
-
-          {/* Scrolling Container */}
-          <div className="flex w-max animate-marquee gap-6 group-hover:[animation-play-state:paused]">
-            {row1Loop.map((image, idx) => (
-              <div
-                key={`row1-${idx}`}
-                className="relative h-80 w-[450px] flex-shrink-0 overflow-hidden rounded-2xl shadow-xl border border-gray-100/50"
-              >
-                <img
-                  src={image.src}
-                  alt={image.alt}
-                  className="h-full w-full object-cover transition-transform duration-500 hover:scale-105"
-                />
-              </div>
-            ))}
+      <div className="relative mb-16 space-y-6">
+        {[row1, row2].map((row, rowIdx) => (
+          <div key={rowIdx} className="mask-fade-x group flex overflow-hidden">
+            <div
+              className={`flex w-max gap-6 ${rowIdx === 0 ? 'animate-marquee' : 'animate-marquee-reverse'} group-hover:[animation-play-state:paused]`}
+            >
+              {row.map((image, i) => (
+                <figure
+                  key={`${rowIdx}-${i}`}
+                  className="relative h-72 w-[420px] flex-shrink-0 overflow-hidden rounded-sm border border-gold/20"
+                >
+                  <img
+                    src={image.src}
+                    alt={image.alt}
+                    className="h-full w-full object-cover transition-transform duration-700 hover:scale-105"
+                  />
+                </figure>
+              ))}
+            </div>
           </div>
-        </div>
-
-        {/* Row 2 - Scroll Right (Same as Row 1) */}
-        <div className="group relative flex overflow-hidden">
-          {/* Gradient Overlays for screen edges */}
-          <div className="pointer-events-none absolute left-0 top-0 z-10 h-full w-24 bg-gradient-to-r from-white to-transparent" />
-          <div className="pointer-events-none absolute right-0 top-0 z-10 h-full w-24 bg-gradient-to-l from-white to-transparent" />
-
-          {/* Scrolling Container */}
-          <div className="flex w-max animate-marquee gap-6 group-hover:[animation-play-state:paused]">
-            {row2Loop.map((image, idx) => (
-              <div
-                key={`row2-${idx}`}
-                className="relative h-80 w-[450px] flex-shrink-0 overflow-hidden rounded-2xl shadow-xl border border-gray-100/50"
-              >
-                <img
-                  src={image.src}
-                  alt={image.alt}
-                  className="h-full w-full object-cover transition-transform duration-500 hover:scale-105"
-                />
-              </div>
-            ))}
-          </div>
-        </div>
+        ))}
       </div>
 
-      {/* Button & Wave Container */}
-      <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-[8%] text-center pb-12">
-        <Button
+      <div className="page-gutter text-center">
+        <button
           onClick={() => navigate('/gallery')}
-          className="bg-[#FF0066] hover:bg-[#D80054] text-white px-8 py-6 rounded-lg text-lg font-semibold shadow-lg shadow-pink-500/20 transition-all duration-200"
-          style={{ fontFamily: "'Montserrat', sans-serif" }}
+          className="group inline-flex items-center gap-3 border border-ink/20 px-9 py-4 font-ui text-xs font-semibold tracking-[0.18em] text-ink uppercase transition-all duration-300 hover:border-brand hover:text-brand"
         >
-          View Gallery
-        </Button>
+          View Full Gallery
+          <ArrowUpRight
+            size={16}
+            weight="bold"
+            className="transition-transform duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5"
+          />
+        </button>
       </div>
     </section>
   );
 }
 
-/* Services Section */
+/* ── Services — espresso editorial features ── */
 function ServicesSection() {
+  const features = [
+    {
+      kicker: '02 — Weddings',
+      title: 'A Love Story Told in Every Detail',
+      body: "We don't just plan weddings; we protect your peace. From intimate vows to grand ballrooms, we ensure the only thing you focus on is the person at the end of the aisle.",
+      img: '/Pictures/service-wedding.jpg',
+      alt: 'A Love Story Told in Every Detail',
+    },
+    {
+      kicker: '03 — Debuts',
+      title: "Your 18th: More Than a Birthday, a Milestone",
+      body: "Eighteen years in the making, designed in a single night. We transform your milestone into a cinematic celebration that captures exactly who you are and who you're becoming.",
+      img: '/Pictures/service-debut.jpg',
+      alt: "Your 18th: More Than a Birthday, It's a Milestone",
+    },
+  ];
+
   return (
-    <section
-      id="services"
-      className="relative bg-cover bg-center bg-no-repeat pt-0 pb-24 lg:pb-36 overflow-hidden"
-      style={{ backgroundImage: "url('/Pictures/texture.jpg')" }}
-    >
-      {/* Dark overlay for contrast and readability */}
-      <div className="absolute inset-0 bg-black/50 pointer-events-none" />
-
-      {/* White Wave at the top — smooth transition from white Spotlight section */}
-      <div className="relative w-full overflow-hidden leading-[0] z-20">
-        <svg
-          className="relative block w-full h-[40px] sm:h-[60px] lg:h-[80px]"
-          viewBox="0 0 1440 120"
-          preserveAspectRatio="none"
-          xmlns="http://www.w3.org/2000/svg"
-        >
-          <path
-            d="M0,0 L1440,0 L1440,60 C1080,110 720,10 320,60 C160,80 60,70 0,50 Z"
-            fill="white"
-          />
-        </svg>
-      </div>
-
-      <div className="relative max-w-7xl mx-auto px-6 sm:px-8 lg:px-[8%] w-full z-10 space-y-24 lg:space-y-36">
-        {/* Service Feature 1: Love Story (Wedding) */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20 items-center">
-          {/* Left: Text */}
-          <ScrollReveal variant="left" className="space-y-6">
-            <h3
-              className="text-3xl sm:text-4xl lg:text-[44px] font-bold leading-tight text-white"
-              style={{ fontFamily: "'Libre Baskerville', serif" }}
-            >
-              A <span className="text-[#FF0066]">Love Story</span> Told in Every Detail
-            </h3>
-            <p
-              className="text-base sm:text-lg lg:text-[18px] text-gray-300 leading-relaxed font-normal"
-              style={{ fontFamily: "'Montserrat', sans-serif" }}
-            >
-              We don't just plan weddings; we protect your peace. From intimate vows to grand
-              ballrooms, we ensure the only thing you focus on is the person at the end of the
-              aisle.
-            </p>
-          </ScrollReveal>
-          {/* Right: Image */}
-          <ScrollReveal
-            variant="right"
-            className="relative overflow-hidden rounded-2xl border-4 border-white shadow-[0_25px_60px_rgba(0,0,0,0.8)] max-w-full lg:max-w-lg justify-self-center lg:justify-self-end aspect-[4/3]"
+    <section id="services" className="grain relative overflow-hidden bg-ink py-24 text-ivory lg:py-36">
+      <div className="page-gutter relative z-10 mx-auto max-w-[1400px] space-y-28 lg:space-y-40">
+        {features.map((f, i) => (
+          <div
+            key={f.kicker}
+            className="grid grid-cols-1 items-center gap-10 lg:grid-cols-2 lg:gap-20"
           >
-            <img
-              src="/Pictures/service-wedding.jpg"
-              alt="A Love Story Told in Every Detail"
-              className="w-full h-full object-cover transition-transform duration-500 hover:scale-105"
-            />
-          </ScrollReveal>
-        </div>
-
-        {/* Service Feature 2: 18th Milestone (Debut) */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20 items-center">
-          {/* Left: Image (on mobile order-2, on desktop order-1) */}
-          <ScrollReveal
-            variant="left"
-            className="relative overflow-hidden rounded-2xl border-4 border-white shadow-[0_25px_60px_rgba(0,0,0,0.8)] max-w-full lg:max-w-lg justify-self-center lg:justify-self-start order-2 lg:order-1 aspect-[4/3]"
-          >
-            <img
-              src="/Pictures/service-debut.jpg"
-              alt="Your 18th: More Than a Birthday, It's a Milestone"
-              className="w-full h-full object-cover transition-transform duration-500 hover:scale-105"
-            />
-          </ScrollReveal>
-          {/* Right: Text (on mobile order-1, on desktop order-2) */}
-          <ScrollReveal variant="right" className="space-y-6 order-1 lg:order-2">
-            <h3
-              className="text-3xl sm:text-4xl lg:text-[44px] font-bold leading-tight text-white"
-              style={{ fontFamily: "'Libre Baskerville', serif" }}
+            <ScrollReveal
+              variant={i % 2 === 0 ? 'right' : 'left'}
+              className={`relative aspect-[4/5] w-full overflow-hidden rounded-sm border border-gold/30 ${
+                i % 2 === 0 ? 'lg:order-2' : 'lg:order-1'
+              }`}
             >
-              <span className="text-[#FF0066]">Your 18th:</span> More Than a Birthday, It's a{' '}
-              <span className="text-[#FF0066]">Milestone</span>
-            </h3>
-            <p
-              className="text-base sm:text-lg lg:text-[18px] text-gray-300 leading-relaxed font-normal"
-              style={{ fontFamily: "'Montserrat', sans-serif" }}
-            >
-              Eighteen years in the making, designed in a single night. We transform your milestone
-              into a cinematic celebration that captures exactly who you are and who you're
-              becoming.
-            </p>
-          </ScrollReveal>
-        </div>
-      </div>
+              <img
+                src={f.img}
+                alt={f.alt}
+                className="h-full w-full object-cover transition-transform duration-[1200ms] hover:scale-105"
+              />
+            </ScrollReveal>
 
-      {/* White/Pink-50 Wave Divider at the bottom transitioning to Testimonials */}
-      <div className="absolute bottom-0 left-0 w-full overflow-hidden leading-[0] transform translate-y-[1px] z-10">
-        <svg
-          className="relative block w-full h-[40px] sm:h-[60px] lg:h-[80px]"
-          viewBox="0 0 1440 120"
-          preserveAspectRatio="none"
-          xmlns="http://www.w3.org/2000/svg"
-        >
-          <path
-            d="M0,80 C360,130 720,20 1080,80 C1260,100 1380,95 1440,75 L1440,120 L0,120 Z"
-            fill="#fdf2f8"
-          />
-        </svg>
+            <ScrollReveal
+              variant={i % 2 === 0 ? 'left' : 'right'}
+              className={`space-y-6 ${i % 2 === 0 ? 'lg:order-1' : 'lg:order-2'}`}
+            >
+              <p className="eyebrow text-gold">{f.kicker}</p>
+              <h3 className="font-heading text-[clamp(2rem,4.5vw,3.5rem)] leading-[1.04] text-ivory">
+                {f.title}
+              </h3>
+              <div className="rule-gold w-24" />
+              <p className="max-w-md font-sans text-base leading-relaxed text-ivory/70 lg:text-lg">
+                {f.body}
+              </p>
+            </ScrollReveal>
+          </div>
+        ))}
       </div>
     </section>
   );
 }
 
-/* Testimonials Section */
+/* ── Testimonials — editorial pull-quotes ── */
 function TestimonialsSection() {
   return (
-    <section className="bg-[#f5f0f0] py-20 lg:py-28">
-      <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-[8%]">
-        {/* Section Title */}
-        <ScrollReveal variant="up" className="mb-14 text-center">
-          <h2
-            className="text-4xl sm:text-5xl lg:text-[52px] font-bold leading-tight tracking-tight text-[#1E002C]"
-            style={{ fontFamily: "'Libre Baskerville', serif" }}
-          >
-            The Schatzies <span className="text-[#FF0066]">Experience</span>.
+    <section className="bg-ivory py-24 lg:py-32">
+      <div className="page-gutter mx-auto max-w-[1400px]">
+        <ScrollReveal variant="up" className="mb-16 max-w-3xl">
+          <p className="eyebrow text-brand">04 — The Experience</p>
+          <h2 className="mt-6 font-heading text-[clamp(2.25rem,5.5vw,4rem)] leading-[1.05] text-ink">
+            The Schatzies <span className="italic text-brand">experience</span>.
           </h2>
-          <p
-            className="mt-5 text-base sm:text-lg lg:text-[18px] text-gray-600 max-w-2xl mx-auto leading-relaxed"
-            style={{ fontFamily: "'Montserrat', sans-serif" }}
-          >
+          <p className="mt-7 font-sans text-base leading-relaxed text-ink/65 lg:text-lg">
             Celebrating 15 years of flawless events through the words of those who experienced the
             magic firsthand.
           </p>
         </ScrollReveal>
 
-        {/* Testimonials 2-Column Grid */}
-        <div className="grid gap-6 sm:grid-cols-2">
-          {testimonials.map((testimonial, idx) => (
-            <div
+        <div className="grid gap-px overflow-hidden rounded-sm border border-border bg-border sm:grid-cols-2 lg:grid-cols-3">
+          {testimonials.map((t, idx) => (
+            <ScrollReveal
               key={idx}
-              className="relative bg-white rounded-2xl p-6 lg:p-8 shadow-[0_2px_15px_rgba(0,0,0,0.06)] hover:shadow-[0_4px_20px_rgba(0,0,0,0.1)] transition-shadow duration-300"
+              variant="up"
+              delay={(idx % 3) * 100}
+              className="flex flex-col bg-card p-8 lg:p-10"
             >
-              {/* Top Row: Avatar + Name | Quote Icon */}
-              <div className="flex items-start justify-between mb-4">
-                <div className="flex items-center gap-3">
-                  {/* Avatar */}
-                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gray-200">
-                    <svg className="h-5 w-5 text-gray-500" fill="currentColor" viewBox="0 0 24 24">
-                      <path d="M12 12c2.7 0 4.8-2.1 4.8-4.8S14.7 2.4 12 2.4 7.2 4.5 7.2 7.2 9.3 12 12 12zm0 2.4c-3.2 0-9.6 1.6-9.6 4.8v2.4h19.2v-2.4c0-3.2-6.4-4.8-9.6-4.8z" />
-                    </svg>
-                  </div>
-                  <div>
-                    <h4
-                      className="font-bold text-[#1E002C] text-sm lg:text-base"
-                      style={{ fontFamily: "'Montserrat', sans-serif" }}
-                    >
-                      {testimonial.name}
-                    </h4>
-                    <p className="text-xs font-semibold text-[#FF0066]">Recommends!</p>
-                  </div>
-                </div>
-
-                {/* Large Pink Quote Mark */}
-                <span
-                  className="text-[#FF0066] text-5xl lg:text-6xl font-bold leading-none select-none -mt-2"
-                  style={{ fontFamily: "'Libre Baskerville', serif" }}
-                >
-                  "
-                </span>
-              </div>
-
-              {/* Testimonial Text */}
-              <p
-                className="text-gray-700 text-sm lg:text-[15px] leading-relaxed"
-                style={{ fontFamily: "'Montserrat', sans-serif" }}
-              >
-                {testimonial.text}
+              <span className="font-heading text-6xl leading-none text-gold">&ldquo;</span>
+              <p className="mt-4 flex-1 font-sans text-[0.95rem] leading-relaxed text-ink/75">
+                {t.text}
               </p>
-            </div>
+              <div className="mt-8 flex items-center gap-3 border-t border-border pt-5">
+                <span className="flex h-9 w-9 items-center justify-center rounded-full bg-brand/10 font-ui text-sm font-bold text-brand">
+                  {t.name.charAt(0)}
+                </span>
+                <div>
+                  <p className="font-ui text-sm font-semibold text-ink">{t.name}</p>
+                  <p className="font-ui text-[0.7rem] tracking-[0.15em] text-brand uppercase">
+                    Recommends
+                  </p>
+                </div>
+              </div>
+            </ScrollReveal>
           ))}
         </div>
       </div>

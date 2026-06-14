@@ -66,31 +66,31 @@ export function ProfilePage({ profilePath = '/admin/profile' }: ProfilePageProps
           onClick={() => {
             setProfileOpen((current) => !current);
           }}
-          className="flex items-center gap-1.5 rounded-lg p-1 transition hover:bg-[#fdf2f8]"
+          className="flex items-center gap-1.5 rounded-lg p-1 transition hover:bg-brand/5"
           aria-label="Profile menu"
           aria-expanded={profileOpen}
         >
           <img
             src={userAvatar}
             alt="User avatar"
-            className="size-8 rounded-full object-cover ring-2 ring-[#e61f83]/30"
+            className="size-8 rounded-full object-cover ring-2 ring-brand/30"
           />
           <ChevronDown
-            className={`size-3.5 text-[#696373] transition-transform duration-150 ${profileOpen ? 'rotate-180' : ''}`}
+            className={`size-3.5 text-muted-foreground transition-transform duration-150 ${profileOpen ? 'rotate-180' : ''}`}
           />
         </button>
 
         {profileOpen && (
-          <div className="absolute right-0 top-full z-50 mt-2 w-56 overflow-hidden rounded-xl border border-[#ece7f2] bg-white shadow-lg shadow-black/10">
-            <div className="flex items-center gap-3 border-b border-[#ece7f2] px-4 py-3">
+          <div className="absolute right-0 top-full z-50 mt-2 w-56 overflow-hidden rounded-xl border border-border bg-white shadow-lg shadow-black/10">
+            <div className="flex items-center gap-3 border-b border-border px-4 py-3">
               <img
                 src={userAvatar}
                 alt="User avatar"
                 className="size-9 rounded-full object-cover"
               />
               <div className="min-w-0">
-                <p className="truncate text-sm font-semibold text-[#2d2834]">{displayName}</p>
-                <p className="truncate text-xs text-[#696373]">{displayRole}</p>
+                <p className="truncate text-sm font-semibold text-foreground">{displayName}</p>
+                <p className="truncate text-xs text-muted-foreground">{displayRole}</p>
               </div>
             </div>
             <div className="p-1.5">
@@ -99,7 +99,7 @@ export function ProfilePage({ profilePath = '/admin/profile' }: ProfilePageProps
                   navigate(profilePath);
                   setProfileOpen(false);
                 }}
-                className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2.5 text-sm font-medium text-[#4f4a56] transition hover:bg-[#fdf2f8] hover:text-[#df2b80]"
+                className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2.5 text-sm font-medium text-foreground/80 transition hover:bg-brand/5 hover:text-brand"
               >
                 <User className="size-4 shrink-0" />
                 View Profile
@@ -125,7 +125,7 @@ export function ProfilePage({ profilePath = '/admin/profile' }: ProfilePageProps
                   <div className="flex h-10 w-10 items-center justify-center rounded-full bg-red-100">
                     <LogOut className="size-5 text-red-500" />
                   </div>
-                  <h3 className="text-lg font-semibold text-[#2d2834]">Confirm Logout</h3>
+                  <h3 className="text-lg font-semibold text-foreground">Confirm Logout</h3>
                 </div>
                 <button
                   onClick={closeLogoutModal}
@@ -136,7 +136,7 @@ export function ProfilePage({ profilePath = '/admin/profile' }: ProfilePageProps
               </div>
 
               <div className="p-6">
-                <p className="text-center text-[#4f4a56]">Are you sure you want to log out?</p>
+                <p className="text-center text-foreground/80">Are you sure you want to log out?</p>
                 <p className="mt-1 text-center text-sm text-gray-400">
                   You&apos;ll need to log in again to access your account.
                 </p>
@@ -145,7 +145,7 @@ export function ProfilePage({ profilePath = '/admin/profile' }: ProfilePageProps
               <div className="flex gap-3 border-t border-gray-100 p-4">
                 <button
                   onClick={closeLogoutModal}
-                  className="flex-1 rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm font-medium text-[#696373] transition hover:bg-gray-50"
+                  className="flex-1 rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm font-medium text-muted-foreground transition hover:bg-gray-50"
                 >
                   Cancel
                 </button>

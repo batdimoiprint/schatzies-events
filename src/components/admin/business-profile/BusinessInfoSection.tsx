@@ -178,7 +178,7 @@ export function BusinessInfoSection() {
 
   if (isLoading) {
     return (
-      <div className="rounded-3xl bg-white p-8 text-center text-sm text-[#7f7889] shadow-[0_8px_30px_rgba(61,32,82,0.08)]">
+      <div className="rounded-3xl bg-white p-8 text-center text-sm text-muted-foreground shadow-[0_8px_30px_rgba(61,32,82,0.08)]">
         Loading business information...
       </div>
     );
@@ -188,18 +188,18 @@ export function BusinessInfoSection() {
     return (
       <div className="rounded-3xl bg-white p-8 shadow-[0_8px_30px_rgba(61,32,82,0.08)]">
         <div className="flex flex-col items-center justify-center py-12 text-center">
-          <div className="mb-4 flex size-16 items-center justify-center rounded-full bg-[#fdf2f8]">
-            <Building2 className="size-8 text-[#df2b80]" />
+          <div className="mb-4 flex size-16 items-center justify-center rounded-full bg-brand/5">
+            <Building2 className="size-8 text-brand" />
           </div>
-          <h2 className="font-heading text-xl font-bold text-[#1d1320]">No business profile yet</h2>
-          <p className="mt-2 max-w-md text-sm text-[#7f7889]">
+          <h2 className="font-heading text-xl font-bold text-foreground">No business profile yet</h2>
+          <p className="mt-2 max-w-md text-sm text-muted-foreground">
             Set up your business profile to manage contact numbers, emails, social links, and
             locations.
           </p>
           <Button
             onClick={() => setupMutation.mutate()}
             disabled={setupMutation.isPending}
-            className="mt-6 rounded-full bg-[#df2b80] px-6 text-xs font-bold text-white shadow-md hover:bg-[#c81e6f]"
+            className="mt-6 rounded-full bg-brand px-6 text-xs font-bold text-white shadow-md hover:bg-brand"
           >
             {setupMutation.isPending ? 'Setting up...' : 'Set Up Business Profile'}
           </Button>
@@ -229,15 +229,15 @@ export function BusinessInfoSection() {
           >
             <div className="mb-4 flex items-center justify-between">
               <div className="flex items-center gap-2.5">
-                <div className="flex size-8 items-center justify-center rounded-lg bg-[#fdf2f8]">
-                  <Icon className="size-4 text-[#df2b80]" />
+                <div className="flex size-8 items-center justify-center rounded-lg bg-brand/5">
+                  <Icon className="size-4 text-brand" />
                 </div>
-                <h2 className="font-heading text-lg font-bold text-[#1d1320]">{title}</h2>
+                <h2 className="font-heading text-lg font-bold text-foreground">{title}</h2>
               </div>
               <Button
                 size="sm"
                 onClick={() => openDialog(section)}
-                className="gap-1.5 rounded-full bg-[#df2b80] px-4 text-xs font-bold text-white shadow-md hover:bg-[#c81e6f]"
+                className="gap-1.5 rounded-full bg-brand px-4 text-xs font-bold text-white shadow-md hover:bg-brand"
               >
                 <Plus className="size-4" />
                 Add
@@ -245,7 +245,7 @@ export function BusinessInfoSection() {
             </div>
 
             {items.length === 0 ? (
-              <p className="py-6 text-center text-sm text-[#7f7889]">
+              <p className="py-6 text-center text-sm text-muted-foreground">
                 No {title.toLowerCase()} added yet.
               </p>
             ) : (
@@ -257,7 +257,7 @@ export function BusinessInfoSection() {
                   >
                     <div className="min-w-0">
                       <p className="truncate text-sm font-semibold text-[#2d1b3d]">{item.label}</p>
-                      <p className="truncate text-sm text-[#7f7889]">
+                      <p className="truncate text-sm text-muted-foreground">
                         {itemSummary(section, item)}
                       </p>
                     </div>
@@ -267,7 +267,7 @@ export function BusinessInfoSection() {
                         size="icon"
                         aria-label={`Edit ${item.label}`}
                         onClick={() => openDialog(section, item)}
-                        className="size-8 text-[#8f1fd1] hover:bg-[#f0e8f5]"
+                        className="size-8 text-brand-deep hover:bg-[#f0e8f5]"
                       >
                         <Pencil className="size-4" />
                       </Button>
@@ -277,7 +277,7 @@ export function BusinessInfoSection() {
                         aria-label={`Delete ${item.label}`}
                         onClick={() => deleteMutation.mutate({ section, itemId: item.id })}
                         disabled={deleteMutation.isPending}
-                        className="size-8 text-[#df2b80] hover:bg-[#fdf2f8]"
+                        className="size-8 text-brand hover:bg-brand/5"
                       >
                         <Trash2 className="size-4" />
                       </Button>
@@ -295,7 +295,7 @@ export function BusinessInfoSection() {
           {dialogState && config && (
             <>
               <DialogHeader>
-                <DialogTitle className="font-heading text-2xl font-bold text-[#1d1320]">
+                <DialogTitle className="font-heading text-2xl font-bold text-foreground">
                   {dialogState.itemId ? 'Edit' : 'Add'} {config.singular}
                 </DialogTitle>
                 <DialogDescription>
@@ -315,7 +315,7 @@ export function BusinessInfoSection() {
                   <div key={field.name} className="space-y-1.5">
                     <Label htmlFor={`bi-${field.name}`}>
                       {field.label}
-                      {field.required && <span className="text-[#df2b80]"> *</span>}
+                      {field.required && <span className="text-brand"> *</span>}
                     </Label>
                     <Input
                       id={`bi-${field.name}`}
@@ -345,7 +345,7 @@ export function BusinessInfoSection() {
                   <Button
                     type="submit"
                     disabled={saveMutation.isPending}
-                    className="rounded-full bg-[#df2b80] px-5 text-xs font-bold text-white shadow-md hover:bg-[#c81e6f]"
+                    className="rounded-full bg-brand px-5 text-xs font-bold text-white shadow-md hover:bg-brand"
                   >
                     {saveMutation.isPending ? 'Saving...' : 'Save'}
                   </Button>

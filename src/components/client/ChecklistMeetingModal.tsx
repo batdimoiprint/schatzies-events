@@ -1,9 +1,21 @@
 import { X, CheckCircle2, Circle } from 'lucide-react';
 
+export interface MeetingItem {
+  title?: string;
+  startTime?: string;
+  endTime?: string;
+  time?: string;
+}
+
+export interface ChecklistItem {
+  label?: string;
+  done?: boolean;
+}
+
 interface Props {
   onClose: () => void;
-  meetings?: any[];
-  checklist?: any[];
+  meetings?: MeetingItem[];
+  checklist?: ChecklistItem[];
 }
 
 export function ChecklistMeetingModal({ onClose, meetings = [], checklist = [] }: Props) {

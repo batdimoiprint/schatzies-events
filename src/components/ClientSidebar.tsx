@@ -42,12 +42,12 @@ export function ClientSidebar() {
         {isMobile || expanded ? (
           <>
             <img src={logoImagePath} alt="Schatzies Events logo" className="h-24 w-auto" />
-            <p className="mt-1 text-xs font-semibold tracking-wide text-[#7f7889]">
-              Your <span className="font-bold text-[#df2b80]">MOST TRUSTED</span> team!
+            <p className="mt-1 text-xs font-semibold tracking-wide text-muted-foreground">
+              Your <span className="font-bold text-brand">MOST TRUSTED</span> team!
             </p>
           </>
         ) : (
-          <div className="size-10 overflow-hidden rounded-full border-2 border-[#e61f83] bg-white">
+          <div className="size-10 overflow-hidden rounded-full border-2 border-brand bg-white">
             <img
               src={logoImagePath}
               alt="Schatzies Events"
@@ -72,14 +72,14 @@ export function ClientSidebar() {
                 ? [
                     'flex w-full items-center gap-4 px-6 py-3 text-[15px] font-semibold transition-colors',
                     isActive
-                      ? 'bg-gradient-to-r from-[#f347a5] to-[#8f1fd1] text-white'
-                      : 'text-[#4f4a56] hover:bg-[#fdf2f8] hover:text-[#df2b80]',
+                      ? 'bg-gradient-brand text-white'
+                      : 'text-foreground/75 hover:bg-brand/5 hover:text-brand',
                   ].join(' ')
                 : [
                     'flex size-10 items-center justify-center rounded-xl transition-all',
                     isActive
-                      ? 'bg-gradient-to-b from-[#f347a5] to-[#8f1fd1] text-white shadow-[0_6px_16px_rgba(187,54,194,0.3)]'
-                      : 'text-[#6b6279] hover:bg-[#fdf2f8] hover:text-[#df2b80]',
+                      ? 'bg-gradient-brand text-white shadow-[0_6px_16px_rgba(187,54,194,0.3)]'
+                      : 'text-muted-foreground hover:bg-brand/5 hover:text-brand',
                   ].join(' ')
             }
           >
@@ -95,7 +95,7 @@ export function ClientSidebar() {
     <>
       {/* ── Desktop Sidebar (hidden on mobile) ── */}
       <aside
-        className={`hidden md:flex h-full shrink-0 flex-col border-r border-[#ece7f2] bg-white transition-all duration-200 ${
+        className={`hidden md:flex h-full shrink-0 flex-col border-r border-border bg-white transition-all duration-200 ${
           expanded ? 'w-64' : 'w-16 items-center'
         }`}
       >
@@ -108,7 +108,7 @@ export function ClientSidebar() {
             size="icon"
             onClick={() => toggleExpanded()}
             aria-label="Toggle sidebar"
-            className="size-11 shrink-0 text-[#3d2052] hover:bg-[#fdf2f8]"
+            className="size-11 shrink-0 text-brand-deep hover:bg-brand/5"
           >
             <Menu className="size-7 stroke-[2.5]" />
           </Button>
@@ -120,7 +120,7 @@ export function ClientSidebar() {
       <button
         onClick={() => setMobileOpen(true)}
         aria-label="Open menu"
-        className="fixed left-3 top-3 z-40 flex size-10 items-center justify-center rounded-lg bg-white text-[#3d2052] shadow-md md:hidden"
+        className="fixed left-3 top-3 z-40 flex size-10 items-center justify-center rounded-lg bg-white text-brand-deep shadow-md md:hidden"
       >
         <Menu className="size-6 stroke-[2.5]" />
       </button>
@@ -138,7 +138,7 @@ export function ClientSidebar() {
                 size="icon"
                 onClick={() => setMobileOpen(false)}
                 aria-label="Close menu"
-                className="size-11 shrink-0 text-[#3d2052] hover:bg-[#fdf2f8]"
+                className="size-11 shrink-0 text-brand-deep hover:bg-brand/5"
               >
                 <X className="size-7 stroke-[2.5]" />
               </Button>

@@ -45,6 +45,30 @@ type CalendarEntry = {
   isDone?: boolean;
 };
 
+interface CalendarRawItem {
+  _id?: string;
+  id?: string;
+  entryId?: string;
+  eventId?: string;
+  uuid?: string;
+  label?: string;
+  type?: string;
+  title?: string;
+  startDateKey?: string;
+  date?: string;
+  createdAt?: string;
+  endDateKey?: string;
+  endDate?: string;
+  startTime?: string;
+  time?: string;
+  endTime?: string;
+  location?: string;
+  description?: string;
+  eventType?: string;
+  isDone?: boolean;
+  status?: string | boolean;
+}
+
 type DraftEntry = {
   title: string;
   startDateKey: string;
@@ -73,14 +97,14 @@ const labelStyles: Record<
     solid: '#e2c341',
   },
   Meeting: {
-    chip: 'border-[#d3a5ef] bg-[#f7ebff] text-[#6f2ea8]',
-    dot: 'bg-[#9740d0]',
-    badge: 'bg-[#edd8fb] text-[#6f2ea8]',
+    chip: 'border-[#d3a5ef] bg-brand/5 text-muted-foreground',
+    dot: 'bg-brand-deep',
+    badge: 'bg-[#edd8fb] text-muted-foreground',
     solid: '#9740d0',
   },
   Reminder: {
     chip: 'border-[#f4b3d8] bg-[#ffeaf5] text-[#b92e79]',
-    dot: 'bg-[#e54e9d]',
+    dot: 'bg-brand',
     badge: 'bg-[#ffd7ea] text-[#b92e79]',
     solid: '#e54e9d',
   },
@@ -93,13 +117,13 @@ const labelPickerStyles: Record<BaseCalendarLabel, string> = {
 };
 
 const customLabelStyle = {
-  chip: 'border-[#e2deea] bg-[#f6f5f8] text-[#4f4a56]',
+  chip: 'border-border bg-[#f6f5f8] text-foreground/80',
   dot: 'bg-[#8f879f]',
-  badge: 'bg-[#f0edf4] text-[#4f4a56]',
+  badge: 'bg-[#f0edf4] text-foreground/80',
   solid: '#8f879f',
 };
 
-const sidebarSectionTitleClass = 'text-sm font-black uppercase tracking-[0.12em] text-[#8f879f]';
+const sidebarSectionTitleClass = 'text-sm font-black uppercase tracking-[0.12em] text-muted-foreground';
 
 function isBaseCalendarLabel(value: string): value is BaseCalendarLabel {
   return value === 'Task' || value === 'Meeting' || value === 'Reminder';
@@ -116,7 +140,7 @@ function getLabelPickerStyle(label: CalendarLabel): string {
   if (isBaseCalendarLabel(label)) {
     return labelPickerStyles[label];
   }
-  return 'bg-[#f0edf4] text-[#4f4a56]';
+  return 'bg-[#f0edf4] text-foreground/80';
 }
 
 const monthTitleFormatter = new Intl.DateTimeFormat('en-US', {
@@ -259,7 +283,7 @@ export function CalendarPage() {
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [entryToDelete, setEntryToDelete] = useState<string | null>(null);
-  const [availableEvents, setAvailableEvents] = useState<any[]>([]);
+  const [availableEvents, setAvailableEvents] = useState<Awaited<ReturnType<typeof getEvents>>>([]);
   const [draftEntry, setDraftEntry] = useState<DraftEntry>(() => ({
     title: '',
     startDateKey: todayKey,
@@ -299,6 +323,7 @@ export function CalendarPage() {
   }, [isFilterMenuOpen]);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- sync draft dates to the selected day
     setDraftEntry((previous) => ({
       ...previous,
       startDateKey: selectedDateKey,
@@ -307,25 +332,26 @@ export function CalendarPage() {
   }, [selectedDateKey]);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- reset add mode when the day changes
     setIsForcingAdd(false);
   }, [selectedDateKey]);
 
   useEffect(() => {
     const loadEntries = async () => {
       try {
-        const rawData: any = await getCalendarEntries();
+        const rawData: unknown = await getCalendarEntries();
 
-        let dataArray: any[] = [];
+        let dataArray: CalendarRawItem[] = [];
         if (Array.isArray(rawData)) {
-          dataArray = rawData;
-        } else if (rawData?.entries && Array.isArray(rawData.entries)) {
-          dataArray = rawData.entries;
-        } else if (rawData?.data && Array.isArray(rawData.data)) {
-          dataArray = rawData.data;
+          dataArray = rawData as CalendarRawItem[];
+        } else if (rawData && typeof rawData === 'object') {
+          const obj = rawData as Record<string, unknown>;
+          if (Array.isArray(obj.entries)) dataArray = obj.entries as CalendarRawItem[];
+          else if (Array.isArray(obj.data)) dataArray = obj.data as CalendarRawItem[];
         }
 
         if (dataArray.length > 0) {
-          const formattedEntries: CalendarEntry[] = dataArray.map((item: any) => {
+          const formattedEntries: CalendarEntry[] = dataArray.map((item) => {
             const rawLabel = String(item.label || item.type || 'Task');
             const formattedLabel =
               rawLabel.charAt(0).toUpperCase() + rawLabel.slice(1).toLowerCase();
@@ -611,13 +637,13 @@ export function CalendarPage() {
 
   return (
     <section className="w-full min-h-[calc(100vh-150px)] pb-2">
-      <div className="flex w-full min-w-0 flex-col gap-4 text-[#302c39]">
+      <div className="flex w-full min-w-0 flex-col gap-4 text-foreground">
         <div className="flex flex-col lg:grid lg:grid-cols-[minmax(0,1fr)_320px] gap-4 items-start">
-          <div className="w-full self-start rounded-2xl border border-[#ddd8e8] bg-white p-3 sm:p-5 shadow-[0_8px_20px_rgba(46,22,76,0.07)]">
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-[#ece7f2] pb-4">
+          <div className="w-full self-start rounded-2xl border border-border bg-white p-3 sm:p-5 shadow-[0_8px_20px_rgba(46,22,76,0.07)]">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-border pb-4">
               <div>
                 <div className="mt-1 flex flex-col sm:flex-row sm:items-center gap-2">
-                  <h2 className="text-xl sm:text-2xl font-black text-[#2f2b39]">{periodLabel}</h2>
+                  <h2 className="text-xl sm:text-2xl font-black text-foreground">{periodLabel}</h2>
                   <div className="flex items-center gap-2">
                     <div className="flex items-center gap-1">
                       <Button
@@ -625,7 +651,7 @@ export function CalendarPage() {
                         variant="ghost"
                         size="icon-sm"
                         onClick={handleNavigatePrevious}
-                        className="rounded-full bg-linear-to-r from-[#8f1fd1] to-[#be8de4] text-white shadow-[0_8px_18px_rgba(143,31,209,0.18)] hover:opacity-95"
+                        className="rounded-full bg-linear-to-r from-brand-deep to-[#be8de4] text-white shadow-[0_8px_18px_rgba(143,31,209,0.18)] hover:opacity-95"
                         aria-label="Previous period"
                       >
                         <ChevronLeft className="size-4" />
@@ -635,7 +661,7 @@ export function CalendarPage() {
                         variant="ghost"
                         size="icon-sm"
                         onClick={handleNavigateNext}
-                        className="rounded-full bg-linear-to-r from-[#8f1fd1] to-[#be8de4] text-white shadow-[0_8px_18px_rgba(143,31,209,0.18)] hover:opacity-95"
+                        className="rounded-full bg-linear-to-r from-brand-deep to-[#be8de4] text-white shadow-[0_8px_18px_rgba(143,31,209,0.18)] hover:opacity-95"
                         aria-label="Next period"
                       >
                         <ChevronRight className="size-4" />
@@ -646,26 +672,26 @@ export function CalendarPage() {
                       type="button"
                       variant="outline"
                       onClick={handleGoToToday}
-                      className="h-8 rounded-full border-2 border-[#f347a5] bg-white px-3 text-xs font-bold text-[#8f2bd2] hover:bg-[#fff8fb]"
+                      className="h-8 rounded-full border-2 border-brand bg-white px-3 text-xs font-bold text-[#8f2bd2] hover:bg-[#fff8fb]"
                     >
                       Today
                     </Button>
                   </div>
                 </div>
-                <p className="text-xs font-semibold text-[#8f879f]">
+                <p className="text-xs font-semibold text-muted-foreground">
                   {markedDateCount} marked dates
                 </p>
               </div>
 
               <div className="flex flex-wrap items-center sm:justify-end gap-2">
-                <div className="inline-flex items-center rounded-xl border border-[#ddd8e8] bg-[#faf9fd] p-1">
+                <div className="inline-flex items-center rounded-xl border border-border bg-[#faf9fd] p-1">
                   <button
                     type="button"
                     onClick={() => setViewMode('monthly')}
                     className={[
                       'rounded-lg px-3 py-1.5 text-xs font-bold transition-colors',
                       viewMode === 'monthly'
-                        ? 'bg-linear-to-r from-[#f347a5] to-[#8f1fd1] text-white shadow-[0_8px_14px_rgba(169,42,188,0.3)]'
+                        ? 'bg-linear-to-r from-brand to-brand-deep text-white shadow-[0_8px_14px_rgba(169,42,188,0.3)]'
                         : 'text-[#655d75] hover:text-[#3c3650]',
                     ].join(' ')}
                   >
@@ -677,7 +703,7 @@ export function CalendarPage() {
                     className={[
                       'rounded-lg px-3 py-1.5 text-xs font-bold transition-colors',
                       viewMode === 'weekly'
-                        ? 'bg-linear-to-r from-[#f347a5] to-[#8f1fd1] text-white shadow-[0_8px_14px_rgba(169,42,188,0.3)]'
+                        ? 'bg-linear-to-r from-brand to-brand-deep text-white shadow-[0_8px_14px_rgba(169,42,188,0.3)]'
                         : 'text-[#655d75] hover:text-[#3c3650]',
                     ].join(' ')}
                   >
@@ -690,7 +716,7 @@ export function CalendarPage() {
                     type="button"
                     variant="outline"
                     onClick={() => setIsFilterMenuOpen((open) => !open)}
-                    className="h-8 rounded-full border-[#ddd8e8] px-3 text-xs font-bold text-[#655d75] hover:bg-[#f4effa]"
+                    className="h-8 rounded-full border-border px-3 text-xs font-bold text-[#655d75] hover:bg-[#f4effa]"
                   >
                     <Filter className="size-3.5" />
                     Filter
@@ -738,7 +764,7 @@ export function CalendarPage() {
                           {calendarLabels.map((label) => (
                             <label
                               key={label}
-                              className="flex cursor-pointer items-center justify-between rounded-lg border border-[#ece7f2] px-2 py-1.5 text-xs font-semibold text-[#5c556f] hover:bg-[#f9f6fd]"
+                              className="flex cursor-pointer items-center justify-between rounded-lg border border-border px-2 py-1.5 text-xs font-semibold text-[#5c556f] hover:bg-[#f9f6fd]"
                             >
                               <span className="flex items-center gap-2">
                                 <span className={`size-2 rounded-full ${labelStyles[label].dot}`} />
@@ -790,7 +816,7 @@ export function CalendarPage() {
                       {weekdayLabels.map((weekday) => (
                         <div
                           key={weekday}
-                          className="rounded-lg border border-[#ece7f2] bg-[#f9f7fc] py-2 text-center text-[10px] sm:text-xs font-bold uppercase tracking-wide text-[#8f879f]"
+                          className="rounded-lg border border-border bg-[#f9f7fc] py-2 text-center text-[10px] sm:text-xs font-bold uppercase tracking-wide text-muted-foreground"
                         >
                           <span>{weekday}</span>
                         </div>
@@ -817,7 +843,7 @@ export function CalendarPage() {
                               'h-20 sm:h-28',
                               isSelected
                                 ? 'border-[#be8de4] bg-[#fbf5ff] shadow-[0_8px_18px_rgba(165,62,191,0.18)]'
-                                : 'border-[#ece7f2] bg-white hover:border-[#d7cbe7] hover:bg-[#fcf9ff]',
+                                : 'border-border bg-white hover:border-[#d7cbe7] hover:bg-brand/5',
                               !isCurrentMonth ? 'opacity-55' : '',
                             ].join(' ')}
                           >
@@ -826,7 +852,7 @@ export function CalendarPage() {
                                 className={[
                                   'inline-flex h-5 min-w-5 sm:h-6 sm:min-w-6 items-center justify-center rounded-full px-1 sm:px-1.5 text-[10px] sm:text-xs font-black',
                                   isToday
-                                    ? 'bg-linear-to-r from-[#f347a5] to-[#8f1fd1] text-white'
+                                    ? 'bg-linear-to-r from-brand to-brand-deep text-white'
                                     : 'text-[#4a445a]',
                                 ].join(' ')}
                               >
@@ -834,7 +860,7 @@ export function CalendarPage() {
                               </span>
 
                               {dayEntries.length > 0 ? (
-                                <span className="text-[9px] sm:text-[10px] font-bold text-[#8f879f]">
+                                <span className="text-[9px] sm:text-[10px] font-bold text-muted-foreground">
                                   {dayEntries.length}
                                 </span>
                               ) : null}
@@ -864,7 +890,7 @@ export function CalendarPage() {
                                   </span>
                                 ))}
                                 {dayEntries.length > 3 ? (
-                                  <span className="block text-[10px] font-semibold text-[#8f879f]">
+                                  <span className="block text-[10px] font-semibold text-muted-foreground">
                                     +{dayEntries.length - 3} more
                                   </span>
                                 ) : null}
@@ -876,27 +902,27 @@ export function CalendarPage() {
                     </div>
                   </>
                 ) : (
-                  <div className="flex flex-col rounded-xl border border-[#ece7f2] bg-white overflow-hidden mt-2">
+                  <div className="flex flex-col rounded-xl border border-border bg-white overflow-hidden mt-2">
                     {/* Weekly Time Grid Header */}
-                    <div className="grid grid-cols-[50px_repeat(7,1fr)] sm:grid-cols-[60px_repeat(7,1fr)] border-b border-[#ece7f2] bg-[#f9f7fc]">
-                      <div className="border-r border-[#ece7f2]"></div>
+                    <div className="grid grid-cols-[50px_repeat(7,1fr)] sm:grid-cols-[60px_repeat(7,1fr)] border-b border-border bg-[#f9f7fc]">
+                      <div className="border-r border-border"></div>
                       {visibleDaysToRender.map((date) => {
                         const isToday = toDateKey(date) === todayKey;
                         return (
                           <div
                             key={toDateKey(date)}
-                            className="py-2 text-center border-r border-[#ece7f2] last:border-r-0"
+                            className="py-2 text-center border-r border-border last:border-r-0"
                           >
                             <p
                               className={`text-[10px] font-bold uppercase ${
-                                isToday ? 'text-[#f347a5]' : 'text-[#8f879f]'
+                                isToday ? 'text-brand' : 'text-muted-foreground'
                               }`}
                             >
                               {weekdayLabels[date.getDay()]}
                             </p>
                             <p
                               className={`text-lg sm:text-xl font-black ${
-                                isToday ? 'text-[#f347a5]' : 'text-[#302c39]'
+                                isToday ? 'text-brand' : 'text-foreground'
                               }`}
                             >
                               {date.getDate()}
@@ -910,11 +936,11 @@ export function CalendarPage() {
                     <div className="overflow-y-auto max-h-[60vh] [scrollbar-width:thin] scrollbar-thumb-[#ddd8e8] scrollbar-track-transparent">
                       <div className="relative grid grid-cols-[50px_repeat(7,1fr)] sm:grid-cols-[60px_repeat(7,1fr)]">
                         {/* Time Axis */}
-                        <div className="flex flex-col border-r border-[#ece7f2] bg-white">
+                        <div className="flex flex-col border-r border-border bg-white">
                           {Array.from({ length: 24 }).map((_, i) => (
                             <div
                               key={i}
-                              className="h-14 border-b border-[#ece7f2] text-right pr-2 pt-1 text-[9px] sm:text-[10px] text-[#a49cb3] font-semibold"
+                              className="h-14 border-b border-border text-right pr-2 pt-1 text-[9px] sm:text-[10px] text-muted-foreground/70 font-semibold"
                             >
                               {i === 0
                                 ? '12 AM'
@@ -1020,13 +1046,13 @@ export function CalendarPage() {
                           return (
                             <div
                               key={dateKey}
-                              className="relative border-r border-[#ece7f2] last:border-r-0 min-h-[1344px]"
+                              className="relative border-r border-border last:border-r-0 min-h-[1344px]"
                             >
                               {/* Horizontal Grid Lines */}
                               {Array.from({ length: 24 }).map((_, i) => (
                                 <div
                                   key={i}
-                                  className="absolute w-full h-14 border-b border-[#ece7f2] opacity-40 pointer-events-none"
+                                  className="absolute w-full h-14 border-b border-border opacity-40 pointer-events-none"
                                   style={{ top: `${i * 56}px` }}
                                 />
                               ))}
@@ -1091,7 +1117,7 @@ export function CalendarPage() {
 
           <aside className="w-full lg:w-[320px] self-start">
             {shouldShowAddForm ? (
-              <section className="rounded-2xl border border-[#ddd8e8] bg-white p-3 sm:p-5 shadow-[0_8px_20px_rgba(46,22,76,0.07)] animate-in fade-in slide-in-from-right-4 duration-300">
+              <section className="rounded-2xl border border-border bg-white p-3 sm:p-5 shadow-[0_8px_20px_rgba(46,22,76,0.07)] animate-in fade-in slide-in-from-right-4 duration-300">
                 <div className="flex items-center justify-between">
                   <h3 className={sidebarSectionTitleClass}>
                     {editingId ? 'Edit Marker' : 'Add Marker'}
@@ -1103,7 +1129,7 @@ export function CalendarPage() {
                         setEditingId(null);
                         setIsForcingAdd(false);
                       }}
-                      className="text-[10px] font-bold text-[#c33274] hover:underline"
+                      className="text-[10px] font-bold text-brand hover:underline"
                     >
                       Cancel Edit
                     </button>
@@ -1117,7 +1143,7 @@ export function CalendarPage() {
 
                 <form className="mt-4 space-y-3" onSubmit={handleAddMarker}>
                   <div className="space-y-2.5">
-                    <Label className="text-[11px] font-bold text-[#6a627c]">For *</Label>
+                    <Label className="text-[11px] font-bold text-muted-foreground">For *</Label>
                     <div className="flex flex-wrap items-center gap-2.5">
                       {selectableLabels.map((label) => {
                         const isSelected = draftEntry.label === label;
@@ -1152,7 +1178,7 @@ export function CalendarPage() {
                           setIsAddingCustomLabel((previous) => !previous);
                           setCustomLabelError('');
                         }}
-                        className="inline-flex h-[36px] w-12 items-center justify-center rounded-[14px] border-2 border-dashed border-[#d2cddb] text-[#8f879f] transition-all hover:bg-[#f6f5f8] hover:text-[#6a627c] hover:-translate-y-0.5"
+                        className="inline-flex h-[36px] w-12 items-center justify-center rounded-[14px] border-2 border-dashed border-[#d2cddb] text-muted-foreground transition-all hover:bg-[#f6f5f8] hover:text-muted-foreground hover:-translate-y-0.5"
                         aria-label="Add custom label"
                       >
                         <Plus className="size-4" />
@@ -1176,7 +1202,7 @@ export function CalendarPage() {
                             }
                           }}
                           placeholder="Add label"
-                          className="h-9 rounded-lg border-[#ddd8e8] bg-white px-3 text-sm text-[#4c455e]"
+                          className="h-9 rounded-lg border-border bg-white px-3 text-sm text-foreground/80"
                         />
                         <Button
                           type="button"
@@ -1190,7 +1216,7 @@ export function CalendarPage() {
                     ) : null}
 
                     {customLabelError ? (
-                      <p className="text-xs font-semibold text-[#c33274]" role="alert">
+                      <p className="text-xs font-semibold text-brand" role="alert">
                         {customLabelError}
                       </p>
                     ) : null}
@@ -1199,7 +1225,7 @@ export function CalendarPage() {
                   <div className="space-y-1.5">
                     <Label
                       htmlFor="calendar-title"
-                      className="text-[11px] font-bold text-[#6a627c]"
+                      className="text-[11px] font-bold text-muted-foreground"
                     >
                       Title
                     </Label>
@@ -1213,21 +1239,21 @@ export function CalendarPage() {
                         }));
                       }}
                       placeholder="Enter title"
-                      className="h-9 rounded-lg border-[#ddd8e8] bg-white px-3 text-sm text-[#4c455e]"
+                      className="h-9 rounded-lg border-border bg-white px-3 text-sm text-foreground/80"
                     />
                   </div>
 
                   <div className="space-y-2">
-                    <Label className="text-[11px] font-bold text-[#6a627c]">Date and Time *</Label>
+                    <Label className="text-[11px] font-bold text-muted-foreground">Date and Time *</Label>
 
                     <div className="space-y-1.5">
                       <Label
                         htmlFor="calendar-start-date"
-                        className="text-[11px] font-bold text-[#6a627c]"
+                        className="text-[11px] font-bold text-muted-foreground"
                       >
                         Start Date *
                       </Label>
-                      <div className="flex overflow-hidden rounded-lg border border-[#ddd8e8] bg-white">
+                      <div className="flex overflow-hidden rounded-lg border border-border bg-white">
                         <Input
                           id="calendar-start-date"
                           type="date"
@@ -1248,7 +1274,7 @@ export function CalendarPage() {
                               );
                             }
                           }}
-                          className="h-9 rounded-none border-0 bg-transparent px-2 text-xs text-[#4c455e] focus-visible:ring-0"
+                          className="h-9 rounded-none border-0 bg-transparent px-2 text-xs text-foreground/80 focus-visible:ring-0"
                         />
                         <div className="h-auto w-px bg-[#ddd8e8]" />
                         <Input
@@ -1261,7 +1287,7 @@ export function CalendarPage() {
                             }));
                           }}
                           aria-label="Start time"
-                          className="h-9 rounded-none border-0 bg-transparent px-2 text-xs text-[#4c455e] focus-visible:ring-0"
+                          className="h-9 rounded-none border-0 bg-transparent px-2 text-xs text-foreground/80 focus-visible:ring-0"
                         />
                       </div>
                     </div>
@@ -1269,11 +1295,11 @@ export function CalendarPage() {
                     <div className="space-y-1.5">
                       <Label
                         htmlFor="calendar-end-date"
-                        className="text-[11px] font-bold text-[#6a627c]"
+                        className="text-[11px] font-bold text-muted-foreground"
                       >
                         End Date *
                       </Label>
-                      <div className="flex overflow-hidden rounded-lg border border-[#ddd8e8] bg-white">
+                      <div className="flex overflow-hidden rounded-lg border border-border bg-white">
                         <Input
                           id="calendar-end-date"
                           type="date"
@@ -1284,7 +1310,7 @@ export function CalendarPage() {
                               endDateKey: event.target.value,
                             }));
                           }}
-                          className="h-9 rounded-none border-0 bg-transparent px-2 text-xs text-[#4c455e] focus-visible:ring-0"
+                          className="h-9 rounded-none border-0 bg-transparent px-2 text-xs text-foreground/80 focus-visible:ring-0"
                         />
                         <div className="h-auto w-px bg-[#ddd8e8]" />
                         <Input
@@ -1297,14 +1323,14 @@ export function CalendarPage() {
                             }));
                           }}
                           aria-label="End time"
-                          className="h-9 rounded-none border-0 bg-transparent px-2 text-xs text-[#4c455e] focus-visible:ring-0"
+                          className="h-9 rounded-none border-0 bg-transparent px-2 text-xs text-foreground/80 focus-visible:ring-0"
                         />
                       </div>
                     </div>
                   </div>
 
                   <div className="space-y-1.5">
-                    <Label htmlFor="calendar-type" className="text-[11px] font-bold text-[#6a627c]">
+                    <Label htmlFor="calendar-type" className="text-[11px] font-bold text-muted-foreground">
                       Link to Event (Optional)
                     </Label>
                     <select
@@ -1316,10 +1342,10 @@ export function CalendarPage() {
                         setDraftEntry((previous) => ({
                           ...previous,
                           eventId: selectedId,
-                          eventType: selectedEvt ? selectedEvt.title : 'General',
+                          eventType: selectedEvt?.title || 'General',
                         }));
                       }}
-                      className="h-9 w-full rounded-lg border border-[#ddd8e8] bg-white px-2 text-xs font-semibold text-[#4c455e] outline-none focus:border-[#be8de4]"
+                      className="h-9 w-full rounded-lg border border-border bg-white px-2 text-xs font-semibold text-foreground/80 outline-none focus:border-[#be8de4]"
                     >
                       <option value="">-- No Linked Event --</option>
                       {availableEvents.map((evt) => (
@@ -1333,7 +1359,7 @@ export function CalendarPage() {
                   <div className="space-y-1.5">
                     <Label
                       htmlFor="calendar-location"
-                      className="text-[11px] font-bold text-[#6a627c]"
+                      className="text-[11px] font-bold text-muted-foreground"
                     >
                       Location
                     </Label>
@@ -1347,14 +1373,14 @@ export function CalendarPage() {
                         }));
                       }}
                       placeholder="Optional location"
-                      className="h-9 rounded-lg border-[#ddd8e8] bg-white px-3 text-sm text-[#4c455e]"
+                      className="h-9 rounded-lg border-border bg-white px-3 text-sm text-foreground/80"
                     />
                   </div>
 
                   <div className="space-y-1.5">
                     <Label
                       htmlFor="calendar-description"
-                      className="text-[11px] font-bold text-[#6a627c]"
+                      className="text-[11px] font-bold text-muted-foreground"
                     >
                       Description
                     </Label>
@@ -1368,19 +1394,19 @@ export function CalendarPage() {
                         }));
                       }}
                       placeholder="Optional notes"
-                      className="h-20 w-full resize-none rounded-lg border border-[#ddd8e8] bg-white px-3 py-2 text-sm text-[#4c455e] outline-none placeholder:text-[#a49cb3] focus:border-[#be8de4]"
+                      className="h-20 w-full resize-none rounded-lg border border-border bg-white px-3 py-2 text-sm text-foreground/80 outline-none placeholder:text-muted-foreground/70 focus:border-[#be8de4]"
                     />
                   </div>
 
                   {formError ? (
-                    <p className="text-xs font-semibold text-[#c33274]" role="alert">
+                    <p className="text-xs font-semibold text-brand" role="alert">
                       {formError}
                     </p>
                   ) : null}
 
                   <Button
                     type="submit"
-                    className="h-9 w-full rounded-full bg-linear-to-r from-[#f347a5] to-[#8f1fd1] text-sm font-black text-white hover:brightness-105"
+                    className="h-9 w-full rounded-full bg-linear-to-r from-brand to-brand-deep text-sm font-black text-white hover:brightness-105"
                   >
                     <Plus className="size-3.5" />
                     {editingId ? 'Save Changes' : 'Add Marker'}
@@ -1390,14 +1416,14 @@ export function CalendarPage() {
             ) : null}
 
             {shouldShowMarkersSection ? (
-              <section className="rounded-2xl border border-[#ddd8e8] bg-white p-3 sm:p-5 shadow-[0_8px_20px_rgba(46,22,76,0.07)] animate-in fade-in slide-in-from-right-4 duration-300">
+              <section className="rounded-2xl border border-border bg-white p-3 sm:p-5 shadow-[0_8px_20px_rgba(46,22,76,0.07)] animate-in fade-in slide-in-from-right-4 duration-300">
                 <div className="flex items-start justify-between gap-2">
                   <div>
                     <h3 className={sidebarSectionTitleClass}>Markers for this Date</h3>
                     <p className="mt-1 text-xs font-semibold text-[#7e768f]">
                       {longDateFormatter.format(selectedDate)}
                     </p>
-                    <p className="mt-1 text-xs font-semibold text-[#8f879f]">
+                    <p className="mt-1 text-xs font-semibold text-muted-foreground">
                       {selectedDateEntries.length} markers for this date
                     </p>
                   </div>
@@ -1415,7 +1441,7 @@ export function CalendarPage() {
                   {selectedDateEntries.map((entry) => (
                     <article
                       key={entry.id}
-                      className="relative flex flex-col rounded-xl bg-white shadow-[0_2px_12px_rgba(0,0,0,0.06)] overflow-hidden border border-[#f0edf4]"
+                      className="relative flex flex-col rounded-xl bg-white shadow-[0_2px_12px_rgba(0,0,0,0.06)] overflow-hidden border border-border"
                     >
                       {/* Left Color Bar */}
                       <div
@@ -1426,7 +1452,7 @@ export function CalendarPage() {
                       <div className="p-4 pl-6">
                         <div className="flex items-start justify-between gap-2">
                           <h4
-                            className={`font-bold text-[15px] leading-tight ${entry.isDone ? 'text-[#a49cb3] line-through' : 'text-[#2d2834]'}`}
+                            className={`font-bold text-[15px] leading-tight ${entry.isDone ? 'text-muted-foreground/70 line-through' : 'text-foreground'}`}
                           >
                             {entry.title}
                           </h4>
@@ -1435,14 +1461,14 @@ export function CalendarPage() {
                               onClick={() =>
                                 setOpenMenuId(openMenuId === entry.id ? null : entry.id)
                               }
-                              className="text-[#a49cb3] hover:text-[#4f4a56] transition-colors"
+                              className="text-muted-foreground/70 hover:text-foreground/80 transition-colors"
                             >
                               <MoreVertical className="size-4.5" />
                             </button>
                             {openMenuId === entry.id ? (
-                              <div className="absolute right-0 top-full mt-1 w-40 rounded-xl bg-white border border-[#e2deea] shadow-[0_8px_16px_rgba(0,0,0,0.1)] py-1 z-10 animate-in fade-in zoom-in-95 duration-200">
+                              <div className="absolute right-0 top-full mt-1 w-40 rounded-xl bg-white border border-border shadow-[0_8px_16px_rgba(0,0,0,0.1)] py-1 z-10 animate-in fade-in zoom-in-95 duration-200">
                                 <button
-                                  className="w-full px-4 py-2 text-left text-xs font-bold text-[#4f4a56] hover:bg-[#f6f5f8] transition-colors"
+                                  className="w-full px-4 py-2 text-left text-xs font-bold text-foreground/80 hover:bg-[#f6f5f8] transition-colors"
                                   onClick={async () => {
                                     setOpenMenuId(null);
                                     const newStatus = !entry.isDone;
@@ -1461,7 +1487,7 @@ export function CalendarPage() {
                                   {entry.isDone ? 'Undo Mark as done' : 'Mark as done'}
                                 </button>
                                 <button
-                                  className="w-full px-4 py-2 text-left text-xs font-bold text-[#4f4a56] hover:bg-[#f6f5f8] transition-colors"
+                                  className="w-full px-4 py-2 text-left text-xs font-bold text-foreground/80 hover:bg-[#f6f5f8] transition-colors"
                                   onClick={() => {
                                     setOpenMenuId(null);
                                     setEditingId(entry.id);
@@ -1483,7 +1509,7 @@ export function CalendarPage() {
                                   Edit
                                 </button>
                                 <button
-                                  className="w-full px-4 py-2 text-left text-xs font-bold text-[#c33274] hover:bg-[#fff0f5] transition-colors"
+                                  className="w-full px-4 py-2 text-left text-xs font-bold text-brand hover:bg-[#fff0f5] transition-colors"
                                   onClick={() => {
                                     setOpenMenuId(null);
                                     setEntryToDelete(entry.id);
@@ -1496,7 +1522,7 @@ export function CalendarPage() {
                           </div>
                         </div>
 
-                        <div className="mt-3 space-y-2 text-[11px] font-semibold text-[#8f879f]">
+                        <div className="mt-3 space-y-2 text-[11px] font-semibold text-muted-foreground">
                           <div className="flex items-center gap-2.5">
                             <Calendar className="size-3.5 shrink-0 text-[#c5bdd1]" />
                             <span>
@@ -1527,8 +1553,8 @@ export function CalendarPage() {
 
                         {entry.description ? (
                           <div className="mt-3 text-[11px]">
-                            <span className="font-semibold text-[#6a627c]">Description:</span>
-                            <p className="mt-0.5 text-[#8f879f] font-medium italic line-clamp-4 leading-snug">
+                            <span className="font-semibold text-muted-foreground">Description:</span>
+                            <p className="mt-0.5 text-muted-foreground font-medium italic line-clamp-4 leading-snug">
                               {entry.description}
                             </p>
                           </div>
@@ -1555,7 +1581,7 @@ export function CalendarPage() {
         <DialogContent className="sm:max-w-[400px] rounded-3xl p-8 text-center border-0 shadow-[0_20px_60px_rgba(195,50,116,0.15)]">
           <div className="mx-auto flex size-16 items-center justify-center rounded-full bg-[#fff0f5] mb-4 shadow-inner">
             <svg
-              className="size-8 text-[#c33274]"
+              className="size-8 text-brand"
               fill="none"
               viewBox="0 0 24 24"
               stroke="currentColor"
@@ -1568,16 +1594,16 @@ export function CalendarPage() {
               />
             </svg>
           </div>
-          <DialogTitle className="text-2xl font-black text-[#2d2834] mb-2">
+          <DialogTitle className="text-2xl font-black text-foreground mb-2">
             Delete Marker
           </DialogTitle>
-          <p className="text-sm font-semibold text-[#696373] mb-8 leading-relaxed">
+          <p className="text-sm font-semibold text-muted-foreground mb-8 leading-relaxed">
             Are you sure you want to delete this marker? This action cannot be undone.
           </p>
           <div className="flex flex-col gap-3 sm:flex-row sm:justify-center">
             <Button
               variant="outline"
-              className="w-full rounded-full border-[#e2deea] font-bold text-[#4f4a56] hover:bg-[#f6f5f8] hover:text-[#2d2834] sm:w-auto px-8 h-10 transition-colors"
+              className="w-full rounded-full border-border font-bold text-foreground/80 hover:bg-[#f6f5f8] hover:text-foreground sm:w-auto px-8 h-10 transition-colors"
               onClick={() => setEntryToDelete(null)}
             >
               Cancel

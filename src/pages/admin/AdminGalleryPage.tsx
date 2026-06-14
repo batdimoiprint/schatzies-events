@@ -51,8 +51,8 @@ export function AdminGalleryPage() {
     <div className="space-y-6">
       {/* Page Header */}
       <div>
-        <h1 className="text-2xl font-bold text-[#1d1320]">Gallery</h1>
-        <p className="text-sm text-[#7f7889]">Photo albums for each event package</p>
+        <h1 className="text-2xl font-bold text-foreground">Gallery</h1>
+        <p className="text-sm text-muted-foreground">Photo albums for each event package</p>
       </div>
 
       {/* Tabs + Add Album */}
@@ -65,8 +65,8 @@ export function AdminGalleryPage() {
               onClick={() => setActiveType(type)}
               className={`pb-1 text-base font-bold transition-colors ${
                 activeType === type
-                  ? 'border-b-2 border-[#df2b80] text-[#df2b80]'
-                  : 'text-[#7f7889] hover:text-[#3d3546]'
+                  ? 'border-b-2 border-brand text-brand'
+                  : 'text-muted-foreground hover:text-[#3d3546]'
               }`}
             >
               {type}
@@ -75,7 +75,7 @@ export function AdminGalleryPage() {
         </div>
         <Button
           onClick={() => setAlbumDialog({ pkg: null })}
-          className="gap-1.5 rounded-full bg-[#df2b80] px-5 text-xs font-bold text-white shadow-md hover:bg-[#c81e6f]"
+          className="gap-1.5 rounded-full bg-brand px-5 text-xs font-bold text-white shadow-md hover:bg-brand"
         >
           <PlusCircle className="size-4" />
           Add Album
@@ -85,16 +85,16 @@ export function AdminGalleryPage() {
       {/* Albums grouped by year */}
       <div className="rounded-3xl bg-white p-5 shadow-[0_8px_30px_rgba(61,32,82,0.08)] sm:p-8 lg:p-10">
         {isLoading ? (
-          <p className="py-12 text-center text-sm text-[#7f7889]">Loading gallery...</p>
+          <p className="py-12 text-center text-sm text-muted-foreground">Loading gallery...</p>
         ) : yearGroups.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-16 text-center">
-            <div className="mb-4 flex size-16 items-center justify-center rounded-full bg-[#fdf2f8]">
-              <ImageIcon className="size-8 text-[#df2b80]" />
+            <div className="mb-4 flex size-16 items-center justify-center rounded-full bg-brand/5">
+              <ImageIcon className="size-8 text-brand" />
             </div>
-            <h2 className="text-lg font-semibold text-[#1d1320]">
+            <h2 className="text-lg font-semibold text-foreground">
               No {activeType.toLowerCase()} albums yet
             </h2>
-            <p className="mt-2 max-w-md text-sm text-[#7f7889]">
+            <p className="mt-2 max-w-md text-sm text-muted-foreground">
               Click "Add Album" to create a package album with photos.
             </p>
           </div>
@@ -102,12 +102,12 @@ export function AdminGalleryPage() {
           <div className="space-y-10">
             {yearGroups.map(([year, albums]) => (
               <section key={year}>
-                <h2 className="font-heading mb-5 text-2xl font-bold text-[#1d1320]">{year}</h2>
+                <h2 className="font-heading mb-5 text-2xl font-bold text-foreground">{year}</h2>
                 <div className="grid grid-cols-2 gap-4 md:grid-cols-3 xl:grid-cols-4">
                   {albums.map((album) => (
                     <div
                       key={album.id}
-                      className="flex flex-col rounded-2xl border border-[#ece7f2] bg-white p-3 shadow-[0_4px_14px_rgba(61,32,82,0.08)]"
+                      className="flex flex-col rounded-2xl border border-border bg-white p-3 shadow-[0_4px_14px_rgba(61,32,82,0.08)]"
                     >
                       <button
                         type="button"
@@ -131,7 +131,7 @@ export function AdminGalleryPage() {
                       <p className="mt-2.5 truncate text-center text-sm font-semibold text-[#3d3546]">
                         {album.packageName}
                       </p>
-                      <p className="text-center text-xs text-[#7f7889]">
+                      <p className="text-center text-xs text-muted-foreground">
                         {formatPackageDate(album.createdAt)}
                       </p>
                       <div className="mt-1.5 flex justify-end gap-1.5">
@@ -139,7 +139,7 @@ export function AdminGalleryPage() {
                           type="button"
                           aria-label={`Edit ${album.packageName} album`}
                           onClick={() => setAlbumDialog({ pkg: album })}
-                          className="flex size-7 items-center justify-center rounded-full bg-[#df2b80] text-white shadow transition-colors hover:bg-[#c81e6f]"
+                          className="flex size-7 items-center justify-center rounded-full bg-brand text-white shadow transition-colors hover:bg-brand"
                         >
                           <Pencil className="size-3.5" />
                         </button>
@@ -156,7 +156,7 @@ export function AdminGalleryPage() {
                             }
                           }}
                           disabled={deleteMutation.isPending}
-                          className="flex size-7 items-center justify-center rounded-full bg-[#df2b80] text-white shadow transition-colors hover:bg-[#c81e6f]"
+                          className="flex size-7 items-center justify-center rounded-full bg-brand text-white shadow transition-colors hover:bg-brand"
                         >
                           <Trash2 className="size-3.5" />
                         </button>
@@ -184,15 +184,15 @@ export function AdminGalleryPage() {
         <DialogContent className="max-h-[90vh] overflow-y-auto rounded-3xl p-6 sm:max-w-3xl sm:p-8">
           {viewingAlbum && (
             <>
-              <DialogTitle className="font-heading text-2xl font-bold text-[#1d1320]">
+              <DialogTitle className="font-heading text-2xl font-bold text-foreground">
                 {viewingAlbum.packageName}
               </DialogTitle>
-              <DialogDescription className="text-sm text-[#7f7889]">
+              <DialogDescription className="text-sm text-muted-foreground">
                 {viewingAlbum.eventType} · {formatPackageDate(viewingAlbum.createdAt)} ·{' '}
                 {viewingAlbum.images.length} photo(s)
               </DialogDescription>
               {viewingAlbum.images.length === 0 ? (
-                <p className="py-8 text-center text-sm text-[#7f7889]">
+                <p className="py-8 text-center text-sm text-muted-foreground">
                   No photos in this album yet.
                 </p>
               ) : (
@@ -203,7 +203,7 @@ export function AdminGalleryPage() {
                       href={image.url}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="block overflow-hidden rounded-xl border border-[#ece7f2]"
+                      className="block overflow-hidden rounded-xl border border-border"
                     >
                       <img
                         src={image.url}
@@ -272,7 +272,7 @@ function AlbumDialog({ eventType, pkg, onClose }: AlbumDialogProps) {
         >
           <div className="flex items-start justify-between gap-3 pr-8">
             <div>
-              <DialogTitle className="font-heading text-2xl font-bold text-[#1d1320]">
+              <DialogTitle className="font-heading text-2xl font-bold text-foreground">
                 {pkg ? 'Edit Album' : 'Add Album'}
               </DialogTitle>
               <DialogDescription className="sr-only">
@@ -284,7 +284,7 @@ function AlbumDialog({ eventType, pkg, onClose }: AlbumDialogProps) {
             <Button
               type="submit"
               disabled={!albumName.trim() || saveMutation.isPending}
-              className="rounded-full bg-[#df2b80] px-5 text-xs font-bold text-white shadow-md hover:bg-[#c81e6f]"
+              className="rounded-full bg-brand px-5 text-xs font-bold text-white shadow-md hover:bg-brand"
             >
               {saveMutation.isPending ? 'Saving...' : 'Save & Close'}
             </Button>
@@ -301,7 +301,7 @@ function AlbumDialog({ eventType, pkg, onClose }: AlbumDialogProps) {
             <Button
               type="button"
               onClick={() => fileInputRef.current?.click()}
-              className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 rounded-lg border border-[#df2b80]/30 bg-white px-4 text-xs font-bold text-[#df2b80] shadow-md hover:bg-[#fdf2f8]"
+              className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 rounded-lg border border-brand/30 bg-white px-4 text-xs font-bold text-brand shadow-md hover:bg-brand/5"
             >
               Upload Photo
             </Button>
@@ -315,14 +315,14 @@ function AlbumDialog({ eventType, pkg, onClose }: AlbumDialogProps) {
             onChange={(e) => setPhotos(Array.from(e.target.files ?? []))}
           />
           {photos.length > 0 && (
-            <p className="text-xs text-[#7f7889]">
+            <p className="text-xs text-muted-foreground">
               {photos.length} photo(s) selected
               {pkg && pkg.images.length > 0 && ' — will replace existing photos on save'}
             </p>
           )}
 
           <div className="space-y-1.5">
-            <Label htmlFor="album-name" className="text-sm text-[#7f7889]">
+            <Label htmlFor="album-name" className="text-sm text-muted-foreground">
               Album Name
             </Label>
             <Input
@@ -331,7 +331,7 @@ function AlbumDialog({ eventType, pkg, onClose }: AlbumDialogProps) {
               onChange={(e) => setAlbumName(e.target.value)}
               placeholder="Josephine & Juanito"
               required
-              className="rounded-lg border-0 bg-[#efedf0] focus-visible:ring-[#df2b80]"
+              className="rounded-lg border-0 bg-[#efedf0] focus-visible:ring-brand"
             />
           </div>
 

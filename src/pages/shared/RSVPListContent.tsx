@@ -21,8 +21,8 @@ export function RSVPListContent({ eventId, eventTitle }: RSVPListContentProps) {
     try {
       const data = await getRSVPList(id);
       // Map snake_case from backend to camelCase for frontend
-      const mappedData = data.map((item: any) => ({
-        id: item.id || item.guest_id || item._id,
+      const mappedData = data.map((item) => ({
+        id: String(item.id || item.guest_id || item._id || ''),
         firstName: item.first_name || item.firstName || '',
         middleName: item.middle_name || item.middleName || '',
         lastName: item.last_name || item.lastName || '',
@@ -40,7 +40,7 @@ export function RSVPListContent({ eventId, eventTitle }: RSVPListContentProps) {
       // Filter to only show verified guests
       const verifiedGuests = mappedData.filter((guest) => guest.isVerified);
       setRsvps(verifiedGuests);
-    } catch (err: any) {
+    } catch (err) {
       console.error('Error fetching RSVPs:', err);
       setFetchError('Failed to load guest list from server.');
     } finally {
@@ -79,10 +79,10 @@ export function RSVPListContent({ eventId, eventTitle }: RSVPListContentProps) {
     <div className="animate-[fadeIn_0.3s_ease-out] rounded-xl bg-white shadow-md border border-gray-100 overflow-hidden">
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between border-b border-gray-100 px-5 py-4 sm:px-6 gap-4">
         <div>
-          <h3 className="text-base font-bold text-[#2d2834]">
+          <h3 className="text-base font-bold text-foreground">
             {eventTitle ? `Guests for ${eventTitle}` : 'Guest List Responses'}
           </h3>
-          <p className="mt-0.5 text-xs text-[#696373]">
+          <p className="mt-0.5 text-xs text-muted-foreground">
             {isFetching
               ? 'Refreshing attendance data...'
               : `${rsvps.length} total responses received`}
@@ -90,21 +90,21 @@ export function RSVPListContent({ eventId, eventTitle }: RSVPListContentProps) {
         </div>
         <div className="flex flex-wrap items-center gap-3 w-full sm:w-auto">
           <div className="relative flex-1 sm:min-w-[240px]">
-            <MagnifyingGlass className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-[#b2acbf]" />
+            <MagnifyingGlass className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground/70" />
             <input
               type="text"
               placeholder="Search name or contact..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full rounded-lg border border-gray-200 bg-gray-50 py-2 pl-9 pr-4 text-xs text-[#4f4a56] outline-none focus:border-[#df2b80] focus:bg-white transition-all"
+              className="w-full rounded-lg border border-gray-200 bg-gray-50 py-2 pl-9 pr-4 text-xs text-foreground/80 outline-none focus:border-brand focus:bg-white transition-all"
             />
           </div>
           <div className="relative">
-            <Funnel className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-[#b2acbf]" />
+            <Funnel className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground/70" />
             <select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
-              className="appearance-none rounded-lg border border-gray-200 bg-gray-50 py-2 pl-9 pr-8 text-xs font-medium text-[#4f4a56] outline-none focus:border-[#df2b80] focus:bg-white cursor-pointer"
+              className="appearance-none rounded-lg border border-gray-200 bg-gray-50 py-2 pl-9 pr-8 text-xs font-medium text-foreground/80 outline-none focus:border-brand focus:bg-white cursor-pointer"
             >
               <option value="All">All Status</option>
               <option value="Attending">Attending</option>
@@ -121,7 +121,7 @@ export function RSVPListContent({ eventId, eventTitle }: RSVPListContentProps) {
             <p className="text-sm text-red-500 font-medium">{fetchError}</p>
             <button
               onClick={() => fetchRSVPs(eventId)}
-              className="mt-2 text-xs text-[#df2b80] font-bold hover:underline"
+              className="mt-2 text-xs text-brand font-bold hover:underline"
             >
               Try Again
             </button>
@@ -129,7 +129,7 @@ export function RSVPListContent({ eventId, eventTitle }: RSVPListContentProps) {
         ) : (
           <table className="w-full min-w-[700px] text-sm">
             <thead>
-              <tr className="border-b border-gray-100 text-left text-xs font-bold uppercase tracking-wider text-[#a49cb3]">
+              <tr className="border-b border-gray-100 text-left text-xs font-bold uppercase tracking-wider text-muted-foreground/70">
                 <th className="px-4 py-3">#</th>
                 <th className="px-4 py-3">Guest Name</th>
                 <th className="px-4 py-3">Contact Details</th>
@@ -155,14 +155,14 @@ export function RSVPListContent({ eventId, eventTitle }: RSVPListContentProps) {
                     key={rsvp.id}
                     className="border-b border-gray-50 bg-white transition-all duration-200 hover:bg-pink-50/50"
                   >
-                    <td className="px-4 py-4 text-xs font-medium text-[#696373]">{i + 1}</td>
+                    <td className="px-4 py-4 text-xs font-medium text-muted-foreground">{i + 1}</td>
                     <td className="px-4 py-4">
                       <div className="flex items-center gap-3">
                         <div className="flex size-9 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-pink-400 to-purple-500 text-xs font-bold text-white shadow-sm">
                           {rsvp.firstName.charAt(0)}
                         </div>
                         <div>
-                          <p className="font-bold text-[#2d2834] leading-tight">
+                          <p className="font-bold text-foreground leading-tight">
                             {`${rsvp.firstName} ${rsvp.lastName}`}
                           </p>
                           {rsvp.middleName && (
@@ -171,7 +171,7 @@ export function RSVPListContent({ eventId, eventTitle }: RSVPListContentProps) {
                         </div>
                       </div>
                     </td>
-                    <td className="px-4 py-4 text-[#696373] font-medium">{rsvp.contactNumber}</td>
+                    <td className="px-4 py-4 text-muted-foreground font-medium">{rsvp.contactNumber}</td>
                     <td className="px-4 py-4">
                       <span
                         className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-[10px] font-black uppercase tracking-tight ${

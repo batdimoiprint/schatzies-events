@@ -57,7 +57,7 @@ export const noteTileThemes = [
     shellClassName: 'border-[#edd9e6] bg-[#fff7fb] text-[#6f295a]',
     headerClassName: 'from-[#ffdaea] via-[#ffeef5] to-[#fff7fb]',
     badgeClassName: 'bg-[#ffd7e7] text-[#a83f73]',
-    accentClassName: 'bg-[#f1589e]',
+    accentClassName: 'bg-brand',
     bodyClassName: 'text-[#5d5364]',
     footerClassName: 'border-[#ead8e6] bg-[#fffafd]',
   },

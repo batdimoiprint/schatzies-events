@@ -325,21 +325,21 @@ export function OrganizerMessagePage() {
     <div className="relative flex h-[calc(100vh-150px)] w-full gap-4 lg:gap-6 bg-transparent pb-4 overflow-hidden">
       {/* ─────────── LEFT SIDEBAR (INBOX LIST) ─────────── */}
       <div
-        className={`w-full lg:w-[340px] shrink-0 flex-col overflow-hidden rounded-2xl border border-[#e2deea] bg-white shadow-sm ${activeConvId ? 'hidden lg:flex' : 'flex'}`}
+        className={`w-full lg:w-[340px] shrink-0 flex-col overflow-hidden rounded-2xl border border-border bg-white shadow-sm ${activeConvId ? 'hidden lg:flex' : 'flex'}`}
       >
-        <div className="border-b border-[#f0edf4] p-4">
+        <div className="border-b border-border p-4">
           {/* Header — no manual refresh button */}
           <div className="mb-4 flex items-center justify-between">
-            <h2 className="text-lg font-bold text-[#2d2834]">Message Inbox</h2>
+            <h2 className="text-lg font-bold text-foreground">Message Inbox</h2>
           </div>
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-[#b2acbf]" />
+            <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground/70" />
             <input
               type="text"
               placeholder="Search here..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full rounded-xl border border-[#ddd8e8] bg-[#f6f5f8] py-2.5 pl-10 pr-4 text-sm text-[#4f4a56] outline-none focus:border-[#df2b80]"
+              className="w-full rounded-xl border border-border bg-[#f6f5f8] py-2.5 pl-10 pr-4 text-sm text-foreground/80 outline-none focus:border-brand"
             />
           </div>
         </div>
@@ -347,8 +347,8 @@ export function OrganizerMessagePage() {
         <div className="scrollbar-thin flex-1 overflow-y-auto">
           {isLoadingList ? (
             <div className="flex items-center justify-center gap-2 p-8">
-              <Loader2 className="size-4 animate-spin text-[#df2b80]" />
-              <span className="text-sm text-[#a49cb3]">Loading...</span>
+              <Loader2 className="size-4 animate-spin text-brand" />
+              <span className="text-sm text-muted-foreground/70">Loading...</span>
             </div>
           ) : isListError ? (
             /* Error state — no retry button; TanStack Query will auto-retry */
@@ -368,7 +368,7 @@ export function OrganizerMessagePage() {
                 <div
                   key={conv.id}
                   onClick={() => handleSelectConversation(conv.id)}
-                  className={`flex cursor-pointer items-center gap-3 border-b border-[#f0edf4] p-4 transition-colors ${
+                  className={`flex cursor-pointer items-center gap-3 border-b border-border p-4 transition-colors ${
                     activeConvId === conv.id
                       ? 'border-l-4 border-l-[#df2b80] bg-[#fafafa]'
                       : 'border-l-4 border-l-transparent hover:bg-[#fafafa]'
@@ -390,22 +390,22 @@ export function OrganizerMessagePage() {
                       </div>
                     )}
                     {recent && activeConvId !== conv.id && (
-                      <span className="absolute -right-0.5 -top-0.5 size-3 rounded-full border-2 border-white bg-[#df2b80] animate-pulse" />
+                      <span className="absolute -right-0.5 -top-0.5 size-3 rounded-full border-2 border-white bg-brand animate-pulse" />
                     )}
                   </div>
                   <div className="min-w-0 flex-1">
                     <div className="mb-1 flex items-center justify-between">
                       <h4
-                        className={`truncate text-sm font-bold ${recent && activeConvId !== conv.id ? 'text-[#df2b80]' : 'text-[#2d2834]'}`}
+                        className={`truncate text-sm font-bold ${recent && activeConvId !== conv.id ? 'text-brand' : 'text-foreground'}`}
                       >
                         {peer?.name || 'Client'}
                       </h4>
-                      <span className="ml-2 whitespace-nowrap text-[10px] font-semibold text-[#a49cb3]">
+                      <span className="ml-2 whitespace-nowrap text-[10px] font-semibold text-muted-foreground/70">
                         {formatRelativeTime(conv.lastMessageAt || conv.updatedAt)}
                       </span>
                     </div>
                     <p
-                      className={`truncate text-xs font-medium ${recent && activeConvId !== conv.id ? 'text-[#5c546a]' : 'text-[#696373]'}`}
+                      className={`truncate text-xs font-medium ${recent && activeConvId !== conv.id ? 'text-foreground/80' : 'text-muted-foreground'}`}
                     >
                       {conv.lastMessage || 'No messages yet'}
                     </p>
@@ -429,7 +429,7 @@ export function OrganizerMessagePage() {
               );
             })
           ) : (
-            <div className="p-8 text-center text-sm font-medium text-[#a49cb3]">
+            <div className="p-8 text-center text-sm font-medium text-muted-foreground/70">
               {conversations.length === 0 ? 'No conversations yet.' : 'No conversations found.'}
             </div>
           )}
@@ -438,17 +438,17 @@ export function OrganizerMessagePage() {
 
       {/* ─────────── MIDDLE (CHAT AREA) ─────────── */}
       <div
-        className={`flex-1 flex-col overflow-hidden rounded-2xl border border-[#e2deea] bg-white shadow-sm transition-all duration-300 ${activeConvId ? 'flex' : 'hidden lg:flex'}`}
+        className={`flex-1 flex-col overflow-hidden rounded-2xl border border-border bg-white shadow-sm transition-all duration-300 ${activeConvId ? 'flex' : 'hidden lg:flex'}`}
       >
         {activeConv ? (
           <>
             {/* Chat Header */}
-            <div className="flex items-center justify-between border-b border-[#f0edf4] px-4 lg:px-6 py-4">
+            <div className="flex items-center justify-between border-b border-border px-4 lg:px-6 py-4">
               <div className="flex items-center gap-2 lg:gap-3">
                 <button
                   type="button"
                   onClick={() => setActiveConvId(null)}
-                  className="lg:hidden rounded-full p-1 text-[#8f879f] transition hover:bg-[#f6f5f8] hover:text-[#df2b80]"
+                  className="lg:hidden rounded-full p-1 text-muted-foreground transition hover:bg-[#f6f5f8] hover:text-brand"
                 >
                   <ChevronLeft className="size-6" />
                 </button>
@@ -466,7 +466,7 @@ export function OrganizerMessagePage() {
                   </div>
                 )}
                 <div>
-                  <h3 className="text-base font-bold text-[#2d2834]">
+                  <h3 className="text-base font-bold text-foreground">
                     {activePeer?.name || 'Client'}
                   </h3>
                   <p className="text-xs font-semibold capitalize text-[#4bc783]">
@@ -474,7 +474,7 @@ export function OrganizerMessagePage() {
                   </p>
                 </div>
               </div>
-              <div className="flex items-center gap-3 text-[#8f879f]">
+              <div className="flex items-center gap-3 text-muted-foreground">
                 {isAdmin && (
                   <button
                     type="button"
@@ -488,7 +488,7 @@ export function OrganizerMessagePage() {
                 )}
                 <button
                   onClick={() => setShowDetails(!showDetails)}
-                  className={`rounded-full p-2 transition ${showDetails ? 'text-[#df2b80]' : 'hover:bg-[#f6f5f8] hover:text-[#df2b80]'}`}
+                  className={`rounded-full p-2 transition ${showDetails ? 'text-brand' : 'hover:bg-[#f6f5f8] hover:text-brand'}`}
                 >
                   <MoreVertical className="size-5" />
                 </button>
@@ -497,38 +497,38 @@ export function OrganizerMessagePage() {
 
             {/* Event Details Banner */}
             {eventDetails && (
-              <div className="border-b border-[#f0edf4] bg-gradient-to-r from-[#fdf2f8] to-[#f8f5fe] px-4 lg:px-6 py-3">
+              <div className="border-b border-border bg-gradient-to-r from-[#fdf2f8] to-[#f8f5fe] px-4 lg:px-6 py-3">
                 <div className="flex items-center gap-2 mb-1.5">
-                  <Sparkles className="size-3.5 text-[#df2b80]" />
-                  <span className="text-[10px] font-black uppercase tracking-widest text-[#8f1fd1]">
+                  <Sparkles className="size-3.5 text-brand" />
+                  <span className="text-[10px] font-black uppercase tracking-widest text-brand-deep">
                     Event Details
                   </span>
                 </div>
-                <h4 className="text-sm font-bold text-[#2d2834] mb-1.5">
+                <h4 className="text-sm font-bold text-foreground mb-1.5">
                   {eventDetails.title || 'Untitled Event'}
                 </h4>
-                <div className="flex flex-wrap gap-x-4 gap-y-1 text-[11px] font-semibold text-[#5c546a]">
+                <div className="flex flex-wrap gap-x-4 gap-y-1 text-[11px] font-semibold text-foreground/80">
                   {eventDetails.eventType && (
                     <span className="flex items-center gap-1">
-                      <CalendarDays className="size-3 text-[#a49cb3]" />
+                      <CalendarDays className="size-3 text-muted-foreground/70" />
                       {eventDetails.eventType}
                     </span>
                   )}
                   {(eventDetails.eventPackageKey || eventDetails.eventPackage) && (
                     <span className="flex items-center gap-1">
-                      <Package className="size-3 text-[#a49cb3]" />
+                      <Package className="size-3 text-muted-foreground/70" />
                       {eventDetails.eventPackageKey || eventDetails.eventPackage}
                     </span>
                   )}
                   {eventDetails.eventPax && (
                     <span className="flex items-center gap-1">
-                      <Users className="size-3 text-[#a49cb3]" />
+                      <Users className="size-3 text-muted-foreground/70" />
                       {eventDetails.eventPax} pax
                     </span>
                   )}
                   {eventDetails.eventDate && (
                     <span className="flex items-center gap-1">
-                      <CalendarDays className="size-3 text-[#a49cb3]" />
+                      <CalendarDays className="size-3 text-muted-foreground/70" />
                       {new Date(eventDetails.eventDate).toLocaleDateString('en-US', {
                         month: 'short',
                         day: 'numeric',
@@ -538,7 +538,7 @@ export function OrganizerMessagePage() {
                   )}
                   {eventDetails.venue && (
                     <span className="flex items-center gap-1">
-                      <MapPin className="size-3 text-[#a49cb3]" />
+                      <MapPin className="size-3 text-muted-foreground/70" />
                       {eventDetails.venue}
                     </span>
                   )}
@@ -550,8 +550,8 @@ export function OrganizerMessagePage() {
             <div className="flex-1 overflow-y-auto bg-[#fafafa] p-6">
               {isLoadingMessages ? (
                 <div className="flex items-center justify-center gap-2 py-12">
-                  <Loader2 className="size-5 animate-spin text-[#df2b80]" />
-                  <span className="text-sm text-[#a49cb3]">Loading messages...</span>
+                  <Loader2 className="size-5 animate-spin text-brand" />
+                  <span className="text-sm text-muted-foreground/70">Loading messages...</span>
                 </div>
               ) : isMsgError ? (
                 /* Error state — no retry button; TanStack Query will auto-retry */
@@ -563,7 +563,7 @@ export function OrganizerMessagePage() {
               ) : messages.length === 0 ? (
                 <div className="flex flex-col items-center justify-center gap-3 py-12 text-center">
                   <MessageSquare className="size-8 text-[#d4d0dc]" />
-                  <p className="text-sm font-medium text-[#a49cb3]">
+                  <p className="text-sm font-medium text-muted-foreground/70">
                     No messages yet. Send one to start the conversation.
                   </p>
                 </div>
@@ -580,14 +580,14 @@ export function OrganizerMessagePage() {
                           <div
                             className={`rounded-2xl px-4 py-3 text-sm ${
                               outgoing
-                                ? 'rounded-br-none bg-gradient-to-r from-[#df2b80] to-[#8f1fd1] text-white'
-                                : 'rounded-bl-none border border-[#e2deea] bg-white text-[#4f4a56] shadow-sm'
+                                ? 'rounded-br-none bg-gradient-to-r from-brand to-brand-deep text-white'
+                                : 'rounded-bl-none border border-border bg-white text-foreground/80 shadow-sm'
                             }`}
                           >
                             {msg.body}
                           </div>
                           <span
-                            className={`text-[10px] font-semibold text-[#a49cb3] ${
+                            className={`text-[10px] font-semibold text-muted-foreground/70 ${
                               outgoing ? 'text-right' : 'text-left'
                             }`}
                           >
@@ -603,7 +603,7 @@ export function OrganizerMessagePage() {
             </div>
 
             {/* Chat Input */}
-            <div className="border-t border-[#f0edf4] bg-white p-4">
+            <div className="border-t border-border bg-white p-4">
               {sendError && (
                 <p className="mb-2 rounded-lg bg-red-50 px-3 py-2 text-xs font-medium text-red-500">
                   {sendError}
@@ -622,12 +622,12 @@ export function OrganizerMessagePage() {
                       }
                     }}
                     placeholder="Write something..."
-                    className="flex-1 bg-transparent text-sm text-[#2d2834] outline-none placeholder:text-[#a49cb3]"
+                    className="flex-1 bg-transparent text-sm text-foreground outline-none placeholder:text-muted-foreground/70"
                   />
                   <button
                     onClick={() => void handleSendMessage()}
                     disabled={isSending || !messageText.trim()}
-                    className="ml-2 flex items-center justify-center text-[#8f1fd1] transition-colors hover:text-[#7a18b3] disabled:opacity-40"
+                    className="ml-2 flex items-center justify-center text-brand-deep transition-colors hover:text-[#7a18b3] disabled:opacity-40"
                   >
                     {isSending ? (
                       <Loader2 className="size-5 animate-spin" />
@@ -644,8 +644,8 @@ export function OrganizerMessagePage() {
           <div className="flex flex-1 flex-col items-center justify-center gap-4 text-center">
             <MessageSquare className="size-12 text-[#d4d0dc]" />
             <div>
-              <p className="text-lg font-bold text-[#2d2834]">Your Messages</p>
-              <p className="mt-1 text-sm text-[#a49cb3]">
+              <p className="text-lg font-bold text-foreground">Your Messages</p>
+              <p className="mt-1 text-sm text-muted-foreground/70">
                 Select a conversation to start messaging.
               </p>
             </div>
@@ -655,13 +655,13 @@ export function OrganizerMessagePage() {
 
       {/* ─────────── RIGHT SIDE (CONTACT DETAILS) ─────────── */}
       {showDetails && activeConv && (
-        <div className="animate-in slide-in-from-right-4 fade-in absolute inset-0 z-50 flex w-full flex-col overflow-y-auto overflow-x-hidden bg-white duration-300 lg:static lg:z-auto lg:flex lg:w-[320px] lg:rounded-2xl lg:border lg:border-[#e2deea] lg:shadow-sm">
+        <div className="animate-in slide-in-from-right-4 fade-in absolute inset-0 z-50 flex w-full flex-col overflow-y-auto overflow-x-hidden bg-white duration-300 lg:static lg:z-auto lg:flex lg:w-[320px] lg:rounded-2xl lg:border lg:border-border lg:shadow-sm">
           {/* Header */}
-          <div className="sticky top-0 z-10 flex items-center justify-between border-b border-[#f0edf4] bg-white px-6 py-4">
-            <h3 className="text-base font-bold text-[#2d2834]">Contact Details</h3>
+          <div className="sticky top-0 z-10 flex items-center justify-between border-b border-border bg-white px-6 py-4">
+            <h3 className="text-base font-bold text-foreground">Contact Details</h3>
             <button
               onClick={() => setShowDetails(false)}
-              className="text-[#8f879f] transition-colors hover:text-[#df2b80]"
+              className="text-muted-foreground transition-colors hover:text-brand"
             >
               <X className="size-5" />
             </button>
@@ -682,29 +682,29 @@ export function OrganizerMessagePage() {
                 {activePeer?.initial || getInitialFromName(activePeer?.name)}
               </div>
             )}
-            <h4 className="text-lg font-bold leading-tight text-[#2d2834]">
+            <h4 className="text-lg font-bold leading-tight text-foreground">
               {activePeer?.name || 'Client'}
             </h4>
-            <span className="mt-2 rounded-full bg-[#f8f5fe] px-4 py-1 text-xs font-bold uppercase tracking-wide text-[#8f1fd1]">
+            <span className="mt-2 rounded-full bg-[#f8f5fe] px-4 py-1 text-xs font-bold uppercase tracking-wide text-brand-deep">
               {normalizeRole(activePeer?.role) || 'client'}
             </span>
           </div>
 
           {/* Information List */}
-          <div className="flex flex-col gap-5 border-t border-[#f0edf4] p-6">
+          <div className="flex flex-col gap-5 border-t border-border p-6">
             <div>
-              <p className="text-[11px] font-bold uppercase tracking-wider text-[#a49cb3]">
+              <p className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground/70">
                 Email Address
               </p>
-              <p className="mt-1 break-all text-sm font-semibold text-[#2d2834]">
+              <p className="mt-1 break-all text-sm font-semibold text-foreground">
                 {activePeer?.email || '-'}
               </p>
             </div>
             <div>
-              <p className="text-[11px] font-bold uppercase tracking-wider text-[#a49cb3]">
+              <p className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground/70">
                 Phone Number
               </p>
-              <p className="mt-1 text-sm font-semibold text-[#2d2834]">
+              <p className="mt-1 text-sm font-semibold text-foreground">
                 {activePeer?.contactNumber || '-'}
               </p>
             </div>
@@ -712,39 +712,39 @@ export function OrganizerMessagePage() {
 
           {/* Event Info */}
           {eventDetails && (
-            <div className="flex flex-col gap-4 border-t border-[#f0edf4] p-6">
+            <div className="flex flex-col gap-4 border-t border-border p-6">
               <div className="flex items-center gap-2">
-                <Sparkles className="size-4 text-[#df2b80]" />
-                <p className="text-[11px] font-black uppercase tracking-widest text-[#8f1fd1]">
+                <Sparkles className="size-4 text-brand" />
+                <p className="text-[11px] font-black uppercase tracking-widest text-brand-deep">
                   Assigned Event
                 </p>
               </div>
-              <div className="rounded-xl border border-[#e2deea] bg-[#fafafa] p-4">
-                <p className="mb-2 text-sm font-bold text-[#2d2834]">
+              <div className="rounded-xl border border-border bg-[#fafafa] p-4">
+                <p className="mb-2 text-sm font-bold text-foreground">
                   {eventDetails.title || 'Untitled Event'}
                 </p>
-                <div className="flex flex-col gap-2 text-xs font-semibold text-[#5c546a]">
+                <div className="flex flex-col gap-2 text-xs font-semibold text-foreground/80">
                   {eventDetails.eventType && (
                     <span className="flex items-center gap-2">
-                      <CalendarDays className="size-3.5 text-[#a49cb3]" />
+                      <CalendarDays className="size-3.5 text-muted-foreground/70" />
                       {eventDetails.eventType}
                     </span>
                   )}
                   {(eventDetails.eventPackageKey || eventDetails.eventPackage) && (
                     <span className="flex items-center gap-2">
-                      <Package className="size-3.5 text-[#a49cb3]" />
+                      <Package className="size-3.5 text-muted-foreground/70" />
                       {eventDetails.eventPackageKey || eventDetails.eventPackage}
                     </span>
                   )}
                   {eventDetails.eventPax && (
                     <span className="flex items-center gap-2">
-                      <Users className="size-3.5 text-[#a49cb3]" />
+                      <Users className="size-3.5 text-muted-foreground/70" />
                       {eventDetails.eventPax} pax
                     </span>
                   )}
                   {eventDetails.eventDate && (
                     <span className="flex items-center gap-2">
-                      <CalendarDays className="size-3.5 text-[#a49cb3]" />
+                      <CalendarDays className="size-3.5 text-muted-foreground/70" />
                       {new Date(eventDetails.eventDate).toLocaleDateString('en-US', {
                         month: 'long',
                         day: 'numeric',
@@ -754,7 +754,7 @@ export function OrganizerMessagePage() {
                   )}
                   {eventDetails.venue && (
                     <span className="flex items-center gap-2">
-                      <MapPin className="size-3.5 text-[#a49cb3]" />
+                      <MapPin className="size-3.5 text-muted-foreground/70" />
                       {eventDetails.venue}
                     </span>
                   )}
@@ -773,9 +773,9 @@ export function OrganizerMessagePage() {
               <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-red-100 text-red-500">
                 <AlertTriangle className="size-5" />
               </div>
-              <h3 className="text-lg font-bold text-[#2d2834]">Delete Conversation</h3>
+              <h3 className="text-lg font-bold text-foreground">Delete Conversation</h3>
             </div>
-            <p className="mb-6 text-sm font-medium text-[#696373]">
+            <p className="mb-6 text-sm font-medium text-muted-foreground">
               Are you sure you want to delete this conversation? This action cannot be undone and
               will permanently remove all messages.
             </p>
@@ -784,7 +784,7 @@ export function OrganizerMessagePage() {
                 type="button"
                 onClick={() => setDeleteConfirmId(null)}
                 disabled={deleteMutation.isPending}
-                className="rounded-xl px-4 py-2 text-sm font-bold text-[#696373] transition-colors hover:bg-[#f6f5f8] disabled:opacity-50"
+                className="rounded-xl px-4 py-2 text-sm font-bold text-muted-foreground transition-colors hover:bg-[#f6f5f8] disabled:opacity-50"
               >
                 Cancel
               </button>

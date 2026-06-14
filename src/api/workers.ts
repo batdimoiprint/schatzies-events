@@ -31,7 +31,7 @@ export const getWorkers = async (): Promise<EventWorker[]> => {
   const response = await axiosInstance.get('/vendors/workers');
   // Map safely in case backend returns slightly different keys
   const workers = response.data.workers || response.data || [];
-  return workers.map((w: any) => ({
+  return workers.map((w: Record<string, string | undefined>) => ({
     id: w.id || w.workerId,
     vendorId: w.vendorId || '',
     eventId: w.eventId || '',

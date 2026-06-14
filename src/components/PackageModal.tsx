@@ -91,7 +91,7 @@ export function PackageModal({
           {/* RIGHT: Content Section */}
           <div className="w-full lg:w-1/2 flex flex-col overflow-y-auto p-5 sm:p-8">
             {/* Title */}
-            <h2 className="text-[1.3rem] font-bold text-[#3d2052] sm:text-[1.6rem] lg:text-[1.8rem]">
+            <h2 className="text-[1.3rem] font-bold text-brand-deep sm:text-[1.6rem] lg:text-[1.8rem]">
               Package Inclusions
             </h2>
 
@@ -136,7 +136,7 @@ export function PackageModal({
                                 key={text}
                                 className="flex items-start gap-2 text-[0.85rem] sm:text-[0.9rem] lg:text-[0.95rem]"
                               >
-                                <span className="mt-0.5 flex h-4 w-4 sm:h-5 sm:w-5 flex-shrink-0 items-center justify-center rounded-full bg-[#e61f83]">
+                                <span className="mt-0.5 flex h-4 w-4 sm:h-5 sm:w-5 flex-shrink-0 items-center justify-center rounded-full bg-brand">
                                   <svg
                                     viewBox="0 0 10 10"
                                     className="h-2 w-2 sm:h-2.5 sm:w-2.5 fill-none stroke-white stroke-[2]"
@@ -150,7 +150,7 @@ export function PackageModal({
                                 </span>
                                 <span
                                   className={`leading-tight ${
-                                    isHighlight ? 'font-semibold text-[#e61f83]' : 'text-gray-700'
+                                    isHighlight ? 'font-semibold text-brand' : 'text-gray-700'
                                   }`}
                                 >
                                   {text}
@@ -182,7 +182,7 @@ export function PackageModal({
                   onClose();
                   onInquire?.();
                 }}
-                className="h-10 w-full rounded-full border-2 border-[#e61f83] bg-transparent px-6 text-[#e61f83] text-[0.85rem] font-bold hover:bg-[#fff0f6] sm:h-11 sm:w-auto sm:px-10 sm:text-[0.9rem] lg:h-[50px] lg:px-14 lg:text-[1rem]"
+                className="h-10 w-full rounded-full border-2 border-brand bg-transparent px-6 text-brand text-[0.85rem] font-bold hover:bg-secondary sm:h-11 sm:w-auto sm:px-10 sm:text-[0.9rem] lg:h-[50px] lg:px-14 lg:text-[1rem]"
               >
                 Inquire
               </Button>
@@ -192,7 +192,7 @@ export function PackageModal({
                   onClick={() => onNavigate(activeIndex - 1)}
                   disabled={activeIndex === 0}
                   aria-label="Previous package"
-                  className="flex h-10 w-10 items-center justify-center rounded-full border-2 border-[#3d2052] text-[#3d2052] transition hover:bg-[#f5eaf7] disabled:opacity-30 sm:h-11 sm:w-11 lg:h-12 lg:w-12"
+                  className="flex h-10 w-10 items-center justify-center rounded-full border-2 border-brand-deep text-brand-deep transition hover:bg-secondary disabled:opacity-30 sm:h-11 sm:w-11 lg:h-12 lg:w-12"
                 >
                   <ArrowLeft className="h-4 w-4 sm:h-5 sm:w-5" />
                 </button>
@@ -200,7 +200,7 @@ export function PackageModal({
                   onClick={() => onNavigate(activeIndex + 1)}
                   disabled={activeIndex === packages.length - 1}
                   aria-label="Next package"
-                  className="flex h-10 w-10 items-center justify-center rounded-full border-2 border-[#3d2052] text-[#3d2052] transition hover:bg-[#f5eaf7] disabled:opacity-30 sm:h-11 sm:w-11 lg:h-12 lg:w-12"
+                  className="flex h-10 w-10 items-center justify-center rounded-full border-2 border-brand-deep text-brand-deep transition hover:bg-secondary disabled:opacity-30 sm:h-11 sm:w-11 lg:h-12 lg:w-12"
                 >
                   <ArrowRight className="h-4 w-4 sm:h-5 sm:w-5" />
                 </button>

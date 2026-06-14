@@ -1,5 +1,12 @@
 import axiosInstance from './axios-instance';
 import { getUsers } from './users';
+import type { PlannerQuickNote } from '@/types/planner';
+
+/** Loosely-typed JSON object exchanged with the checklist/flow endpoints. */
+type JsonRecord = Record<string, unknown>;
+
+/** A note payload coming from the UI (id is assigned server/client-side). */
+type NoteInput = Omit<PlannerQuickNote, 'id'> & { id?: string };
 
 export type EventStatus = 'Completed' | 'Pending' | 'Execution' | 'Cancelled';
 
@@ -240,7 +247,7 @@ export async function getEventAllocation(eventId: string) {
 // NOTES API (With Dynamic JSON/FormData Logic)
 // ==========================================
 
-export async function getEventNotes(eventId: string): Promise<any[]> {
+export async function getEventNotes(eventId: string): Promise<PlannerQuickNote[]> {
   try {
     const response = await axiosInstance.get(`/events/${eventId}/notes`);
     const rawNotes = response.data?.notes || response.data;
@@ -248,41 +255,41 @@ export async function getEventNotes(eventId: string): Promise<any[]> {
     if (typeof rawNotes === 'string') {
       try {
         const parsed = JSON.parse(rawNotes);
-        return Array.isArray(parsed) ? parsed : [];
-      } catch (e) {
+        return Array.isArray(parsed) ? (parsed as PlannerQuickNote[]) : [];
+      } catch {
         return [{ id: `note-${Date.now()}`, title: 'Imported Note', body: rawNotes }];
       }
     }
-    return Array.isArray(rawNotes) ? rawNotes : [];
-  } catch (error) {
+    return Array.isArray(rawNotes) ? (rawNotes as PlannerQuickNote[]) : [];
+  } catch {
     return [];
   }
 }
 
 export async function createEventNote(
   eventId: string,
-  payload: any,
+  payload: NoteInput,
   _file?: File | null
-): Promise<any> {
+): Promise<PlannerQuickNote> {
   const currentNotes = await getEventNotes(eventId);
-  const newNote = { ...payload, id: payload.id || `note-${Date.now()}` };
+  const newNote: PlannerQuickNote = { ...payload, id: payload.id || `note-${Date.now()}` };
   const updatedNotes = [...currentNotes, newNote];
 
   const requestData = { notes: JSON.stringify(updatedNotes) };
 
-  const response = await axiosInstance.put(`/events/${eventId}/notes`, requestData);
+  await axiosInstance.put(`/events/${eventId}/notes`, requestData);
 
-  return response.data?.notes ? newNote : newNote;
+  return newNote;
 }
 
 export async function updateEventNote(
   eventId: string,
   noteId: string,
-  payload: any,
+  payload: NoteInput,
   _file?: File | null
-): Promise<any> {
+): Promise<PlannerQuickNote> {
   const currentNotes = await getEventNotes(eventId);
-  const updatedNotes = currentNotes.map((n: any) => (n.id === noteId ? { ...n, ...payload } : n));
+  const updatedNotes = currentNotes.map((n) => (n.id === noteId ? { ...n, ...payload } : n));
 
   const requestData = { notes: JSON.stringify(updatedNotes) };
 
@@ -293,7 +300,7 @@ export async function updateEventNote(
 
 export async function deleteEventNote(eventId: string, noteId: string): Promise<void> {
   const currentNotes = await getEventNotes(eventId);
-  const filteredNotes = currentNotes.filter((n: any) => n.id !== noteId);
+  const filteredNotes = currentNotes.filter((n: JsonRecord) => n.id !== noteId);
 
   // Deletion doesn't need file upload, so JSON is fine
   await axiosInstance.put(
@@ -311,12 +318,12 @@ export async function deleteEventNote(eventId: string, noteId: string): Promise<
 // CHECKLIST & FLOW API
 // ==========================================
 
-export async function getEventChecklist(eventId: string): Promise<any[]> {
+export async function getEventChecklist(eventId: string): Promise<JsonRecord[]> {
   try {
     const response = await axiosInstance.get(`/events/${eventId}/checklist`);
     const data = response.data?.checklist || response.data;
     return Array.isArray(data) ? data : [];
-  } catch (error) {
+  } catch {
     return [];
   }
 }
@@ -327,8 +334,8 @@ export async function updateEventChecklistItem(
   itemId: string,
   done: boolean,
   label?: string
-): Promise<any> {
-  const payload: any = { id: itemId, done };
+): Promise<JsonRecord> {
+  const payload: JsonRecord = { id: itemId, done };
   if (label !== undefined) payload.label = label;
 
   const response = await axiosInstance.patch(`/events/${eventId}/checklist`, {
@@ -337,7 +344,7 @@ export async function updateEventChecklistItem(
   return response.data;
 }
 
-export async function addEventChecklistItem(eventId: string, label: string): Promise<any> {
+export async function addEventChecklistItem(eventId: string, label: string): Promise<JsonRecord> {
   const tempId = `chk-${Date.now()}`;
 
   const response = await axiosInstance.post(`/events/${eventId}/checklist`, {
@@ -357,7 +364,7 @@ export async function deleteEventChecklistItem(eventId: string, itemId: string):
   await axiosInstance.delete(`/events/${eventId}/checklist/${itemId}`);
 }
 
-export async function saveEventAllocation(eventId: string, payload: any): Promise<any> {
+export async function saveEventAllocation(eventId: string, payload: JsonRecord): Promise<JsonRecord> {
   const response = await axiosInstance.post(`/events/${eventId}/allocation`, payload);
   return response.data;
 }
@@ -370,7 +377,7 @@ export async function getEventFlow(eventId: string) {
     if (typeof data === 'string') {
       try {
         data = JSON.parse(data);
-      } catch (e) {}
+      } catch { /* ignore */ }
     }
 
     if (Array.isArray(data)) return data;
@@ -383,12 +390,12 @@ export async function getEventFlow(eventId: string) {
     }
 
     return [];
-  } catch (error) {
+  } catch {
     return [];
   }
 }
 
-export async function saveEventFlow(eventId: string, payload: any) {
+export async function saveEventFlow(eventId: string, payload: JsonRecord) {
   const isNew = !payload.id || String(payload.id).startsWith('timeline-');
   let response;
 
@@ -402,7 +409,7 @@ export async function saveEventFlow(eventId: string, payload: any) {
   if (typeof data === 'string') {
     try {
       data = JSON.parse(data);
-    } catch (e) {}
+    } catch { /* ignore */ }
   }
 
   return data?.flow || data?.data || data;

@@ -64,16 +64,16 @@ export function NotificationsPage() {
         <div className="flex items-center gap-3">
           <button
             onClick={handleGoBack}
-            className="flex h-9 w-9 items-center justify-center rounded-full border border-[#ece7f2] bg-white text-[#696373] transition-all duration-200 hover:bg-[#fdf2f8] hover:text-[#df2b80] hover:border-[#df2b80]"
+            className="flex h-9 w-9 items-center justify-center rounded-full border border-border bg-white text-muted-foreground transition-all duration-200 hover:bg-brand/5 hover:text-brand hover:border-brand"
             aria-label="Go back"
           >
             <ArrowLeft className="size-4" />
           </button>
           <div>
-            <h1 className="text-3xl font-black tracking-tight text-[#2d2834] md:text-4xl">
+            <h1 className="text-3xl font-black tracking-tight text-foreground md:text-4xl">
               Notifications
             </h1>
-            <p className="mt-1 text-sm font-medium text-[#696373]">
+            <p className="mt-1 text-sm font-medium text-muted-foreground">
               Stay updated on your event progress and responses.
             </p>
           </div>
@@ -89,8 +89,8 @@ export function NotificationsPage() {
               onClick={() => setFilter(f.value)}
               className={`rounded-full px-3.5 py-1.5 text-xs font-semibold transition ${
                 filter === f.value
-                  ? 'bg-[#df2b80] text-white shadow-sm'
-                  : 'bg-gray-100 text-[#696373] hover:bg-gray-200'
+                  ? 'bg-brand text-white shadow-sm'
+                  : 'bg-gray-100 text-muted-foreground hover:bg-gray-200'
               }`}
             >
               {f.label}
@@ -100,7 +100,7 @@ export function NotificationsPage() {
         {unreadCount > 0 && (
           <button
             onClick={markAllRead}
-            className="flex items-center gap-1.5 text-xs font-semibold text-[#df2b80] transition hover:text-[#c41e6d]"
+            className="flex items-center gap-1.5 text-xs font-semibold text-brand transition hover:text-[#c41e6d]"
           >
             <CheckCheck className="size-4" />
             Mark all as read
@@ -109,11 +109,11 @@ export function NotificationsPage() {
       </div>
 
       {/* Notification list */}
-      <div className="overflow-hidden rounded-xl border border-[#ece7f2] bg-white shadow-sm">
+      <div className="overflow-hidden rounded-xl border border-border bg-white shadow-sm">
         {filtered.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-16 text-center">
             <Bell className="mb-3 size-10 text-gray-300" />
-            <p className="text-sm font-medium text-[#696373]">No notifications</p>
+            <p className="text-sm font-medium text-muted-foreground">No notifications</p>
           </div>
         ) : (
           <ul>
@@ -124,7 +124,7 @@ export function NotificationsPage() {
                   key={n.id}
                   onClick={() => markRead(n.id)}
                   className={[
-                    'flex cursor-pointer items-start gap-4 border-b border-[#ece7f2] px-5 py-4 transition-all duration-200 last:border-b-0 hover:bg-[#fdf2f8]',
+                    'flex cursor-pointer items-start gap-4 border-b border-border px-5 py-4 transition-all duration-200 last:border-b-0 hover:bg-brand/5',
                     n.unread ? 'bg-pink-50/60' : '',
                   ].join(' ')}
                   style={{ animation: `slideUp 0.3s ease-out ${i * 0.04}s both` }}
@@ -134,7 +134,7 @@ export function NotificationsPage() {
                     className={`mt-0.5 flex size-9 shrink-0 items-center justify-center rounded-full ${
                       n.unread
                         ? 'bg-gradient-to-br from-pink-400 to-purple-500 text-white'
-                        : 'bg-gray-100 text-[#696373]'
+                        : 'bg-gray-100 text-muted-foreground'
                     }`}
                   >
                     <Icon className="size-4" />
@@ -143,15 +143,15 @@ export function NotificationsPage() {
                   <div className="min-w-0 flex-1">
                     <div className="flex items-start justify-between gap-2">
                       <p
-                        className={`text-sm ${n.unread ? 'font-bold text-[#2d2834]' : 'font-medium text-[#4f4a56]'}`}
+                        className={`text-sm ${n.unread ? 'font-bold text-foreground' : 'font-medium text-foreground/80'}`}
                       >
                         {n.title}
                       </p>
                       {n.unread && (
-                        <span className="mt-1 h-2 w-2 shrink-0 rounded-full bg-[#e61f83]" />
+                        <span className="mt-1 h-2 w-2 shrink-0 rounded-full bg-brand" />
                       )}
                     </div>
-                    <p className="mt-0.5 text-xs leading-relaxed text-[#696373]">{n.message}</p>
+                    <p className="mt-0.5 text-xs leading-relaxed text-muted-foreground">{n.message}</p>
                     <p className="mt-1.5 text-[11px] text-gray-400">{n.time}</p>
                   </div>
                 </li>

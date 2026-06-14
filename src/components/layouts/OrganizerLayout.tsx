@@ -41,6 +41,7 @@ export function OrganizerLayout() {
 
   // Close mobile drawer on route change
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- sync drawer to route changes
     setMobileOpen(false);
   }, [location.pathname]);
 
@@ -53,10 +54,10 @@ export function OrganizerLayout() {
             <img
               src="/Pictures/organizerpics/Logo.png.png"
               alt="Schatzies Events logo"
-              className="size-20 animate-pulse rounded-full border-4 border-[#df2b80] object-cover shadow-[0_0_20px_rgba(223,43,128,0.4)]"
+              className="size-20 animate-pulse rounded-full border-4 border-brand object-cover shadow-[0_0_20px_rgba(223,43,128,0.4)]"
             />
           </div>
-          <p className="mt-6 text-sm font-bold uppercase tracking-widest text-[#8f1fd1] animate-pulse">
+          <p className="mt-6 text-sm font-bold uppercase tracking-widest text-brand-deep animate-pulse">
             Loading Workspace...
           </p>
         </div>
@@ -82,7 +83,7 @@ export function OrganizerLayout() {
             <img
               src="/Pictures/organizerpics/Logo.png.png"
               alt="CSE logo"
-              className="size-12 shrink-0 rounded-full border-2 border-[#df2b80] bg-white object-cover"
+              className="size-12 shrink-0 rounded-full border-2 border-brand bg-white object-cover"
             />
             <div
               className={[
@@ -90,7 +91,7 @@ export function OrganizerLayout() {
                 isMobile || isSidebarOpen ? 'max-w-30 opacity-100' : 'max-w-0 opacity-0',
               ].join(' ')}
             >
-              <p className="font-heading whitespace-nowrap text-base font-bold text-[#df2b80]">
+              <p className="font-heading whitespace-nowrap text-base font-bold text-brand">
                 Schatzies
               </p>
               <p className="font-heading whitespace-nowrap text-base font-bold text-[#9a1eb9]">
@@ -100,11 +101,11 @@ export function OrganizerLayout() {
           </div>
           <p
             className={[
-              'mt-3 overflow-hidden text-center text-xs font-semibold tracking-wide text-[#7f7889] transition-all duration-300',
+              'mt-3 overflow-hidden text-center text-xs font-semibold tracking-wide text-muted-foreground transition-all duration-300',
               isMobile || isSidebarOpen ? 'max-h-10 opacity-100' : 'max-h-0 opacity-0',
             ].join(' ')}
           >
-            Your <span className="text-[#df2b80]">MOST TRUSTED</span> team!
+            Your <span className="text-brand">MOST TRUSTED</span> team!
           </p>
         </div>
       </div>
@@ -124,8 +125,8 @@ export function OrganizerLayout() {
                   ? 'w-full justify-start gap-3 px-4'
                   : 'size-11 justify-center gap-0 px-0',
                 isActive
-                  ? 'bg-gradient-to-r from-[#f347a5] to-[#8f1fd1] text-white shadow-[0_10px_20px_rgba(187,54,194,0.28)]'
-                  : 'text-[#4f4a56] hover:bg-[#f0e8f5] hover:text-[#8f1fd0] hover:translate-x-1',
+                  ? 'bg-gradient-to-r from-brand to-brand-deep text-white shadow-[0_10px_20px_rgba(187,54,194,0.28)]'
+                  : 'text-foreground/80 hover:bg-[#f0e8f5] hover:text-[#8f1fd0] hover:translate-x-1',
               ].join(' ');
             }}
             end={item.to === '/organizer'}
@@ -154,7 +155,7 @@ export function OrganizerLayout() {
       {/* ── Desktop Sidebar (hidden on mobile) ── */}
       <aside
         className={[
-          'hidden md:flex relative flex-col z-40 bg-white transition-all duration-300 ease-in-out shrink-0 border-r border-[#ece7f2] h-full',
+          'hidden md:flex relative flex-col z-40 bg-white transition-all duration-300 ease-in-out shrink-0 border-r border-border h-full',
           isSidebarOpen ? 'w-[250px]' : 'w-20 items-center',
         ].join(' ')}
       >
@@ -164,7 +165,7 @@ export function OrganizerLayout() {
           <button
             onClick={() => setIsSidebarOpen(!isSidebarOpen)}
             aria-label="Toggle sidebar"
-            className="flex size-11 shrink-0 cursor-pointer items-center justify-center rounded-md text-[#3d2052] transition-colors hover:bg-[#fdf2f8]"
+            className="flex size-11 shrink-0 cursor-pointer items-center justify-center rounded-md text-brand-deep transition-colors hover:bg-brand/5"
           >
             <Menu className="size-7 stroke-[2.5]" />
           </button>
@@ -177,7 +178,7 @@ export function OrganizerLayout() {
       <button
         onClick={() => setMobileOpen(true)}
         aria-label="Open menu"
-        className="fixed left-3 top-3 z-50 flex size-10 items-center justify-center rounded-lg bg-white text-[#3d2052] shadow-md md:hidden"
+        className="fixed left-3 top-3 z-50 flex size-10 items-center justify-center rounded-lg bg-white text-brand-deep shadow-md md:hidden"
       >
         <Menu className="size-6 stroke-[2.5]" />
       </button>
@@ -198,7 +199,7 @@ export function OrganizerLayout() {
                 size="icon"
                 onClick={() => setMobileOpen(false)}
                 aria-label="Close menu"
-                className="size-11 shrink-0 text-[#3d2052] hover:bg-[#fdf2f8]"
+                className="size-11 shrink-0 text-brand-deep hover:bg-brand/5"
               >
                 <X className="size-7 stroke-[2.5]" />
               </Button>

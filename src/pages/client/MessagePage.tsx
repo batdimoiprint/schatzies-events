@@ -137,11 +137,13 @@ export function MessagePage() {
         if (userEvents.length === 0) return null;
 
         const fullEvent = await getEventById(userEvents[0].id);
+        const fullEventRec = fullEvent as { organizer_id?: string; organizerId?: string };
+        const firstEventRec = userEvents[0] as { organizer_id?: string };
         const orgId =
-          (fullEvent as any).organizer_id ||
-          (fullEvent as any).organizerId ||
+          fullEventRec.organizer_id ||
+          fullEventRec.organizerId ||
           userEvents[0].organizerId ||
-          (userEvents[0] as any).organizer_id;
+          firstEventRec.organizer_id;
 
         if (!orgId) return null;
 
@@ -356,7 +358,7 @@ export function MessagePage() {
           </div>
 
           {/* Name + badge */}
-          <p className="mt-4 text-2xl font-bold text-[#2d2834]">{organizer?.name || ''}</p>
+          <p className="mt-4 text-2xl font-bold text-foreground">{organizer?.name || ''}</p>
           <span className="mt-2 rounded-full bg-pink-400 px-4 py-1 text-sm text-white">
             Assigned Organizer
           </span>

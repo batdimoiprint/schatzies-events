@@ -3,6 +3,7 @@ import type { ReactNode } from 'react';
 import { login, verifyToken, logout as logoutApi } from '@/api/auth';
 import { AuthContext } from './AuthContext';
 import type { User, LoginResult } from '@/types/auth';
+import type { ApiError } from '@/types/api-error';
 import { subscribeToPushNotifications } from '@/lib/pushNotifications';
 
 export function AuthProvider({ children }: { children: ReactNode }) {
@@ -25,8 +26,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
 
       return verifiedUser ?? null;
-    } catch (err: any) {
-      const status = err?.response?.status;
+    } catch (err) {
+      const status = (err as ApiError)?.response?.status;
 
       // If we get a 429 (Too Many Requests), don't force logout
       // if we have a hint that the user was previously authenticated.

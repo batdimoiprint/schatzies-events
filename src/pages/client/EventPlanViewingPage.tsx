@@ -1,8 +1,18 @@
 import { useEffect, useState } from 'react';
 import { Calendar, Clock } from 'lucide-react';
-import { ServiceRequirementsModal } from '@/components/client/ServiceRequirementsModal';
-import { AllocationResourcesModal } from '@/components/client/AllocationResourcesModal';
-import { ChecklistMeetingModal } from '@/components/client/ChecklistMeetingModal';
+import {
+  ServiceRequirementsModal,
+  type ServiceAllocation,
+} from '@/components/client/ServiceRequirementsModal';
+import {
+  AllocationResourcesModal,
+  type ResourceAllocation,
+} from '@/components/client/AllocationResourcesModal';
+import {
+  ChecklistMeetingModal,
+  type MeetingItem,
+  type ChecklistItem,
+} from '@/components/client/ChecklistMeetingModal';
 import { ProgramFlowModal } from '@/components/client/ProgramFlowModal';
 
 import {
@@ -55,13 +65,93 @@ function CostIllustration() {
   );
 }
 
+// ── Local shapes for loosely-typed backend payloads ────────────────────────────
+interface FullEventLike {
+  endDate?: string;
+  dateEnd?: string;
+  eventDate?: string;
+  eventPackageKey?: string;
+  eventPackage?: string;
+  package?: { name?: string; pax?: number };
+  eventType?: string;
+  eventPax?: number | null;
+  cost?: string;
+  packageInitialAmount?: number | null;
+  title?: string;
+  status?: string;
+  startTime?: string;
+  endTime?: string;
+  eventTime?: string;
+  eventTimeEnd?: string;
+  organizer_id?: string;
+  organizerId?: string;
+}
+
+interface BaseEventLike {
+  id: string;
+  organizerId?: string;
+  organizer_id?: string;
+  organizerName?: string;
+  package?: string;
+  type?: string;
+  pax?: number;
+  title?: string;
+}
+
+interface FlowSourceLike {
+  id?: string;
+  title?: string;
+  activity?: string;
+  startTime?: string;
+  start?: string;
+  endTime?: string;
+  end?: string;
+  description?: string;
+  startHour?: number | string;
+}
+
+interface CalItemLike {
+  eventId?: string;
+  label?: string;
+  title?: string;
+  startTime?: string;
+  endTime?: string;
+  time?: string;
+}
+
+interface FlowBlock {
+  id: string;
+  title: string;
+  from: string;
+  to: string;
+  description: string;
+  startHour: number;
+}
+
+interface EventViewData {
+  title: string;
+  date: string;
+  completion: number;
+  organizer: string;
+  email: string;
+  contact: string;
+  packageName: string;
+  pax: number;
+  eventType: string;
+  cost: string;
+  startTime: string;
+  endTime: string;
+}
+
 export function EventPlanViewingPage() {
   const { user } = useAuth();
-  const [eventData, setEventData] = useState<any>(null);
-  const [allocation, setAllocation] = useState<any>(null);
-  const [meetings, setMeetings] = useState<any[]>([]);
-  const [checklist, setChecklist] = useState<any[]>([]);
-  const [flow, setFlow] = useState<any[]>([]);
+  const [eventData, setEventData] = useState<EventViewData | null>(null);
+  const [allocation, setAllocation] = useState<(ResourceAllocation & ServiceAllocation) | null>(
+    null
+  );
+  const [meetings, setMeetings] = useState<MeetingItem[]>([]);
+  const [checklist, setChecklist] = useState<ChecklistItem[]>([]);
+  const [flow, setFlow] = useState<FlowBlock[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   const [showServiceReq, setShowServiceReq] = useState(false);
@@ -105,11 +195,10 @@ export function EventPlanViewingPage() {
         if (userEventBase) {
           const fullEvent = await getEventById(userEventBase.id);
 
+          const fe = fullEvent as FullEventLike;
+          const base = userEventBase as BaseEventLike;
           const orgId =
-            (fullEvent as any).organizer_id ||
-            (fullEvent as any).organizerId ||
-            userEventBase.organizerId ||
-            (userEventBase as any).organizer_id;
+            fe.organizer_id || fe.organizerId || base.organizerId || base.organizer_id;
 
           let organizerName = userEventBase.organizerName || 'Assigned Organizer';
           let organizerEmail = 'contact@schatzies.com';
@@ -155,16 +244,12 @@ export function EventPlanViewingPage() {
           // If package is "Others", use eventType as the display name
           const displayPkgName = rawPkgName === 'Others' ? currentEventType : rawPkgName;
 
-          const paxCount =
-            fullEvent.eventPax ||
-            (userEventBase as any).pax ||
-            (fullEvent as any).package?.pax ||
-            0;
+          const paxCount = fe.eventPax || base.pax || fe.package?.pax || 0;
 
           // Cost logic: Use packageInitialAmount if available
-          let costValue = (fullEvent as any).cost || 'TBD';
-          if ((fullEvent as any).packageInitialAmount) {
-            costValue = `₱${Number((fullEvent as any).packageInitialAmount).toLocaleString()}`;
+          let costValue = fe.cost || 'TBD';
+          if (fe.packageInitialAmount) {
+            costValue = `₱${Number(fe.packageInitialAmount).toLocaleString()}`;
           }
 
           // Fetch additional data modules
@@ -179,7 +264,7 @@ export function EventPlanViewingPage() {
             if (isMounted) {
               setAllocation(allocRes);
 
-              const formatDisplayTime = (val: any) => {
+              const formatDisplayTime = (val?: string) => {
                 if (!val) return '00:00';
                 if (typeof val === 'string' && val.includes(':')) {
                   const [h, m] = val.split(':');
@@ -193,31 +278,31 @@ export function EventPlanViewingPage() {
 
               const mappedFlows = Array.isArray(flowRes)
                 ? flowRes
-                    .map((item: any) => ({
+                    .map((item: FlowSourceLike) => ({
                       id: item.id || Math.random().toString(),
                       title: item.title || item.activity || 'Activity',
                       from: formatDisplayTime(item.startTime || item.start),
                       to: formatDisplayTime(item.endTime || item.end),
                       description: item.description || '',
-                      startHour: parseFloat(item.startHour) || 0,
+                      startHour: parseFloat(String(item.startHour ?? '')) || 0,
                     }))
-                    .sort((a: any, b: any) => a.startHour - b.startHour)
+                    .sort((a: FlowBlock, b: FlowBlock) => a.startHour - b.startHour)
                 : [];
               setFlow(mappedFlows);
 
-              const eventMeetings = (calRes || []).filter(
-                (item: any) =>
+              const eventMeetings = ((calRes as CalItemLike[]) || []).filter(
+                (item: CalItemLike) =>
                   item.eventId === userEventBase.id && item.label?.toUpperCase() === 'MEETING'
               );
               setMeetings(eventMeetings);
-              setChecklist(checklistRes || []);
+              setChecklist((checklistRes as ChecklistItem[]) || []);
             }
           } catch (e) {
             console.error('Error fetching event extra details:', e);
           }
 
           if (isMounted) {
-            const formatTime12Hour = (val: any) => {
+            const formatTime12Hour = (val?: string) => {
               if (!val) return '';
               if (typeof val === 'string' && val.includes(':')) {
                 const [h, m] = val.split(':');
@@ -240,10 +325,8 @@ export function EventPlanViewingPage() {
               pax: paxCount,
               eventType: currentEventType,
               cost: costValue,
-              startTime: formatTime12Hour(
-                fullEvent.startTime || (fullEvent as any).eventTime || ''
-              ),
-              endTime: formatTime12Hour(fullEvent.endTime || (fullEvent as any).eventTimeEnd || ''),
+              startTime: formatTime12Hour(fe.startTime || fe.eventTime || ''),
+              endTime: formatTime12Hour(fe.endTime || fe.eventTimeEnd || ''),
             });
           }
         }
@@ -293,7 +376,7 @@ export function EventPlanViewingPage() {
 
   if (!eventData) {
     return (
-      <div className="flex h-[50vh] flex-col items-center justify-center gap-4 text-[#8a8697]">
+      <div className="flex h-[50vh] flex-col items-center justify-center gap-4 text-muted-foreground">
         <Calendar className="h-12 w-12 opacity-20" />
         <p className="text-sm font-medium">No event plan assigned to your account yet.</p>
       </div>
@@ -307,10 +390,10 @@ export function EventPlanViewingPage() {
       {/* ── 1. Header ─────────────────────────────────────────────────────── */}
       <div className="flex items-start justify-between">
         <div>
-          <h1 className="text-3xl font-black tracking-tight text-[#2d2834] md:text-4xl">
+          <h1 className="text-3xl font-black tracking-tight text-foreground md:text-4xl">
             Event Plan Viewing
           </h1>
-          <p className="mt-1 text-sm font-medium text-[#696373]">
+          <p className="mt-1 text-sm font-medium text-muted-foreground">
             Review your event plan details prepared by your organizer.
           </p>
         </div>
@@ -406,16 +489,16 @@ export function EventPlanViewingPage() {
                 View
               </button>
             </div>
-            <div className="space-y-1 text-xs text-[#696373]">
+            <div className="space-y-1 text-xs text-muted-foreground">
               {allocation?.food_package || allocation?.flow_type ? (
                 <>
                   {allocation?.food_package && (
-                    <p className="font-medium text-[#2d2834]">
+                    <p className="font-medium text-foreground">
                       Food Package: {allocation.food_package}
                     </p>
                   )}
                   {allocation?.flow_type && (
-                    <p className="font-medium text-[#2d2834]">Flow Type: {allocation.flow_type}</p>
+                    <p className="font-medium text-foreground">Flow Type: {allocation.flow_type}</p>
                   )}
                 </>
               ) : (
@@ -441,25 +524,25 @@ export function EventPlanViewingPage() {
               <div>
                 <span className="font-medium text-pink-500">• Vendors</span>
                 {allocation?.vendors && allocation.vendors.length > 0 ? (
-                  allocation.vendors.map((v: any, i: number) => (
-                    <p key={i} className="pl-3 text-[#2d2834]">
+                  allocation.vendors.map((v, i) => (
+                    <p key={i} className="pl-3 text-foreground">
                       {v.name}
                     </p>
                   ))
                 ) : (
-                  <p className="pl-3 italic text-[#8a8697]">None assigned</p>
+                  <p className="pl-3 italic text-muted-foreground">None assigned</p>
                 )}
               </div>
               <div>
                 <span className="font-medium text-orange-400">• Manpower</span>
                 {allocation?.manpower && allocation.manpower.length > 0 ? (
-                  allocation.manpower.map((m: any, i: number) => (
-                    <p key={i} className="pl-3 text-[#2d2834]">
+                  allocation.manpower.map((m, i) => (
+                    <p key={i} className="pl-3 text-foreground">
                       {m.role}
                     </p>
                   ))
                 ) : (
-                  <p className="pl-3 italic text-[#8a8697]">None assigned</p>
+                  <p className="pl-3 italic text-muted-foreground">None assigned</p>
                 )}
               </div>
             </div>
@@ -482,17 +565,17 @@ export function EventPlanViewingPage() {
               <div>
                 <span className="font-medium text-pink-500">• Meetings</span>
                 {meetings.length > 0 ? (
-                  meetings.map((meeting: any, index: number) => (
+                  meetings.map((meeting, index) => (
                     <div key={index} className="pl-3 mb-1">
-                      <p className="text-[#2d2834] font-medium">{meeting.title}</p>
-                      <p className="text-[#8a8697]">
+                      <p className="text-foreground font-medium">{meeting.title}</p>
+                      <p className="text-muted-foreground">
                         {meeting.startTime || meeting.time || ''}{' '}
                         {meeting.endTime ? `- ${meeting.endTime}` : ''}
                       </p>
                     </div>
                   ))
                 ) : (
-                  <p className="pl-3 italic text-[#8a8697]">No scheduled meetings yet.</p>
+                  <p className="pl-3 italic text-muted-foreground">No scheduled meetings yet.</p>
                 )}
               </div>
             </div>
@@ -527,23 +610,23 @@ export function EventPlanViewingPage() {
             </div>
             <div className="mt-2 space-y-4">
               {flow.length > 0 ? (
-                flow.map((f: any) => (
+                flow.map((f) => (
                   <div key={f.id} className="flex gap-4 items-start">
-                    <div className="text-xs text-[#8a8697] shrink-0 w-16">
+                    <div className="text-xs text-muted-foreground shrink-0 w-16">
                       <p>{f.from}</p>
                       <p>{f.to}</p>
                     </div>
                     <div className="w-px bg-pink-200 self-stretch"></div>
                     <div className="flex-1 min-w-0">
-                      <p className="font-medium text-[#2d2834] text-sm truncate">{f.title}</p>
-                      <p className="line-clamp-3 text-[11px] text-[#8a8697] mt-1 leading-relaxed break-words whitespace-pre-wrap">
+                      <p className="font-medium text-foreground text-sm truncate">{f.title}</p>
+                      <p className="line-clamp-3 text-[11px] text-muted-foreground mt-1 leading-relaxed break-words whitespace-pre-wrap">
                         {f.description || 'No description provided.'}
                       </p>
                     </div>
                   </div>
                 ))
               ) : (
-                <p className="text-xs italic text-[#8a8697]">No program flow scheduled yet.</p>
+                <p className="text-xs italic text-muted-foreground">No program flow scheduled yet.</p>
               )}
             </div>
           </div>

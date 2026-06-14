@@ -212,12 +212,12 @@ export function AdminDataBackupPage() {
       <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
         <div>
           <div className="flex items-center gap-3">
-            <div className="flex size-11 items-center justify-center rounded-xl bg-gradient-to-br from-[#f347a5] to-[#8f1fd1] shadow-lg shadow-purple-200">
+            <div className="flex size-11 items-center justify-center rounded-xl bg-gradient-to-br from-brand to-brand-deep shadow-lg shadow-purple-200">
               <DatabaseBackup className="size-5 text-white" />
             </div>
             <div>
-              <h1 className="text-3xl font-black text-[#2e2837]">Data Backup</h1>
-              <p className="text-sm font-semibold text-[#8f879f]">
+              <h1 className="text-3xl font-black text-foreground">Data Backup</h1>
+              <p className="text-sm font-semibold text-muted-foreground">
                 DynamoDB → S3 archival & disaster recovery
               </p>
             </div>
@@ -236,7 +236,7 @@ export function AdminDataBackupPage() {
           <Button
             onClick={handleCreateBackup}
             disabled={creating}
-            className="gap-2 rounded-xl bg-gradient-to-r from-[#f347a5] to-[#8f1fd1] text-white shadow-lg shadow-purple-200 hover:shadow-xl hover:shadow-purple-300"
+            className="gap-2 rounded-xl bg-gradient-to-r from-brand to-brand-deep text-white shadow-lg shadow-purple-200 hover:shadow-xl hover:shadow-purple-300"
           >
             {creating ? <Loader2 className="size-4 animate-spin" /> : <Upload className="size-4" />}
             {creating ? 'Creating Backup...' : 'Save Backup Now'}
@@ -252,8 +252,8 @@ export function AdminDataBackupPage() {
               <HardDrive className="size-5 text-[#9a1eb9]" />
             </div>
             <div>
-              <p className="text-2xl font-black text-[#2e2837]">{backups.length}</p>
-              <p className="text-xs font-semibold text-[#8f879f]">Total Backups</p>
+              <p className="text-2xl font-black text-foreground">{backups.length}</p>
+              <p className="text-xs font-semibold text-muted-foreground">Total Backups</p>
             </div>
           </CardContent>
         </Card>
@@ -264,10 +264,10 @@ export function AdminDataBackupPage() {
               <ShieldCheck className="size-5 text-emerald-600" />
             </div>
             <div>
-              <p className="text-2xl font-black text-[#2e2837]">
+              <p className="text-2xl font-black text-foreground">
                 {latestBackup ? timeAgo(latestBackup.timestamp) : '—'}
               </p>
-              <p className="text-xs font-semibold text-[#8f879f]">Latest Backup</p>
+              <p className="text-xs font-semibold text-muted-foreground">Latest Backup</p>
             </div>
           </CardContent>
         </Card>
@@ -278,10 +278,10 @@ export function AdminDataBackupPage() {
               <FileJson className="size-5 text-blue-600" />
             </div>
             <div>
-              <p className="text-2xl font-black text-[#2e2837]">
+              <p className="text-2xl font-black text-foreground">
                 {latestBackup ? formatBytes(latestBackup.sizeBytes) : '—'}
               </p>
-              <p className="text-xs font-semibold text-[#8f879f]">Latest Size</p>
+              <p className="text-xs font-semibold text-muted-foreground">Latest Size</p>
             </div>
           </CardContent>
         </Card>
@@ -292,8 +292,8 @@ export function AdminDataBackupPage() {
               <Clock className="size-5 text-yellow-700" />
             </div>
             <div>
-              <p className="text-2xl font-black text-[#2e2837]">Weekly</p>
-              <p className="text-xs font-semibold text-[#8f879f]">Auto Schedule</p>
+              <p className="text-2xl font-black text-foreground">Weekly</p>
+              <p className="text-xs font-semibold text-muted-foreground">Auto Schedule</p>
             </div>
           </CardContent>
         </Card>
@@ -303,7 +303,7 @@ export function AdminDataBackupPage() {
       <Card className="overflow-hidden border-none shadow-sm">
         <CardHeader className="border-b border-[#f0eaf5] bg-gradient-to-r from-[#fefaff] to-[#fcf7ff]">
           <div className="flex items-center justify-between">
-            <CardTitle className="flex items-center gap-2 text-lg font-bold text-[#2e2837]">
+            <CardTitle className="flex items-center gap-2 text-lg font-bold text-foreground">
               <DatabaseBackup className="size-5 text-[#9a1eb9]" />
               Backup History
             </CardTitle>
@@ -314,7 +314,7 @@ export function AdminDataBackupPage() {
           {loading ? (
             <div className="flex flex-col items-center justify-center gap-3 py-20">
               <Loader2 className="size-8 animate-spin text-[#9a1eb9]" />
-              <p className="text-sm font-semibold text-[#8f879f]">Loading backups...</p>
+              <p className="text-sm font-semibold text-muted-foreground">Loading backups...</p>
             </div>
           ) : backups.length === 0 ? (
             <div className="flex flex-col items-center justify-center gap-4 py-20">
@@ -322,15 +322,15 @@ export function AdminDataBackupPage() {
                 <DatabaseBackup className="size-7 text-[#c4b5d0]" />
               </div>
               <div className="text-center">
-                <p className="text-base font-bold text-[#2e2837]">No Backups Yet</p>
-                <p className="mt-1 text-sm text-[#8f879f]">
+                <p className="text-base font-bold text-foreground">No Backups Yet</p>
+                <p className="mt-1 text-sm text-muted-foreground">
                   Create your first backup to start archiving DynamoDB data.
                 </p>
               </div>
               <Button
                 onClick={handleCreateBackup}
                 disabled={creating}
-                className="mt-2 gap-2 rounded-xl bg-gradient-to-r from-[#f347a5] to-[#8f1fd1] text-white"
+                className="mt-2 gap-2 rounded-xl bg-gradient-to-r from-brand to-brand-deep text-white"
               >
                 <Upload className="size-4" />
                 Create First Backup
@@ -341,19 +341,19 @@ export function AdminDataBackupPage() {
               <Table>
                 <TableHeader>
                   <TableRow className="border-b border-[#f0eaf5] bg-[#faf7fd]">
-                    <TableHead className="py-3.5 pl-6 text-xs font-bold uppercase tracking-wider text-[#7f7889]">
+                    <TableHead className="py-3.5 pl-6 text-xs font-bold uppercase tracking-wider text-muted-foreground">
                       Backup Date
                     </TableHead>
-                    <TableHead className="py-3.5 text-xs font-bold uppercase tracking-wider text-[#7f7889]">
+                    <TableHead className="py-3.5 text-xs font-bold uppercase tracking-wider text-muted-foreground">
                       Time Ago
                     </TableHead>
-                    <TableHead className="py-3.5 text-xs font-bold uppercase tracking-wider text-[#7f7889]">
+                    <TableHead className="py-3.5 text-xs font-bold uppercase tracking-wider text-muted-foreground">
                       Size
                     </TableHead>
-                    <TableHead className="py-3.5 text-xs font-bold uppercase tracking-wider text-[#7f7889]">
+                    <TableHead className="py-3.5 text-xs font-bold uppercase tracking-wider text-muted-foreground">
                       Status
                     </TableHead>
-                    <TableHead className="py-3.5 pr-6 text-right text-xs font-bold uppercase tracking-wider text-[#7f7889]">
+                    <TableHead className="py-3.5 pr-6 text-right text-xs font-bold uppercase tracking-wider text-muted-foreground">
                       Actions
                     </TableHead>
                   </TableRow>
@@ -371,7 +371,7 @@ export function AdminDataBackupPage() {
                           <div
                             className={`flex size-9 items-center justify-center rounded-lg ${
                               index === 0
-                                ? 'bg-gradient-to-br from-[#f347a5] to-[#8f1fd1]'
+                                ? 'bg-gradient-to-br from-brand to-brand-deep'
                                 : 'bg-[#f0e3f7]'
                             }`}
                           >
@@ -380,7 +380,7 @@ export function AdminDataBackupPage() {
                             />
                           </div>
                           <div>
-                            <p className="text-sm font-bold text-[#2e2837]">
+                            <p className="text-sm font-bold text-foreground">
                               {formatDate(backup.timestamp)}
                             </p>
                             <p className="text-xs text-[#a89fb5]">
@@ -395,7 +395,7 @@ export function AdminDataBackupPage() {
                         </span>
                       </TableCell>
                       <TableCell>
-                        <span className="text-sm font-semibold text-[#2e2837]">
+                        <span className="text-sm font-semibold text-foreground">
                           {formatBytes(backup.sizeBytes)}
                         </span>
                       </TableCell>
@@ -408,7 +408,7 @@ export function AdminDataBackupPage() {
                         ) : (
                           <Badge
                             variant="outline"
-                            className="border-[#e0d6ea] text-xs font-semibold text-[#8f879f]"
+                            className="border-[#e0d6ea] text-xs font-semibold text-muted-foreground"
                           >
                             Archived
                           </Badge>
@@ -465,7 +465,7 @@ export function AdminDataBackupPage() {
             <Info className="size-5 text-blue-600" />
           </div>
           <div className="space-y-1">
-            <p className="text-sm font-bold text-[#2e2837]">How Backups Work</p>
+            <p className="text-sm font-bold text-foreground">How Backups Work</p>
             <p className="text-xs leading-relaxed text-[#6b5f7b]">
               Backups are automatically created <strong>every Sunday at midnight (UTC)</strong> via
               AWS EventBridge. You can also create manual backups at any time. Each backup is a full
@@ -499,7 +499,7 @@ export function AdminDataBackupPage() {
                   <Trash2 className="size-5 text-red-600" />
                 )}
               </div>
-              <DialogTitle className="text-xl font-bold text-[#2e2837]">
+              <DialogTitle className="text-xl font-bold text-foreground">
                 {confirmDialog.type === 'restore' ? 'Confirm Restore' : 'Confirm Delete'}
               </DialogTitle>
             </div>

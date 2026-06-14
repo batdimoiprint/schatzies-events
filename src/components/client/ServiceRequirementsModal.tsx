@@ -1,8 +1,16 @@
 import { X } from 'lucide-react';
 
+type RequirementItem = string | { label?: string; name?: string };
+
+export interface ServiceAllocation {
+  food_package?: string;
+  flow_type?: string;
+  requirements?: RequirementItem[];
+}
+
 interface Props {
   onClose: () => void;
-  allocation?: any;
+  allocation?: ServiceAllocation | null;
 }
 
 export function ServiceRequirementsModal({ onClose, allocation }: Props) {
@@ -66,7 +74,7 @@ export function ServiceRequirementsModal({ onClose, allocation }: Props) {
                     <h3 className="text-lg font-bold text-gray-800">Other Requirements</h3>
                   </div>
                   <ul className="space-y-2">
-                    {allocation.requirements.map((req: any, i: number) => (
+                    {allocation.requirements.map((req: RequirementItem, i: number) => (
                       <li key={i} className="text-sm text-gray-700">
                         {typeof req === 'string' ? req : req.label || req.name}
                       </li>

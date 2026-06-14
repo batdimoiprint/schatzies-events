@@ -32,10 +32,10 @@ export function TaskTab({
   setTaskCardMenuOpenFor,
 }: TaskTabProps) {
   return (
-    <section className="rounded-2xl border border-[#ddd8e8] bg-[#fbfafd] p-3 shadow-[0_6px_14px_rgba(31,18,54,0.05)]">
+    <section className="rounded-2xl border border-border bg-[#fbfafd] p-3 shadow-[0_6px_14px_rgba(31,18,54,0.05)]">
       <div className="mb-3 flex flex-wrap items-center justify-between gap-2 rounded-xl border border-[#e7e2f0] bg-white px-3 py-2">
         <div>
-          <p className="text-xs font-black uppercase tracking-[0.12em] text-[#8f879f]">
+          <p className="text-xs font-black uppercase tracking-[0.12em] text-muted-foreground">
             Task Board
           </p>
           <p className="text-sm font-semibold text-[#5e586f]">
@@ -45,7 +45,7 @@ export function TaskTab({
         <button
           type="button"
           onClick={handleAddEmptyTask}
-          className="inline-flex h-9 items-center gap-2 rounded-lg border border-[#e1d8ef] bg-white px-4 text-xs font-black text-[#7c1cc9] transition hover:bg-[#f8f3ff]"
+          className="inline-flex h-9 items-center gap-2 rounded-lg border border-border bg-white px-4 text-xs font-black text-[#7c1cc9] transition hover:bg-[#f8f3ff]"
         >
           <Plus className="size-4" />
           Add Task
@@ -78,7 +78,7 @@ export function TaskTab({
             >
               <div className="mb-2 flex items-center gap-2 px-1">
                 <span className={`inline-flex size-2.5 rounded-full ${lane.dotClassName}`} />
-                <h3 className="text-[20px] font-black tracking-tight text-[#2f2b39]">
+                <h3 className="text-[20px] font-black tracking-tight text-foreground">
                   {lane.label} ({laneTasks.length})
                 </h3>
               </div>
@@ -151,7 +151,7 @@ export function TaskTab({
                           )}
                         </div>
                       </div>
-                      <div className="min-h-0 flex-1 overflow-y-auto pr-2 text-[12px] leading-snug text-[#6f687f] [scrollbar-width:thin]">
+                      <div className="min-h-0 flex-1 overflow-y-auto pr-2 text-[12px] leading-snug text-muted-foreground [scrollbar-width:thin]">
                         <div className="space-y-1">
                           {(task.details ?? '')
                             .split('\n')
@@ -200,7 +200,7 @@ export function TaskTab({
                                   style={{ accentColor: color }}
                                 />
                                 <span
-                                  className={`min-w-0 flex-1 truncate text-[11px] font-medium ${item.done ? 'text-[#a29faf] line-through' : 'text-[#5a546a]'}`}
+                                  className={`min-w-0 flex-1 truncate text-[11px] font-medium ${item.done ? 'text-muted-foreground/70 line-through' : 'text-foreground/80'}`}
                                 >
                                   {item.label}
                                 </span>
@@ -211,8 +211,8 @@ export function TaskTab({
                       )}
                       {task.lane === 'completed' && (
                         <div className="mt-4 rounded-xl border border-[#dde8eb] bg-[#f5fbfc] px-3 py-2">
-                          <div className="text-[13px] font-black text-[#1f1f21]">Completed</div>
-                          <div className="text-[12px] font-semibold text-[#6f687f]">
+                          <div className="text-[13px] font-black text-foreground">Completed</div>
+                          <div className="text-[12px] font-semibold text-muted-foreground">
                             This task is completed
                           </div>
                         </div>
