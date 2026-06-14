@@ -1,11 +1,10 @@
 import axios from 'axios';
 import type { InternalAxiosRequestConfig } from 'axios';
 
-const API_BASE_URL = import.meta.env.VITE_API_URL
-  ? import.meta.env.VITE_API_URL          // staging — direct API Gateway URL
-  : import.meta.env.MODE === 'development'
-    ? 'http://localhost:3000/api'           // local dev
-    : `${import.meta.env.BASE_URL}/api`.replace(/\/+/g, '/'); // prod — through CloudFront
+const API_BASE_URL =
+  import.meta.env.MODE === 'development'
+    ? 'http://localhost:3000/api'
+    : `${import.meta.env.BASE_URL}/api`.replace(/\/+/g, '/');
 
 interface RetryableRequestConfig extends InternalAxiosRequestConfig {
   _retry?: boolean;
