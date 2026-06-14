@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - master
+      - dev
   workflow_dispatch:
 
 jobs:
@@ -27,9 +28,6 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Build frontend
-        run: pnpm build
-
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v2
         with:
@@ -37,29 +35,50 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ap-southeast-1
 
-      - name: Get Stack Outputs and Set Target
-        id: target
+      - name: Get Stack Outputs
+        id: stack
         env:
           STACK_NAME: schatzies-events
         run: |
           BUCKET_NAME=$(aws cloudformation describe-stacks --stack-name $STACK_NAME --query "Stacks[0].Outputs[?OutputKey=='DeploymentBucketName'].OutputValue" --output text)
           CF_DIST_ID=$(aws cloudformation describe-stacks --stack-name $STACK_NAME --query "Stacks[0].Outputs[?OutputKey=='CloudFrontDistributionId'].OutputValue" --output text)
+          API_URL=$(aws cloudformation describe-stacks --stack-name $STACK_NAME --query "Stacks[0].Outputs[?OutputKey=='ApiEndpoint'].OutputValue" --output text)
 
-          if [ "${{ github.ref_name }}" = "master" ]; then
-            echo "s3_prefix=s3://${BUCKET_NAME}" >> $GITHUB_OUTPUT
-            echo "cf_path=/*" >> $GITHUB_OUTPUT
-          else
-            echo "s3_prefix=s3://${BUCKET_NAME}/dev" >> $GITHUB_OUTPUT
-            echo "cf_path=/dev/*" >> $GITHUB_OUTPUT
-          fi
-
+          echo "bucket_name=${BUCKET_NAME}" >> $GITHUB_OUTPUT
           echo "cf_dist_id=${CF_DIST_ID}" >> $GITHUB_OUTPUT
+          echo "api_url=${API_URL}" >> $GITHUB_OUTPUT
 
-      - name: Deploy to S3
-        run: aws s3 sync dist ${{ steps.target.outputs.s3_prefix }} --delete
+      # ── PROD (master) ──────────────────────────────────────────
+      - name: Build frontend (prod)
+        if: github.ref_name == 'master'
+        run: pnpm build
 
-      - name: Invalidate CloudFront cache
+      - name: Deploy to S3 (prod)
+        if: github.ref_name == 'master'
+        run: aws s3 sync dist s3://${{ steps.stack.outputs.bucket_name }} --delete
+
+      - name: Invalidate CloudFront (prod)
+        if: github.ref_name == 'master'
         run: |
           aws cloudfront create-invalidation \
-            --distribution-id ${{ steps.target.outputs.cf_dist_id }} \
-            --paths "${{ steps.target.outputs.cf_path }}"
+            --distribution-id ${{ steps.stack.outputs.cf_dist_id }} \
+            --paths "/*"
+
+      # ── STAGING (dev) ──────────────────────────────────────────
+      - name: Build frontend (staging)
+        if: github.ref_name == 'dev'
+        env:
+          VITE_BASE_PATH: /staging/
+          VITE_API_URL: ${{ steps.stack.outputs.api_url }}/api
+        run: pnpm build
+
+      - name: Deploy to S3 (staging)
+        if: github.ref_name == 'dev'
+        run: aws s3 sync dist s3://${{ steps.stack.outputs.bucket_name }}/staging --delete
+
+      - name: Invalidate CloudFront (staging)
+        if: github.ref_name == 'dev'
+        run: |
+          aws cloudfront create-invalidation \
+            --distribution-id ${{ steps.stack.outputs.cf_dist_id }} \
+            --paths "/staging/*"

@@ -7,10 +7,12 @@ const VAPID_PUBLIC_KEY =
 
 /**
  * Resolve the backend API base URL.
- * In dev: http://localhost:3000/api
- * In prod: uses VITE_API_URL (must be set in your deployment env, e.g. https://api.schatzies.com/api)
+ * Staging: VITE_API_URL (direct API Gateway URL, set at build time)
+ * Local dev: http://localhost:3000/api
+ * Prod: relative path through CloudFront
  */
 function getApiUrl(): string {
+  if (import.meta.env.VITE_API_URL) return import.meta.env.VITE_API_URL;
   return import.meta.env.MODE === 'development'
     ? 'http://localhost:3000/api'
     : `${import.meta.env.BASE_URL}/api`.replace(/\/+/g, '/');
