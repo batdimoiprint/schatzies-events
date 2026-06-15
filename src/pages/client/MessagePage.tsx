@@ -281,14 +281,14 @@ export function MessagePage() {
                   /* Outgoing */
                   <div key={msg.id} className="flex items-end justify-end gap-3">
                     <div className="flex flex-col items-end gap-1">
-                      <div className="max-w-xs rounded-2xl rounded-br-sm bg-gradient-to-r from-pink-400 to-purple-500 px-4 py-3 text-sm text-white shadow-sm">
+                      <div className="max-w-xs rounded-2xl rounded-br-sm bg-gradient-to-r from-pink-400 to-pink-600 px-4 py-3 text-sm text-white shadow-sm">
                         {msg.body}
                       </div>
                       <span className="text-[10px] text-gray-400">
                         {formatMessageTime(msg.createdAt)}
                       </span>
                     </div>
-                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-purple-500 text-xs font-bold text-white">
+                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-pink-600 text-xs font-bold text-white">
                       {user?.firstName?.charAt(0)?.toUpperCase() || 'Y'}
                     </div>
                   </div>
@@ -338,7 +338,7 @@ export function MessagePage() {
                 aria-label="Send"
                 onClick={() => void handleSendMessage()}
                 disabled={isSending || !input.trim()}
-                className="flex size-10 shrink-0 items-center justify-center rounded-full bg-gradient-to-r from-pink-400 to-purple-500 text-white shadow transition hover:brightness-110 disabled:opacity-40"
+                className="flex size-10 shrink-0 items-center justify-center rounded-full bg-gradient-to-r from-pink-400 to-pink-600 text-white shadow transition hover:brightness-110 disabled:opacity-40"
               >
                 {isSending ? (
                   <Loader2 className="size-4 animate-spin" />

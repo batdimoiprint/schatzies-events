@@ -53,7 +53,7 @@ function BudgetIcon() {
 const reasons = [
   {
     Icon: YearsIcon,
-    title: '17+ Years of Expertise',
+    title: 'since 2011',
     body: 'A decade and a half of helping many clients turn special occasions into perfectly managed, memorable events.',
   },
   {
@@ -71,11 +71,6 @@ const reasons = [
     title: 'Budget-Friendly Luxury',
     body: 'Expertly managing the details so you can focus on the moment. We specialize in all-inclusive event solutions that are both affordable and adaptable.',
   },
-];
-
-const team = [
-  { name: 'Juana Dela Cruz', role: 'President', img: '/Pictures/team2.png' },
-  { name: 'Juan Dela Cruz', role: 'Vice-President', img: '/Pictures/team1.png' },
 ];
 
 export default function AboutUsPage() {
@@ -143,63 +138,28 @@ export default function AboutUsPage() {
             </h2>
             <div className="rule-gold mt-7 w-40" />
             <p className="mt-7 font-sans text-base leading-relaxed text-ivory/70 lg:text-lg">
-              With over 17 years of expertise, we turn complex logistics into seamless celebrations.
+              With years of expertise since 2011, we turn complex logistics into seamless celebrations.
               As your reliable on-the-ground partner, we handle the details so you can simply stay in
               the moment.
             </p>
           </ScrollReveal>
 
-          <div className="grid gap-px overflow-hidden rounded-sm border border-ivory/10 bg-ivory/10 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="grid gap-px overflow-hidden rounded-sm border border-ink/[0.08] bg-ink/[0.08] sm:grid-cols-2 lg:grid-cols-4">
             {reasons.map(({ Icon, title, body }, i) => (
               <ScrollReveal
                 key={title}
                 variant="up"
                 delay={(i % 4) * 80}
-                className="flex h-full flex-col bg-ink p-8"
+                className="flex h-full flex-col bg-white p-8"
               >
                 <div className="flex items-start justify-between">
                   <Icon />
-                  <span className="font-heading text-2xl italic text-gold/40">
+                  <span className="font-heading text-2xl italic text-gold/60">
                     {String(i + 1).padStart(2, '0')}
                   </span>
                 </div>
-                <h3 className="mt-7 font-heading text-xl leading-tight text-ivory">{title}</h3>
-                <p className="mt-3 font-sans text-sm leading-relaxed text-ivory/65">{body}</p>
-              </ScrollReveal>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ── Team ── */}
-      <section className="bg-ivory py-24 lg:py-32">
-        <div className="page-gutter mx-auto max-w-[1100px]">
-          <ScrollReveal variant="up" className="mb-14 text-center">
-            <p className="eyebrow text-brand">The Atelier</p>
-            <h2 className="mt-6 font-heading text-[clamp(2.25rem,5.5vw,4rem)] leading-[1.05] text-ink">
-              Meet our <span className="italic text-brand">team</span>.
-            </h2>
-            <p className="mt-5 font-sans text-base text-ink/60 lg:text-lg">
-              The experts behind your seamless events.
-            </p>
-          </ScrollReveal>
-
-          <div className="grid gap-8 sm:grid-cols-2">
-            {team.map((member, i) => (
-              <ScrollReveal key={member.name} variant="up" delay={i * 120}>
-                <figure className="group overflow-hidden rounded-sm border border-border bg-card">
-                  <div className="relative aspect-[4/5] overflow-hidden">
-                    <img
-                      src={member.img}
-                      alt={member.name}
-                      className="h-full w-full object-cover object-top transition-transform duration-700 group-hover:scale-105"
-                    />
-                  </div>
-                  <figcaption className="bg-ink px-6 py-6 text-center">
-                    <h3 className="font-heading text-2xl text-ivory">{member.name}</h3>
-                    <p className="eyebrow mt-2 text-gold">{member.role}</p>
-                  </figcaption>
-                </figure>
+                <h3 className="mt-7 font-heading text-xl leading-tight text-ink">{title}</h3>
+                <p className="mt-3 font-sans text-sm leading-relaxed text-ink/70">{body}</p>
               </ScrollReveal>
             ))}
           </div>

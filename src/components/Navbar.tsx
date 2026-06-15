@@ -7,6 +7,7 @@ const navMenuItems = [
   { label: 'Home', href: '/' },
   { label: 'Events Packages', href: '/event-packages' },
   { label: 'Services', href: '/services' },
+  { label: 'Gallery', href: '/gallery' },
   { label: 'About Us', href: '/about-us' },
   { label: 'Contact', href: '/contact' },
 ];
@@ -42,14 +43,14 @@ export function Navbar() {
           : 'border-b border-transparent bg-ivory/80 backdrop-blur-md'
       )}
     >
-      <div className="page-gutter">
+      <div className="page-gutter mx-auto w-full max-w-[1400px]">
         {/* Desktop */}
-        <div className="hidden h-20 grid-cols-[1fr_auto_1fr] items-center lg:grid">
+        <div className="hidden h-20 items-center justify-between lg:flex">
           <Link to="/" className="flex w-fit items-center gap-3">
             <img
               src="/Pictures/business-logo.png"
               alt="Schatzies Events"
-              className="h-12 w-auto object-contain transition-transform duration-500 group-hover:scale-105"
+              className="h-16 w-auto object-contain transition-transform duration-500 group-hover:scale-105"
             />
           </Link>
 
@@ -58,6 +59,7 @@ export function Navbar() {
               <Link
                 key={item.href}
                 to={item.href}
+                onClick={() => window.scrollTo(0, 0)}
                 className={cn(
                   'group relative font-ui text-[0.72rem] font-semibold tracking-[0.2em] uppercase transition-colors duration-300',
                   isActive(item.href) ? 'text-brand' : 'text-ink/70 hover:text-brand'
@@ -72,12 +74,6 @@ export function Navbar() {
                 />
               </Link>
             ))}
-          </div>
-
-          <div className="flex items-center justify-end">
-            <span className="font-heading text-[0.7rem] tracking-[0.28em] text-gold uppercase italic">
-              Est. 2011
-            </span>
           </div>
         </div>
 
@@ -114,7 +110,10 @@ export function Navbar() {
             <Link
               key={item.href}
               to={item.href}
-              onClick={() => setMobileOpen(false)}
+              onClick={() => {
+                setMobileOpen(false);
+                window.scrollTo(0, 0);
+              }}
               style={{ transitionDelay: mobileOpen ? `${i * 60 + 100}ms` : '0ms' }}
               className={cn(
                 'border-b border-ivory/10 py-4 font-heading text-3xl transition-all duration-500',

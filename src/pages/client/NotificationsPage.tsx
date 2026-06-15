@@ -133,7 +133,7 @@ export function NotificationsPage() {
                   <div
                     className={`mt-0.5 flex size-9 shrink-0 items-center justify-center rounded-full ${
                       n.unread
-                        ? 'bg-gradient-to-br from-pink-400 to-purple-500 text-white'
+                        ? 'bg-gradient-to-br from-pink-400 to-pink-600 text-white'
                         : 'bg-gray-100 text-muted-foreground'
                     }`}
                   >

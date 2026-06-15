@@ -95,7 +95,7 @@ export function SettingsPage() {
         {/* ── Privacy & Security ── */}
         <section className="overflow-hidden rounded-xl border border-border bg-white shadow-sm">
           <div className="flex items-center gap-3 border-b border-border px-6 py-4">
-            <div className="flex size-8 items-center justify-center rounded-lg bg-purple-100 text-purple-600">
+            <div className="flex size-8 items-center justify-center rounded-lg bg-pink-100 text-pink-600">
               <Shield className="size-4" />
             </div>
             <h2 className="text-base font-bold text-foreground">Privacy & Security</h2>

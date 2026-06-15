@@ -156,7 +156,7 @@ export function CostBreakdownPage() {
 
     // Header
     doc.setFontSize(22);
-    doc.setTextColor('#8f1fd1');
+    doc.setTextColor('#ff0066');
     doc.text('SCHATZIES EVENTS', 14, 22);
 
     doc.setFontSize(16);
@@ -224,7 +224,7 @@ export function CostBreakdownPage() {
             </SelectContent>
           </Select>
           <div>
-            <span className="rounded-full border border-[#eadcf6] bg-brand/5 px-3 py-0.5 text-xs font-bold uppercase tracking-wide text-brand-deep">
+            <span className="rounded-full border border-pink-200 bg-brand/5 px-3 py-0.5 text-xs font-bold uppercase tracking-wide text-brand-deep">
               {evType}
             </span>
           </div>
@@ -232,7 +232,7 @@ export function CostBreakdownPage() {
         <div className="flex items-center gap-2">
           <Button
             onClick={handlePdf}
-            className="rounded-full bg-gradient-to-r from-[#f34da7] to-brand-deep px-6 text-white hover:opacity-95 font-bold shadow-[0_4px_14px_rgba(165,44,180,0.2)]"
+            className="rounded-full bg-gradient-to-r from-[#f34da7] to-brand-deep px-6 text-white hover:opacity-95 font-bold shadow-[0_4px_14px_rgba(255,0,102,0.2)]"
           >
             <FileText className="size-4 mr-2" /> Export PDF Report
           </Button>

@@ -176,12 +176,12 @@ export function TaskTab({
                           {(task.checklist ?? []).map((item) => {
                             const palette = [
                               '#f347a5',
-                              '#8f1fd1',
+                              '#ff0066',
                               '#f1589e',
                               '#2ea4ff',
                               '#2ec24f',
                               '#ffb86b',
-                              '#6f26b4',
+                              '#e6005c',
                             ];
                             const colorIndex = (task.checklist ?? []).findIndex(
                               (x) => x.id === item.id

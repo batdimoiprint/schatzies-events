@@ -8,18 +8,31 @@ interface CookieConsentBannerProps {
 
 export function CookieConsentBanner({ onOpenCookiePolicy }: CookieConsentBannerProps) {
   const [showBanner, setShowBanner] = useState(() => {
-    // Initialize state based on localStorage on first render
-    const cookieConsent = localStorage.getItem('schatzies-cookie-consent');
-    return !cookieConsent;
+    try {
+      // Initialize state based on localStorage on first render
+      const cookieConsent = localStorage.getItem('schatzies-cookie-consent');
+      return !cookieConsent;
+    } catch (e) {
+      console.warn('LocalStorage not accessible:', e);
+      return true;
+    }
   });
 
   const handleAccept = () => {
-    localStorage.setItem('schatzies-cookie-consent', 'accepted');
+    try {
+      localStorage.setItem('schatzies-cookie-consent', 'accepted');
+    } catch (e) {
+      console.warn('LocalStorage not accessible:', e);
+    }
     setShowBanner(false);
   };
 
   const handleReject = () => {
-    localStorage.setItem('schatzies-cookie-consent', 'rejected');
+    try {
+      localStorage.setItem('schatzies-cookie-consent', 'rejected');
+    } catch (e) {
+      console.warn('LocalStorage not accessible:', e);
+    }
     setShowBanner(false);
   };
 

@@ -158,7 +158,7 @@ export function RSVPListContent({ eventId, eventTitle }: RSVPListContentProps) {
                     <td className="px-4 py-4 text-xs font-medium text-muted-foreground">{i + 1}</td>
                     <td className="px-4 py-4">
                       <div className="flex items-center gap-3">
-                        <div className="flex size-9 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-pink-400 to-purple-500 text-xs font-bold text-white shadow-sm">
+                        <div className="flex size-9 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-pink-400 to-pink-600 text-xs font-bold text-white shadow-sm">
                           {rsvp.firstName.charAt(0)}
                         </div>
                         <div>

@@ -50,7 +50,7 @@ export function OrganizerLayout() {
       <div className="flex h-screen items-center justify-center bg-[#fbf8fd]">
         <div className="flex flex-col items-center">
           <div className="relative">
-            <div className="absolute -inset-2 animate-spin rounded-full border-r-4 border-t-4 border-transparent border-r-[#8f1fd1] border-t-[#f347a5]" />
+            <div className="absolute -inset-2 animate-spin rounded-full border-r-4 border-t-4 border-transparent border-r-[#e6005c] border-t-[#f347a5]" />
             <img
               src="/Pictures/organizerpics/Logo.png.png"
               alt="Schatzies Events logo"

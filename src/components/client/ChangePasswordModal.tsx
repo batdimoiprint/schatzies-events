@@ -73,7 +73,7 @@ export function ChangePasswordModal({ onPasswordChanged }: ChangePasswordModalPr
         <div
           className="px-6 py-5"
           style={{
-            backgroundImage: 'linear-gradient(135deg, #700F81 0%, #FF0066 100%)',
+            backgroundImage: 'linear-gradient(135deg, #FF0066 0%, #E6005C 100%)',
           }}
         >
           <div className="flex items-center gap-3">
@@ -224,7 +224,7 @@ export function ChangePasswordModal({ onPasswordChanged }: ChangePasswordModalPr
             style={{
               backgroundImage:
                 canSubmit && !success
-                  ? 'linear-gradient(135deg, #700F81 0%, #FF0066 100%)'
+                  ? 'linear-gradient(135deg, #FF0066 0%, #E6005C 100%)'
                   : undefined,
               backgroundColor: canSubmit && !success ? undefined : '#a0a0a0',
             }}

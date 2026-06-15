@@ -212,7 +212,7 @@ export function AdminDataBackupPage() {
       <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
         <div>
           <div className="flex items-center gap-3">
-            <div className="flex size-11 items-center justify-center rounded-xl bg-gradient-to-br from-brand to-brand-deep shadow-lg shadow-purple-200">
+            <div className="flex size-11 items-center justify-center rounded-xl bg-gradient-to-br from-brand to-brand-deep shadow-lg shadow-pink-200">
               <DatabaseBackup className="size-5 text-white" />
             </div>
             <div>
@@ -228,7 +228,7 @@ export function AdminDataBackupPage() {
             onClick={fetchBackups}
             disabled={loading}
             variant="outline"
-            className="gap-2 rounded-xl border-[#e0d6ea] text-[#6b5f7b] hover:border-[#c7b8d8] hover:bg-[#f8f2fc]"
+            className="gap-2 rounded-xl border-pink-200 text-pink-700 hover:border-pink-300 hover:bg-pink-50/30"
           >
             <RefreshCcw className={`size-4 ${loading ? 'animate-spin' : ''}`} />
             Refresh
@@ -236,7 +236,7 @@ export function AdminDataBackupPage() {
           <Button
             onClick={handleCreateBackup}
             disabled={creating}
-            className="gap-2 rounded-xl bg-gradient-to-r from-brand to-brand-deep text-white shadow-lg shadow-purple-200 hover:shadow-xl hover:shadow-purple-300"
+            className="gap-2 rounded-xl bg-gradient-to-r from-brand to-brand-deep text-white shadow-lg shadow-pink-200 hover:shadow-xl hover:shadow-pink-300"
           >
             {creating ? <Loader2 className="size-4 animate-spin" /> : <Upload className="size-4" />}
             {creating ? 'Creating Backup...' : 'Save Backup Now'}

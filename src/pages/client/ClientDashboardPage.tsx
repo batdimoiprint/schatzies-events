@@ -411,7 +411,7 @@ export function ClientDashboardPage() {
                   <span
                     className="font-black leading-none sm:text-8xl lg:text-9xl text-[clamp(3rem,8vw,10rem)]"
                     style={{
-                      backgroundImage: 'linear-gradient(to right, #700F81 0%, #FF0066 100%)',
+                      backgroundImage: 'linear-gradient(to right, #FF0066 0%, #E6005C 100%)',
                       backgroundClip: 'text',
                       WebkitBackgroundClip: 'text',
                       WebkitTextFillColor: 'transparent',
@@ -424,7 +424,7 @@ export function ClientDashboardPage() {
                       className="font-black text-2xl sm:text-3xl lg:text-4xl leading-tight"
                       style={{
                         fontFamily: 'Libre Baskerville, serif',
-                        backgroundImage: 'linear-gradient(to right, #700F81 0%, #FF0066 100%)',
+                        backgroundImage: 'linear-gradient(to right, #FF0066 0%, #E6005C 100%)',
                         backgroundClip: 'text',
                         WebkitBackgroundClip: 'text',
                         WebkitTextFillColor: 'transparent',
@@ -451,7 +451,7 @@ export function ClientDashboardPage() {
                   </div>
                   <div className="bg-white border border-gray-200 shadow-sm rounded-md px-3 py-2 mb-2 flex justify-between items-center">
                     <div className="flex items-center gap-3">
-                      <Calendar className="size-5 shrink-0" style={{ color: '#700F81' }} />
+                      <Calendar className="size-5 shrink-0" style={{ color: '#FF0066' }} />
                       <span className="truncate font-medium text-brand text-sm sm:text-base">
                         {displayEvent.eventDate}
                       </span>
@@ -491,7 +491,7 @@ export function ClientDashboardPage() {
                   <h2
                     className="text-xl sm:text-2xl lg:text-3xl font-bold leading-tight"
                     style={{
-                      backgroundImage: 'linear-gradient(to right, #FF0066 0%, #700F81 100%)',
+                      backgroundImage: 'linear-gradient(to right, #FF0066 0%, #E6005C 100%)',
                       backgroundClip: 'text',
                       WebkitBackgroundClip: 'text',
                       WebkitTextFillColor: 'transparent',
@@ -569,7 +569,7 @@ export function ClientDashboardPage() {
             {/* De Luxe Package card — gradient, no white */}
             <div
               className="rounded-xl p-6 shadow-md"
-              style={{ backgroundImage: 'linear-gradient(to right, #700F81 0%, #FF589C 100%)' }}
+              style={{ backgroundImage: 'linear-gradient(to right, #FF0066 0%, #FF589C 100%)' }}
             >
               <h2
                 className="text-3xl font-bold text-white"

@@ -1,20 +1,30 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FacebookLogo, EnvelopeSimple, Phone, ArrowRight, ArrowUpRight } from '@phosphor-icons/react';
+import {
+  FacebookLogo,
+  InstagramLogo,
+  EnvelopeSimple,
+  Phone,
+  Link,
+  ArrowRight,
+} from '@phosphor-icons/react';
 import ScrollReveal from '@/components/ui/ScrollReveal';
+import ServicesSection from '@/components/ServicesSection';
+import { useBusinessContact } from '@/hooks/useBusinessContact';
 
-// Gallery images
+// Gallery images — equal count per row for balanced marquee
 const galleryRow1 = [
   { src: '/Pictures/gallery-1.jpg', alt: 'Event gallery 1' },
   { src: '/Pictures/gallery-2.jpg', alt: 'Event gallery 2' },
   { src: '/Pictures/gallery-3.jpg', alt: 'Event gallery 3' },
+  { src: '/Pictures/gallery-4.jpg', alt: 'Event gallery 4' },
 ];
 
 const galleryRow2 = [
-  { src: '/Pictures/gallery-4.jpg', alt: 'Event gallery 4' },
   { src: '/Pictures/gallery-5.jpg', alt: 'Event gallery 5' },
   { src: '/Pictures/gallery-6.jpg', alt: 'Event gallery 6' },
   { src: '/Pictures/gallery-7.jpg', alt: 'Event gallery 7' },
+  { src: '/Pictures/hero-1.jpg', alt: 'Event gallery 8' },
 ];
 
 const heroImages = [
@@ -69,30 +79,86 @@ export function LandingPage() {
   );
 }
 
+function HeroHeartParticles() {
+  const hearts = [
+    { left: '10%', top: '25%', size: 16, delay: '0s', dur: '7s' },
+    { left: '85%', top: '20%', size: 22, delay: '1.5s', dur: '8s' },
+    { left: '25%', top: '65%', size: 14, delay: '3s', dur: '9s' },
+    { left: '75%', top: '75%', size: 20, delay: '0.8s', dur: '7.5s' },
+    { left: '45%', top: '45%', size: 18, delay: '2.2s', dur: '8.5s' },
+    { left: '60%', top: '85%', size: 15, delay: '4s', dur: '10s' },
+    { left: '20%', top: '50%', size: 19, delay: '0.5s', dur: '6.8s' },
+    { left: '90%', top: '55%', size: 16, delay: '2.5s', dur: '9.2s' },
+  ];
+
+  return (
+    <div className="pointer-events-none absolute inset-0 z-[1] overflow-hidden" aria-hidden="true">
+      <style>{`
+        @keyframes float-heart {
+          0% { transform: translateY(15px) scale(1) rotate(0deg); opacity: 0; }
+          15% { opacity: 0.95; }
+          85% { opacity: 0.95; }
+          100% { transform: translateY(-35px) scale(0.9) rotate(15deg); opacity: 0; }
+        }
+      `}</style>
+      {hearts.map((h, i) => (
+        <svg
+          key={i}
+          className="absolute text-red-600/60"
+          style={{
+            left: h.left,
+            top: h.top,
+            width: h.size,
+            height: h.size,
+            animation: `float-heart ${h.dur} ease-in-out infinite`,
+            animationDelay: h.delay,
+          }}
+          viewBox="0 0 24 24"
+          fill="currentColor"
+        >
+          <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
+        </svg>
+      ))}
+    </div>
+  );
+}
+
 /* ── Hero — editorial split ── */
 function HeroSection() {
   const navigate = useNavigate();
   const [index, setIndex] = useState(0);
+  const { data: contact } = useBusinessContact();
 
   useEffect(() => {
     const t = setInterval(() => setIndex((i) => (i + 1) % heroImages.length), 6000);
     return () => clearInterval(t);
   }, []);
 
-  const socials = [
-    {
-      href: 'https://www.facebook.com/debutandweddingpackage',
-      label: 'Facebook',
-      Icon: FacebookLogo,
-      external: true,
-    },
-    { href: 'mailto:schatziesevents@gmail.com', label: 'Email', Icon: EnvelopeSimple, external: false },
-    { href: 'tel:+639333807868', label: 'Phone', Icon: Phone, external: false },
-  ];
+  type Social = { href: string; label: string; Icon: React.ElementType; external: boolean };
+  const socials: Social[] = [];
+
+  if (contact) {
+    for (const lnk of contact.links ?? []) {
+      const p = (lnk.platform ?? lnk.label).toLowerCase();
+      const Icon = p.includes('facebook')
+        ? FacebookLogo
+        : p.includes('instagram')
+          ? InstagramLogo
+          : Link;
+      socials.push({ href: lnk.url, label: lnk.label, Icon, external: true });
+    }
+    for (const email of contact.emails ?? []) {
+      socials.push({ href: `mailto:${email.email}`, label: email.label, Icon: EnvelopeSimple, external: false });
+    }
+    for (const phone of contact.phones ?? []) {
+      socials.push({ href: `tel:${phone.number.replace(/\s/g, '')}`, label: phone.label, Icon: Phone, external: false });
+    }
+  }
 
   return (
-    <section className="relative min-h-screen overflow-hidden bg-ivory">
-      <div className="page-gutter mx-auto grid min-h-screen max-w-[1500px] grid-cols-1 items-center gap-10 pt-28 pb-16 lg:grid-cols-[1.05fr_0.95fr] lg:gap-16 lg:pt-24 lg:pb-0">
+    <section className="relative bg-ivory w-full min-h-screen lg:max-h-screen lg:overflow-hidden">
+      <HeroHeartParticles />
+      <div className="page-gutter mx-auto grid min-h-screen max-w-[1500px] grid-cols-1 items-center gap-10 pt-28 pb-16 lg:grid-cols-[1.05fr_0.95fr] lg:gap-16 lg:pt-24 lg:pb-0 lg:max-h-screen">
         {/* Left — type */}
         <div className="relative z-10">
           <div className="animate-fade-in-up flex items-center gap-4">
@@ -158,10 +224,7 @@ function HeroSection() {
         </div>
 
         {/* Right — editorial image frame */}
-        <div className="relative h-[55vh] w-full lg:h-[88vh]">
-          <span className="absolute -top-3 right-2 z-20 hidden font-heading text-sm italic tracking-[0.25em] text-gold lg:block [writing-mode:vertical-rl]">
-            Est. 2011
-          </span>
+        <div className="relative h-[45vh] sm:h-[55vh] lg:h-[88vh] w-full">
           <div className="relative h-full w-full overflow-hidden rounded-t-[180px] rounded-b-md border border-gold/40 shadow-[0_30px_80px_-30px_rgba(34,26,20,0.45)]">
             {heroImages.map((src, i) => (
               <img
@@ -194,24 +257,72 @@ function HeroSection() {
   );
 }
 
-/* ── Spotlight — portfolio marquee ── */
-function SpotlightSection() {
-  const navigate = useNavigate();
-  const row1 = Array.from({ length: 8 }, () => galleryRow1).flat();
-  const row2 = Array.from({ length: 8 }, () => galleryRow2).flat();
+/* ── Spotlight — portfolio marquee as background, text centered ── */
+function SpotlightParticles() {
+  const particles = [
+    { left: '10%', top: '25%', size: 8, delay: '0s', dur: '8s' },
+    { left: '80%', top: '15%', size: 6, delay: '2s', dur: '10s' },
+    { left: '30%', top: '75%', size: 10, delay: '1s', dur: '9s' },
+    { left: '85%', top: '80%', size: 7, delay: '3s', dur: '7s' },
+    { left: '15%', top: '85%', size: 9, delay: '4s', dur: '11s' },
+    { left: '50%', top: '30%', size: 8, delay: '1.5s', dur: '8.5s' },
+    { left: '70%', top: '60%', size: 7, delay: '2.5s', dur: '9.5s' },
+  ];
 
   return (
-    <section className="overflow-hidden bg-ivory py-24 lg:py-32">
-      <div className="page-gutter mx-auto mb-16 max-w-5xl text-center">
-        <ScrollReveal variant="up">
-          <p className="eyebrow text-brand">01 — The Portfolio</p>
-          <h2 className="mt-6 font-heading text-[clamp(2.25rem,5.5vw,4rem)] leading-[1.05] text-ink">
+    <div className="pointer-events-none absolute inset-0 z-[2] overflow-hidden" aria-hidden="true">
+      <style>{`
+        @keyframes float-spotlight {
+          0% { transform: translateY(20px) rotate(0deg); opacity: 0; }
+          20% { opacity: 0.5; }
+          80% { opacity: 0.5; }
+          100% { transform: translateY(-30px) rotate(360deg); opacity: 0; }
+        }
+      `}</style>
+      {particles.map((p, i) => (
+        <svg
+          key={i}
+          className="absolute text-brand/20"
+          style={{
+            left: p.left,
+            top: p.top,
+            width: p.size,
+            height: p.size,
+            animation: `float-spotlight ${p.dur} linear infinite`,
+            animationDelay: p.delay,
+          }}
+          viewBox="0 0 24 24"
+          fill="currentColor"
+        >
+          <circle cx="12" cy="12" r="8" />
+        </svg>
+      ))}
+    </div>
+  );
+}
+
+/* ── Spotlight — portfolio marquee as background, text centered ── */
+function SpotlightSection() {
+  // 4x duplication ensures seamless infinite scroll on ultra-wide screens
+  const repeat = (arr: typeof galleryRow1) => [...arr, ...arr, ...arr, ...arr];
+  const row1 = repeat(galleryRow1);
+  const row2 = repeat(galleryRow2);
+
+  return (
+    <section className="relative overflow-hidden bg-white min-h-screen max-h-screen flex flex-col justify-between items-center py-8">
+      {/* ── Animated Spotlight Particles ── */}
+      <SpotlightParticles />
+
+      {/* ── Centered text content (top 30%) ── */}
+      <div className="relative z-10 w-full max-w-3xl text-center px-6 flex flex-col justify-center h-[30vh]">
+        <ScrollReveal variant="up" className="mx-auto text-center">
+          <h2 className="font-heading text-[clamp(2rem,4vw,2.75rem)] leading-[1.1] text-ink">
             Step into the <span className="italic text-brand">spotlight</span>,
             <br />
             we&rsquo;ll handle the <span className="italic text-brand">stage</span>.
           </h2>
-          <div className="rule-gold mx-auto mt-8 w-40" />
-          <p className="mx-auto mt-8 max-w-2xl font-sans text-base leading-relaxed text-ink/65 lg:text-lg">
+          <div className="rule-gold mx-auto mt-4 w-32" />
+          <p className="mx-auto mt-4 max-w-xl font-sans text-xs sm:text-sm leading-relaxed text-ink/75">
             Your milestone is a masterpiece in the making. While you focus on making memories and
             greeting your guests, our team ensures every light, sound, and moment is executed to
             perfection.
@@ -219,148 +330,165 @@ function SpotlightSection() {
         </ScrollReveal>
       </div>
 
-      <div className="relative mb-16 space-y-6">
-        {[row1, row2].map((row, rowIdx) => (
-          <div key={rowIdx} className="mask-fade-x group flex overflow-hidden">
-            <div
-              className={`flex w-max gap-6 ${rowIdx === 0 ? 'animate-marquee' : 'animate-marquee-reverse'} group-hover:[animation-play-state:paused]`}
-            >
-              {row.map((image, i) => (
-                <figure
-                  key={`${rowIdx}-${i}`}
-                  className="relative h-72 w-[420px] flex-shrink-0 overflow-hidden rounded-sm border border-gold/20"
-                >
-                  <img
-                    src={image.src}
-                    alt={image.alt}
-                    className="h-full w-full object-cover transition-transform duration-700 hover:scale-105"
-                  />
-                </figure>
-              ))}
-            </div>
+      {/* ── Marquee rows below (70%) ── */}
+      <div className="relative z-0 w-full flex flex-col justify-center gap-4 overflow-hidden h-[70vh]" aria-hidden="true">
+        {/* Row 1 — scrolls left */}
+        <div className="mask-fade-x flex overflow-hidden">
+          <div className="flex w-max gap-4 animate-marquee">
+            {row1.map((image, i) => (
+              <figure
+                key={`r1-${i}`}
+                className="relative h-[31vh] w-[46vh] flex-shrink-0 overflow-hidden rounded-md"
+              >
+                <img
+                  src={image.src}
+                  alt=""
+                  loading="lazy"
+                  decoding="async"
+                  className="h-full w-full object-cover"
+                />
+              </figure>
+            ))}
           </div>
-        ))}
-      </div>
+        </div>
 
-      <div className="page-gutter text-center">
-        <button
-          onClick={() => navigate('/gallery')}
-          className="group inline-flex items-center gap-3 border border-ink/20 px-9 py-4 font-ui text-xs font-semibold tracking-[0.18em] text-ink uppercase transition-all duration-300 hover:border-brand hover:text-brand"
-        >
-          View Full Gallery
-          <ArrowUpRight
-            size={16}
-            weight="bold"
-            className="transition-transform duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5"
-          />
-        </button>
+        {/* Row 2 — scrolls right (reverse) */}
+        <div className="mask-fade-x flex overflow-hidden">
+          <div className="flex w-max gap-4 animate-marquee-reverse">
+            {row2.map((image, i) => (
+              <figure
+                key={`r2-${i}`}
+                className="relative h-[31vh] w-[46vh] flex-shrink-0 overflow-hidden rounded-md"
+              >
+                <img
+                  src={image.src}
+                  alt=""
+                  loading="lazy"
+                  decoding="async"
+                  className="h-full w-full object-cover"
+                />
+              </figure>
+            ))}
+          </div>
+        </div>
       </div>
     </section>
   );
 }
 
-/* ── Services — espresso editorial features ── */
-function ServicesSection() {
-  const features = [
-    {
-      kicker: '02 — Weddings',
-      title: 'A Love Story Told in Every Detail',
-      body: "We don't just plan weddings; we protect your peace. From intimate vows to grand ballrooms, we ensure the only thing you focus on is the person at the end of the aisle.",
-      img: '/Pictures/service-wedding.jpg',
-      alt: 'A Love Story Told in Every Detail',
-    },
-    {
-      kicker: '03 — Debuts',
-      title: "Your 18th: More Than a Birthday, a Milestone",
-      body: "Eighteen years in the making, designed in a single night. We transform your milestone into a cinematic celebration that captures exactly who you are and who you're becoming.",
-      img: '/Pictures/service-debut.jpg',
-      alt: "Your 18th: More Than a Birthday, It's a Milestone",
-    },
-  ];
+/* ── Services section — now imported from @/components/ServicesSection ── */
 
-  return (
-    <section id="services" className="grain relative overflow-hidden bg-ink py-24 text-ivory lg:py-36">
-      <div className="page-gutter relative z-10 mx-auto max-w-[1400px] space-y-28 lg:space-y-40">
-        {features.map((f, i) => (
-          <div
-            key={f.kicker}
-            className="grid grid-cols-1 items-center gap-10 lg:grid-cols-2 lg:gap-20"
-          >
-            <ScrollReveal
-              variant={i % 2 === 0 ? 'right' : 'left'}
-              className={`relative aspect-[4/5] w-full overflow-hidden rounded-sm border border-gold/30 ${
-                i % 2 === 0 ? 'lg:order-2' : 'lg:order-1'
-              }`}
-            >
-              <img
-                src={f.img}
-                alt={f.alt}
-                className="h-full w-full object-cover transition-transform duration-[1200ms] hover:scale-105"
-              />
-            </ScrollReveal>
-
-            <ScrollReveal
-              variant={i % 2 === 0 ? 'left' : 'right'}
-              className={`space-y-6 ${i % 2 === 0 ? 'lg:order-1' : 'lg:order-2'}`}
-            >
-              <p className="eyebrow text-gold">{f.kicker}</p>
-              <h3 className="font-heading text-[clamp(2rem,4.5vw,3.5rem)] leading-[1.04] text-ivory">
-                {f.title}
-              </h3>
-              <div className="rule-gold w-24" />
-              <p className="max-w-md font-sans text-base leading-relaxed text-ivory/70 lg:text-lg">
-                {f.body}
-              </p>
-            </ScrollReveal>
-          </div>
-        ))}
-      </div>
-    </section>
-  );
-}
-
-/* ── Testimonials — editorial pull-quotes ── */
+/* ── Testimonials — premium editorial carousel ── */
 function TestimonialsSection() {
   return (
-    <section className="bg-ivory py-24 lg:py-32">
-      <div className="page-gutter mx-auto max-w-[1400px]">
-        <ScrollReveal variant="up" className="mb-16 max-w-3xl">
-          <p className="eyebrow text-brand">04 — The Experience</p>
-          <h2 className="mt-6 font-heading text-[clamp(2.25rem,5.5vw,4rem)] leading-[1.05] text-ink">
+    <section className="relative bg-ivory w-full py-16 lg:py-24">
+      {/* ── Subtle decorative gradient blobs ── */}
+      <div className="pointer-events-none absolute inset-0" aria-hidden="true">
+        <div
+          className="absolute -left-32 top-0 h-[500px] w-[500px] rounded-full opacity-[0.06]"
+          style={{ background: 'radial-gradient(circle, #ff0066, transparent 70%)' }}
+        />
+        <div
+          className="absolute -right-32 bottom-0 h-[500px] w-[500px] rounded-full opacity-[0.05]"
+          style={{ background: 'radial-gradient(circle, #e6005c, transparent 70%)' }}
+        />
+      </div>
+
+      <div className="page-gutter relative z-10 mx-auto w-full max-w-[1400px] flex flex-col justify-center">
+        {/* ── Header ── */}
+        <ScrollReveal variant="up" className="mb-8 text-center lg:text-left">
+          <h2 className="font-heading text-[clamp(2.25rem,5.5vw,4rem)] leading-[1.05] text-ink">
             The Schatzies <span className="italic text-brand">experience</span>.
           </h2>
-          <p className="mt-7 font-sans text-base leading-relaxed text-ink/65 lg:text-lg">
+          <p className="mx-auto mt-5 max-w-2xl font-sans text-base leading-relaxed text-ink/60 lg:mx-0 lg:text-lg">
             Celebrating 15 years of flawless events through the words of those who experienced the
             magic firsthand.
           </p>
         </ScrollReveal>
 
-        <div className="grid gap-px overflow-hidden rounded-sm border border-border bg-border sm:grid-cols-2 lg:grid-cols-3">
+        {/* ── Testimonial cards — equal height grid ── */}
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {testimonials.map((t, idx) => (
             <ScrollReveal
               key={idx}
               variant="up"
-              delay={(idx % 3) * 100}
-              className="flex flex-col bg-card p-8 lg:p-10"
+              delay={idx * 120}
+              className="group relative h-full"
             >
-              <span className="font-heading text-6xl leading-none text-gold">&ldquo;</span>
-              <p className="mt-4 flex-1 font-sans text-[0.95rem] leading-relaxed text-ink/75">
-                {t.text}
-              </p>
-              <div className="mt-8 flex items-center gap-3 border-t border-border pt-5">
-                <span className="flex h-9 w-9 items-center justify-center rounded-full bg-brand/10 font-ui text-sm font-bold text-brand">
-                  {t.name.charAt(0)}
-                </span>
-                <div>
-                  <p className="font-ui text-sm font-semibold text-ink">{t.name}</p>
-                  <p className="font-ui text-[0.7rem] tracking-[0.15em] text-brand uppercase">
-                    Recommends
-                  </p>
+              <div
+                className="relative flex h-full flex-col rounded-2xl border border-brand/[0.08] p-6 transition-all duration-500 hover:border-brand/20 hover:shadow-[0_20px_60px_-20px_rgba(255,0,102,0.12)] lg:p-7"
+                style={{
+                  background:
+                    'linear-gradient(135deg, rgba(255, 240, 245, 0.95), rgba(253, 215, 225, 0.9))',
+                  backdropFilter: 'blur(12px)',
+                }}
+              >
+                {/* Decorative top accent line */}
+                <div
+                  className="absolute left-6 right-6 top-0 h-[2px] rounded-full opacity-0 transition-opacity duration-500 group-hover:opacity-100"
+                  style={{
+                    background: 'linear-gradient(90deg, transparent, #ff0066, #e6005c, transparent)',
+                  }}
+                />
+
+                {/* Quote mark + stars */}
+                <div className="mb-4 flex items-start justify-between">
+                  <svg
+                    className="h-8 w-8 text-brand/15 transition-colors duration-500 group-hover:text-brand/30"
+                    viewBox="0 0 40 40"
+                    fill="currentColor"
+                  >
+                    <path d="M10.4 18.8c-1.2 0-2.3-.3-3.2-.8C5.9 17.2 5 15.8 5 14c0-1.2.3-2.3.8-3.2C6.6 9.3 7.8 8.2 9.6 7.2c1.8-1 3.8-1.6 5.6-1.8l.4 1.6c-2 .6-3.4 1.4-4.4 2.4-.8.8-1.2 1.8-1.2 2.8 0 .4.2.8.4 1 .4.2.8.4 1.4.4 1 0 1.8.4 2.6 1.2.8.8 1.2 1.8 1.2 3s-.4 2.2-1.2 3c-.8.6-2 1-3 1zm16 0c-1.2 0-2.3-.3-3.2-.8C21.9 17.2 21 15.8 21 14c0-1.2.3-2.3.8-3.2C22.6 9.3 23.8 8.2 25.6 7.2c1.8-1 3.8-1.6 5.6-1.8l.4 1.6c-2 .6-3.4 1.4-4.4 2.4-.8.8-1.2 1.8-1.2 2.8 0 .4.2.8.4 1 .4.2.8.4 1.4.4 1 0 1.8.4 2.6 1.2.8.8 1.2 1.8 1.2 3s-.4 2.2-1.2 3c-.8.6-2 1-3 1z" />
+                  </svg>
+                  <div className="flex gap-0.5">
+                    {Array.from({ length: 5 }).map((_, i) => (
+                      <svg
+                        key={i}
+                        className="h-3 w-3 text-amber-400"
+                        viewBox="0 0 20 20"
+                        fill="currentColor"
+                      >
+                        <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                      </svg>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Quote text */}
+                <p className="flex-1 font-sans text-[0.88rem] leading-[1.65] text-ink/70">
+                  &ldquo;{t.text}&rdquo;
+                </p>
+
+                {/* Author */}
+                <div className="mt-6 flex items-center gap-3 border-t border-ink/[0.06] pt-4">
+                  <div className="relative">
+                    <span
+                      className="flex h-9 w-9 items-center justify-center rounded-full font-heading text-xs font-bold text-white"
+                      style={{
+                        background: 'linear-gradient(135deg, #ff0066, #e6005c)',
+                      }}
+                    >
+                      {t.name.charAt(0)}
+                    </span>
+                    {/* Online dot */}
+                    <span className="absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full border-2 border-white bg-emerald-400" />
+                  </div>
+                  <div>
+                    <p className="font-sans text-xs font-semibold text-ink">{t.name}</p>
+                  </div>
                 </div>
               </div>
             </ScrollReveal>
           ))}
         </div>
+
+        {/* ── Bottom accent ── */}
+        <ScrollReveal variant="up" delay={600} className="mt-8 text-center">
+          <div className="rule-gold mx-auto w-24" />
+          <p className="mt-4 font-heading text-base italic text-ink/40">
+            &ldquo;Where every celebration becomes unforgettable.&rdquo;
+          </p>
+        </ScrollReveal>
       </div>
     </section>
   );

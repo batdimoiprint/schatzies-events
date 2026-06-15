@@ -7,6 +7,7 @@ import { getVendorEntitiesByEventId, type Vendor } from '@/api/vendors';
 import { getCostBreakdown, type CostBreakdownResponse } from '@/api/cost-breakdown';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
+import { useBusinessContact } from '@/hooks/useBusinessContact';
 
 /** jsPDF augmented by the autotable plugin (not in the base typings). */
 interface AutoTableDoc {
@@ -79,6 +80,7 @@ export function CostBreakdownTab({ selectedEventId }: CostBreakdownTabProps) {
   const [apiEvents, setApiEvents] = useState<Awaited<ReturnType<typeof getEvents>>>([]);
   const [eventVendors, setEventVendors] = useState<Vendor[]>([]);
   const [breakdown, setBreakdown] = useState<CostBreakdownResponse | null>(null);
+  const { data: bizContact } = useBusinessContact();
 
   const ev = useMemo(
     () => apiEvents.find((e) => String(e?.id) === selectedEventId) ?? null,
@@ -172,8 +174,17 @@ export function CostBreakdownTab({ selectedEventId }: CostBreakdownTabProps) {
     doc.setFontSize(10);
     doc.setFont('helvetica', 'normal');
     doc.setTextColor('#666666');
-    doc.text('27 Novaliches Mendoza Village Project 8, Quezon City', 14, 32);
-    doc.text('Phone: +63 933 380 7868 / 917 502 3538 | Email: schatziesevents@gmail.com', 14, 38);
+    const bizAddr = bizContact?.addresses?.[0];
+    const addrText = bizAddr
+      ? [bizAddr.street, bizAddr.barangay, bizAddr.city, bizAddr.province].filter(Boolean).join(', ')
+      : '';
+    const phoneText = (bizContact?.phones ?? []).map((p) => p.number).join(' / ');
+    const emailText = bizContact?.emails?.[0]?.email ?? '';
+    if (addrText) doc.text(addrText, 14, 32);
+    const contactLine = [phoneText && `Phone: ${phoneText}`, emailText && `Email: ${emailText}`]
+      .filter(Boolean)
+      .join(' | ');
+    if (contactLine) doc.text(contactLine, 14, 38);
 
     // Divider line
     doc.setDrawColor(220, 220, 220);
@@ -197,7 +208,7 @@ export function CostBreakdownTab({ selectedEventId }: CostBreakdownTabProps) {
     doc.text(`Generated on: ${currentDate}`, pageWidth - 14, 56, { align: 'right' });
 
     // Event Details box
-    doc.setFillColor(248, 241, 253); // Light purple background
+    doc.setFillColor(255, 240, 245); // Light pink background
     doc.roundedRect(14, 62, pageWidth - 28, 36, 3, 3, 'F');
 
     doc.setFontSize(11);

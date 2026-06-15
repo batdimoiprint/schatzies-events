@@ -12,6 +12,7 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 import {
   addAddress,
   addEmail,
@@ -24,6 +25,7 @@ import {
   deletePhone,
   getContacts,
   updateAddress,
+  updateContact,
   updateEmail,
   updateLink,
   updatePhone,
@@ -115,6 +117,9 @@ export function BusinessInfoSection() {
   const queryClient = useQueryClient();
   const [dialogState, setDialogState] = useState<DialogState | null>(null);
   const [saveError, setSaveError] = useState<string | null>(null);
+  const [editingContact, setEditingContact] = useState(false);
+  const [contactForm, setContactForm] = useState({ name: '', description: '' });
+  const [contactError, setContactError] = useState<string | null>(null);
 
   const { data: contacts = [], isLoading } = useQuery<BusinessContact[]>({
     queryKey: ['business-contacts'],
@@ -128,6 +133,17 @@ export function BusinessInfoSection() {
     mutationFn: () =>
       createContact({ name: 'Schatzies Events', description: 'Business contact information' }),
     onSuccess: invalidate,
+  });
+
+  const updateContactMutation = useMutation({
+    mutationFn: (payload: { name: string; description: string }) =>
+      updateContact(contact!.id, payload),
+    onSuccess: () => {
+      invalidate();
+      setEditingContact(false);
+      setContactError(null);
+    },
+    onError: (err) => setContactError(err instanceof Error ? err.message : 'Unable to save'),
   });
 
   const saveMutation = useMutation({
@@ -218,7 +234,85 @@ export function BusinessInfoSection() {
   const config = dialogState ? SECTION_CONFIG[dialogState.section] : null;
 
   return (
-    <div className="grid gap-6 lg:grid-cols-2">
+    <div className="space-y-6">
+      {/* Contact identity */}
+      <div className="rounded-3xl bg-white p-6 shadow-[0_8px_30px_rgba(61,32,82,0.08)]">
+        {editingContact ? (
+          <form
+            className="space-y-4"
+            onSubmit={(e) => {
+              e.preventDefault();
+              updateContactMutation.mutate(contactForm);
+            }}
+          >
+            <div className="space-y-1.5">
+              <Label htmlFor="bc-name">Business Name <span className="text-brand">*</span></Label>
+              <Input
+                id="bc-name"
+                required
+                value={contactForm.name}
+                onChange={(e) => setContactForm((p) => ({ ...p, name: e.target.value }))}
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="bc-desc">Description</Label>
+              <Textarea
+                id="bc-desc"
+                rows={2}
+                value={contactForm.description}
+                onChange={(e) => setContactForm((p) => ({ ...p, description: e.target.value }))}
+              />
+            </div>
+            {contactError && <p className="text-sm text-red-600">{contactError}</p>}
+            <div className="flex gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setEditingContact(false)}
+                disabled={updateContactMutation.isPending}
+              >
+                Cancel
+              </Button>
+              <Button
+                type="submit"
+                disabled={updateContactMutation.isPending}
+                className="rounded-full bg-brand px-5 text-xs font-bold text-white shadow-md hover:bg-brand"
+              >
+                {updateContactMutation.isPending ? 'Saving...' : 'Save'}
+              </Button>
+            </div>
+          </form>
+        ) : (
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex items-center gap-3">
+              <div className="flex size-10 items-center justify-center rounded-xl bg-brand/5">
+                <Building2 className="size-5 text-brand" />
+              </div>
+              <div>
+                <p className="font-heading text-lg font-bold text-foreground">{contact.name}</p>
+                {contact.description && (
+                  <p className="text-sm text-muted-foreground">{contact.description}</p>
+                )}
+              </div>
+            </div>
+            <Button
+              variant="ghost"
+              size="icon"
+              aria-label="Edit business name"
+              onClick={() => {
+                setContactForm({ name: contact.name, description: contact.description ?? '' });
+                setContactError(null);
+                setEditingContact(true);
+              }}
+              className="size-8 text-brand-deep hover:bg-[#f0e8f5]"
+            >
+              <Pencil className="size-4" />
+            </Button>
+          </div>
+        )}
+      </div>
+
+      <div className="grid gap-6 lg:grid-cols-2">
       {(Object.keys(SECTION_CONFIG) as SectionKey[]).map((section) => {
         const { title, icon: Icon } = SECTION_CONFIG[section];
         const items = sectionItems[section];
@@ -356,5 +450,6 @@ export function BusinessInfoSection() {
         </DialogContent>
       </Dialog>
     </div>
+  </div>
   );
 }

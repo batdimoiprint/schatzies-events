@@ -50,35 +50,35 @@ body {
 
   --primary-foreground: #ffffff;
 
-  --secondary: #f7ecf6;
+  --secondary: #faf3f7;
 
-  --secondary-foreground: #2a1033;
+  --secondary-foreground: #2d1020;
 
-  --muted: #f4ecf5;
+  --muted: #fbf5f9;
 
-  --muted-foreground: #6f5d77;
+  --muted-foreground: #785d6e;
 
-  --accent: #f7ecf6;
+  --accent: #faf3f7;
 
-  --accent-foreground: #2a1033;
+  --accent-foreground: #2d1020;
 
   --destructive: #d12655;
 
-  --border: #efe1ef;
+  --border: #f7edf5;
 
-  --input: #efe1ef;
+  --input: #f7edf5;
 
   --ring: #ff0066;
 
   --chart-1: #ff0066;
 
-  --chart-2: #700f81;
+  --chart-2: #e6005c;
 
-  --chart-3: #b8389a;
+  --chart-3: #ff3385;
 
-  --chart-4: #9a1eb9;
+  --chart-4: #ff66a3;
 
-  --chart-5: #d85b9a;
+  --chart-5: #ff99c2;
 
   --radius: 0.4rem;
 
@@ -174,15 +174,15 @@ body {
 
   --font-ui: 'Hanken Grotesk', sans-serif;
 
-  /* Brand palette: pink → purple */
+  /* Brand palette: pink primary and secondary accents */
   --color-brand: #ff0066;
 
-  --color-brand-deep: #700f81;
+  --color-brand-deep: #e6005c;
 
   --color-ink: #1f0a2b;
 
-  /* Secondary accent (repointed from gold to brand purple) */
-  --color-gold: #700f81;
+  /* Secondary accent */
+  --color-gold: #ff0066;
 
   --color-ivory: #fdf8fc;
 
@@ -280,7 +280,7 @@ body {
 @layer utilities {
   /* Signature brand gradient — pink → purple */
   .text-gradient-brand {
-    background: linear-gradient(110deg, #700f81 8%, #ff0066 55%);
+    background: linear-gradient(110deg, #ff0066 30%, #700f81 90%);
     -webkit-background-clip: text;
     background-clip: text;
     -webkit-text-fill-color: transparent;
@@ -288,17 +288,17 @@ body {
   }
 
   .bg-gradient-brand {
-    background: linear-gradient(120deg, #ff0066 0%, #700f81 100%);
+    background: linear-gradient(120deg, #ff0066 0%, #e6005c 100%);
   }
 
   .bg-gradient-brand-soft {
-    background: linear-gradient(135deg, rgba(255, 0, 102, 0.07), rgba(112, 15, 129, 0.08));
+    background: linear-gradient(135deg, rgba(255, 0, 102, 0.07), rgba(230, 0, 92, 0.08));
   }
 
   /* Brand hairline rule for editorial section breaks */
   .rule-gold {
     height: 1px;
-    background: linear-gradient(to right, transparent, #ff0066, #700f81, transparent);
+    background: linear-gradient(to right, transparent, #ff0066, #e6005c, transparent);
   }
 
   /* Letterspaced editorial eyebrow / kicker text */
@@ -323,13 +323,7 @@ body {
 
   /* Edge fades for marquees/carousels */
   .mask-fade-x {
-    -webkit-mask-image: linear-gradient(
-      to right,
-      transparent,
-      black 6%,
-      black 94%,
-      transparent
-    );
+    -webkit-mask-image: linear-gradient(to right, transparent, black 6%, black 94%, transparent);
     mask-image: linear-gradient(to right, transparent, black 6%, black 94%, transparent);
   }
 
@@ -346,13 +340,13 @@ body {
   }
 
   100% {
-    transform: translateX(-100%);
+    transform: translateX(calc(-50% - 0.75rem));
   }
 }
 
 @keyframes marquee-reverse {
   0% {
-    transform: translateX(-100%);
+    transform: translateX(calc(-50% - 0.75rem));
   }
 
   100% {
@@ -408,8 +402,8 @@ body {
   align-items: center;
   justify-content: center;
   border-radius: 9999px;
-  background: linear-gradient(to bottom right, #ff0066, #700f81);
-  box-shadow: 0 8px 32px rgba(112, 15, 129, 0.5);
+  background: linear-gradient(to bottom right, #ff0066, #e6005c);
+  box-shadow: 0 8px 32px rgba(255, 0, 102, 0.4);
   border: none;
   cursor: default;
   animation: pulse 1.5s ease-in-out infinite;
@@ -430,7 +424,7 @@ body {
   border-radius: 9999px;
   border: 2px solid rgba(255, 0, 102, 0.3);
   border-top-color: #ff0066;
-  border-right-color: #700f81;
+  border-right-color: #e6005c;
   animation: spin 0.8s linear infinite;
 }
 
@@ -445,7 +439,7 @@ body {
   width: 0.5rem;
   height: 0.5rem;
   border-radius: 50%;
-  background: linear-gradient(to right, #ff0066, #700f81);
+  background: linear-gradient(to right, #ff0066, #e6005c);
   animation: bounce 1.4s ease-in-out infinite;
 }
 
@@ -699,12 +693,12 @@ body {
 }
 
 .overflow-y-auto::-webkit-scrollbar-thumb {
-  background: linear-gradient(to bottom, #ff0066, #4a1053);
+  background: linear-gradient(to bottom, #ff0066, #99003d);
   border-radius: 10px;
 }
 
 .overflow-y-auto::-webkit-scrollbar-thumb:hover {
-  background: linear-gradient(to bottom, #e60060, #3d0e45);
+  background: linear-gradient(to bottom, #e60060, #800033);
 }
 
 /* ── Booked date highlighting on calendar ── */
@@ -748,4 +742,44 @@ button[data-booked='true'] {
   color: #d1d5db !important;
   opacity: 0.5 !important;
   cursor: not-allowed !important;
+}
+
+/* Floating particle animations for the footer */
+@keyframes float-slow {
+  0%, 100% {
+    transform: translateY(0) translateX(0);
+  }
+  50% {
+    transform: translateY(-12px) translateX(6px);
+  }
+}
+
+@keyframes float-medium {
+  0%, 100% {
+    transform: translateY(0) translateX(0);
+  }
+  50% {
+    transform: translateY(-20px) translateX(-10px);
+  }
+}
+
+@keyframes float-fast {
+  0%, 100% {
+    transform: translateY(0) translateX(0);
+  }
+  50% {
+    transform: translateY(-8px) translateX(4px);
+  }
+}
+
+.animate-float-slow {
+  animation: float-slow 12s ease-in-out infinite;
+}
+
+.animate-float-medium {
+  animation: float-medium 9s ease-in-out infinite;
+}
+
+.animate-float-fast {
+  animation: float-fast 6s ease-in-out infinite;
 }

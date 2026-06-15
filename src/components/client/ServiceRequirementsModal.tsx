@@ -59,7 +59,7 @@ export function ServiceRequirementsModal({ onClose, allocation }: Props) {
               {hasFlow && (
                 <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
                   <div className="mb-4 flex items-center gap-2">
-                    <span className="h-2.5 w-2.5 rounded-full bg-purple-500" />
+                    <span className="h-2.5 w-2.5 rounded-full bg-pink-500" />
                     <h3 className="text-lg font-bold text-gray-800">Flow Type</h3>
                   </div>
                   <p className="text-sm font-medium text-gray-700">{allocation.flow_type}</p>

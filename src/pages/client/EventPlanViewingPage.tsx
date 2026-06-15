@@ -400,7 +400,7 @@ export function EventPlanViewingPage() {
       </div>
 
       {/* ── 2. Gradient Event Banner ───────────────────────────────────────── */}
-      <div className="rounded-lg bg-gradient-to-r from-pink-500 to-purple-600 p-4 text-white sm:p-6">
+      <div className="rounded-lg bg-gradient-to-r from-pink-500 to-pink-700 p-4 text-white sm:p-6">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between sm:gap-6">
           {/* Left: title + meta */}
           <div className="flex min-w-0 flex-col gap-2">

@@ -42,12 +42,12 @@ export function RSVPSuccessPage({
         {/* Spacer */}
         <div className="flex-1 flex flex-col items-center justify-center w-full max-w-sm">
           {/* Checkmark circle */}
-          <div className="w-24 h-24 rounded-full bg-gradient-to-b from-pink-400 to-purple-700 flex items-center justify-center shadow-2xl mb-6">
+          <div className="w-24 h-24 rounded-full bg-gradient-to-b from-pink-400 to-pink-700 flex items-center justify-center shadow-2xl mb-6">
             <Check className="w-12 h-12 text-white stroke-[3]" />
           </div>
 
           {/* Title */}
-          <h2 className="text-3xl font-extrabold text-center bg-clip-text text-transparent bg-gradient-to-r from-pink-500 to-purple-700 drop-shadow mb-3">
+          <h2 className="text-3xl font-extrabold text-center bg-clip-text text-transparent bg-gradient-to-r from-pink-500 to-pink-700 drop-shadow mb-3">
             Response Received!
           </h2>
 

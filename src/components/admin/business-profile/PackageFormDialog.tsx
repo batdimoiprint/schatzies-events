@@ -1,6 +1,6 @@
-import { useMemo, useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { ImageIcon, Plus, PlusCircle, Trash2 } from 'lucide-react';
+import { Plus, PlusCircle, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
@@ -26,7 +26,7 @@ interface PackageFormDialogProps {
   pkg: EventPackage | null;
   onClose: () => void;
   /** Called after a new package is created so the parent can switch to edit mode */
-  onCreated?: (id: string) => void;
+  onCreated?: (pkg: EventPackage) => void;
 }
 
 export function PackageFormDialog({
@@ -58,7 +58,7 @@ function PackageFormBody({
   onCreated,
 }: Omit<PackageFormDialogProps, 'open'>) {
   const queryClient = useQueryClient();
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const galleryInputRef = useRef<HTMLInputElement>(null);
   const [packageName, setPackageName] = useState(pkg?.packageName ?? '');
   const [description, setDescription] = useState(pkg?.description ?? '');
   const [newImages, setNewImages] = useState<File[]>([]);
@@ -75,11 +75,17 @@ function PackageFormBody({
   const [paxPrice, setPaxPrice] = useState('');
   const [paxNote, setPaxNote] = useState('');
 
-  const coverPreview = useMemo(
-    () => (newImages.length > 0 ? URL.createObjectURL(newImages[0]) : null),
-    [newImages]
-  );
-  const coverUrl = coverPreview ?? pkg?.images[0]?.url ?? null;
+  const handleAddFiles = (files: File[]) => {
+    setNewImages((prev) => {
+      const combined = [...prev, ...files];
+      if (combined.length > 25) {
+        setError('A package can have at most 25 pictures.');
+        return combined.slice(0, 25);
+      }
+      setError(null);
+      return combined;
+    });
+  };
 
   const invalidate = () => queryClient.invalidateQueries({ queryKey: ['packages'] });
 
@@ -98,8 +104,7 @@ function PackageFormBody({
       if (pkg) {
         onClose();
       } else if (saved?.id && onCreated) {
-        // Stay open in edit mode so inclusions and pax tiers can be added
-        onCreated(saved.id);
+        onCreated(saved);
       } else {
         onClose();
       }
@@ -192,90 +197,40 @@ function PackageFormBody({
           </Button>
         </div>
 
-        {/* Details + cover */}
-        <div className="grid gap-5 md:grid-cols-2">
-          <div className="space-y-4">
-            <div className="space-y-1.5">
-              <Label htmlFor="pkg-name" className="text-sm text-muted-foreground">
-                Package Name
-              </Label>
-              <Input
-                id="pkg-name"
-                value={packageName}
-                onChange={(e) => setPackageName(e.target.value)}
-                placeholder="Fascinating"
-                required
-                className="rounded-lg border-0 bg-[#efedf0] focus-visible:ring-brand"
-              />
-            </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="pkg-description" className="text-sm text-muted-foreground">
-                Description
-              </Label>
-              <Textarea
-                id="pkg-description"
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                placeholder="A cinematic experience featuring high-end storytelling..."
-                rows={5}
-                className="rounded-lg border-0 bg-[#efedf0] focus-visible:ring-brand"
-              />
-            </div>
-          </div>
-
-          <div className="space-y-2">
-            <div className="relative aspect-[16/10] overflow-hidden rounded-xl bg-[#d9d6dc]">
-              {coverUrl ? (
-                <img src={coverUrl} alt="Package cover" className="h-full w-full object-cover" />
-              ) : (
-                <div className="flex h-full w-full items-center justify-center">
-                  <ImageIcon className="size-10 text-white" />
-                </div>
-              )}
-              <Button
-                type="button"
-                onClick={() => fileInputRef.current?.click()}
-                className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 rounded-lg border border-brand/30 bg-white px-4 text-xs font-bold text-brand shadow-md hover:bg-brand/5"
-              >
-                {coverUrl ? 'Change Cover' : 'Upload Photos'}
-              </Button>
-            </div>
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/*"
-              multiple
-              className="hidden"
-              onChange={(e) => setNewImages(Array.from(e.target.files ?? []))}
+        {/* Section 1: Details - Full Width */}
+        <div className="space-y-4">
+          <div className="space-y-1.5">
+            <Label htmlFor="pkg-name" className="text-sm text-muted-foreground">
+              Package Name
+            </Label>
+            <Input
+              id="pkg-name"
+              value={packageName}
+              onChange={(e) => setPackageName(e.target.value)}
+              placeholder="Fascinating"
+              required
+              className="rounded-lg border-0 bg-[#efedf0] focus-visible:ring-brand"
             />
-            {newImages.length > 0 ? (
-              <p className="text-xs text-muted-foreground">
-                {newImages.length} new photo(s) selected
-                {pkg && pkg.images.length > 0 && ' — will replace existing photos on save'}
-              </p>
-            ) : (
-              pkg &&
-              pkg.images.length > 1 && (
-                <div className="flex flex-wrap gap-1.5">
-                  {pkg.images.slice(1).map((image) => (
-                    <img
-                      key={image.key}
-                      src={image.url}
-                      alt={pkg.packageName}
-                      className="size-12 rounded-md border border-border object-cover"
-                    />
-                  ))}
-                </div>
-              )
-            )}
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="pkg-description" className="text-sm text-muted-foreground">
+              Description
+            </Label>
+            <Textarea
+              id="pkg-description"
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              placeholder="A cinematic experience featuring high-end storytelling..."
+              rows={4}
+              className="rounded-lg border-0 bg-[#efedf0] focus-visible:ring-brand"
+            />
           </div>
         </div>
 
-        {pkg ? (
+        {/* Section 2: Inclusions (Only if pkg exists) */}
+        {pkg && (
           <>
             <hr className="border-[#e8e2ee]" />
-
-            {/* Inclusions */}
             <section className="space-y-3">
               <div className="flex items-center justify-between gap-3">
                 <h3 className="text-lg font-semibold text-muted-foreground">Inclusions</h3>
@@ -367,8 +322,128 @@ function PackageFormBody({
                 </div>
               ))}
             </section>
+          </>
+        )}
 
-            {/* Pax tiers */}
+        {/* Section 3: Pictures (Always rendered) */}
+        <hr className="border-[#e8e2ee]" />
+        <section className="space-y-3">
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <h3 className="text-lg font-semibold text-muted-foreground">Pictures</h3>
+              <p className="text-xs text-muted-foreground">
+                Upload up to 25 pictures. First picture acts as the cover photo.
+              </p>
+            </div>
+            <div className="flex gap-2">
+              {newImages.length > 0 && (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setNewImages([])}
+                  className="h-auto px-2.5 py-1 text-xs font-bold text-[#9b93a5] hover:bg-brand/5 hover:text-brand"
+                >
+                  Clear Selection
+                </Button>
+              )}
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => galleryInputRef.current?.click()}
+                className="gap-1.5 rounded-full border-[#d9d3e0] px-4 text-xs font-bold text-[#3d3546] hover:bg-[#f7f4f9]"
+              >
+                <PlusCircle className="size-4" />
+                Add Pictures ({newImages.length || pkg?.images.length || 0}/25)
+              </Button>
+            </div>
+          </div>
+
+          <input
+            ref={galleryInputRef}
+            type="file"
+            accept="image/*"
+            multiple
+            className="hidden"
+            onChange={(e) => {
+              const files = Array.from(e.target.files ?? []);
+              handleAddFiles(files);
+            }}
+          />
+
+          {newImages.length > 0 ? (
+            <div className="space-y-2">
+              <div className="grid grid-cols-4 gap-3 sm:grid-cols-6 md:grid-cols-8">
+                {newImages.map((file, i) => {
+                  const src = URL.createObjectURL(file);
+                  return (
+                    <div key={i} className="group relative aspect-square overflow-hidden rounded-xl border border-border bg-[#d9d6dc]">
+                      <img
+                        src={src}
+                        alt={`New picture ${i + 1}`}
+                        className="h-full w-full object-cover"
+                      />
+                      {i === 0 ? (
+                        <span className="absolute bottom-0 inset-x-0 bg-brand/90 py-0.5 text-center font-sans text-[9px] font-bold text-white uppercase">
+                          Cover
+                        </span>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setNewImages((prev) => {
+                              const next = [...prev];
+                              const [target] = next.splice(i, 1);
+                              return [target, ...next];
+                            });
+                          }}
+                          className="absolute bottom-0 inset-x-0 bg-black/60 py-1 text-center font-sans text-[9px] font-bold text-white/90 uppercase opacity-0 transition-opacity hover:bg-brand/90 group-hover:opacity-100 cursor-pointer"
+                        >
+                          Set Cover
+                        </button>
+                      )}
+                      <button
+                        type="button"
+                        aria-label="Remove"
+                        onClick={() => setNewImages((prev) => prev.filter((_, idx) => idx !== i))}
+                        className="absolute right-1 top-1 flex size-5 items-center justify-center rounded-full bg-white text-gray-500 shadow hover:text-brand"
+                      >
+                        <Trash2 className="size-3" />
+                      </button>
+                    </div>
+                  );
+                })}
+              </div>
+              <p className="text-xs text-brand font-medium">
+                Note: Saving will replace all existing package pictures with this new selection.
+              </p>
+            </div>
+          ) : pkg && pkg.images && pkg.images.length > 0 ? (
+            <div className="grid grid-cols-4 gap-3 sm:grid-cols-6 md:grid-cols-8">
+              {pkg.images.map((image, i) => (
+                <div key={image.key} className="relative aspect-square overflow-hidden rounded-xl border border-border bg-[#d9d6dc]">
+                  <img
+                    src={image.url}
+                    alt={`${pkg.packageName} ${i + 1}`}
+                    className="h-full w-full object-cover"
+                  />
+                  {i === 0 && (
+                    <span className="absolute bottom-0 inset-x-0 bg-gold/90 py-0.5 text-center font-sans text-[9px] font-bold text-ink uppercase">
+                      Cover
+                    </span>
+                  )}
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-sm text-muted-foreground">No pictures uploaded yet.</p>
+          )}
+        </section>
+
+        {/* Section 4: Pax Tiers (Only if pkg exists) */}
+        {pkg && (
+          <>
+            <hr className="border-[#e8e2ee]" />
             <section className="space-y-3">
               <div className="flex items-center justify-between gap-3">
                 <h3 className="text-lg font-semibold text-muted-foreground">Pax Tiers</h3>
@@ -464,10 +539,6 @@ function PackageFormBody({
               )}
             </section>
           </>
-        ) : (
-          <p className="text-xs text-muted-foreground">
-            Save the package to start adding inclusions and pax tiers.
-          </p>
         )}
 
         {error && <p className="text-sm text-red-600">{error}</p>}

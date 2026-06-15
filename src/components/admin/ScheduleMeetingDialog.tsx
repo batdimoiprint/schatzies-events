@@ -206,7 +206,7 @@ export function ScheduleMeetingDialog({
               <select
                 required
                 {...register('organizerId', { required: true })}
-                className="h-11 w-full rounded-lg border border-border bg-white px-2 text-sm font-semibold text-foreground/80 outline-none focus:border-[#be8de4]"
+                className="h-11 w-full rounded-lg border border-border bg-white px-2 text-sm font-semibold text-foreground/80 outline-none focus:border-brand/40"
               >
                 <option value="">
                   {organizersLoading ? 'Loading organizers...' : 'Select organizer'}
@@ -327,7 +327,7 @@ export function ScheduleMeetingDialog({
                 <Label className="text-sm font-bold text-muted-foreground">Label</Label>
                 <select
                   {...register('label')}
-                  className="h-11 w-full rounded-lg border border-border bg-white px-2 text-sm font-semibold text-foreground/80 outline-none focus:border-[#be8de4] md:text-base"
+                  className="h-11 w-full rounded-lg border border-border bg-white px-2 text-sm font-semibold text-foreground/80 outline-none focus:border-brand/40 md:text-base"
                 >
                   <option value="Meeting">Meeting</option>
                   <option value="Task">Task</option>
@@ -338,7 +338,7 @@ export function ScheduleMeetingDialog({
                 <Label className="text-sm font-bold text-muted-foreground">Event Type</Label>
                 <select
                   {...register('eventType')}
-                  className="h-11 w-full rounded-lg border border-border bg-white px-2 text-sm font-semibold text-foreground/80 outline-none focus:border-[#be8de4] md:text-base"
+                  className="h-11 w-full rounded-lg border border-border bg-white px-2 text-sm font-semibold text-foreground/80 outline-none focus:border-brand/40 md:text-base"
                 >
                   <option value="General">General</option>
                   <option value="Booking">Booking</option>
@@ -364,7 +364,7 @@ export function ScheduleMeetingDialog({
               <textarea
                 {...register('description')}
                 placeholder="Optional notes"
-                className="h-24 w-full resize-none rounded-lg border border-border bg-white px-3 py-3 text-sm font-semibold text-foreground/80 outline-none placeholder:text-muted-foreground/70 focus:border-[#be8de4] md:text-base"
+                className="h-24 w-full resize-none rounded-lg border border-border bg-white px-3 py-3 text-sm font-semibold text-foreground/80 outline-none placeholder:text-muted-foreground/70 focus:border-brand/40 md:text-base"
               />
             </div>
 

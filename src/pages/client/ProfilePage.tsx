@@ -414,7 +414,7 @@ export function ProfilePage() {
           <div className="mt-2 h-4 w-64 animate-pulse rounded bg-gray-100" />
         </div>
         <div className="overflow-hidden rounded-xl border border-border bg-white shadow-sm">
-          <div className="h-28 animate-pulse bg-gradient-to-r from-pink-200 to-purple-200" />
+          <div className="h-28 animate-pulse bg-gradient-to-r from-pink-200 to-pink-300" />
           <div className="px-6 pt-14 pb-6 space-y-4">
             <div className="h-6 w-48 animate-pulse rounded bg-gray-200" />
             <div className="grid gap-5 sm:grid-cols-2 mt-6">
@@ -470,7 +470,7 @@ export function ProfilePage() {
         {/* Profile card */}
         <div className="overflow-hidden rounded-xl border border-border bg-white shadow-sm">
           {/* Banner */}
-          <div className="relative h-28 bg-gradient-to-r from-pink-400 to-purple-500">
+          <div className="relative h-28 bg-gradient-to-r from-pink-400 to-pink-600">
             {/* Avatar */}
             <div className="absolute -bottom-12 left-6">
               <div className="relative">

@@ -1,6 +1,8 @@
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { ArrowLeft } from '@phosphor-icons/react';
+import { X } from 'lucide-react';
 import LoadingScreen from '@/components/ui/LoadingScreen';
 import ScrollReveal from '@/components/ui/ScrollReveal';
 import { getPackages, type EventPackage } from '@/api/packages';
@@ -12,10 +14,12 @@ function GalleryGrid({
   items,
   isLoading,
   emptyLabel,
+  onImageClick,
 }: {
   items: GalleryItem[];
   isLoading: boolean;
   emptyLabel: string;
+  onImageClick: (item: GalleryItem) => void;
 }) {
   if (isLoading) {
     return <p className="py-12 text-center font-sans text-sm text-ink/50">Loading photos…</p>;
@@ -24,20 +28,28 @@ function GalleryGrid({
     return <p className="py-12 text-center font-sans text-sm text-ink/50">{emptyLabel}</p>;
   }
   return (
-    <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+    <div className="columns-1 gap-6 sm:columns-2 lg:columns-3 [column-fill:balance] space-y-6 sm:space-y-0">
       {items.map((item, index) => (
-        <ScrollReveal key={item.key} variant="up" delay={(index % 3) * 100}>
-          <figure className="group overflow-hidden rounded-sm border border-border bg-card">
-            <div className="relative aspect-square overflow-hidden">
+        <ScrollReveal
+          key={item.key}
+          variant="up"
+          delay={(index % 3) * 100}
+          className="break-inside-avoid mb-6 block"
+        >
+          <figure
+            onClick={() => onImageClick(item)}
+            className="group overflow-hidden rounded-sm border border-border bg-card cursor-zoom-in transition-all hover:border-brand/30"
+          >
+            <div className="relative overflow-hidden">
               <img
                 src={item.url}
                 alt={item.title}
                 loading="lazy"
-                className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
+                className="h-auto w-full transition-transform duration-700 group-hover:scale-105"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-ink/40 via-transparent to-transparent opacity-0 transition-opacity duration-500 group-hover:opacity-100" />
             </div>
-            <figcaption className="px-5 py-4 text-center font-heading text-lg text-ink">
+            <figcaption className="px-5 py-4 text-center font-heading text-lg text-ink transition-colors group-hover:text-brand">
               {item.title}
             </figcaption>
           </figure>
@@ -49,6 +61,7 @@ function GalleryGrid({
 
 export default function GalleryPage() {
   const navigate = useNavigate();
+  const [activePhoto, setActivePhoto] = useState<GalleryItem | null>(null);
 
   const { data: weddingPackages = [], isLoading: weddingLoading } = useQuery<EventPackage[]>({
     queryKey: ['packages', 'Wedding'],
@@ -113,6 +126,7 @@ export default function GalleryPage() {
             items={weddingItems}
             isLoading={weddingLoading}
             emptyLabel="Wedding photos are coming soon."
+            onImageClick={setActivePhoto}
           />
         </div>
       </section>
@@ -135,9 +149,38 @@ export default function GalleryPage() {
             items={debutItems}
             isLoading={debutLoading}
             emptyLabel="Debut photos are coming soon."
+            onImageClick={setActivePhoto}
           />
         </div>
       </section>
+
+      {activePhoto && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 p-4 backdrop-blur-sm cursor-zoom-out animate-fade-in"
+          onClick={() => setActivePhoto(null)}
+        >
+          {/* Overlay Close Button */}
+          <button
+            onClick={() => setActivePhoto(null)}
+            aria-label="Close modal"
+            className="absolute right-6 top-6 z-50 rounded-full bg-white/10 p-2 text-white hover:bg-white/20 hover:text-gold transition-all duration-200 cursor-pointer"
+          >
+            <X className="size-6 sm:size-8" />
+          </button>
+
+          {/* Big Photo */}
+          <div className="relative max-h-[85vh] max-w-[90vw] overflow-hidden" onClick={(e) => e.stopPropagation()}>
+            <img
+              src={activePhoto.url}
+              alt={activePhoto.title}
+              className="max-h-[85vh] max-w-[90vw] object-contain rounded-md shadow-2xl select-none"
+            />
+            <p className="mt-3 text-center font-heading text-lg sm:text-xl text-white/90 drop-shadow">
+              {activePhoto.title}
+            </p>
+          </div>
+        </div>
+      )}
     </>
   );
 }

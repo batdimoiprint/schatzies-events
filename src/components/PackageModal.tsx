@@ -59,6 +59,8 @@ export function PackageModal({
     modal.categories[0]?.title || null
   );
 
+  const coverImg = pkg.image || '/Pictures/packages-hero.jpg';
+
   return (
     <>
       {/* Backdrop */}
@@ -82,7 +84,7 @@ export function PackageModal({
           {/* LEFT: Image Section */}
           <div className="hidden lg:flex w-1/2 overflow-hidden bg-gray-100">
             <img
-              src="/Pictures/_EventPics/V.jpg"
+              src={coverImg}
               alt={pkg.name}
               className="w-full h-full object-cover"
             />

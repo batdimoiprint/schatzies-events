@@ -331,7 +331,7 @@ export function QrCodePage() {
       )}
 
       {state === 'idle' && (
-        <div className="mt-6 flex flex-1 flex-col items-center justify-center rounded-2xl border-2 border-dashed border-gray-300 bg-[#f8f5fe] shadow-inner p-10 text-center">
+        <div className="mt-6 flex flex-1 flex-col items-center justify-center rounded-2xl border-2 border-dashed border-gray-300 bg-pink-50/20 shadow-inner p-10 text-center">
           {isEventsLoading ? (
             <div className="flex flex-col items-center">
               <div className="size-10 animate-spin rounded-full border-4 border-brand border-t-transparent" />
@@ -508,7 +508,7 @@ export function QrCodePage() {
                       <td className="px-4 py-3.5 text-xs font-medium text-muted-foreground">{i + 1}</td>
                       <td className="px-4 py-3.5">
                         <div className="flex items-center gap-2.5">
-                          <div className="flex size-8 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-pink-400 to-purple-500 text-xs font-bold text-white">
+                          <div className="flex size-8 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-pink-400 to-pink-600 text-xs font-bold text-white">
                             {rsvp.firstName.charAt(0)}
                           </div>
                           <span className="font-medium text-foreground">{`${rsvp.firstName} ${rsvp.middleName ? rsvp.middleName + ' ' : ''}${rsvp.lastName}`}</span>

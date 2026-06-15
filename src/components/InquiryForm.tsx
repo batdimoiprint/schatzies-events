@@ -669,7 +669,7 @@ export function InquiryForm({ onClose, selectedPackageId, selectedEventType }: I
         >
           {/* ── LEFT SIDE — text + image on gradient bg ── */}
           <div className="hidden w-[50%] shrink-0 flex-col px-8 py-8 lg:flex">
-            {/* Back button — transparent, dark purple border */}
+            {/* Back button — transparent, dark pink border */}
             <button
               onClick={onClose}
               aria-label="Close"

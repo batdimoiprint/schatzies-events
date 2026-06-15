@@ -497,7 +497,7 @@ export function OrganizerMessagePage() {
 
             {/* Event Details Banner */}
             {eventDetails && (
-              <div className="border-b border-border bg-gradient-to-r from-[#fdf2f8] to-[#f8f5fe] px-4 lg:px-6 py-3">
+              <div className="border-b border-border bg-gradient-to-r from-[#fdf2f8] to-pink-50/20 px-4 lg:px-6 py-3">
                 <div className="flex items-center gap-2 mb-1.5">
                   <Sparkles className="size-3.5 text-brand" />
                   <span className="text-[10px] font-black uppercase tracking-widest text-brand-deep">
@@ -627,7 +627,7 @@ export function OrganizerMessagePage() {
                   <button
                     onClick={() => void handleSendMessage()}
                     disabled={isSending || !messageText.trim()}
-                    className="ml-2 flex items-center justify-center text-brand-deep transition-colors hover:text-[#7a18b3] disabled:opacity-40"
+                    className="ml-2 flex items-center justify-center text-brand-deep transition-colors hover:text-brand disabled:opacity-40"
                   >
                     {isSending ? (
                       <Loader2 className="size-5 animate-spin" />
@@ -673,7 +673,7 @@ export function OrganizerMessagePage() {
               <img
                 src={activePeer.profilePic}
                 alt={activePeer.name || 'Client'}
-                className="mb-4 size-24 rounded-full object-cover shadow-md ring-4 ring-[#f0edf4]"
+                className="mb-4 size-24 rounded-full object-cover shadow-md ring-4 ring-pink-100"
               />
             ) : (
               <div
@@ -685,7 +685,7 @@ export function OrganizerMessagePage() {
             <h4 className="text-lg font-bold leading-tight text-foreground">
               {activePeer?.name || 'Client'}
             </h4>
-            <span className="mt-2 rounded-full bg-[#f8f5fe] px-4 py-1 text-xs font-bold uppercase tracking-wide text-brand-deep">
+            <span className="mt-2 rounded-full bg-pink-50 px-4 py-1 text-xs font-bold uppercase tracking-wide text-brand-deep">
               {normalizeRole(activePeer?.role) || 'client'}
             </span>
           </div>

@@ -1,7 +1,9 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { ArrowLeft, PlusCircle, SquarePen, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { toSlug } from '@/utils/package-display';
 import {
   EVENT_TYPES,
   deletePackage,
@@ -19,6 +21,7 @@ const EVENT_TYPE_BANNERS: Record<EventType, string> = {
 };
 
 export function EventPackagesSection() {
+  const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [selectedType, setSelectedType] = useState<EventType | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -49,32 +52,31 @@ export function EventPackagesSection() {
   };
 
   const openEdit = (pkg: EventPackage) => {
-    setEditingId(pkg.id);
-    setDialogOpen(true);
+    navigate(`/admin/event-packages/${selectedType!.toLowerCase()}/${toSlug(pkg.packageName)}`);
   };
 
   /* ── Event type banners (Wedding / Debut) ── */
   if (selectedType === null) {
     return (
       <div className="rounded-3xl bg-white p-5 shadow-[0_8px_30px_rgba(61,32,82,0.08)] sm:p-8 lg:p-10">
-        <div className="space-y-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {EVENT_TYPES.map((type) => (
             <div
               key={type}
-              className="group relative h-44 overflow-hidden rounded-2xl shadow-md sm:h-52"
+              className="group relative h-64 overflow-hidden rounded-2xl shadow-md sm:h-72 lg:h-80"
             >
               <img
                 src={EVENT_TYPE_BANNERS[type]}
                 alt={`${type} events`}
-                className="absolute inset-0 h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+                className="absolute inset-0 h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
               />
-              <div className="absolute inset-0 bg-gradient-to-r from-black/45 via-black/10 to-transparent" />
-              <h2 className="font-heading absolute left-6 top-5 text-3xl font-bold text-white drop-shadow-md sm:left-8 sm:text-4xl">
+              <div className="absolute inset-0 bg-black/40 transition-colors duration-300 group-hover:bg-black/50" />
+              <h2 className="font-heading absolute left-1/2 top-8 -translate-x-1/2 text-center text-3xl font-extrabold text-white drop-shadow-[0_2px_8px_rgba(0,0,0,0.5)] sm:text-4xl">
                 {type}
               </h2>
               <Button
                 onClick={() => setSelectedType(type)}
-                className="absolute bottom-4 right-4 rounded-lg bg-white px-5 text-xs font-bold text-brand shadow-md hover:bg-brand/5 sm:bottom-5 sm:right-6"
+                className="absolute bottom-8 left-1/2 -translate-x-1/2 w-44 h-12 rounded-xl bg-white text-sm font-bold text-brand shadow-lg transition-transform duration-200 hover:scale-105 hover:bg-brand hover:text-white"
               >
                 View Event
               </Button>
@@ -190,7 +192,10 @@ export function EventPackagesSection() {
           setDialogOpen(false);
           setEditingId(null);
         }}
-        onCreated={(id) => setEditingId(id)}
+        onCreated={(newPkg) => {
+          setDialogOpen(false);
+          navigate(`/admin/event-packages/${selectedType!.toLowerCase()}/${toSlug(newPkg.packageName)}`);
+        }}
       />
     </div>
   );

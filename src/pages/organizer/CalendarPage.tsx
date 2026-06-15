@@ -651,7 +651,7 @@ export function CalendarPage() {
                         variant="ghost"
                         size="icon-sm"
                         onClick={handleNavigatePrevious}
-                        className="rounded-full bg-linear-to-r from-brand-deep to-[#be8de4] text-white shadow-[0_8px_18px_rgba(143,31,209,0.18)] hover:opacity-95"
+                        className="rounded-full bg-linear-to-r from-brand-deep to-[#ff99c2] text-white shadow-[0_8px_18px_rgba(255,0,102,0.15)] hover:opacity-95"
                         aria-label="Previous period"
                       >
                         <ChevronLeft className="size-4" />
@@ -661,7 +661,7 @@ export function CalendarPage() {
                         variant="ghost"
                         size="icon-sm"
                         onClick={handleNavigateNext}
-                        className="rounded-full bg-linear-to-r from-brand-deep to-[#be8de4] text-white shadow-[0_8px_18px_rgba(143,31,209,0.18)] hover:opacity-95"
+                        className="rounded-full bg-linear-to-r from-brand-deep to-[#ff99c2] text-white shadow-[0_8px_18px_rgba(255,0,102,0.15)] hover:opacity-95"
                         aria-label="Next period"
                       >
                         <ChevronRight className="size-4" />
@@ -672,7 +672,7 @@ export function CalendarPage() {
                       type="button"
                       variant="outline"
                       onClick={handleGoToToday}
-                      className="h-8 rounded-full border-2 border-brand bg-white px-3 text-xs font-bold text-[#8f2bd2] hover:bg-[#fff8fb]"
+                      className="h-8 rounded-full border-2 border-pink-500 bg-white px-3 text-xs font-bold text-pink-600 hover:bg-[#fff8fb]"
                     >
                       Today
                     </Button>
@@ -735,8 +735,8 @@ export function CalendarPage() {
                             className={[
                               'rounded-lg border px-2 py-1.5 text-xs font-bold transition-colors',
                               viewMode === 'monthly'
-                                ? 'border-[#be8de4] bg-[#f7eeff] text-[#712ca9]'
-                                : 'border-[#e5e0ed] text-[#6c6580] hover:bg-[#f8f5fd]',
+                                ? 'border-pink-300 bg-pink-50/50 text-brand'
+                                : 'border-[#e5e0ed] text-[#6c6580] hover:bg-pink-50/20',
                             ].join(' ')}
                           >
                             Monthly
@@ -747,8 +747,8 @@ export function CalendarPage() {
                             className={[
                               'rounded-lg border px-2 py-1.5 text-xs font-bold transition-colors',
                               viewMode === 'weekly'
-                                ? 'border-[#be8de4] bg-[#f7eeff] text-[#712ca9]'
-                                : 'border-[#e5e0ed] text-[#6c6580] hover:bg-[#f8f5fd]',
+                                ? 'border-pink-300 bg-pink-50/50 text-brand'
+                                : 'border-[#e5e0ed] text-[#6c6580] hover:bg-pink-50/20',
                             ].join(' ')}
                           >
                             Weekly
@@ -764,7 +764,7 @@ export function CalendarPage() {
                           {calendarLabels.map((label) => (
                             <label
                               key={label}
-                              className="flex cursor-pointer items-center justify-between rounded-lg border border-border px-2 py-1.5 text-xs font-semibold text-[#5c556f] hover:bg-[#f9f6fd]"
+                              className="flex cursor-pointer items-center justify-between rounded-lg border border-border px-2 py-1.5 text-xs font-semibold text-[#5c556f] hover:bg-pink-50/10"
                             >
                               <span className="flex items-center gap-2">
                                 <span className={`size-2 rounded-full ${labelStyles[label].dot}`} />
@@ -774,7 +774,7 @@ export function CalendarPage() {
                                 type="checkbox"
                                 checked={labelFilters[label]}
                                 onChange={() => handleToggleLabelFilter(label)}
-                                className="size-3.5 rounded border border-[#cbc3d9] accent-[#8f1fd1]"
+                                className="size-3.5 rounded border border-[#cbc3d9] accent-brand"
                               />
                             </label>
                           ))}
@@ -784,7 +784,7 @@ export function CalendarPage() {
                           <button
                             type="button"
                             onClick={handleResetFilters}
-                            className="text-[#8b22ca] hover:text-[#6d1e9d]"
+                            className="text-brand hover:text-brand-deep"
                           >
                             Reset
                           </button>
@@ -798,7 +798,7 @@ export function CalendarPage() {
                             type="checkbox"
                             checked={showOnlyMarkedDates}
                             onChange={() => setShowOnlyMarkedDates((prev) => !prev)}
-                            className="size-3.5 rounded border border-[#cbc3d9] accent-[#8f1fd1]"
+                            className="size-3.5 rounded border border-[#cbc3d9] accent-brand"
                           />
                         </label>
                       </div>
@@ -816,7 +816,7 @@ export function CalendarPage() {
                       {weekdayLabels.map((weekday) => (
                         <div
                           key={weekday}
-                          className="rounded-lg border border-border bg-[#f9f7fc] py-2 text-center text-[10px] sm:text-xs font-bold uppercase tracking-wide text-muted-foreground"
+                          className="rounded-lg border border-border bg-pink-50/10 py-2 text-center text-[10px] sm:text-xs font-bold uppercase tracking-wide text-muted-foreground"
                         >
                           <span>{weekday}</span>
                         </div>
@@ -842,8 +842,8 @@ export function CalendarPage() {
                               'flex flex-col rounded-xl border p-1.5 sm:p-2 text-left transition-all overflow-hidden relative',
                               'h-20 sm:h-28',
                               isSelected
-                                ? 'border-[#be8de4] bg-[#fbf5ff] shadow-[0_8px_18px_rgba(165,62,191,0.18)]'
-                                : 'border-border bg-white hover:border-[#d7cbe7] hover:bg-brand/5',
+                                ? 'border-pink-300 bg-pink-50/10 shadow-[0_8px_18px_rgba(255,0,102,0.1)]'
+                                : 'border-border bg-white hover:border-pink-200 hover:bg-brand/5',
                               !isCurrentMonth ? 'opacity-55' : '',
                             ].join(' ')}
                           >
@@ -1345,7 +1345,7 @@ export function CalendarPage() {
                           eventType: selectedEvt?.title || 'General',
                         }));
                       }}
-                      className="h-9 w-full rounded-lg border border-border bg-white px-2 text-xs font-semibold text-foreground/80 outline-none focus:border-[#be8de4]"
+                      className="h-9 w-full rounded-lg border border-border bg-white px-2 text-xs font-semibold text-foreground/80 outline-none focus:border-brand/40"
                     >
                       <option value="">-- No Linked Event --</option>
                       {availableEvents.map((evt) => (
@@ -1394,7 +1394,7 @@ export function CalendarPage() {
                         }));
                       }}
                       placeholder="Optional notes"
-                      className="h-20 w-full resize-none rounded-lg border border-border bg-white px-3 py-2 text-sm text-foreground/80 outline-none placeholder:text-muted-foreground/70 focus:border-[#be8de4]"
+                      className="h-20 w-full resize-none rounded-lg border border-border bg-white px-3 py-2 text-sm text-foreground/80 outline-none placeholder:text-muted-foreground/70 focus:border-brand/40"
                     />
                   </div>
 
