@@ -2,7 +2,7 @@ export function PrivacyPolicyContent() {
   return (
     <div className="space-y-8">
       <section>
-        <h3 className="text-xl sm:text-2xl font-bold text-[#1a1a1a] mb-4">
+        <h3 className="text-xl sm:text-2xl font-bold text-foreground mb-4">
           Information We Collect
         </h3>
         <ul className="list-disc list-inside space-y-2 text-gray-700 text-[0.95rem] sm:text-[1rem]">
@@ -16,7 +16,7 @@ export function PrivacyPolicyContent() {
       </section>
 
       <section>
-        <h3 className="text-xl sm:text-2xl font-bold text-[#1a1a1a] mb-4">
+        <h3 className="text-xl sm:text-2xl font-bold text-foreground mb-4">
           How We Use Your Information
         </h3>
         <ul className="list-disc list-inside space-y-2 text-gray-700 text-[0.95rem] sm:text-[1rem]">
@@ -29,7 +29,7 @@ export function PrivacyPolicyContent() {
       </section>
 
       <section>
-        <h3 className="text-xl sm:text-2xl font-bold text-[#1a1a1a] mb-4">Information Sharing</h3>
+        <h3 className="text-xl sm:text-2xl font-bold text-foreground mb-4">Information Sharing</h3>
         <p className="text-gray-700 text-[0.95rem] sm:text-[1rem] leading-relaxed">
           We do not sell, trade, or otherwise transfer your personal information to third parties
           without your consent, except as described in this policy or required by law. We may share
@@ -38,7 +38,7 @@ export function PrivacyPolicyContent() {
       </section>
 
       <section>
-        <h3 className="text-xl sm:text-2xl font-bold text-[#1a1a1a] mb-4">Data Security</h3>
+        <h3 className="text-xl sm:text-2xl font-bold text-foreground mb-4">Data Security</h3>
         <p className="text-gray-700 text-[0.95rem] sm:text-[1rem] leading-relaxed">
           We implement appropriate security measures to protect your personal information against
           unauthorized access, alteration, disclosure, or destruction. However, no method of
@@ -47,7 +47,7 @@ export function PrivacyPolicyContent() {
       </section>
 
       <section>
-        <h3 className="text-xl sm:text-2xl font-bold text-[#1a1a1a] mb-4">Your Rights</h3>
+        <h3 className="text-xl sm:text-2xl font-bold text-foreground mb-4">Your Rights</h3>
         <p className="text-gray-700 text-[0.95rem] sm:text-[1rem] leading-relaxed">
           You have the right to access, update, or delete your personal information. You may also
           opt out of marketing communications at any time. To exercise these rights, please contact
@@ -56,7 +56,7 @@ export function PrivacyPolicyContent() {
       </section>
 
       <section>
-        <h3 className="text-xl sm:text-2xl font-bold text-[#1a1a1a] mb-4">Contact Us</h3>
+        <h3 className="text-xl sm:text-2xl font-bold text-foreground mb-4">Contact Us</h3>
         <p className="text-gray-700 text-[0.95rem] sm:text-[1rem] leading-relaxed">
           If you have any questions about this Privacy Policy, please contact us at
           schatziesevents@gmail.com or through our Contact page.
@@ -64,7 +64,7 @@ export function PrivacyPolicyContent() {
       </section>
 
       <section>
-        <h3 className="text-xl sm:text-2xl font-bold text-[#1a1a1a] mb-4">
+        <h3 className="text-xl sm:text-2xl font-bold text-foreground mb-4">
           Updates To This Policy
         </h3>
         <p className="text-gray-700 text-[0.95rem] sm:text-[1rem] leading-relaxed">

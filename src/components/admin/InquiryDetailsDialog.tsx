@@ -44,7 +44,7 @@ interface InquiryMeetingDetails {
   inquiryUserId?: string;
 }
 
-interface InquiryRecord {
+export interface InquiryRecord {
   id?: string;
   _id?: string;
   firstName?: string;
@@ -61,6 +61,7 @@ interface InquiryRecord {
   eventPackage?: string;
   eventPackageKey?: string;
   eventPax?: number;
+  package?: { name?: string; pax?: string | number };
   packageInitialAmount?: number;
   downpaymentAmount?: number;
   currency?: string;
@@ -73,7 +74,7 @@ interface InquiryRecord {
   meetingDetails?: InquiryMeetingDetails;
 }
 
-interface OrganizerRecord {
+export interface OrganizerRecord {
   user_id: string;
   firstName?: string;
   lastName?: string;
@@ -641,13 +642,13 @@ export function InquiryDetailsDialog({
   return (
     <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
       <DialogContent className="sm:max-w-7xl max-h-[90vh] overflow-y-auto p-0">
-        <div className="bg-linear-to-r from-[#fdfbff] to-[#f5f7ff] p-6 border-b border-[#eee7f4]">
+        <div className="bg-linear-to-r from-[#fdfbff] to-[#f5f7ff] p-6 border-b border-border">
           <div className="flex items-center justify-between">
             <div>
-              <DialogTitle className="text-2xl font-black text-[#2e2837]">
+              <DialogTitle className="text-2xl font-black text-foreground">
                 Inquiry Details
               </DialogTitle>
-              <p className="text-sm font-semibold text-[#8f879f] mt-0.5">
+              <p className="text-sm font-semibold text-muted-foreground mt-0.5">
                 Submitted on{' '}
                 {new Date(
                   selectedInquiry?.createdAt || selectedInquiry?.created_at || Date.now()
@@ -693,21 +694,21 @@ export function InquiryDetailsDialog({
               {/* First Column - Core Info */}
               <div className="space-y-6">
                 <section className="space-y-3">
-                  <h3 className="text-xs font-black uppercase tracking-widest text-[#b0a4c5] flex items-center gap-2">
+                  <h3 className="text-xs font-black uppercase tracking-widest text-muted-foreground/70 flex items-center gap-2">
                     <span className="h-px w-4 bg-[#d5c9e4]"></span>
                     Client Information
                   </h3>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div className="rounded-2xl border border-[#efe8f6] bg-[#fcfaff] p-4 transition-all hover:border-[#e2d5f0]">
-                      <h4 className="text-[10px] font-black uppercase tracking-wider text-[#857a98] mb-1">
+                    <div className="rounded-2xl border border-border bg-[#fcfaff] p-4 transition-all hover:border-[#e2d5f0]">
+                      <h4 className="text-[10px] font-black uppercase tracking-wider text-muted-foreground mb-1">
                         Full Name
                       </h4>
-                      <p className="text-[#2e2837] font-bold text-lg">
+                      <p className="text-foreground font-bold text-lg">
                         {selectedInquiry.firstName} {selectedInquiry.lastName}
                       </p>
                     </div>
-                    <div className="rounded-2xl border border-[#efe8f6] bg-[#fcfaff] p-4 transition-all hover:border-[#e2d5f0]">
-                      <h4 className="text-[10px] font-black uppercase tracking-wider text-[#857a98] mb-1">
+                    <div className="rounded-2xl border border-border bg-[#fcfaff] p-4 transition-all hover:border-[#e2d5f0]">
+                      <h4 className="text-[10px] font-black uppercase tracking-wider text-muted-foreground mb-1">
                         Contact Details
                       </h4>
                       <p className="text-sm font-bold text-[#5a5368]">{selectedInquiry.email}</p>
@@ -721,32 +722,32 @@ export function InquiryDetailsDialog({
                 </section>
 
                 <section className="space-y-3">
-                  <h3 className="text-xs font-black uppercase tracking-widest text-[#b0a4c5] flex items-center gap-2">
+                  <h3 className="text-xs font-black uppercase tracking-widest text-muted-foreground/70 flex items-center gap-2">
                     <span className="h-px w-4 bg-[#d5c9e4]"></span>
                     Event Requirements
                   </h3>
                   <div className="grid grid-cols-2 gap-3">
-                    <div className="px-4 py-3 rounded-xl bg-[#f7ebff]/50 border-2 border-[#eadcf7] backdrop-blur-sm shadow-sm flex flex-col justify-center">
-                      <p className="text-[10px] font-black uppercase tracking-widest text-[#857a98] mb-0.5">
+                    <div className="px-4 py-3 rounded-xl bg-brand/5/50 border-2 border-border backdrop-blur-sm shadow-sm flex flex-col justify-center">
+                      <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-0.5">
                         Current Status
                       </p>
-                      <p className="text-sm font-bold text-[#6f2ea8]">
+                      <p className="text-sm font-bold text-muted-foreground">
                         {selectedInquiry?.status || 'New'}
                       </p>
                     </div>
-                    <div className="rounded-xl border border-[#f1eaf7] bg-white p-3 shadow-sm">
-                      <h4 className="text-[10px] font-black uppercase tracking-wider text-[#a094b8] mb-1">
+                    <div className="rounded-xl border border-border bg-white p-3 shadow-sm">
+                      <h4 className="text-[10px] font-black uppercase tracking-wider text-muted-foreground/70 mb-1">
                         Event Format
                       </h4>
-                      <p className="text-[#4e4560] font-bold text-sm">
+                      <p className="text-foreground/80 font-bold text-sm">
                         {selectedInquiry.eventType || selectedInquiry.subject || 'N/A'}
                       </p>
                     </div>
-                    <div className="rounded-xl border border-[#f1eaf7] bg-white p-3 shadow-sm">
-                      <h4 className="text-[10px] font-black uppercase tracking-wider text-[#a094b8] mb-1">
+                    <div className="rounded-xl border border-border bg-white p-3 shadow-sm">
+                      <h4 className="text-[10px] font-black uppercase tracking-wider text-muted-foreground/70 mb-1">
                         Planned Date
                       </h4>
-                      <p className="text-[#4e4560] font-bold text-sm">
+                      <p className="text-foreground/80 font-bold text-sm">
                         {new Date(
                           selectedInquiry.date || selectedInquiry.createdAt || Date.now()
                         ).toLocaleDateString('en-US', {
@@ -757,11 +758,11 @@ export function InquiryDetailsDialog({
                         })}
                       </p>
                     </div>
-                    <div className="rounded-xl border border-[#f1eaf7] bg-white p-3 shadow-sm">
-                      <h4 className="text-[10px] font-black uppercase tracking-wider text-[#a094b8] mb-1">
+                    <div className="rounded-xl border border-border bg-white p-3 shadow-sm">
+                      <h4 className="text-[10px] font-black uppercase tracking-wider text-muted-foreground/70 mb-1">
                         Submitted Date
                       </h4>
-                      <p className="text-[#4e4560] font-bold text-sm">
+                      <p className="text-foreground/80 font-bold text-sm">
                         {new Date(
                           selectedInquiry.createdAt || selectedInquiry.created_at || Date.now()
                         ).toLocaleDateString('en-US', {
@@ -773,21 +774,21 @@ export function InquiryDetailsDialog({
                       </p>
                     </div>
                     {selectedInquiry.eventPackage && (
-                      <div className="rounded-xl border border-[#f1eaf7] bg-white p-3 shadow-sm">
-                        <h4 className="text-[10px] font-black uppercase tracking-wider text-[#a094b8] mb-1">
+                      <div className="rounded-xl border border-border bg-white p-3 shadow-sm">
+                        <h4 className="text-[10px] font-black uppercase tracking-wider text-muted-foreground/70 mb-1">
                           Package Choice
                         </h4>
-                        <p className="text-[#4e4560] font-bold text-sm">
+                        <p className="text-foreground/80 font-bold text-sm">
                           {selectedInquiry.eventPackage}
                         </p>
                       </div>
                     )}
                     {selectedInquiry.eventPax && (
-                      <div className="rounded-xl border border-[#f1eaf7] bg-white p-3 shadow-sm">
-                        <h4 className="text-[10px] font-black uppercase tracking-wider text-[#a094b8] mb-1">
+                      <div className="rounded-xl border border-border bg-white p-3 shadow-sm">
+                        <h4 className="text-[10px] font-black uppercase tracking-wider text-muted-foreground/70 mb-1">
                           Guest Count
                         </h4>
-                        <p className="text-[#4e4560] font-bold text-sm">
+                        <p className="text-foreground/80 font-bold text-sm">
                           {selectedInquiry.eventPax} Pax
                         </p>
                       </div>
@@ -809,11 +810,11 @@ export function InquiryDetailsDialog({
                                 Number(selectedInquiry.eventPax) || 0
                               );
                         return (
-                          <div className="rounded-xl border border-[#f1eaf7] bg-white p-3 shadow-sm col-span-2">
-                            <h4 className="text-[10px] font-black uppercase tracking-wider text-[#a094b8] mb-1">
+                          <div className="rounded-xl border border-border bg-white p-3 shadow-sm col-span-2">
+                            <h4 className="text-[10px] font-black uppercase tracking-wider text-muted-foreground/70 mb-1">
                               Package Amount
                             </h4>
-                            <p className="text-[#4e4560] font-bold text-sm">
+                            <p className="text-foreground/80 font-bold text-sm">
                               {displayAmount > 0 ? formatMoney(displayAmount) : '—'}
                             </p>
                           </div>
@@ -823,11 +824,11 @@ export function InquiryDetailsDialog({
                 </section>
 
                 <section className="space-y-3">
-                  <h3 className="text-xs font-black uppercase tracking-widest text-[#b0a4c5] flex items-center gap-2">
+                  <h3 className="text-xs font-black uppercase tracking-widest text-muted-foreground/70 flex items-center gap-2">
                     <span className="h-px w-4 bg-[#d5c9e4]"></span>
                     Client Message
                   </h3>
-                  <div className="min-h-20 whitespace-pre-wrap rounded-2xl border border-[#ece4f5] bg-[#faf7ff] p-5 text-sm text-[#4e4560] leading-relaxed italic shadow-inner">
+                  <div className="min-h-20 whitespace-pre-wrap rounded-2xl border border-[#ece4f5] bg-[#faf7ff] p-5 text-sm text-foreground/80 leading-relaxed italic shadow-inner">
                     "{selectedInquiry.message || 'No additional message provided.'}"
                   </div>
                 </section>
@@ -836,14 +837,14 @@ export function InquiryDetailsDialog({
               {/* Second Column - Meetings & Account Details */}
               <div className="space-y-6">
                 <section className="space-y-3">
-                  <h4 className="text-xs font-black uppercase tracking-widest text-[#b0a4c5] mb-2">
+                  <h4 className="text-xs font-black uppercase tracking-widest text-muted-foreground/70 mb-2">
                     Meetings
                   </h4>
                   {selectedInquiry.meetingDetails ? (
                     <div className="w-full space-y-4">
-                      <div className="rounded-2xl border border-[#eadcf7] bg-linear-to-br from-[#fbf6ff] to-[#f5f0ff] p-4 shadow-sm">
+                      <div className="rounded-2xl border border-border bg-linear-to-br from-[#fbf6ff] to-[#f5f0ff] p-4 shadow-sm">
                         <div className="flex items-center gap-3 mb-3">
-                          <div className="h-10 w-10 rounded-xl bg-white flex items-center justify-center border border-[#eadcf7] text-[#8f1fd1] shadow-xs">
+                          <div className="h-10 w-10 rounded-xl bg-white flex items-center justify-center border border-border text-brand-deep shadow-xs">
                             <CalendarIcon className="h-5 w-5" />
                           </div>
                           <div>
@@ -857,21 +858,21 @@ export function InquiryDetailsDialog({
                                 year: 'numeric',
                               })}
                             </p>
-                            <p className="text-xs font-bold text-[#8f1fd1]">
+                            <p className="text-xs font-bold text-brand-deep">
                               at {selectedInquiry.meetingDetails.time || 'TBD'}
                             </p>
                           </div>
                         </div>
                         <div className="space-y-3 text-[11px] font-semibold">
-                          <p className="flex justify-between border-b border-[#eee7f4] pb-1.5">
-                            <span className="text-[#a094b8]">Meeting Location</span>
+                          <p className="flex justify-between border-b border-border pb-1.5">
+                            <span className="text-muted-foreground/70">Meeting Location</span>
                             <span className="text-[#5f4f7a]">
                               {selectedInquiry.meetingDetails.location || 'TBA'}
                             </span>
                           </p>
                           <div className="space-y-2">
                             <p className="flex justify-between">
-                              <span className="text-[#a094b8]">Current Organizer</span>
+                              <span className="text-muted-foreground/70">Current Organizer</span>
                               <span className="text-[#5f4f7a] text-right">
                                 {getOrganizerLabel(
                                   selectedInquiry.meetingDetails.organizerId || ''
@@ -879,7 +880,7 @@ export function InquiryDetailsDialog({
                               </span>
                             </p>
                             <div className="pt-1">
-                              <Label className="text-[9px] font-black uppercase text-[#857a98] mb-1.5 block">
+                              <Label className="text-[9px] font-black uppercase text-muted-foreground mb-1.5 block">
                                 Reassign Expert
                               </Label>
                               <Select
@@ -887,10 +888,10 @@ export function InquiryDetailsDialog({
                                 onValueChange={handleOrganizerChange}
                                 disabled={isUpdatingMeetingOrganizer}
                               >
-                                <SelectTrigger className="h-9 w-full rounded-xl border-[#eadcf7] bg-white/80 px-3 text-[11px] font-bold text-[#4c455e] transition-all">
+                                <SelectTrigger className="h-9 w-full rounded-xl border-border bg-white/80 px-3 text-[11px] font-bold text-foreground/80 transition-all">
                                   <SelectValue placeholder="Change organizer..." />
                                 </SelectTrigger>
-                                <SelectContent className="rounded-xl border-[#e5ddee]">
+                                <SelectContent className="rounded-xl border-border">
                                   {organizers.map((organizer) => (
                                     <SelectItem key={organizer.user_id} value={organizer.user_id}>
                                       {[organizer.firstName, organizer.lastName]
@@ -907,7 +908,7 @@ export function InquiryDetailsDialog({
                     </div>
                   ) : (
                     <div className="space-y-3">
-                      <div className="rounded-2xl border border-dashed border-[#eadcf7] bg-[#fbf6ff] p-6 text-center">
+                      <div className="rounded-2xl border border-dashed border-border bg-brand/5 p-6 text-center">
                         <CalendarIcon className="h-8 w-8 text-[#d5c9e4] mx-auto mb-2" />
                         <p className="text-sm font-bold text-[#6a5a83]">No meeting scheduled</p>
                         <p className="text-[11px] text-[#9a8fb0] mt-1">
@@ -919,13 +920,13 @@ export function InquiryDetailsDialog({
                 </section>
 
                 <section className="space-y-3">
-                  <h4 className="text-xs font-black uppercase tracking-widest text-[#b0a4c5] mb-2">
+                  <h4 className="text-xs font-black uppercase tracking-widest text-muted-foreground/70 mb-2">
                     Account Details
                   </h4>
-                  <div className="rounded-2xl border border-[#eadcf7] bg-white p-4 shadow-sm">
+                  <div className="rounded-2xl border border-border bg-white p-4 shadow-sm">
                     {createdAccount && (
                       <div className="space-y-2 rounded-lg border border-[#e5dbef] bg-[#faf7ff] p-2 animate-in fade-in slide-in-from-top-2">
-                        <p className="text-[9px] font-black uppercase text-[#6f2ea8]">
+                        <p className="text-[9px] font-black uppercase text-muted-foreground">
                           Temporary Access Key
                         </p>
                         <div className="flex items-center gap-2">
@@ -943,7 +944,7 @@ export function InquiryDetailsDialog({
                                   [selectedInquiryKey]: !isPasswordVisible,
                                 }))
                               }
-                              className="absolute right-2 top-1/2 -translate-y-1/2 text-[#8f879f] hover:text-[#8f1fd1]"
+                              className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-brand-deep"
                             >
                               {isPasswordVisible ? (
                                 <EyeOff className="h-3 w-3" />
@@ -1016,11 +1017,11 @@ export function InquiryDetailsDialog({
               {/* Third Column - Inquiry Status */}
               <div className="space-y-6">
                 <section className="space-y-3">
-                  <h4 className="text-xs font-black uppercase tracking-widest text-[#b0a4c5] mb-2">
+                  <h4 className="text-xs font-black uppercase tracking-widest text-muted-foreground/70 mb-2">
                     Inquiry Status
                   </h4>
-                  <div className="p-4 rounded-2xl border border-[#eadcf7] bg-white shadow-sm flex flex-col gap-2">
-                    <Label className="text-[10px] font-black uppercase text-[#857a98] mb-1 block">
+                  <div className="p-4 rounded-2xl border border-border bg-white shadow-sm flex flex-col gap-2">
+                    <Label className="text-[10px] font-black uppercase text-muted-foreground mb-1 block">
                       Change State
                     </Label>
                     {statusOptions.map((option, index) => {
@@ -1069,8 +1070,8 @@ export function InquiryDetailsDialog({
                           {isApprovedBtn && (
                             <>
                               {isOthersPackage && (
-                                <div className="relative my-2 rounded-xl border border-[#eadcf7] bg-[#faf7ff] p-3">
-                                  <Label className="text-[10px] font-black uppercase text-[#857a98] mb-2 block">
+                                <div className="relative my-2 rounded-xl border border-border bg-[#faf7ff] p-3">
+                                  <Label className="text-[10px] font-black uppercase text-muted-foreground mb-2 block">
                                     Package Amount (Required for Approval)
                                   </Label>
                                   <div className="flex gap-2 items-center">
@@ -1083,7 +1084,7 @@ export function InquiryDetailsDialog({
                                         currentStatusValue === INQUIRY_STATUS_OPTIONS.DECLINED ||
                                         currentStatusValue === INQUIRY_STATUS_OPTIONS.APPROVED
                                       }
-                                      className="h-9 flex-1 bg-white border-[#ebe3f5] focus-visible:ring-[#8C6bB1] text-xs font-bold disabled:opacity-50"
+                                      className="h-9 flex-1 bg-white border-border focus-visible:ring-[#8C6bB1] text-xs font-bold disabled:opacity-50"
                                     />
                                     <Button
                                       onClick={handleSaveCustomPackageAmount}
@@ -1104,8 +1105,8 @@ export function InquiryDetailsDialog({
                                   </div>
                                 </div>
                               )}
-                              <div className="relative my-2 rounded-xl border border-[#eadcf7] bg-[#faf7ff] p-3">
-                                <Label className="text-[10px] font-black uppercase text-[#857a98] mb-2 block">
+                              <div className="relative my-2 rounded-xl border border-border bg-[#faf7ff] p-3">
+                                <Label className="text-[10px] font-black uppercase text-muted-foreground mb-2 block">
                                   Venue (Required for Approval)
                                 </Label>
                                 <div className="flex gap-2 items-center">
@@ -1128,14 +1129,14 @@ export function InquiryDetailsDialog({
                                       isLoadingVenues
                                     }
                                   >
-                                    <SelectTrigger className="h-9 flex-1 bg-white border-[#ebe3f5] text-xs font-bold disabled:opacity-50">
+                                    <SelectTrigger className="h-9 flex-1 bg-white border-border text-xs font-bold disabled:opacity-50">
                                       <SelectValue
                                         placeholder={
                                           isLoadingVenues ? 'Loading venues...' : 'Select venue...'
                                         }
                                       />
                                     </SelectTrigger>
-                                    <SelectContent className="rounded-xl border-[#e5ddee]">
+                                    <SelectContent className="rounded-xl border-border">
                                       {venueVendors.map((venue) => (
                                         <SelectItem key={venue.name} value={venue.name}>
                                           {venue.name}{' '}
@@ -1145,7 +1146,7 @@ export function InquiryDetailsDialog({
                                         </SelectItem>
                                       ))}
                                       {venueVendors.length === 0 && !isLoadingVenues && (
-                                        <div className="px-3 py-2 text-xs text-[#8f879f] italic">
+                                        <div className="px-3 py-2 text-xs text-muted-foreground italic">
                                           No venue vendors found
                                         </div>
                                       )}
@@ -1156,8 +1157,8 @@ export function InquiryDetailsDialog({
                                   )}
                                 </div>
                               </div>
-                              <div className="relative my-2 rounded-xl border border-[#eadcf7] bg-[#faf7ff] p-3">
-                                <Label className="text-[10px] font-black uppercase text-[#857a98] mb-2 block">
+                              <div className="relative my-2 rounded-xl border border-border bg-[#faf7ff] p-3">
+                                <Label className="text-[10px] font-black uppercase text-muted-foreground mb-2 block">
                                   Downpayment (Required for Approval)
                                 </Label>
                                 <div className="flex gap-2 items-center">
@@ -1170,7 +1171,7 @@ export function InquiryDetailsDialog({
                                       currentStatusValue === INQUIRY_STATUS_OPTIONS.DECLINED ||
                                       currentStatusValue === INQUIRY_STATUS_OPTIONS.APPROVED
                                     }
-                                    className="h-9 flex-1 bg-white border-[#ebe3f5] focus-visible:ring-[#8C6bB1] text-xs font-bold disabled:opacity-50"
+                                    className="h-9 flex-1 bg-white border-border focus-visible:ring-[#8C6bB1] text-xs font-bold disabled:opacity-50"
                                   />
                                   <Button
                                     onClick={handleSaveDownpayment}
@@ -1190,7 +1191,7 @@ export function InquiryDetailsDialog({
                                   </Button>
                                 </div>
                               </div>
-                              <div className="relative my-2 rounded-xl border border-[#eadcf7] bg-[#faf7ff] p-3">
+                              <div className="relative my-2 rounded-xl border border-border bg-[#faf7ff] p-3">
                                 {!selectedInquiry.meetingDetails && !hasAccount && (
                                   <div className="absolute inset-0 z-10 bg-white/60 backdrop-blur-[1px] flex items-center justify-center p-2 text-center rounded-xl">
                                     <p className="text-[10px] font-bold text-amber-700 bg-amber-50 px-2 py-1 rounded border border-amber-100 shadow-sm">
@@ -1198,7 +1199,7 @@ export function InquiryDetailsDialog({
                                     </p>
                                   </div>
                                 )}
-                                <Label className="text-[10px] font-black uppercase text-[#857a98] mb-2 block">
+                                <Label className="text-[10px] font-black uppercase text-muted-foreground mb-2 block">
                                   Portal Access (Required for Approval)
                                 </Label>
                                 <Button
@@ -1226,10 +1227,10 @@ export function InquiryDetailsDialog({
                             disabled={isOptionDisabled && !isActive}
                             className={`w-full justify-start h-11 rounded-xl font-bold transition-all ${
                               isActive
-                                ? 'bg-linear-to-r from-[#f347a5] to-[#8f1fd1] text-white border-none shadow-md'
+                                ? 'bg-linear-to-r from-brand to-brand-deep text-white border-none shadow-md'
                                 : isCompleted
-                                  ? 'bg-[#f7f5fa] border-[#e5ddee] text-[#8f879f]'
-                                  : 'bg-white border-[#e5ddee] text-[#5a5368] hover:border-[#d5c9e4] hover:bg-[#faf7ff]'
+                                  ? 'bg-[#f7f5fa] border-border text-muted-foreground'
+                                  : 'bg-white border-border text-[#5a5368] hover:border-[#d5c9e4] hover:bg-[#faf7ff]'
                             }`}
                             onClick={() => {
                               if (isActive) return;
@@ -1245,8 +1246,8 @@ export function InquiryDetailsDialog({
                                 isActive
                                   ? 'bg-white/20 text-white'
                                   : isCompleted
-                                    ? 'bg-[#e5ddee] text-[#a094b8]'
-                                    : 'bg-[#f3edfa] text-[#8f1fd1]'
+                                    ? 'bg-[#e5ddee] text-muted-foreground/70'
+                                    : 'bg-[#f3edfa] text-brand-deep'
                               }`}
                             >
                               {index + 1}
@@ -1280,11 +1281,11 @@ export function InquiryDetailsDialog({
             <div className="h-12 w-12 rounded-full bg-amber-50 text-amber-500 flex items-center justify-center mx-auto mb-4">
               <CalendarIcon className="h-6 w-6" />
             </div>
-            <h3 className="text-xl font-black text-[#2e2837] mb-2">Update Status?</h3>
+            <h3 className="text-xl font-black text-foreground mb-2">Update Status?</h3>
             <p className="text-sm font-medium text-[#7a708d] mb-6">
               Are you sure you want to change the status of this inquiry from{' '}
-              <span className="font-bold text-[#6f2ea8]">{selectedInquiry?.status || 'New'}</span>{' '}
-              to <span className="font-bold text-[#8f1fd1]">{pendingStatus}</span>?
+              <span className="font-bold text-muted-foreground">{selectedInquiry?.status || 'New'}</span>{' '}
+              to <span className="font-bold text-brand-deep">{pendingStatus}</span>?
             </p>
             <div className="flex gap-3">
               <Button
@@ -1297,7 +1298,7 @@ export function InquiryDetailsDialog({
               <Button
                 onClick={confirmStatusChange}
                 disabled={isUpdatingStatus}
-                className="flex-1 h-11 bg-linear-to-r from-[#f347a5] to-[#8f1fd1] text-white font-black rounded-xl shadow-md"
+                className="flex-1 h-11 bg-linear-to-r from-brand to-brand-deep text-white font-black rounded-xl shadow-md"
               >
                 {isUpdatingStatus ? (
                   <>
@@ -1317,17 +1318,17 @@ export function InquiryDetailsDialog({
       <Dialog open={isOrgConfirmOpen} onOpenChange={setIsOrgConfirmOpen}>
         <DialogContent className="sm:max-w-100 p-0 overflow-hidden border-none rounded-2xl">
           <div className="p-6 text-center">
-            <div className="h-12 w-12 rounded-full bg-linear-to-br from-[#f347a5]/10 to-[#8f1fd1]/10 text-[#8f1fd1] flex items-center justify-center mx-auto mb-4">
+            <div className="h-12 w-12 rounded-full bg-linear-to-br from-brand/10 to-brand-deep/10 text-brand-deep flex items-center justify-center mx-auto mb-4">
               <CalendarIcon className="h-6 w-6" />
             </div>
-            <h3 className="text-xl font-black text-[#2e2837] mb-2">Change Organizer?</h3>
+            <h3 className="text-xl font-black text-foreground mb-2">Change Organizer?</h3>
             <p className="text-sm font-medium text-[#7a708d] mb-6">
               Are you sure you want to reassign this inquiry from{' '}
-              <span className="font-bold text-[#6f2ea8]">
+              <span className="font-bold text-muted-foreground">
                 {getOrganizerLabel(selectedInquiry?.meetingDetails?.organizerId || '')}
               </span>{' '}
               to{' '}
-              <span className="font-bold text-[#8f1fd1]">
+              <span className="font-bold text-brand-deep">
                 {getOrganizerLabel(pendingOrganizerId)}
               </span>
               ?
@@ -1356,7 +1357,7 @@ export function InquiryDetailsDialog({
       <Dialog open={isDeleteConfirmOpen} onOpenChange={setIsDeleteConfirmOpen}>
         <DialogContent className="sm:max-w-md p-0 overflow-hidden border-none rounded-2xl">
           <div className="p-6 text-center">
-            <h3 className="text-xl font-black text-[#2e2837] mb-2">Delete Inquiry?</h3>
+            <h3 className="text-xl font-black text-foreground mb-2">Delete Inquiry?</h3>
             <p className="text-sm font-medium text-[#7a708d] mb-6">
               Are you sure you want to delete this inquiry? This action cannot be undone.
             </p>

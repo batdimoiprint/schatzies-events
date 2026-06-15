@@ -1,24 +1,32 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Button } from '@/components/ui/button';
-import { Navbar } from '@/components/Navbar';
+import {
+  FacebookLogo,
+  InstagramLogo,
+  EnvelopeSimple,
+  Phone,
+  Link,
+  ArrowRight,
+} from '@phosphor-icons/react';
 import ScrollReveal from '@/components/ui/ScrollReveal';
+import ServicesSection from '@/components/ServicesSection';
+import { useBusinessContact } from '@/hooks/useBusinessContact';
 
-// Gallery images
+// Gallery images — equal count per row for balanced marquee
 const galleryRow1 = [
   { src: '/Pictures/gallery-1.jpg', alt: 'Event gallery 1' },
   { src: '/Pictures/gallery-2.jpg', alt: 'Event gallery 2' },
   { src: '/Pictures/gallery-3.jpg', alt: 'Event gallery 3' },
+  { src: '/Pictures/gallery-4.jpg', alt: 'Event gallery 4' },
 ];
 
 const galleryRow2 = [
-  { src: '/Pictures/gallery-4.jpg', alt: 'Event gallery 4' },
   { src: '/Pictures/gallery-5.jpg', alt: 'Event gallery 5' },
   { src: '/Pictures/gallery-6.jpg', alt: 'Event gallery 6' },
   { src: '/Pictures/gallery-7.jpg', alt: 'Event gallery 7' },
+  { src: '/Pictures/hero-1.jpg', alt: 'Event gallery 8' },
 ];
 
-// Hero images carousel
 const heroImages = [
   '/Pictures/hero-1.jpg',
   '/Pictures/hero-2.jpg',
@@ -33,7 +41,6 @@ const heroImages = [
   '/Pictures/hero-11.jpg',
 ];
 
-// Testimonials
 const testimonials = [
   {
     name: 'Ainna O.',
@@ -64,233 +71,258 @@ const testimonials = [
 export function LandingPage() {
   return (
     <>
-      <Navbar />
-      <main>
-        <HeroSection />
-        <SpotlightSection />
-        <ServicesSection />
-        <TestimonialsSection />
-      </main>
-
-      {/* Floating Chat Widget */}
+      <HeroSection />
+      <SpotlightSection />
+      <ServicesSection />
+      <TestimonialsSection />
     </>
   );
 }
 
-/* Hero Section */
-function HeroSection() {
-  const [currentImageIndex, setCurrentImageIndex] = useState(0);
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setCurrentImageIndex((prevIndex) => (prevIndex + 1) % heroImages.length);
-    }, 8000); // Change image every 8 seconds
-
-    return () => clearInterval(interval);
-  }, []);
+function HeroHeartParticles() {
+  const hearts = [
+    { left: '10%', top: '25%', size: 16, delay: '0s', dur: '7s' },
+    { left: '85%', top: '20%', size: 22, delay: '1.5s', dur: '8s' },
+    { left: '25%', top: '65%', size: 14, delay: '3s', dur: '9s' },
+    { left: '75%', top: '75%', size: 20, delay: '0.8s', dur: '7.5s' },
+    { left: '45%', top: '45%', size: 18, delay: '2.2s', dur: '8.5s' },
+    { left: '60%', top: '85%', size: 15, delay: '4s', dur: '10s' },
+    { left: '20%', top: '50%', size: 19, delay: '0.5s', dur: '6.8s' },
+    { left: '90%', top: '55%', size: 16, delay: '2.5s', dur: '9.2s' },
+  ];
 
   return (
-    <section className="relative min-h-screen w-full overflow-hidden bg-white">
-      {/* Background Images — all stacked, crossfade via opacity */}
-      {heroImages.map((src, index) => (
-        <img
-          key={src}
-          src={src}
-          alt=""
-          className="absolute inset-0 w-full h-full object-cover object-right lg:object-center"
+    <div className="pointer-events-none absolute inset-0 z-[1] overflow-hidden" aria-hidden="true">
+      <style>{`
+        @keyframes float-heart {
+          0% { transform: translateY(15px) scale(1) rotate(0deg); opacity: 0; }
+          15% { opacity: 0.95; }
+          85% { opacity: 0.95; }
+          100% { transform: translateY(-35px) scale(0.9) rotate(15deg); opacity: 0; }
+        }
+      `}</style>
+      {hearts.map((h, i) => (
+        <svg
+          key={i}
+          className="absolute text-red-600/60"
           style={{
-            opacity: index === currentImageIndex ? 1 : 0,
-            transition: 'opacity 1.5s ease-in-out',
+            left: h.left,
+            top: h.top,
+            width: h.size,
+            height: h.size,
+            animation: `float-heart ${h.dur} ease-in-out infinite`,
+            animationDelay: h.delay,
           }}
-        />
+          viewBox="0 0 24 24"
+          fill="currentColor"
+        >
+          <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
+        </svg>
       ))}
+    </div>
+  );
+}
 
-      {/* Gradient Overlay — sits above all images */}
-      <div
-        className="absolute inset-0"
-        style={{
-          background:
-            'linear-gradient(to right, rgba(255,255,255,0.95) 0%, rgba(255,255,255,0.85) 15%, rgba(255,255,255,0.4) 25%, transparent 40%)',
-        }}
-      />
+/* ── Hero — editorial split ── */
+function HeroSection() {
+  const navigate = useNavigate();
+  const [index, setIndex] = useState(0);
+  const { data: contact } = useBusinessContact();
 
-      {/* Content */}
-      <div className="relative flex items-center h-full min-h-screen px-6 sm:px-8 lg:px-[8%] w-full z-10">
-        <div className="w-full lg:w-[52%] pt-32 pb-24 lg:pt-40 lg:pb-32 space-y-8">
-          {/* Main Heading */}
-          <div className="space-y-3 animate-fade-in-up">
-            <p
-              className="text-[#1E002C] text-3xl sm:text-4xl lg:text-[44px] font-normal leading-tight"
-              style={{ fontFamily: "'Libre Baskerville', serif" }}
-            >
-              Welcome to
-            </p>
-            <h1
-              className="text-5xl sm:text-7xl lg:text-[84px] font-bold leading-[1.05] tracking-tight bg-clip-text text-transparent"
-              style={{
-                fontFamily: "'Libre Baskerville', serif",
-                background: 'linear-gradient(99.67deg, #700F81 16.53%, #FF0066 45.5%)',
-                WebkitBackgroundClip: 'text',
-                WebkitTextFillColor: 'transparent',
-              }}
-            >
-              Schatzies Events!
-            </h1>
+  useEffect(() => {
+    const t = setInterval(() => setIndex((i) => (i + 1) % heroImages.length), 6000);
+    return () => clearInterval(t);
+  }, []);
+
+  type Social = { href: string; label: string; Icon: React.ElementType; external: boolean };
+  const socials: Social[] = [];
+
+  if (contact) {
+    for (const lnk of contact.links ?? []) {
+      const p = (lnk.platform ?? lnk.label).toLowerCase();
+      const Icon = p.includes('facebook')
+        ? FacebookLogo
+        : p.includes('instagram')
+          ? InstagramLogo
+          : Link;
+      socials.push({ href: lnk.url, label: lnk.label, Icon, external: true });
+    }
+    for (const email of contact.emails ?? []) {
+      socials.push({ href: `mailto:${email.email}`, label: email.label, Icon: EnvelopeSimple, external: false });
+    }
+    for (const phone of contact.phones ?? []) {
+      socials.push({ href: `tel:${phone.number.replace(/\s/g, '')}`, label: phone.label, Icon: Phone, external: false });
+    }
+  }
+
+  return (
+    <section className="relative bg-ivory w-full min-h-screen lg:max-h-screen lg:overflow-hidden">
+      <HeroHeartParticles />
+      <div className="page-gutter mx-auto grid min-h-screen max-w-[1500px] grid-cols-1 items-center gap-10 pt-28 pb-16 lg:grid-cols-[1.05fr_0.95fr] lg:gap-16 lg:pt-24 lg:pb-0 lg:max-h-screen">
+        {/* Left — type */}
+        <div className="relative z-10">
+          <div className="animate-fade-in-up flex items-center gap-4">
+            <span className="h-px w-12 bg-gold" />
+            <span className="eyebrow text-brand">Wedding &amp; Debut Atelier — Philippines</span>
           </div>
 
-          {/* Subtitle */}
-          <p
-            className="text-xl sm:text-2xl lg:text-[28px] font-semibold text-[#1E002C] leading-normal animate-fade-in-up animation-delay-200"
-            style={{ fontFamily: "'Montserrat', sans-serif" }}
-          >
-            Your{' '}
-            <span
-              className="font-bold bg-clip-text text-transparent"
-              style={{
-                background: 'linear-gradient(99.67deg, #700F81 16.53%, #FF0066 45.5%)',
-                WebkitBackgroundClip: 'text',
-                WebkitTextFillColor: 'transparent',
-              }}
-            >
-              MOST TRUSTED
-            </span>{' '}
-            team!
-          </p>
+          <h1 className="animate-fade-in-up animation-delay-200 mt-7 font-heading leading-[0.92] text-ink">
+            <span className="block text-2xl font-normal italic text-ink/60 sm:text-3xl">
+              Welcome to
+            </span>
+            <span className="mt-2 block text-[clamp(3rem,9vw,7rem)] font-semibold tracking-[-0.02em]">
+              Schatzies
+            </span>
+            <span className="block text-[clamp(3rem,9vw,7rem)] font-light italic tracking-[-0.02em] text-brand">
+              Events.
+            </span>
+          </h1>
 
-          {/* Description */}
-          <p
-            className="text-black text-base sm:text-lg lg:text-[18px] leading-relaxed max-w-xl animate-fade-in-up animation-delay-400"
-            style={{ fontFamily: "'Source Sans Pro', sans-serif" }}
-          >
+          <p className="animate-fade-in-up animation-delay-400 mt-8 max-w-md font-sans text-base leading-relaxed text-ink/70 sm:text-lg">
             Premium wedding and debut planning for those who want to be a guest at their own
-            celebration. We handle the stress; you handle the memories.
+            celebration. We handle the stress; you handle the memories. Your{' '}
+            <span className="font-semibold text-brand">most trusted</span> team.
           </p>
 
-          {/* Social Links */}
-          <div className="pt-4 space-y-3 animate-fade-in-up animation-delay-600">
-            <p
-              className="text-gray-400 text-sm font-medium tracking-wide"
-              style={{ fontFamily: "'Montserrat', sans-serif" }}
+          <div className="animate-fade-in-up animation-delay-600 mt-10 flex flex-wrap items-center gap-6">
+            <button
+              onClick={() => navigate('/event-packages')}
+              className="group inline-flex items-center gap-3 rounded-full bg-brand px-8 py-4 font-ui text-xs font-semibold tracking-[0.18em] text-primary-foreground uppercase transition-all duration-300 hover:bg-brand-deep"
             >
-              Connect with us:
-            </p>
+              View Packages
+              <ArrowRight
+                size={16}
+                weight="bold"
+                className="transition-transform duration-300 group-hover:translate-x-1"
+              />
+            </button>
+            <button
+              onClick={() => navigate('/about-us')}
+              className="group inline-flex items-center gap-2 font-ui text-xs font-semibold tracking-[0.18em] text-ink uppercase"
+            >
+              Our Story
+              <span className="h-px w-6 bg-ink transition-all duration-300 group-hover:w-10" />
+            </button>
+          </div>
+
+          <div className="animate-fade-in-up animation-delay-800 mt-12 flex items-center gap-5">
+            <span className="eyebrow text-ink/40">Connect</span>
             <div className="flex items-center gap-3">
-              {/* Facebook */}
-              <a
-                href="https://www.facebook.com/debutandweddingpackage"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex h-10 w-10 items-center justify-center rounded-full bg-[#FF0066] text-white hover:scale-110 transition-transform duration-200 shadow-md"
-              >
-                <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 24 24">
-                  <path d="M9 8h-3v4h3v12h5v-12h3.642l.358-4h-4v-1.667c0-.955.192-1.333 1.115-1.333h2.885v-5h-3.808c-3.596 0-5.192 1.583-5.192 4.615v3.385z" />
-                </svg>
-              </a>
-              {/* Email */}
-              <a
-                href="mailto:schatziesevents@gmail.com"
-                className="flex h-10 w-10 items-center justify-center rounded-[10px] bg-[#FF0066] text-white hover:scale-110 transition-transform duration-200 shadow-md"
-              >
-                <svg
-                  className="h-5 w-5"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  viewBox="0 0 24 24"
+              {socials.map(({ href, label, Icon, external }) => (
+                <a
+                  key={label}
+                  href={href}
+                  aria-label={label}
+                  {...(external ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
+                  className="flex h-10 w-10 items-center justify-center rounded-full border border-ink/15 text-ink transition-all duration-300 hover:border-brand hover:bg-brand hover:text-primary-foreground"
                 >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
-                  />
-                </svg>
-              </a>
-              {/* Phone */}
-              <a
-                href="tel:+639333807868"
-                className="flex h-10 w-10 items-center justify-center rounded-full bg-[#FF0066] text-white hover:scale-110 transition-transform duration-200 shadow-md"
-              >
-                <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 24 24">
-                  <path d="M20.01 15.38c-1.23 0-2.42-.2-3.53-.56a.977.977 0 0 0-1.01.24l-2.2 2.2a15.045 15.045 0 0 1-6.59-6.59l2.2-2.21a.96.96 0 0 0 .25-1A11.36 11.36 0 0 1 8.5 4c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1 0 9.39 7.61 17 17 17 .55 0 1-.45 1-1v-3.58c0-.56-.45-1-.99-1z" />
-                </svg>
-              </a>
+                  <Icon size={17} />
+                </a>
+              ))}
             </div>
           </div>
         </div>
-      </div>
 
-      {/* Image Indicators */}
-      <div className="absolute bottom-24 left-6 sm:left-8 lg:left-[8%] z-20 flex gap-2">
-        {heroImages.map((_, index) => (
-          <button
-            key={index}
-            onClick={() => setCurrentImageIndex(index)}
-            className={`h-2 rounded-full transition-all duration-300 ${
-              index === currentImageIndex ? 'w-8 bg-[#FF0066]' : 'w-2 bg-white/50 hover:bg-white/75'
-            }`}
-            aria-label={`Go to image ${index + 1}`}
-          />
-        ))}
-      </div>
+        {/* Right — editorial image frame */}
+        <div className="relative h-[45vh] sm:h-[55vh] lg:h-[88vh] w-full">
+          <div className="relative h-full w-full overflow-hidden rounded-t-[180px] rounded-b-md border border-gold/40 shadow-[0_30px_80px_-30px_rgba(34,26,20,0.45)]">
+            {heroImages.map((src, i) => (
+              <img
+                key={src}
+                src={src}
+                alt=""
+                className="absolute inset-0 h-full w-full object-cover transition-opacity duration-[1500ms] ease-in-out"
+                style={{ opacity: i === index ? 1 : 0 }}
+              />
+            ))}
+            <div className="absolute inset-0 bg-gradient-to-t from-ink/30 via-transparent to-transparent" />
+          </div>
 
-      {/* Wave Divider */}
-      <div className="absolute bottom-0 left-0 w-full overflow-hidden leading-[0] transform translate-y-[1px] z-10">
-        <svg
-          className="relative block w-full h-[60px] sm:h-[90px] lg:h-[120px]"
-          viewBox="0 0 1440 120"
-          preserveAspectRatio="none"
-          xmlns="http://www.w3.org/2000/svg"
-        >
-          <path
-            d="M0,60 C320,130 720,10 1080,80 C1260,105 1380,95 1440,75 L1440,120 L0,120 Z"
-            fill="white"
-          />
-        </svg>
+          {/* progress ticks */}
+          <div className="absolute bottom-6 left-1/2 z-20 flex -translate-x-1/2 gap-1.5">
+            {heroImages.map((_, i) => (
+              <button
+                key={i}
+                onClick={() => setIndex(i)}
+                aria-label={`Go to image ${i + 1}`}
+                className={`h-[3px] rounded-full transition-all duration-500 ${
+                  i === index ? 'w-7 bg-gold' : 'w-2 bg-ivory/60 hover:bg-ivory'
+                }`}
+              />
+            ))}
+          </div>
+        </div>
       </div>
     </section>
   );
 }
 
-/* Spotlight Section */
-function SpotlightSection() {
-  const navigate = useNavigate();
-  const row1Loop = [
-    ...galleryRow1,
-    ...galleryRow1,
-    ...galleryRow1,
-    ...galleryRow1,
-    ...galleryRow1,
-    ...galleryRow1,
-    ...galleryRow1,
-    ...galleryRow1,
-  ];
-  const row2Loop = [
-    ...galleryRow2,
-    ...galleryRow2,
-    ...galleryRow2,
-    ...galleryRow2,
-    ...galleryRow2,
-    ...galleryRow2,
-    ...galleryRow2,
-    ...galleryRow2,
+/* ── Spotlight — portfolio marquee as background, text centered ── */
+function SpotlightParticles() {
+  const particles = [
+    { left: '10%', top: '25%', size: 8, delay: '0s', dur: '8s' },
+    { left: '80%', top: '15%', size: 6, delay: '2s', dur: '10s' },
+    { left: '30%', top: '75%', size: 10, delay: '1s', dur: '9s' },
+    { left: '85%', top: '80%', size: 7, delay: '3s', dur: '7s' },
+    { left: '15%', top: '85%', size: 9, delay: '4s', dur: '11s' },
+    { left: '50%', top: '30%', size: 8, delay: '1.5s', dur: '8.5s' },
+    { left: '70%', top: '60%', size: 7, delay: '2.5s', dur: '9.5s' },
   ];
 
   return (
-    <section className="relative overflow-hidden bg-white py-20 lg:py-28">
-      {/* Heading & Subtitle inside the standard padding container */}
-      <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-[8%] text-center mb-16">
-        <ScrollReveal variant="up">
-          <h2
-            className="text-4xl sm:text-5xl lg:text-[52px] font-bold leading-tight tracking-tight text-[#1E002C]"
-            style={{ fontFamily: "'Libre Baskerville', serif" }}
-          >
-            Step Into the <span className="text-[#FF0066]">Spotlight</span>,<br />
-            We'll Handle the <span className="text-[#FF0066]">Stage</span>.
+    <div className="pointer-events-none absolute inset-0 z-[2] overflow-hidden" aria-hidden="true">
+      <style>{`
+        @keyframes float-spotlight {
+          0% { transform: translateY(20px) rotate(0deg); opacity: 0; }
+          20% { opacity: 0.5; }
+          80% { opacity: 0.5; }
+          100% { transform: translateY(-30px) rotate(360deg); opacity: 0; }
+        }
+      `}</style>
+      {particles.map((p, i) => (
+        <svg
+          key={i}
+          className="absolute text-brand/20"
+          style={{
+            left: p.left,
+            top: p.top,
+            width: p.size,
+            height: p.size,
+            animation: `float-spotlight ${p.dur} linear infinite`,
+            animationDelay: p.delay,
+          }}
+          viewBox="0 0 24 24"
+          fill="currentColor"
+        >
+          <circle cx="12" cy="12" r="8" />
+        </svg>
+      ))}
+    </div>
+  );
+}
+
+/* ── Spotlight — portfolio marquee as background, text centered ── */
+function SpotlightSection() {
+  // 4x duplication ensures seamless infinite scroll on ultra-wide screens
+  const repeat = (arr: typeof galleryRow1) => [...arr, ...arr, ...arr, ...arr];
+  const row1 = repeat(galleryRow1);
+  const row2 = repeat(galleryRow2);
+
+  return (
+    <section className="relative overflow-hidden bg-white min-h-screen max-h-screen flex flex-col justify-between items-center py-8">
+      {/* ── Animated Spotlight Particles ── */}
+      <SpotlightParticles />
+
+      {/* ── Centered text content (top 30%) ── */}
+      <div className="relative z-10 w-full max-w-3xl text-center px-6 flex flex-col justify-center h-[30vh]">
+        <ScrollReveal variant="up" className="mx-auto text-center">
+          <h2 className="font-heading text-[clamp(2rem,4vw,2.75rem)] leading-[1.1] text-ink">
+            Step into the <span className="italic text-brand">spotlight</span>,
+            <br />
+            we&rsquo;ll handle the <span className="italic text-brand">stage</span>.
           </h2>
-          <p
-            className="mt-6 text-base sm:text-lg lg:text-[18px] text-gray-600 max-w-3xl mx-auto leading-relaxed"
-            style={{ fontFamily: "'Montserrat', sans-serif" }}
-          >
+          <div className="rule-gold mx-auto mt-4 w-32" />
+          <p className="mx-auto mt-4 max-w-xl font-sans text-xs sm:text-sm leading-relaxed text-ink/75">
             Your milestone is a masterpiece in the making. While you focus on making memories and
             greeting your guests, our team ensures every light, sound, and moment is executed to
             perfection.
@@ -298,248 +330,165 @@ function SpotlightSection() {
         </ScrollReveal>
       </div>
 
-      {/* Gallery Carousel - Maxed out to the screen width (outside container) */}
-      <div className="w-full space-y-8 mb-16 relative">
-        {/* Row 1 - Scroll Right */}
-        <div className="group relative flex overflow-hidden">
-          {/* Gradient Overlays for screen edges */}
-          <div className="pointer-events-none absolute left-0 top-0 z-10 h-full w-24 bg-gradient-to-r from-white to-transparent" />
-          <div className="pointer-events-none absolute right-0 top-0 z-10 h-full w-24 bg-gradient-to-l from-white to-transparent" />
-
-          {/* Scrolling Container */}
-          <div className="flex w-max animate-marquee gap-6 group-hover:[animation-play-state:paused]">
-            {row1Loop.map((image, idx) => (
-              <div
-                key={`row1-${idx}`}
-                className="relative h-80 w-[450px] flex-shrink-0 overflow-hidden rounded-2xl shadow-xl border border-gray-100/50"
+      {/* ── Marquee rows below (70%) ── */}
+      <div className="relative z-0 w-full flex flex-col justify-center gap-4 overflow-hidden h-[70vh]" aria-hidden="true">
+        {/* Row 1 — scrolls left */}
+        <div className="mask-fade-x flex overflow-hidden">
+          <div className="flex w-max gap-4 animate-marquee">
+            {row1.map((image, i) => (
+              <figure
+                key={`r1-${i}`}
+                className="relative h-[31vh] w-[46vh] flex-shrink-0 overflow-hidden rounded-md"
               >
                 <img
                   src={image.src}
-                  alt={image.alt}
-                  className="h-full w-full object-cover transition-transform duration-500 hover:scale-105"
+                  alt=""
+                  loading="lazy"
+                  decoding="async"
+                  className="h-full w-full object-cover"
                 />
-              </div>
+              </figure>
             ))}
           </div>
         </div>
 
-        {/* Row 2 - Scroll Right (Same as Row 1) */}
-        <div className="group relative flex overflow-hidden">
-          {/* Gradient Overlays for screen edges */}
-          <div className="pointer-events-none absolute left-0 top-0 z-10 h-full w-24 bg-gradient-to-r from-white to-transparent" />
-          <div className="pointer-events-none absolute right-0 top-0 z-10 h-full w-24 bg-gradient-to-l from-white to-transparent" />
-
-          {/* Scrolling Container */}
-          <div className="flex w-max animate-marquee gap-6 group-hover:[animation-play-state:paused]">
-            {row2Loop.map((image, idx) => (
-              <div
-                key={`row2-${idx}`}
-                className="relative h-80 w-[450px] flex-shrink-0 overflow-hidden rounded-2xl shadow-xl border border-gray-100/50"
+        {/* Row 2 — scrolls right (reverse) */}
+        <div className="mask-fade-x flex overflow-hidden">
+          <div className="flex w-max gap-4 animate-marquee-reverse">
+            {row2.map((image, i) => (
+              <figure
+                key={`r2-${i}`}
+                className="relative h-[31vh] w-[46vh] flex-shrink-0 overflow-hidden rounded-md"
               >
                 <img
                   src={image.src}
-                  alt={image.alt}
-                  className="h-full w-full object-cover transition-transform duration-500 hover:scale-105"
+                  alt=""
+                  loading="lazy"
+                  decoding="async"
+                  className="h-full w-full object-cover"
                 />
-              </div>
+              </figure>
             ))}
           </div>
         </div>
-      </div>
-
-      {/* Button & Wave Container */}
-      <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-[8%] text-center pb-12">
-        <Button
-          onClick={() => navigate('/gallery')}
-          className="bg-[#FF0066] hover:bg-[#D80054] text-white px-8 py-6 rounded-lg text-lg font-semibold shadow-lg shadow-pink-500/20 transition-all duration-200"
-          style={{ fontFamily: "'Montserrat', sans-serif" }}
-        >
-          View Gallery
-        </Button>
       </div>
     </section>
   );
 }
 
-/* Services Section */
-function ServicesSection() {
-  return (
-    <section
-      id="services"
-      className="relative bg-cover bg-center bg-no-repeat pt-0 pb-24 lg:pb-36 overflow-hidden"
-      style={{ backgroundImage: "url('/Pictures/texture.jpg')" }}
-    >
-      {/* Dark overlay for contrast and readability */}
-      <div className="absolute inset-0 bg-black/50 pointer-events-none" />
+/* ── Services section — now imported from @/components/ServicesSection ── */
 
-      {/* White Wave at the top — smooth transition from white Spotlight section */}
-      <div className="relative w-full overflow-hidden leading-[0] z-20">
-        <svg
-          className="relative block w-full h-[40px] sm:h-[60px] lg:h-[80px]"
-          viewBox="0 0 1440 120"
-          preserveAspectRatio="none"
-          xmlns="http://www.w3.org/2000/svg"
-        >
-          <path
-            d="M0,0 L1440,0 L1440,60 C1080,110 720,10 320,60 C160,80 60,70 0,50 Z"
-            fill="white"
-          />
-        </svg>
-      </div>
-
-      <div className="relative max-w-7xl mx-auto px-6 sm:px-8 lg:px-[8%] w-full z-10 space-y-24 lg:space-y-36">
-        {/* Service Feature 1: Love Story (Wedding) */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20 items-center">
-          {/* Left: Text */}
-          <ScrollReveal variant="left" className="space-y-6">
-            <h3
-              className="text-3xl sm:text-4xl lg:text-[44px] font-bold leading-tight text-white"
-              style={{ fontFamily: "'Libre Baskerville', serif" }}
-            >
-              A <span className="text-[#FF0066]">Love Story</span> Told in Every Detail
-            </h3>
-            <p
-              className="text-base sm:text-lg lg:text-[18px] text-gray-300 leading-relaxed font-normal"
-              style={{ fontFamily: "'Montserrat', sans-serif" }}
-            >
-              We don't just plan weddings; we protect your peace. From intimate vows to grand
-              ballrooms, we ensure the only thing you focus on is the person at the end of the
-              aisle.
-            </p>
-          </ScrollReveal>
-          {/* Right: Image */}
-          <ScrollReveal
-            variant="right"
-            className="relative overflow-hidden rounded-2xl border-4 border-white shadow-[0_25px_60px_rgba(0,0,0,0.8)] max-w-full lg:max-w-lg justify-self-center lg:justify-self-end aspect-[4/3]"
-          >
-            <img
-              src="/Pictures/service-wedding.jpg"
-              alt="A Love Story Told in Every Detail"
-              className="w-full h-full object-cover transition-transform duration-500 hover:scale-105"
-            />
-          </ScrollReveal>
-        </div>
-
-        {/* Service Feature 2: 18th Milestone (Debut) */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20 items-center">
-          {/* Left: Image (on mobile order-2, on desktop order-1) */}
-          <ScrollReveal
-            variant="left"
-            className="relative overflow-hidden rounded-2xl border-4 border-white shadow-[0_25px_60px_rgba(0,0,0,0.8)] max-w-full lg:max-w-lg justify-self-center lg:justify-self-start order-2 lg:order-1 aspect-[4/3]"
-          >
-            <img
-              src="/Pictures/service-debut.jpg"
-              alt="Your 18th: More Than a Birthday, It's a Milestone"
-              className="w-full h-full object-cover transition-transform duration-500 hover:scale-105"
-            />
-          </ScrollReveal>
-          {/* Right: Text (on mobile order-1, on desktop order-2) */}
-          <ScrollReveal variant="right" className="space-y-6 order-1 lg:order-2">
-            <h3
-              className="text-3xl sm:text-4xl lg:text-[44px] font-bold leading-tight text-white"
-              style={{ fontFamily: "'Libre Baskerville', serif" }}
-            >
-              <span className="text-[#FF0066]">Your 18th:</span> More Than a Birthday, It's a{' '}
-              <span className="text-[#FF0066]">Milestone</span>
-            </h3>
-            <p
-              className="text-base sm:text-lg lg:text-[18px] text-gray-300 leading-relaxed font-normal"
-              style={{ fontFamily: "'Montserrat', sans-serif" }}
-            >
-              Eighteen years in the making, designed in a single night. We transform your milestone
-              into a cinematic celebration that captures exactly who you are and who you're
-              becoming.
-            </p>
-          </ScrollReveal>
-        </div>
-      </div>
-
-      {/* White/Pink-50 Wave Divider at the bottom transitioning to Testimonials */}
-      <div className="absolute bottom-0 left-0 w-full overflow-hidden leading-[0] transform translate-y-[1px] z-10">
-        <svg
-          className="relative block w-full h-[40px] sm:h-[60px] lg:h-[80px]"
-          viewBox="0 0 1440 120"
-          preserveAspectRatio="none"
-          xmlns="http://www.w3.org/2000/svg"
-        >
-          <path
-            d="M0,80 C360,130 720,20 1080,80 C1260,100 1380,95 1440,75 L1440,120 L0,120 Z"
-            fill="#fdf2f8"
-          />
-        </svg>
-      </div>
-    </section>
-  );
-}
-
-/* Testimonials Section */
+/* ── Testimonials — premium editorial carousel ── */
 function TestimonialsSection() {
   return (
-    <section className="bg-[#f5f0f0] py-20 lg:py-28">
-      <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-[8%]">
-        {/* Section Title */}
-        <ScrollReveal variant="up" className="mb-14 text-center">
-          <h2
-            className="text-4xl sm:text-5xl lg:text-[52px] font-bold leading-tight tracking-tight text-[#1E002C]"
-            style={{ fontFamily: "'Libre Baskerville', serif" }}
-          >
-            The Schatzies <span className="text-[#FF0066]">Experience</span>.
+    <section className="relative bg-ivory w-full py-16 lg:py-24">
+      {/* ── Subtle decorative gradient blobs ── */}
+      <div className="pointer-events-none absolute inset-0" aria-hidden="true">
+        <div
+          className="absolute -left-32 top-0 h-[500px] w-[500px] rounded-full opacity-[0.06]"
+          style={{ background: 'radial-gradient(circle, #ff0066, transparent 70%)' }}
+        />
+        <div
+          className="absolute -right-32 bottom-0 h-[500px] w-[500px] rounded-full opacity-[0.05]"
+          style={{ background: 'radial-gradient(circle, #e6005c, transparent 70%)' }}
+        />
+      </div>
+
+      <div className="page-gutter relative z-10 mx-auto w-full max-w-[1400px] flex flex-col justify-center">
+        {/* ── Header ── */}
+        <ScrollReveal variant="up" className="mb-8 text-center lg:text-left">
+          <h2 className="font-heading text-[clamp(2.25rem,5.5vw,4rem)] leading-[1.05] text-ink">
+            The Schatzies <span className="italic text-brand">experience</span>.
           </h2>
-          <p
-            className="mt-5 text-base sm:text-lg lg:text-[18px] text-gray-600 max-w-2xl mx-auto leading-relaxed"
-            style={{ fontFamily: "'Montserrat', sans-serif" }}
-          >
+          <p className="mx-auto mt-5 max-w-2xl font-sans text-base leading-relaxed text-ink/60 lg:mx-0 lg:text-lg">
             Celebrating 15 years of flawless events through the words of those who experienced the
             magic firsthand.
           </p>
         </ScrollReveal>
 
-        {/* Testimonials 2-Column Grid */}
-        <div className="grid gap-6 sm:grid-cols-2">
-          {testimonials.map((testimonial, idx) => (
-            <div
+        {/* ── Testimonial cards — equal height grid ── */}
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {testimonials.map((t, idx) => (
+            <ScrollReveal
               key={idx}
-              className="relative bg-white rounded-2xl p-6 lg:p-8 shadow-[0_2px_15px_rgba(0,0,0,0.06)] hover:shadow-[0_4px_20px_rgba(0,0,0,0.1)] transition-shadow duration-300"
+              variant="up"
+              delay={idx * 120}
+              className="group relative h-full"
             >
-              {/* Top Row: Avatar + Name | Quote Icon */}
-              <div className="flex items-start justify-between mb-4">
-                <div className="flex items-center gap-3">
-                  {/* Avatar */}
-                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gray-200">
-                    <svg className="h-5 w-5 text-gray-500" fill="currentColor" viewBox="0 0 24 24">
-                      <path d="M12 12c2.7 0 4.8-2.1 4.8-4.8S14.7 2.4 12 2.4 7.2 4.5 7.2 7.2 9.3 12 12 12zm0 2.4c-3.2 0-9.6 1.6-9.6 4.8v2.4h19.2v-2.4c0-3.2-6.4-4.8-9.6-4.8z" />
-                    </svg>
-                  </div>
-                  <div>
-                    <h4
-                      className="font-bold text-[#1E002C] text-sm lg:text-base"
-                      style={{ fontFamily: "'Montserrat', sans-serif" }}
-                    >
-                      {testimonial.name}
-                    </h4>
-                    <p className="text-xs font-semibold text-[#FF0066]">Recommends!</p>
+              <div
+                className="relative flex h-full flex-col rounded-2xl border border-brand/[0.08] p-6 transition-all duration-500 hover:border-brand/20 hover:shadow-[0_20px_60px_-20px_rgba(255,0,102,0.12)] lg:p-7"
+                style={{
+                  background:
+                    'linear-gradient(135deg, rgba(255, 240, 245, 0.95), rgba(253, 215, 225, 0.9))',
+                  backdropFilter: 'blur(12px)',
+                }}
+              >
+                {/* Decorative top accent line */}
+                <div
+                  className="absolute left-6 right-6 top-0 h-[2px] rounded-full opacity-0 transition-opacity duration-500 group-hover:opacity-100"
+                  style={{
+                    background: 'linear-gradient(90deg, transparent, #ff0066, #e6005c, transparent)',
+                  }}
+                />
+
+                {/* Quote mark + stars */}
+                <div className="mb-4 flex items-start justify-between">
+                  <svg
+                    className="h-8 w-8 text-brand/15 transition-colors duration-500 group-hover:text-brand/30"
+                    viewBox="0 0 40 40"
+                    fill="currentColor"
+                  >
+                    <path d="M10.4 18.8c-1.2 0-2.3-.3-3.2-.8C5.9 17.2 5 15.8 5 14c0-1.2.3-2.3.8-3.2C6.6 9.3 7.8 8.2 9.6 7.2c1.8-1 3.8-1.6 5.6-1.8l.4 1.6c-2 .6-3.4 1.4-4.4 2.4-.8.8-1.2 1.8-1.2 2.8 0 .4.2.8.4 1 .4.2.8.4 1.4.4 1 0 1.8.4 2.6 1.2.8.8 1.2 1.8 1.2 3s-.4 2.2-1.2 3c-.8.6-2 1-3 1zm16 0c-1.2 0-2.3-.3-3.2-.8C21.9 17.2 21 15.8 21 14c0-1.2.3-2.3.8-3.2C22.6 9.3 23.8 8.2 25.6 7.2c1.8-1 3.8-1.6 5.6-1.8l.4 1.6c-2 .6-3.4 1.4-4.4 2.4-.8.8-1.2 1.8-1.2 2.8 0 .4.2.8.4 1 .4.2.8.4 1.4.4 1 0 1.8.4 2.6 1.2.8.8 1.2 1.8 1.2 3s-.4 2.2-1.2 3c-.8.6-2 1-3 1z" />
+                  </svg>
+                  <div className="flex gap-0.5">
+                    {Array.from({ length: 5 }).map((_, i) => (
+                      <svg
+                        key={i}
+                        className="h-3 w-3 text-amber-400"
+                        viewBox="0 0 20 20"
+                        fill="currentColor"
+                      >
+                        <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                      </svg>
+                    ))}
                   </div>
                 </div>
 
-                {/* Large Pink Quote Mark */}
-                <span
-                  className="text-[#FF0066] text-5xl lg:text-6xl font-bold leading-none select-none -mt-2"
-                  style={{ fontFamily: "'Libre Baskerville', serif" }}
-                >
-                  "
-                </span>
-              </div>
+                {/* Quote text */}
+                <p className="flex-1 font-sans text-[0.88rem] leading-[1.65] text-ink/70">
+                  &ldquo;{t.text}&rdquo;
+                </p>
 
-              {/* Testimonial Text */}
-              <p
-                className="text-gray-700 text-sm lg:text-[15px] leading-relaxed"
-                style={{ fontFamily: "'Montserrat', sans-serif" }}
-              >
-                {testimonial.text}
-              </p>
-            </div>
+                {/* Author */}
+                <div className="mt-6 flex items-center gap-3 border-t border-ink/[0.06] pt-4">
+                  <div className="relative">
+                    <span
+                      className="flex h-9 w-9 items-center justify-center rounded-full font-heading text-xs font-bold text-white"
+                      style={{
+                        background: 'linear-gradient(135deg, #ff0066, #e6005c)',
+                      }}
+                    >
+                      {t.name.charAt(0)}
+                    </span>
+                    {/* Online dot */}
+                    <span className="absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full border-2 border-white bg-emerald-400" />
+                  </div>
+                  <div>
+                    <p className="font-sans text-xs font-semibold text-ink">{t.name}</p>
+                  </div>
+                </div>
+              </div>
+            </ScrollReveal>
           ))}
         </div>
+
+        {/* ── Bottom accent ── */}
+        <ScrollReveal variant="up" delay={600} className="mt-8 text-center">
+          <div className="rule-gold mx-auto w-24" />
+          <p className="mt-4 font-heading text-base italic text-ink/40">
+            &ldquo;Where every celebration becomes unforgettable.&rdquo;
+          </p>
+        </ScrollReveal>
       </div>
     </section>
   );

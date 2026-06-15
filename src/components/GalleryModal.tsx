@@ -52,7 +52,7 @@ export function GalleryModal({ isOpen, onClose, title, images }: GalleryModalPro
     >
       <div className="relative w-full h-full max-w-6xl max-h-[90vh] rounded-xl sm:rounded-2xl bg-white shadow-2xl overflow-hidden flex flex-col lg:flex-row">
         {/* Header - Mobile Only */}
-        <div className="lg:hidden flex items-center justify-between bg-gradient-to-r from-[#FF0066] via-[#8B1A64] to-[#4A1053] px-4 py-3 sm:px-6 sm:py-4">
+        <div className="lg:hidden flex items-center justify-between bg-gradient-to-r from-brand to-brand-deep px-4 py-3 sm:px-6 sm:py-4">
           <h2 className="font-heading text-base sm:text-lg font-bold text-white truncate pr-4">
             {title}
           </h2>
@@ -68,7 +68,7 @@ export function GalleryModal({ isOpen, onClose, title, images }: GalleryModalPro
         {/* Main Image Section - Responsive */}
         <div className="flex-1 relative bg-black overflow-hidden flex flex-col">
           {/* Desktop Header */}
-          <div className="hidden lg:flex items-center justify-between bg-gradient-to-r from-[#FF0066] via-[#8B1A64] to-[#4A1053] px-6 py-4">
+          <div className="hidden lg:flex items-center justify-between bg-gradient-to-r from-brand to-brand-deep px-6 py-4">
             <h2 className="font-heading text-2xl font-bold text-white">{title}</h2>
             <button
               onClick={onClose}
@@ -114,8 +114,8 @@ export function GalleryModal({ isOpen, onClose, title, images }: GalleryModalPro
           </div>
 
           {/* Image Info - Mobile Footer */}
-          <div className="lg:hidden bg-gradient-to-r from-[#FF0066]/10 to-[#4A1053]/10 px-4 py-2.5 sm:px-6 sm:py-3 border-t border-gray-200">
-            <p className="text-xs sm:text-sm text-[#4A1053] text-center">
+          <div className="lg:hidden bg-gradient-to-r from-brand/10 to-brand-deep/10 px-4 py-2.5 sm:px-6 sm:py-3 border-t border-gray-200">
+            <p className="text-xs sm:text-sm text-brand-deep text-center">
               Use arrow keys or buttons to navigate
             </p>
           </div>
@@ -130,8 +130,8 @@ export function GalleryModal({ isOpen, onClose, title, images }: GalleryModalPro
                 onClick={() => setCurrentIndex(index)}
                 className={`relative shrink-0 flex-1 lg:flex-none aspect-square rounded-lg overflow-hidden transition-all duration-300 group ${
                   index === currentIndex
-                    ? 'ring-2 ring-[#FF0066]'
-                    : 'ring-1 ring-gray-300 hover:ring-[#FF0066]/70'
+                    ? 'ring-2 ring-brand'
+                    : 'ring-1 ring-gray-300 hover:ring-brand/70'
                 }`}
               >
                 <img
@@ -141,7 +141,7 @@ export function GalleryModal({ isOpen, onClose, title, images }: GalleryModalPro
                   loading="lazy"
                 />
                 {index === currentIndex && (
-                  <div className="absolute inset-0 bg-gradient-to-br from-[#FF0066]/20 to-transparent pointer-events-none" />
+                  <div className="absolute inset-0 bg-gradient-to-br from-brand/20 to-transparent pointer-events-none" />
                 )}
               </button>
             ))}

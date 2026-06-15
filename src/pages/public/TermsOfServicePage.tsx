@@ -61,7 +61,7 @@ export default function TermsOfServicePage() {
         <div className="mx-auto max-w-[800px] space-y-10">
           <ScrollReveal variant="up">
             <div className="flex items-start gap-4">
-              <FileText className="h-6 w-6 text-[#FF0066] mt-1 shrink-0" />
+              <FileText className="h-6 w-6 text-brand mt-1 shrink-0" />
               <div>
                 <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-3 font-heading">
                   Acceptance of Terms
@@ -77,7 +77,7 @@ export default function TermsOfServicePage() {
 
           <ScrollReveal variant="up" delay={100}>
             <div className="flex items-start gap-4">
-              <Briefcase className="h-6 w-6 text-[#FF0066] mt-1 shrink-0" />
+              <Briefcase className="h-6 w-6 text-brand mt-1 shrink-0" />
               <div>
                 <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-3 font-heading">
                   Services
@@ -94,7 +94,7 @@ export default function TermsOfServicePage() {
 
           <ScrollReveal variant="up" delay={100}>
             <div className="flex items-start gap-4">
-              <ClipboardList className="h-6 w-6 text-[#FF0066] mt-1 shrink-0" />
+              <ClipboardList className="h-6 w-6 text-brand mt-1 shrink-0" />
               <div>
                 <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-3 font-heading">
                   Client Responsibilities
@@ -112,7 +112,7 @@ export default function TermsOfServicePage() {
 
           <ScrollReveal variant="up" delay={100}>
             <div className="flex items-start gap-4">
-              <CreditCard className="h-6 w-6 text-[#FF0066] mt-1 shrink-0" />
+              <CreditCard className="h-6 w-6 text-brand mt-1 shrink-0" />
               <div>
                 <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-3 font-heading">
                   Payment Terms
@@ -129,7 +129,7 @@ export default function TermsOfServicePage() {
 
           <ScrollReveal variant="up" delay={100}>
             <div className="flex items-start gap-4">
-              <XCircle className="h-6 w-6 text-[#FF0066] mt-1 shrink-0" />
+              <XCircle className="h-6 w-6 text-brand mt-1 shrink-0" />
               <div>
                 <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-3 font-heading">
                   Cancellation Policy
@@ -145,7 +145,7 @@ export default function TermsOfServicePage() {
 
           <ScrollReveal variant="up" delay={100}>
             <div className="flex items-start gap-4">
-              <Scale className="h-6 w-6 text-[#FF0066] mt-1 shrink-0" />
+              <Scale className="h-6 w-6 text-brand mt-1 shrink-0" />
               <div>
                 <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-3 font-heading">
                   Liability
@@ -162,7 +162,7 @@ export default function TermsOfServicePage() {
 
           <ScrollReveal variant="up" delay={100}>
             <div className="flex items-start gap-4">
-              <Brain className="h-6 w-6 text-[#FF0066] mt-1 shrink-0" />
+              <Brain className="h-6 w-6 text-brand mt-1 shrink-0" />
               <div>
                 <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-3 font-heading">
                   Intellectual Property
@@ -178,7 +178,7 @@ export default function TermsOfServicePage() {
 
           <ScrollReveal variant="up" delay={100}>
             <div className="flex items-start gap-4">
-              <Gavel className="h-6 w-6 text-[#FF0066] mt-1 shrink-0" />
+              <Gavel className="h-6 w-6 text-brand mt-1 shrink-0" />
               <div>
                 <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-3 font-heading">
                   Governing Law
@@ -193,7 +193,7 @@ export default function TermsOfServicePage() {
 
           <ScrollReveal variant="up" delay={100}>
             <div className="flex items-start gap-4">
-              <Mail className="h-6 w-6 text-[#FF0066] mt-1 shrink-0" />
+              <Mail className="h-6 w-6 text-brand mt-1 shrink-0" />
               <div>
                 <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-3 font-heading">
                   Contacts Us
@@ -202,7 +202,7 @@ export default function TermsOfServicePage() {
                   For questions about these Terms of Service, please contact us at{' '}
                   <a
                     href="mailto:schatziesevents@gmail.com"
-                    className="text-[#FF0066] hover:underline"
+                    className="text-brand hover:underline"
                   >
                     schatziesevents@gmail.com
                   </a>{' '}
@@ -214,7 +214,7 @@ export default function TermsOfServicePage() {
 
           <ScrollReveal variant="up" delay={100}>
             <div className="flex items-start gap-4">
-              <RefreshCw className="h-6 w-6 text-[#FF0066] mt-1 shrink-0" />
+              <RefreshCw className="h-6 w-6 text-brand mt-1 shrink-0" />
               <div>
                 <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-3 font-heading">
                   Updates to Terms
@@ -229,7 +229,7 @@ export default function TermsOfServicePage() {
           </ScrollReveal>
 
           <ScrollReveal variant="fade">
-            <p className="text-[#FF0066] text-sm font-semibold pt-4">Last updated: 6/10/2026</p>
+            <p className="text-brand text-sm font-semibold pt-4">Last updated: 6/10/2026</p>
           </ScrollReveal>
         </div>
       </section>

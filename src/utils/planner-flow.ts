@@ -7,7 +7,15 @@ export const mapLaneToBackendStatus = (lane: TaskLane): string => {
   return 'TODO';
 };
 
-export function mapBackendFlowToUI(item: any, index: number) {
+interface BackendFlowItem {
+  id?: string;
+  title?: string;
+  description?: string;
+  start_time?: string;
+  end_time?: string;
+}
+
+export function mapBackendFlowToUI(item: BackendFlowItem, index: number) {
   const startDate = item.start_time ? new Date(item.start_time) : null;
   const endDate = item.end_time ? new Date(item.end_time) : null;
   const startHour = startDate && !isNaN(startDate.getTime()) ? startDate.getHours() : 5;

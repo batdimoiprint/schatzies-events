@@ -70,9 +70,10 @@ export function QrCodePage() {
 
         if (userEvents.length > 0) {
           const firstEvent = userEvents[0];
+          const firstEventPax = (firstEvent as { pax?: number | string }).pax;
           setSelectedEventId((prev) => prev || firstEvent.id);
 
-          if ((firstEvent as any).pax) setEventPax(Number((firstEvent as any).pax));
+          if (firstEventPax) setEventPax(Number(firstEventPax));
 
           // Fetch full details to get the most accurate capacity (eventPax)
           try {
@@ -86,13 +87,13 @@ export function QrCodePage() {
                   unknown
                 >
               )?.pax ||
-              (firstEvent as any).pax ||
+              firstEventPax ||
               200;
             if (Number(pax) > 0) setEventPax(Number(pax));
           } catch (e) {
             console.error('Error fetching event capacity:', e);
             // Fallback to 200 if we couldn't fetch details but know it's a client event
-            if (!(firstEvent as any).pax) setEventPax(200);
+            if (!firstEventPax) setEventPax(200);
           }
         }
       } catch (error) {
@@ -297,8 +298,8 @@ export function QrCodePage() {
 
       <div className="flex min-h-[6rem] items-start justify-between">
         <div>
-          <h1 className="text-4xl font-extrabold tracking-tight text-[#2d2834]">RSVP Management</h1>
-          <p className="mt-1 text-sm text-[#696373]">
+          <h1 className="text-4xl font-extrabold tracking-tight text-foreground">RSVP Management</h1>
+          <p className="mt-1 text-sm text-muted-foreground">
             Oversee your invitations and monitor attendance in real-time.
           </p>
         </div>
@@ -311,7 +312,7 @@ export function QrCodePage() {
               <button
                 key={tab}
                 onClick={() => setActiveTab(tab as 'overview' | 'guest-list')}
-                className={`pb-2 text-sm font-semibold capitalize transition ${activeTab === tab ? 'border-b-2 border-[#df2b80] text-[#df2b80]' : 'text-[#696373] hover:text-[#2d2834]'}`}
+                className={`pb-2 text-sm font-semibold capitalize transition ${activeTab === tab ? 'border-b-2 border-brand text-brand' : 'text-muted-foreground hover:text-foreground'}`}
               >
                 {tab.replace('-', ' ')}
               </button>
@@ -330,19 +331,19 @@ export function QrCodePage() {
       )}
 
       {state === 'idle' && (
-        <div className="mt-6 flex flex-1 flex-col items-center justify-center rounded-2xl border-2 border-dashed border-gray-300 bg-[#f8f5fe] shadow-inner p-10 text-center">
+        <div className="mt-6 flex flex-1 flex-col items-center justify-center rounded-2xl border-2 border-dashed border-gray-300 bg-pink-50/20 shadow-inner p-10 text-center">
           {isEventsLoading ? (
             <div className="flex flex-col items-center">
-              <div className="size-10 animate-spin rounded-full border-4 border-[#df2b80] border-t-transparent" />
-              <p className="mt-4 text-sm font-semibold text-[#696373]">Checking for events...</p>
+              <div className="size-10 animate-spin rounded-full border-4 border-brand border-t-transparent" />
+              <p className="mt-4 text-sm font-semibold text-muted-foreground">Checking for events...</p>
             </div>
           ) : !selectedEventId ? (
             <div className="flex flex-col items-center max-w-sm">
-              <div className="mb-4 rounded-full bg-pink-50 p-4 text-[#df2b80]">
+              <div className="mb-4 rounded-full bg-pink-50 p-4 text-brand">
                 <PlusCircle weight="bold" size={48} />
               </div>
-              <h3 className="text-xl font-bold text-[#2d2834]">No Events Found</h3>
-              <p className="mt-2 text-sm text-[#696373]">
+              <h3 className="text-xl font-bold text-foreground">No Events Found</h3>
+              <p className="mt-2 text-sm text-muted-foreground">
                 You need to have an active event to generate an RSVP QR code. Please create or
                 select an event first!
               </p>
@@ -351,7 +352,7 @@ export function QrCodePage() {
             <button
               onClick={generateQRCode}
               disabled={isLoading}
-              className="flex items-center gap-2.5 rounded-xl bg-white px-8 py-4 text-lg font-bold text-[#df2b80] shadow-xl hover:shadow-2xl hover:-translate-y-1 active:scale-95 disabled:opacity-50 transition-all duration-300"
+              className="flex items-center gap-2.5 rounded-xl bg-white px-8 py-4 text-lg font-bold text-brand shadow-xl hover:shadow-2xl hover:-translate-y-1 active:scale-95 disabled:opacity-50 transition-all duration-300"
             >
               <PlusCircle weight="bold" size={24} /> Create QR Code
             </button>
@@ -363,16 +364,16 @@ export function QrCodePage() {
         <div className="rounded-xl border border-gray-100 bg-white p-8 shadow-sm">
           <div className="grid grid-cols-1 gap-10 lg:grid-cols-[auto_1fr]">
             <div className="flex flex-col items-center rounded-2xl bg-white p-6 shadow-lg border border-gray-100">
-              <p className="text-base font-bold text-[#df2b80]">Schatzies Events</p>
+              <p className="text-base font-bold text-brand">Schatzies Events</p>
               {qrCode && (
                 <div className="mt-4 rounded-lg bg-white p-4 shadow-inner border border-gray-50">
                   <img src={qrCode} alt="Generated QR Code" className="w-48 h-48" />
                 </div>
               )}
-              <p className="mt-5 text-sm font-extrabold uppercase tracking-wide text-[#2d2834]">
+              <p className="mt-5 text-sm font-extrabold uppercase tracking-wide text-foreground">
                 Share QR to Invite Guest!
               </p>
-              <p className="mt-1 text-xs text-[#696373]">
+              <p className="mt-1 text-xs text-muted-foreground">
                 QR CODE ID: <span className="font-semibold">{currentQRId.substring(3, 13)}</span>
               </p>
               <span className="mt-2 inline-block rounded-full bg-green-100 px-3 py-0.5 text-xs font-bold text-green-800">
@@ -381,13 +382,13 @@ export function QrCodePage() {
               <div className="mt-5 flex gap-3">
                 <button
                   onClick={handleDownloadQR}
-                  className="flex items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-4 py-2 text-xs font-semibold text-[#df2b80] shadow-sm hover:bg-gray-50"
+                  className="flex items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-4 py-2 text-xs font-semibold text-brand shadow-sm hover:bg-gray-50"
                 >
                   <Download weight="bold" size={14} /> Download QR
                 </button>
                 <button
                   onClick={handleCopyLink}
-                  className="flex items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-4 py-2 text-xs font-semibold text-[#df2b80] shadow-sm hover:bg-gray-50"
+                  className="flex items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-4 py-2 text-xs font-semibold text-brand shadow-sm hover:bg-gray-50"
                 >
                   <LinkIcon weight="bold" size={14} /> {copied ? 'Copied!' : 'Copy Link'}
                 </button>
@@ -395,23 +396,23 @@ export function QrCodePage() {
             </div>
 
             <div className="flex flex-col">
-              <h3 className="pb-2 text-lg font-extrabold text-[#2d2834] border-b border-black">
+              <h3 className="pb-2 text-lg font-extrabold text-foreground border-b border-black">
                 Attendance Breakdown
               </h3>
               <div className="mt-5 rounded-xl border border-gray-100 bg-white p-5 shadow-md">
                 <div className="flex items-start justify-between">
                   <div>
-                    <p className="text-sm font-bold text-[#2d2834]">Live Response Analytics</p>
-                    <p className="text-[11px] text-[#696373]">
+                    <p className="text-sm font-bold text-foreground">Live Response Analytics</p>
+                    <p className="text-[11px] text-muted-foreground">
                       A visual representation of your current guest status.
                     </p>
                   </div>
-                  <ChartBar weight="fill" size={18} className="text-[#696373]" />
+                  <ChartBar weight="fill" size={18} className="text-muted-foreground" />
                 </div>
                 <div className="mt-5 flex flex-col gap-4">
                   {stats.map(({ label, pct, count, bar, text }) => (
                     <div key={label} className="flex items-center gap-3">
-                      <span className="w-20 shrink-0 text-xs font-semibold text-[#696373]">
+                      <span className="w-20 shrink-0 text-xs font-semibold text-muted-foreground">
                         {label}
                       </span>
                       <div className="flex-1 h-6 rounded bg-gray-100 overflow-hidden">
@@ -427,7 +428,7 @@ export function QrCodePage() {
                   ))}
                 </div>
               </div>
-              <div className="mt-6 flex justify-between items-center text-xs text-[#696373]">
+              <div className="mt-6 flex justify-between items-center text-xs text-muted-foreground">
                 <div className="flex gap-4">
                   Capacity: <strong>{eventPax}</strong>
                   <span>
@@ -450,26 +451,26 @@ export function QrCodePage() {
         <div className="animate-[fadeIn_0.3s_ease-out] rounded-xl bg-white shadow-md border border-gray-100">
           <div className="flex items-center justify-between border-b border-gray-100 px-5 py-4 sm:px-6">
             <div>
-              <h3 className="text-base font-bold text-[#2d2834]">Guest List Responses</h3>
-              <p className="mt-0.5 text-xs text-[#696373]">Track who's coming to your event</p>
+              <h3 className="text-base font-bold text-foreground">Guest List Responses</h3>
+              <p className="mt-0.5 text-xs text-muted-foreground">Track who's coming to your event</p>
             </div>
             <div className="flex flex-wrap items-center gap-3">
               <div className="relative min-w-[200px]">
-                <MagnifyingGlass className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-[#b2acbf]" />
+                <MagnifyingGlass className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground/70" />
                 <input
                   type="text"
                   placeholder="Search name or contact..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full rounded-lg border border-gray-200 bg-gray-50 py-2 pl-9 pr-4 text-xs text-[#4f4a56] outline-none focus:border-[#df2b80] focus:bg-white"
+                  className="w-full rounded-lg border border-gray-200 bg-gray-50 py-2 pl-9 pr-4 text-xs text-foreground/80 outline-none focus:border-brand focus:bg-white"
                 />
               </div>
               <div className="relative">
-                <Funnel className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-[#b2acbf]" />
+                <Funnel className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground/70" />
                 <select
                   value={statusFilter}
                   onChange={(e) => setStatusFilter(e.target.value)}
-                  className="appearance-none rounded-lg border border-gray-200 bg-gray-50 py-2 pl-9 pr-8 text-xs font-medium text-[#4f4a56] outline-none focus:border-[#df2b80] focus:bg-white"
+                  className="appearance-none rounded-lg border border-gray-200 bg-gray-50 py-2 pl-9 pr-8 text-xs font-medium text-foreground/80 outline-none focus:border-brand focus:bg-white"
                 >
                   <option value="All">All Status</option>
                   <option value="Attending">Attending</option>
@@ -482,7 +483,7 @@ export function QrCodePage() {
           <div className="overflow-x-auto px-4 pb-4">
             <table className="mt-2 w-full min-w-[700px] text-sm">
               <thead>
-                <tr className="border-b border-gray-100 text-left text-xs font-semibold uppercase tracking-wider text-[#696373]">
+                <tr className="border-b border-gray-100 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                   <th className="px-4 py-3 font-semibold">#</th>
                   <th className="px-4 py-3 font-semibold">Guest Name</th>
                   <th className="px-4 py-3 font-semibold">Contact</th>
@@ -493,7 +494,7 @@ export function QrCodePage() {
               <tbody>
                 {filteredRsvps.length === 0 ? (
                   <tr>
-                    <td colSpan={5} className="py-10 text-center text-[#696373] italic">
+                    <td colSpan={5} className="py-10 text-center text-muted-foreground italic">
                       No guests found matching your criteria.
                     </td>
                   </tr>
@@ -504,16 +505,16 @@ export function QrCodePage() {
                       className="border-b border-gray-50 bg-white transition-all duration-200 hover:bg-pink-50/50"
                       style={{ animation: `slideUp 0.35s ease-out ${i * 0.04}s both` }}
                     >
-                      <td className="px-4 py-3.5 text-xs font-medium text-[#696373]">{i + 1}</td>
+                      <td className="px-4 py-3.5 text-xs font-medium text-muted-foreground">{i + 1}</td>
                       <td className="px-4 py-3.5">
                         <div className="flex items-center gap-2.5">
-                          <div className="flex size-8 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-pink-400 to-purple-500 text-xs font-bold text-white">
+                          <div className="flex size-8 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-pink-400 to-pink-600 text-xs font-bold text-white">
                             {rsvp.firstName.charAt(0)}
                           </div>
-                          <span className="font-medium text-[#2d2834]">{`${rsvp.firstName} ${rsvp.middleName ? rsvp.middleName + ' ' : ''}${rsvp.lastName}`}</span>
+                          <span className="font-medium text-foreground">{`${rsvp.firstName} ${rsvp.middleName ? rsvp.middleName + ' ' : ''}${rsvp.lastName}`}</span>
                         </div>
                       </td>
-                      <td className="px-4 py-3.5 text-[#696373]">{rsvp.contactNumber}</td>
+                      <td className="px-4 py-3.5 text-muted-foreground">{rsvp.contactNumber}</td>
                       <td className="px-4 py-3.5">
                         <span
                           className={`inline-flex items-center gap-1.5 rounded-full px-3 py-0.5 text-[10px] font-bold ${rsvp.isScanned ? 'bg-blue-100 text-blue-700' : rsvp.status === 'Not Attending' ? 'bg-red-100 text-red-700' : 'bg-yellow-100 text-yellow-700'}`}

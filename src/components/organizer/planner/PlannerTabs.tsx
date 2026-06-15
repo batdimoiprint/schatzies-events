@@ -8,7 +8,7 @@ interface PlannerTabsProps {
 
 export function PlannerTabs({ activeTab, onTabChange }: PlannerTabsProps) {
   return (
-    <div className="overflow-hidden rounded-xl border border-[#ddd8e8] bg-white p-1 shadow-[0_4px_12px_rgba(33,19,57,0.05)]">
+    <div className="overflow-hidden rounded-xl border border-border bg-white p-1 shadow-[0_4px_12px_rgba(33,19,57,0.05)]">
       <nav
         className="flex items-center gap-1 overflow-x-auto whitespace-nowrap [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
         aria-label="Event planning sections"

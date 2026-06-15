@@ -10,7 +10,7 @@ import axiosInstance from './axios-instance';
  */
 export async function checkOrSendVerification(
   email: string,
-  pendingInquiry?: any
+  pendingInquiry?: Record<string, unknown>
 ): Promise<{ verified: boolean; emailSent?: boolean; reason?: string; alreadyUsed?: boolean }> {
   const { data } = await axiosInstance.post<{
     verified: boolean;

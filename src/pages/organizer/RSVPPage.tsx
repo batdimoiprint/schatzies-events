@@ -10,8 +10,9 @@ import {
 import { downloadQRCode } from '@/lib/qrCodeGenerator';
 import LoadingScreen from '@/components/ui/LoadingScreen';
 import { getRSVPList, scanGuest, generateEventRsvpQr } from '@/api/rsvp';
-import { getEventManagerEvents } from '@/api/events';
+import { getEventManagerEvents, type EventManagerEvent } from '@/api/events';
 import type { RSVPResponse } from '@/types/rsvp';
+import type { ApiError } from '@/types/api-error';
 import { Html5QrcodeScanner } from 'html5-qrcode';
 import { useAuth } from '@/hooks/useAuth';
 
@@ -24,7 +25,7 @@ export function RSVPPage() {
   const [currentQRId, setCurrentQRId] = useState<string>('');
   const [isLoading, setIsLoading] = useState(false);
   const [selectedEventId, setSelectedEventId] = useState<string>('');
-  const [selectedEvent, setSelectedEvent] = useState<any>(null);
+  const [selectedEvent, setSelectedEvent] = useState<EventManagerEvent | null>(null);
   const [copied, setCopied] = useState(false);
 
   // RSVP Data state
@@ -39,7 +40,7 @@ export function RSVPPage() {
   } | null>(null);
   const [isEventsLoading, setIsEventsLoading] = useState(true);
   // Event List state
-  const [events, setEvents] = useState<any[]>([]);
+  const [events, setEvents] = useState<EventManagerEvent[]>([]);
   const [eventsSearchQuery, setEventsSearchQuery] = useState('');
 
   const { user } = useAuth();
@@ -52,7 +53,7 @@ export function RSVPPage() {
 
         // Filter events: Clients only see their own, Admins/Organizers see everything
         const userEvents =
-          user?.role === 'CLIENT' ? data.filter((e: any) => e.clientId === user.user_id) : data;
+          user?.role === 'CLIENT' ? data.filter((e) => e.clientId === user.user_id) : data;
 
         setEvents(userEvents);
 
@@ -60,7 +61,7 @@ export function RSVPPage() {
           // Only set the initial event if one isn't already selected
           const initialEvent = userEvents[0];
           setSelectedEventId((prev) => prev || initialEvent.id);
-          setSelectedEvent((prev: any) => prev || initialEvent);
+          setSelectedEvent((prev) => prev || initialEvent);
         }
       } catch (error) {
         console.error('Error fetching events for QR Management:', error);
@@ -130,13 +131,13 @@ export function RSVPPage() {
         try {
           const altData = await getRSVPList(`EVENT#${eventId}`);
           if (altData && altData.length > 0) data = altData;
-        } catch (e) {
+        } catch {
           /* ignore fallback error */
         }
       }
 
       // Map database fields to the format the UI expects
-      const mappedData = (Array.isArray(data) ? data : []).map((item: any) => {
+      const mappedData = (Array.isArray(data) ? data : []).map((item) => {
         const rawStatus = (item.status || '').toString().toUpperCase();
         const isAttending =
           rawStatus === 'ATTENDING' || rawStatus === 'CONFIRMED' || rawStatus === 'TRUE';
@@ -147,28 +148,31 @@ export function RSVPPage() {
           (item.isScanned && typeof item.isScanned === 'object' && item.isScanned.BOOL === true) ||
           item.isScanned === 'true';
 
+        const guestId = String(item.guestId || item.SK?.split('#')[1] || item.id || '');
         return {
-          id: item.guestId || item.SK?.split('#')[1] || item.id,
-          guestId: item.guestId || item.SK?.split('#')[1] || item.id,
+          id: guestId,
+          guestId,
           firstName: item.guestfirstName || item.firstName || item.first_name || 'Guest',
           lastName: item.guestlastName || item.lastName || item.last_name || '',
           middleName: item.guestmiddleName || item.middleName || item.middle_name || '',
           contactNumber: item.contactNumber || item.contact_number || '',
           status: isAttending ? 'Attending' : 'Not Attending',
           isScanned: scanned,
-          isVerified:
+          isVerified: Boolean(
             item.isVerified === true ||
-            (item.isVerified &&
-              typeof item.isVerified === 'object' &&
-              item.isVerified.BOOL === true) ||
-            item.isVerified === 'true',
-          qrCode: item.qrCode?.S || item.qrCode || '', // CRITICAL: Include the Base64 data!
+              (item.isVerified &&
+                typeof item.isVerified === 'object' &&
+                item.isVerified.BOOL === true) ||
+              item.isVerified === 'true'
+          ),
+          // CRITICAL: Include the Base64 data (handle DynamoDB {S} or plain string)
+          qrCode: (typeof item.qrCode === 'object' ? item.qrCode.S : item.qrCode) || '',
           message: item.message || '',
         };
       });
 
       setRsvps(mappedData);
-    } catch (err: any) {
+    } catch (err) {
       console.error('Error fetching RSVPs:', err);
       // Fallback or local notification could go here if needed
     } finally {
@@ -228,7 +232,7 @@ export function RSVPPage() {
         // Only try to pause if the scanner is actually in a scanning state (camera)
         try {
           if (scanner.getState() === 1) scanner.pause(true);
-        } catch (e) {
+        } catch {
           /* ignore pause error */
         }
 
@@ -293,10 +297,11 @@ export function RSVPPage() {
               type: 'error',
             });
           }
-        } catch (err: any) {
+        } catch (err) {
           console.error('Scan error:', err);
+          const apiErr = err as ApiError;
           const serverMessage =
-            err?.response?.data?.message || err?.response?.data?.error || err.message;
+            apiErr?.response?.data?.message || apiErr?.response?.data?.error || apiErr.message;
           setScanResult({ success: false, message: `Scan Error: ${serverMessage}`, type: 'error' });
         } finally {
           // Re-enable scanner after a delay
@@ -420,19 +425,19 @@ export function RSVPPage() {
       <LoadingScreen isLoading={isLoading} />
 
       {/* ─────────── LEFT SIDEBAR (EVENT LIST) ─────────── */}
-      <div className="w-full lg:w-[340px] shrink-0 flex-col overflow-hidden rounded-2xl border border-[#e2deea] bg-white shadow-sm hidden lg:flex">
-        <div className="border-b border-[#f0edf4] p-4">
+      <div className="w-full lg:w-[340px] shrink-0 flex-col overflow-hidden rounded-2xl border border-border bg-white shadow-sm hidden lg:flex">
+        <div className="border-b border-border p-4">
           <div className="mb-4 flex items-center justify-between">
-            <h2 className="text-lg font-bold text-[#2d2834]">Select Event</h2>
+            <h2 className="text-lg font-bold text-foreground">Select Event</h2>
           </div>
           <div className="relative">
-            <MagnifyingGlass className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-[#b2acbf]" />
+            <MagnifyingGlass className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground/70" />
             <input
               type="text"
               placeholder="Search events..."
               value={eventsSearchQuery}
               onChange={(e) => setEventsSearchQuery(e.target.value)}
-              className="w-full rounded-xl border border-[#ddd8e8] bg-[#f6f5f8] py-2.5 pl-10 pr-4 text-sm text-[#4f4a56] outline-none focus:border-[#df2b80]"
+              className="w-full rounded-xl border border-border bg-[#f6f5f8] py-2.5 pl-10 pr-4 text-sm text-foreground/80 outline-none focus:border-brand"
             />
           </div>
         </div>
@@ -440,32 +445,32 @@ export function RSVPPage() {
         <div className="scrollbar-thin flex-1 overflow-y-auto">
           {isEventsLoading ? (
             <div className="flex items-center justify-center gap-2 p-8">
-              <div className="size-5 animate-spin rounded-full border-2 border-[#df2b80] border-t-transparent" />
-              <span className="text-sm text-[#a49cb3]">Loading events...</span>
+              <div className="size-5 animate-spin rounded-full border-2 border-brand border-t-transparent" />
+              <span className="text-sm text-muted-foreground/70">Loading events...</span>
             </div>
           ) : activeEventsList.length > 0 ? (
             activeEventsList.map((evt) => (
               <div
                 key={evt.id}
                 onClick={() => setSelectedEventId(evt.id)}
-                className={`flex cursor-pointer items-center gap-3 border-b border-[#f0edf4] p-4 transition-colors ${
+                className={`flex cursor-pointer items-center gap-3 border-b border-border p-4 transition-colors ${
                   selectedEventId === evt.id
                     ? 'border-l-4 border-l-[#df2b80] bg-[#fafafa]'
                     : 'border-l-4 border-l-transparent hover:bg-[#fafafa]'
                 }`}
               >
                 <div className="min-w-0 flex-1">
-                  <h4 className="truncate text-sm font-bold text-[#2d2834]">
+                  <h4 className="truncate text-sm font-bold text-foreground">
                     {evt.title || 'Untitled Event'}
                   </h4>
-                  <p className="truncate text-xs font-medium text-[#696373]">
+                  <p className="truncate text-xs font-medium text-muted-foreground">
                     {evt.client || 'Unknown Client'}
                   </p>
                 </div>
               </div>
             ))
           ) : (
-            <div className="p-8 text-center text-sm font-medium text-[#a49cb3]">
+            <div className="p-8 text-center text-sm font-medium text-muted-foreground/70">
               No events found.
             </div>
           )}
@@ -473,16 +478,16 @@ export function RSVPPage() {
       </div>
 
       {/* ─────────── RIGHT SIDE (MAIN AREA) ─────────── */}
-      <div className="flex-1 flex-col overflow-hidden rounded-2xl border border-[#e2deea] bg-white shadow-sm flex relative">
+      <div className="flex-1 flex-col overflow-hidden rounded-2xl border border-border bg-white shadow-sm flex relative">
         <div className="flex-1 overflow-y-auto p-4 sm:p-6 bg-[#fbf8fd]">
           {state === 'active' && (
             <div className="mb-6 flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 border-b border-gray-200 bg-white p-4 rounded-xl shadow-sm">
               <div className="flex gap-4 sm:gap-6">
-                {['overview', 'guest-list', 'scanner'].map((tab) => (
+                {(['overview', 'guest-list', 'scanner'] as const).map((tab) => (
                   <button
                     key={tab}
-                    onClick={() => setActiveTab(tab as any)}
-                    className={`pb-2 text-sm font-semibold capitalize transition ${activeTab === tab ? 'border-b-2 border-[#df2b80] text-[#df2b80]' : 'text-[#696373] hover:text-[#2d2834]'}`}
+                    onClick={() => setActiveTab(tab)}
+                    className={`pb-2 text-sm font-semibold capitalize transition ${activeTab === tab ? 'border-b-2 border-brand text-brand' : 'text-muted-foreground hover:text-foreground'}`}
                   >
                     {tab.replace('-', ' ')}
                   </button>
@@ -501,21 +506,21 @@ export function RSVPPage() {
           )}
 
           {state === 'idle' && (
-            <div className="mt-6 flex flex-1 flex-col items-center justify-center rounded-2xl border-2 border-dashed border-gray-300 bg-[#f8f5fe] shadow-inner p-10 text-center">
+            <div className="mt-6 flex flex-1 flex-col items-center justify-center rounded-2xl border-2 border-dashed border-gray-300 bg-pink-50/20 shadow-inner p-10 text-center">
               {isEventsLoading ? (
                 <div className="flex flex-col items-center">
-                  <div className="size-10 animate-spin rounded-full border-4 border-[#df2b80] border-t-transparent" />
-                  <p className="mt-4 text-sm font-semibold text-[#696373]">
+                  <div className="size-10 animate-spin rounded-full border-4 border-brand border-t-transparent" />
+                  <p className="mt-4 text-sm font-semibold text-muted-foreground">
                     Checking for events...
                   </p>
                 </div>
               ) : !selectedEventId ? (
                 <div className="flex flex-col items-center max-w-sm">
-                  <div className="mb-4 rounded-full bg-pink-50 p-4 text-[#df2b80]">
+                  <div className="mb-4 rounded-full bg-pink-50 p-4 text-brand">
                     <PlusCircle weight="bold" size={48} />
                   </div>
-                  <h3 className="text-xl font-bold text-[#2d2834]">No Events Found</h3>
-                  <p className="mt-2 text-sm text-[#696373]">
+                  <h3 className="text-xl font-bold text-foreground">No Events Found</h3>
+                  <p className="mt-2 text-sm text-muted-foreground">
                     You need to have an active event to generate an RSVP QR code. Please create or
                     select an event first!
                   </p>
@@ -524,7 +529,7 @@ export function RSVPPage() {
                 <button
                   onClick={generateQRCode}
                   disabled={isLoading}
-                  className="flex items-center gap-2.5 rounded-xl bg-white px-8 py-4 text-lg font-bold text-[#df2b80] shadow-xl hover:shadow-2xl hover:-translate-y-1 active:scale-95 disabled:opacity-50 transition-all duration-300"
+                  className="flex items-center gap-2.5 rounded-xl bg-white px-8 py-4 text-lg font-bold text-brand shadow-xl hover:shadow-2xl hover:-translate-y-1 active:scale-95 disabled:opacity-50 transition-all duration-300"
                 >
                   <PlusCircle weight="bold" size={24} /> Create QR Code
                 </button>
@@ -536,16 +541,16 @@ export function RSVPPage() {
             <div className="rounded-xl border border-gray-100 bg-white p-6 sm:p-8 shadow-sm">
               <div className="grid grid-cols-1 gap-6 sm:gap-10 lg:grid-cols-[auto_1fr]">
                 <div className="flex flex-col items-center rounded-2xl bg-white p-6 shadow-lg border border-gray-100">
-                  <p className="text-base font-bold text-[#df2b80]">Schatzies Events</p>
+                  <p className="text-base font-bold text-brand">Schatzies Events</p>
                   {qrCode && (
                     <div className="mt-4 rounded-lg bg-white p-4 shadow-inner border border-gray-50">
                       <img src={qrCode} alt="Generated QR Code" className="w-48 h-48" />
                     </div>
                   )}
-                  <p className="mt-5 text-sm font-extrabold uppercase tracking-wide text-[#2d2834]">
+                  <p className="mt-5 text-sm font-extrabold uppercase tracking-wide text-foreground">
                     Share QR to Invite Guest!
                   </p>
-                  <p className="mt-1 text-xs text-[#696373]">
+                  <p className="mt-1 text-xs text-muted-foreground">
                     QR CODE ID:{' '}
                     <span className="font-semibold">{currentQRId.substring(3, 13)}</span>
                   </p>
@@ -555,13 +560,13 @@ export function RSVPPage() {
                   <div className="mt-5 flex flex-col sm:flex-row gap-3 w-full">
                     <button
                       onClick={handleDownloadQR}
-                      className="flex w-full sm:w-auto items-center justify-center gap-1.5 rounded-lg border border-gray-200 bg-white px-4 py-3 text-xs font-semibold text-[#df2b80] shadow-sm hover:bg-gray-50"
+                      className="flex w-full sm:w-auto items-center justify-center gap-1.5 rounded-lg border border-gray-200 bg-white px-4 py-3 text-xs font-semibold text-brand shadow-sm hover:bg-gray-50"
                     >
                       <Download weight="bold" size={14} /> Download QR
                     </button>
                     <button
                       onClick={handleCopyLink}
-                      className="flex w-full sm:w-auto items-center justify-center gap-1.5 rounded-lg border border-gray-200 bg-white px-4 py-3 text-xs font-semibold text-[#df2b80] shadow-sm hover:bg-gray-50"
+                      className="flex w-full sm:w-auto items-center justify-center gap-1.5 rounded-lg border border-gray-200 bg-white px-4 py-3 text-xs font-semibold text-brand shadow-sm hover:bg-gray-50"
                     >
                       <LinkIcon weight="bold" size={14} /> {copied ? 'Copied!' : 'Copy Link'}
                     </button>
@@ -569,23 +574,23 @@ export function RSVPPage() {
                 </div>
 
                 <div className="flex flex-col">
-                  <h3 className="pb-2 text-lg font-extrabold text-[#2d2834] border-b border-black">
+                  <h3 className="pb-2 text-lg font-extrabold text-foreground border-b border-black">
                     Attendance Breakdown
                   </h3>
                   <div className="mt-5 rounded-xl border border-gray-100 bg-white p-5 shadow-md">
                     <div className="flex items-start justify-between">
                       <div>
-                        <p className="text-sm font-bold text-[#2d2834]">Live Response Analytics</p>
-                        <p className="text-[11px] text-[#696373]">
+                        <p className="text-sm font-bold text-foreground">Live Response Analytics</p>
+                        <p className="text-[11px] text-muted-foreground">
                           A visual representation of your current guest status.
                         </p>
                       </div>
-                      <ChartBar weight="fill" size={18} className="text-[#696373]" />
+                      <ChartBar weight="fill" size={18} className="text-muted-foreground" />
                     </div>
                     <div className="mt-5 flex flex-col gap-4">
                       {stats.map(({ label, pct, count, bar, text }) => (
                         <div key={label} className="flex items-center gap-3">
-                          <span className="w-20 shrink-0 text-xs font-semibold text-[#696373]">
+                          <span className="w-20 shrink-0 text-xs font-semibold text-muted-foreground">
                             {label}
                           </span>
                           <div className="flex-1 h-6 rounded bg-gray-100 overflow-hidden">
@@ -601,7 +606,7 @@ export function RSVPPage() {
                       ))}
                     </div>
                   </div>
-                  <div className="mt-6 flex justify-between items-center text-xs text-[#696373]">
+                  <div className="mt-6 flex justify-between items-center text-xs text-muted-foreground">
                     <div className="flex gap-4">
                       <span>
                         Capacity: <strong>{pax}</strong>
@@ -626,26 +631,26 @@ export function RSVPPage() {
             <div className="animate-[fadeIn_0.3s_ease-out] rounded-xl bg-white shadow-md border border-gray-100">
               <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between border-b border-gray-100 px-5 py-4 sm:px-6 gap-4">
                 <div>
-                  <h3 className="text-base font-bold text-[#2d2834]">Guest List Responses</h3>
-                  <p className="mt-0.5 text-xs text-[#696373]">Track who's coming to your event</p>
+                  <h3 className="text-base font-bold text-foreground">Guest List Responses</h3>
+                  <p className="mt-0.5 text-xs text-muted-foreground">Track who's coming to your event</p>
                 </div>
                 <div className="flex flex-col md:flex-row items-center gap-3 w-full md:w-auto">
                   <div className="relative w-full md:w-[250px]">
-                    <MagnifyingGlass className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-[#b2acbf]" />
+                    <MagnifyingGlass className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground/70" />
                     <input
                       type="text"
                       placeholder="Search name or contact..."
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
-                      className="w-full rounded-lg border border-gray-200 bg-gray-50 py-3 pl-9 pr-4 text-xs text-[#4f4a56] outline-none focus:border-[#df2b80] focus:bg-white"
+                      className="w-full rounded-lg border border-gray-200 bg-gray-50 py-3 pl-9 pr-4 text-xs text-foreground/80 outline-none focus:border-brand focus:bg-white"
                     />
                   </div>
                   <div className="relative w-full md:w-auto">
-                    <Funnel className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-[#b2acbf]" />
+                    <Funnel className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground/70" />
                     <select
                       value={statusFilter}
                       onChange={(e) => setStatusFilter(e.target.value)}
-                      className="w-full appearance-none rounded-lg border border-gray-200 bg-gray-50 py-3 pl-9 pr-8 text-xs font-medium text-[#4f4a56] outline-none focus:border-[#df2b80] focus:bg-white"
+                      className="w-full appearance-none rounded-lg border border-gray-200 bg-gray-50 py-3 pl-9 pr-8 text-xs font-medium text-foreground/80 outline-none focus:border-brand focus:bg-white"
                     >
                       <option value="All">All Status</option>
                       <option value="Attending">Attending</option>
@@ -658,7 +663,7 @@ export function RSVPPage() {
               <div className="overflow-x-auto px-4 pb-4">
                 <table className="mt-2 w-full min-w-[700px] text-sm">
                   <thead>
-                    <tr className="border-b border-gray-100 text-left text-xs font-semibold uppercase tracking-wider text-[#696373]">
+                    <tr className="border-b border-gray-100 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                       <th className="px-4 py-3 font-semibold">#</th>
                       <th className="px-4 py-3 font-semibold">Guest Name</th>
                       <th className="px-4 py-3 font-semibold">Contact</th>
@@ -669,7 +674,7 @@ export function RSVPPage() {
                   <tbody>
                     {filteredRsvps.length === 0 ? (
                       <tr>
-                        <td colSpan={5} className="py-10 text-center text-[#696373] italic">
+                        <td colSpan={5} className="py-10 text-center text-muted-foreground italic">
                           No guests found matching your criteria.
                         </td>
                       </tr>
@@ -680,18 +685,18 @@ export function RSVPPage() {
                           className="border-b border-gray-50 bg-white transition-all duration-200 hover:bg-pink-50/50"
                           style={{ animation: `slideUp 0.35s ease-out ${i * 0.04}s both` }}
                         >
-                          <td className="px-4 py-3.5 text-xs font-medium text-[#696373]">
+                          <td className="px-4 py-3.5 text-xs font-medium text-muted-foreground">
                             {i + 1}
                           </td>
                           <td className="px-4 py-3.5">
                             <div className="flex items-center gap-2.5">
-                              <div className="flex size-8 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-pink-400 to-purple-500 text-xs font-bold text-white">
+                              <div className="flex size-8 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-pink-400 to-pink-600 text-xs font-bold text-white">
                                 {rsvp.firstName.charAt(0)}
                               </div>
-                              <span className="font-medium text-[#2d2834]">{`${rsvp.firstName} ${rsvp.middleName ? rsvp.middleName + ' ' : ''}${rsvp.lastName}`}</span>
+                              <span className="font-medium text-foreground">{`${rsvp.firstName} ${rsvp.middleName ? rsvp.middleName + ' ' : ''}${rsvp.lastName}`}</span>
                             </div>
                           </td>
-                          <td className="px-4 py-3.5 text-[#696373]">{rsvp.contactNumber}</td>
+                          <td className="px-4 py-3.5 text-muted-foreground">{rsvp.contactNumber}</td>
                           <td className="px-4 py-3.5">
                             <span
                               className={`inline-flex items-center gap-1.5 rounded-full px-3 py-0.5 text-[10px] font-bold ${rsvp.isScanned ? 'bg-blue-100 text-blue-700' : rsvp.status === 'Not Attending' ? 'bg-red-100 text-red-700' : 'bg-yellow-100 text-yellow-700'}`}
@@ -725,7 +730,7 @@ export function RSVPPage() {
           {state === 'active' && activeTab === 'scanner' && (
             <div className="animate-[fadeIn_0.3s_ease-out] rounded-xl bg-white p-8 shadow-md border border-gray-100">
               <div className="mx-auto max-w-md">
-                <h3 className="mb-4 text-center text-lg font-bold text-[#2d2834]">
+                <h3 className="mb-4 text-center text-lg font-bold text-foreground">
                   Scan Guest QR Code
                 </h3>
                 <div
@@ -746,7 +751,7 @@ export function RSVPPage() {
                   </div>
                 )}
                 {!scanResult && (
-                  <p className="mt-6 text-center text-xs text-[#696373]">
+                  <p className="mt-6 text-center text-xs text-muted-foreground">
                     Position the QR code within the frame to scan.
                   </p>
                 )}

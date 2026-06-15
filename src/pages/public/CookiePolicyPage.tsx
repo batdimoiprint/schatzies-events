@@ -50,7 +50,7 @@ export default function CookiePolicyPage() {
         <div className="mx-auto max-w-[800px] space-y-10">
           <ScrollReveal variant="up">
             <div className="flex items-start gap-4">
-              <Cookie className="h-6 w-6 text-[#FF0066] mt-1 shrink-0" />
+              <Cookie className="h-6 w-6 text-brand mt-1 shrink-0" />
               <div>
                 <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-3 font-heading">
                   What Are Cookies?
@@ -67,7 +67,7 @@ export default function CookiePolicyPage() {
 
           <ScrollReveal variant="up" delay={100}>
             <div className="flex items-start gap-4">
-              <Settings className="h-6 w-6 text-[#FF0066] mt-1 shrink-0" />
+              <Settings className="h-6 w-6 text-brand mt-1 shrink-0" />
               <div>
                 <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-3 font-heading">
                   How We Use Cookies
@@ -99,7 +99,7 @@ export default function CookiePolicyPage() {
 
           <ScrollReveal variant="up" delay={100}>
             <div className="flex items-start gap-4">
-              <Layers className="h-6 w-6 text-[#FF0066] mt-1 shrink-0" />
+              <Layers className="h-6 w-6 text-brand mt-1 shrink-0" />
               <div>
                 <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-3 font-heading">
                   Types of Cookies We Use
@@ -133,7 +133,7 @@ export default function CookiePolicyPage() {
 
           <ScrollReveal variant="up" delay={100}>
             <div className="flex items-start gap-4">
-              <Wrench className="h-6 w-6 text-[#FF0066] mt-1 shrink-0" />
+              <Wrench className="h-6 w-6 text-brand mt-1 shrink-0" />
               <div>
                 <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-3 font-heading">
                   Managing Cookies
@@ -153,7 +153,7 @@ export default function CookiePolicyPage() {
 
           <ScrollReveal variant="up" delay={100}>
             <div className="flex items-start gap-4">
-              <Globe className="h-6 w-6 text-[#FF0066] mt-1 shrink-0" />
+              <Globe className="h-6 w-6 text-brand mt-1 shrink-0" />
               <div>
                 <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-3 font-heading">
                   Third-Party Services
@@ -176,7 +176,7 @@ export default function CookiePolicyPage() {
 
           <ScrollReveal variant="up" delay={100}>
             <div className="flex items-start gap-4">
-              <Mail className="h-6 w-6 text-[#FF0066] mt-1 shrink-0" />
+              <Mail className="h-6 w-6 text-brand mt-1 shrink-0" />
               <div>
                 <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-3 font-heading">
                   Contacts Us
@@ -185,7 +185,7 @@ export default function CookiePolicyPage() {
                   If you have any questions about our use of cookies, please contact us at{' '}
                   <a
                     href="mailto:schatziesevents@gmail.com"
-                    className="text-[#FF0066] hover:underline"
+                    className="text-brand hover:underline"
                   >
                     schatziesevents@gmail.com
                   </a>{' '}
@@ -197,7 +197,7 @@ export default function CookiePolicyPage() {
 
           <ScrollReveal variant="up" delay={100}>
             <div className="flex items-start gap-4">
-              <RefreshCw className="h-6 w-6 text-[#FF0066] mt-1 shrink-0" />
+              <RefreshCw className="h-6 w-6 text-brand mt-1 shrink-0" />
               <div>
                 <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-3 font-heading">
                   Updates to Terms
@@ -212,7 +212,7 @@ export default function CookiePolicyPage() {
           </ScrollReveal>
 
           <ScrollReveal variant="fade">
-            <p className="text-[#FF0066] text-sm font-semibold pt-4">Last updated: 6/10/2026</p>
+            <p className="text-brand text-sm font-semibold pt-4">Last updated: 6/10/2026</p>
           </ScrollReveal>
         </div>
       </section>

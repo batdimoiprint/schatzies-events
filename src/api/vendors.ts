@@ -39,7 +39,7 @@ export interface CreateVendorPayload {
   notes?: string;
 }
 
-export interface UpdateVendorPayload extends Partial<CreateVendorPayload> {}
+export type UpdateVendorPayload = Partial<CreateVendorPayload>;
 
 export interface EventManagerVendor {
   id: string;
@@ -220,7 +220,7 @@ export interface VendorWorker {
 export async function getVendorWorkersList(vendorId: string): Promise<VendorWorker[]> {
   const response = await axiosInstance.get(`/vendors/${vendorId}/workers`);
   const workers = response.data.workers || response.data || [];
-  return workers.map((w: any) => ({
+  return workers.map((w: Record<string, string | undefined>) => ({
     id: w.id || w.workerId || '',
     vendorId: w.vendorId || vendorId,
     workerName: w.workerName || `${w.firstName || ''} ${w.lastName || ''}`.trim() || 'Worker',
@@ -247,7 +247,7 @@ export interface VendorEvent {
 export async function getVendorEventHistory(vendorId: string): Promise<VendorEvent[]> {
   const response = await axiosInstance.get(`/vendors/${vendorId}/events`);
   const events = Array.isArray(response.data) ? response.data : response.data.events || [];
-  return events.map((e: any) => ({
+  return events.map((e: Record<string, string | undefined>) => ({
     eventId: e.eventId || e.id || '',
     title: e.title || e.eventTitle || 'Untitled Event',
     status: e.status || 'Unknown',
@@ -267,7 +267,7 @@ export async function createVendorWorker(
     availabilityStatus?: string;
     notes?: string;
   }
-): Promise<any> {
+): Promise<unknown> {
   const response = await axiosInstance.post(`/vendors/${vendorId}/workers`, payload);
   return response.data;
 }

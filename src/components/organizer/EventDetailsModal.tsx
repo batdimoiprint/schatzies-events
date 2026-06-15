@@ -17,6 +17,37 @@ import type { EventManagerEvent } from '@/api/events';
 import { updateEventPricing } from '@/api/events';
 import { getVendors, getVendorEntitiesByEventId, assignVendorToEvent } from '@/api/vendors';
 import { getRSVPList } from '@/api/rsvp';
+import type { ApiError } from '@/types/api-error';
+
+interface RsvpRawItem {
+  id?: string;
+  guestId?: string;
+  SK?: string;
+  firstName?: string;
+  first_name?: string;
+  guestfirstName?: string;
+  lastName?: string;
+  last_name?: string;
+  guestlastName?: string;
+  status?: string;
+  isScanned?: boolean | string;
+  updatedAt?: string;
+  scannedAt?: string;
+  createdAt?: string;
+  contactNumber?: string;
+  contact_number?: string;
+  message?: string;
+}
+
+interface RsvpGuestRow {
+  id: string;
+  firstName: string;
+  lastName: string;
+  isScanned: boolean;
+  scannedAt: string;
+  contactNumber: string;
+  message: string;
+}
 
 interface EventDetailsModalProps {
   event: EventManagerEvent;
@@ -81,21 +112,21 @@ const STATUS_CONFIG: Record<string, { label: string; dot: string; bg: string; te
   Pending: { label: 'Planning', dot: 'bg-[#e2b020]', bg: 'bg-[#fff5d3]', text: 'text-[#b68c17]' },
   Execution: {
     label: 'Execution',
-    dot: 'bg-[#df1b8b]',
+    dot: 'bg-brand',
     bg: 'bg-[#ffe6f1]',
-    text: 'text-[#df1b8b]',
+    text: 'text-brand',
   },
   Completed: {
     label: 'Completed',
-    dot: 'bg-[#8637c3]',
-    bg: 'bg-[#f4e6fc]',
-    text: 'text-[#8637c3]',
+    dot: 'bg-brand-deep',
+    bg: 'bg-brand/5',
+    text: 'text-brand-deep',
   },
   Cancelled: {
     label: 'Cancelled',
     dot: 'bg-[#c5221f]',
     bg: 'bg-[#fce8e6]',
-    text: 'text-[#c5221f]',
+    text: 'text-destructive',
   },
 };
 
@@ -150,7 +181,7 @@ export function EventDetailsModal({
   const statusValue = watch('status');
 
   // RSVP state
-  const [rsvpGuests, setRsvpGuests] = useState<any[]>([]);
+  const [rsvpGuests, setRsvpGuests] = useState<RsvpGuestRow[]>([]);
   const [isLoadingRsvp, setIsLoadingRsvp] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
@@ -206,13 +237,13 @@ export function EventDetailsModal({
       setIsLoadingRsvp(true);
       getRSVPList(event.id)
         .then((data) => {
-          const flatArray: any[] = [];
-          const processData = (item: any) => {
+          const flatArray: RsvpRawItem[] = [];
+          const processData = (item: unknown) => {
             if (Array.isArray(item)) item.forEach(processData);
-            else if (item && typeof item === 'object') flatArray.push(item);
+            else if (item && typeof item === 'object') flatArray.push(item as RsvpRawItem);
           };
           processData(data);
-          const mapped = flatArray.map((item: any) => {
+          const mapped = flatArray.map((item) => {
             const fName = String(item.firstName || item.first_name || item.guestfirstName || '')
               .replace(/undefined/gi, '')
               .trim();
@@ -228,7 +259,7 @@ export function EventDetailsModal({
               statusStr === 'ATTENDING' ||
               statusStr === 'CONFIRMED';
             return {
-              id: item.id || item.guestId || item.SK || Math.random().toString(),
+              id: String(item.id || item.guestId || item.SK || Math.random().toString()),
               firstName: fName || 'Guest',
               lastName: lName,
               isScanned: isAttending,
@@ -285,10 +316,10 @@ export function EventDetailsModal({
     <div className="fixed inset-0 z-1000 flex min-h-full items-center justify-center bg-[#1a1423]/60 backdrop-blur-md p-4 overflow-auto">
       <div className="relative w-full max-w-5xl animate-in zoom-in-95 fade-in rounded-3xl bg-white shadow-2xl max-h-[90vh] overflow-y-auto">
         {/* ──── Header with Actions ──── */}
-        <div className="sticky top-0 z-10 bg-white/95 backdrop-blur-sm border-b border-[#f1eef5] px-8 py-4 rounded-t-3xl">
+        <div className="sticky top-0 z-10 bg-white/95 backdrop-blur-sm border-b border-border px-8 py-4 rounded-t-3xl">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <h2 className="text-2xl font-black text-[#2e2837]">Event Details</h2>
+              <h2 className="text-2xl font-black text-foreground">Event Details</h2>
               <Badge
                 className={`${statusCfg.bg} ${statusCfg.text} text-[10px] font-black tracking-wide px-2.5 py-1 shadow-none`}
               >
@@ -303,7 +334,7 @@ export function EventDetailsModal({
                 <>
                   {showDeleteConfirm ? (
                     <div className="flex items-center gap-2">
-                      <span className="text-xs font-bold text-[#c5221f]">Delete?</span>
+                      <span className="text-xs font-bold text-destructive">Delete?</span>
                       <Button
                         type="button"
                         size="sm"
@@ -319,7 +350,7 @@ export function EventDetailsModal({
                         variant="ghost"
                         onClick={() => setShowDeleteConfirm(false)}
                         disabled={isDeleting}
-                        className="h-7 px-3 text-[10px] font-bold text-[#696373]"
+                        className="h-7 px-3 text-[10px] font-bold text-muted-foreground"
                       >
                         No
                       </Button>
@@ -331,7 +362,7 @@ export function EventDetailsModal({
                       size="sm"
                       onClick={() => setShowDeleteConfirm(true)}
                       disabled={isUpdating}
-                      className="h-8 text-xs font-bold text-[#c5221f] hover:bg-[#fce8e6]"
+                      className="h-8 text-xs font-bold text-destructive hover:bg-[#fce8e6]"
                     >
                       <Trash2 className="mr-1 h-3.5 w-3.5" /> Delete
                     </Button>
@@ -343,7 +374,7 @@ export function EventDetailsModal({
                 onClick={onClose}
                 disabled={isUpdating}
                 variant="outline"
-                className="h-8 px-4 text-xs font-bold text-[#696373] border-[#e1d5eb]"
+                className="h-8 px-4 text-xs font-bold text-muted-foreground border-border"
               >
                 Cancel
               </Button>
@@ -351,7 +382,7 @@ export function EventDetailsModal({
                 type="submit"
                 form="event-details-form"
                 disabled={isUpdating}
-                className="h-8 bg-linear-to-r from-[#df1b8b] to-[#9f1baf] px-5 text-xs font-bold text-white shadow-sm disabled:opacity-50"
+                className="h-8 bg-linear-to-r from-brand to-[#9f1baf] px-5 text-xs font-bold text-white shadow-sm disabled:opacity-50"
               >
                 {isUpdating ? (
                   <>
@@ -365,7 +396,7 @@ export function EventDetailsModal({
                 type="button"
                 onClick={onClose}
                 disabled={isUpdating || isDeleting}
-                className="text-[#a69eb5] hover:text-[#df1b8b] transition-colors disabled:opacity-50 ml-1"
+                className="text-[#a69eb5] hover:text-brand transition-colors disabled:opacity-50 ml-1"
               >
                 <X className="size-5" />
               </button>
@@ -376,35 +407,35 @@ export function EventDetailsModal({
         <div className="px-8 pt-6 pb-0">
           {/* ──── Info Cards ──── */}
           <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mt-4 mb-6">
-            <div className="rounded-xl border border-[#f1eef5] bg-[#faf9fc] px-3 py-3">
-              <span className="text-[10px] font-black uppercase tracking-widest text-[#8b839c] mb-1 block">
+            <div className="rounded-xl border border-border bg-[#faf9fc] px-3 py-3">
+              <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-1 block">
                 Client
               </span>
-              <p className="text-sm font-bold text-[#2e2837] truncate">{event.client}</p>
+              <p className="text-sm font-bold text-foreground truncate">{event.client}</p>
             </div>
-            <div className="rounded-xl border border-[#f1eef5] bg-[#faf9fc] px-3 py-3">
-              <span className="text-[10px] font-black uppercase tracking-widest text-[#8b839c] mb-1 block">
+            <div className="rounded-xl border border-border bg-[#faf9fc] px-3 py-3">
+              <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-1 block">
                 Organizer
               </span>
-              <p className="text-sm font-bold text-[#2e2837] truncate">
+              <p className="text-sm font-bold text-foreground truncate">
                 {event.organizerName || 'Unassigned'}
               </p>
             </div>
-            <div className="rounded-xl border border-[#f1eef5] bg-[#faf9fc] px-3 py-3">
-              <span className="text-[10px] font-black uppercase tracking-widest text-[#8b839c] mb-1 block">
+            <div className="rounded-xl border border-border bg-[#faf9fc] px-3 py-3">
+              <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-1 block">
                 Date
               </span>
-              <p className="text-sm font-bold text-[#2e2837] truncate">{event.date}</p>
+              <p className="text-sm font-bold text-foreground truncate">{event.date}</p>
             </div>
             <div
               className={`rounded-xl border px-3 py-3 ${
                 isEditingEventPrice
-                  ? 'border-[#df1b8b]/30 bg-[#fdf2f8]'
-                  : 'border-[#f1eef5] bg-[#faf9fc]'
+                  ? 'border-brand/30 bg-brand/5'
+                  : 'border-border bg-[#faf9fc]'
               }`}
             >
               <div className="flex items-center justify-between mb-1">
-                <span className="text-[10px] font-black uppercase tracking-widest text-[#8b839c]">
+                <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">
                   Event Price
                 </span>
                 {isAdmin && !isEditingEventPrice && (
@@ -415,7 +446,7 @@ export function EventDetailsModal({
                       setEditPrice(String(eventPrice ?? ''));
                       setEventPriceError('');
                     }}
-                    className="text-[#a69eb5] hover:text-[#df1b8b] transition-colors"
+                    className="text-[#a69eb5] hover:text-brand transition-colors"
                     title="Edit event price"
                   >
                     <Pencil className="size-3" />
@@ -441,8 +472,8 @@ export function EventDetailsModal({
                           });
                           event.packageInitialAmount = parsedPrice;
                           setIsEditingEventPrice(false);
-                        } catch (err: any) {
-                          setEventPriceError(err?.response?.data?.error || 'Failed to save price');
+                        } catch (err) {
+                          setEventPriceError((err as ApiError)?.response?.data?.error || 'Failed to save price');
                         } finally {
                           setIsSavingEventPrice(false);
                         }
@@ -482,7 +513,7 @@ export function EventDetailsModal({
                         setIsEditingEventPrice(false);
                         setEventPriceError('');
                       }}
-                      className="text-[#c5221f] hover:text-[#a31b18] transition-colors disabled:opacity-50"
+                      className="text-destructive hover:text-[#a31b18] transition-colors disabled:opacity-50"
                       title="Cancel"
                     >
                       <X className="size-3.5" />
@@ -498,27 +529,27 @@ export function EventDetailsModal({
                   value={editPrice}
                   onChange={(e) => setEditPrice(e.target.value)}
                   disabled={isSavingEventPrice}
-                  className="w-full rounded-md border border-[#e1d5eb] bg-white px-2 py-1 text-sm font-bold text-[#2e2837] outline-none focus:border-[#df1b8b] focus:ring-1 focus:ring-[#df1b8b] disabled:opacity-50"
+                  className="w-full rounded-md border border-border bg-white px-2 py-1 text-sm font-bold text-foreground outline-none focus:border-brand focus:ring-1 focus:ring-brand disabled:opacity-50"
                   placeholder="0"
                 />
               ) : (
-                <p className="text-sm font-bold text-[#2e2837] truncate">
+                <p className="text-sm font-bold text-foreground truncate">
                   {formatMoney(eventPrice)}
                 </p>
               )}
               {eventPriceError && (
-                <p className="text-[10px] font-bold text-[#c5221f] mt-1">{eventPriceError}</p>
+                <p className="text-[10px] font-bold text-destructive mt-1">{eventPriceError}</p>
               )}
             </div>
             <div
               className={`rounded-xl border px-3 py-3 ${
                 isEditingDownpayment
-                  ? 'border-[#df1b8b]/30 bg-[#fdf2f8]'
-                  : 'border-[#f1eef5] bg-[#faf9fc]'
+                  ? 'border-brand/30 bg-brand/5'
+                  : 'border-border bg-[#faf9fc]'
               }`}
             >
               <div className="flex items-center justify-between mb-1">
-                <span className="text-[10px] font-black uppercase tracking-widest text-[#8b839c]">
+                <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">
                   Downpayment
                 </span>
                 {isAdmin && !isEditingDownpayment && (
@@ -529,7 +560,7 @@ export function EventDetailsModal({
                       setEditDownpayment(String(downpaymentAmount ?? ''));
                       setDownpaymentError('');
                     }}
-                    className="text-[#a69eb5] hover:text-[#df1b8b] transition-colors"
+                    className="text-[#a69eb5] hover:text-brand transition-colors"
                     title="Edit downpayment"
                   >
                     <Pencil className="size-3" />
@@ -555,9 +586,9 @@ export function EventDetailsModal({
                           });
                           event.downpaymentAmount = parsedDown;
                           setIsEditingDownpayment(false);
-                        } catch (err: any) {
+                        } catch (err) {
                           setDownpaymentError(
-                            err?.response?.data?.error || 'Failed to save downpayment'
+                            (err as ApiError)?.response?.data?.error || 'Failed to save downpayment'
                           );
                         } finally {
                           setIsSavingDownpayment(false);
@@ -598,7 +629,7 @@ export function EventDetailsModal({
                         setIsEditingDownpayment(false);
                         setDownpaymentError('');
                       }}
-                      className="text-[#c5221f] hover:text-[#a31b18] transition-colors disabled:opacity-50"
+                      className="text-destructive hover:text-[#a31b18] transition-colors disabled:opacity-50"
                       title="Cancel"
                     >
                       <X className="size-3.5" />
@@ -614,23 +645,23 @@ export function EventDetailsModal({
                   value={editDownpayment}
                   onChange={(e) => setEditDownpayment(e.target.value)}
                   disabled={isSavingDownpayment}
-                  className="w-full rounded-md border border-[#e1d5eb] bg-white px-2 py-1 text-sm font-bold text-[#2e2837] outline-none focus:border-[#df1b8b] focus:ring-1 focus:ring-[#df1b8b] disabled:opacity-50"
+                  className="w-full rounded-md border border-border bg-white px-2 py-1 text-sm font-bold text-foreground outline-none focus:border-brand focus:ring-1 focus:ring-brand disabled:opacity-50"
                   placeholder="0"
                 />
               ) : (
-                <p className="text-sm font-bold text-[#2e2837] truncate">
+                <p className="text-sm font-bold text-foreground truncate">
                   {formatMoney(downpaymentAmount)}
                 </p>
               )}
               {downpaymentError && (
-                <p className="text-[10px] font-bold text-[#c5221f] mt-1">{downpaymentError}</p>
+                <p className="text-[10px] font-bold text-destructive mt-1">{downpaymentError}</p>
               )}
             </div>
-            <div className="rounded-xl border border-[#f1eef5] bg-[#faf9fc] px-3 py-3">
-              <span className="text-[10px] font-black uppercase tracking-widest text-[#8b839c] mb-1 block">
+            <div className="rounded-xl border border-border bg-[#faf9fc] px-3 py-3">
+              <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-1 block">
                 RSVP
               </span>
-              <p className="text-sm font-bold text-[#2e2837]">
+              <p className="text-sm font-bold text-foreground">
                 {isLoadingRsvp ? '...' : `${attendingCount} / ${totalRsvp}`}
               </p>
             </div>
@@ -643,13 +674,13 @@ export function EventDetailsModal({
             <form id="event-details-form" onSubmit={handleSubmit(onSubmit)} className="space-y-5">
               {/* Title */}
               <div className="space-y-2">
-                <Label htmlFor="title" className="text-sm font-bold text-[#2e2837]">
+                <Label htmlFor="title" className="text-sm font-bold text-foreground">
                   Event Title *
                 </Label>
                 <Input
                   id="title"
                   {...register('title', { required: 'Title is required' })}
-                  className="border-[#e1d5eb] focus:border-[#df1b8b] focus:ring-[#df1b8b]"
+                  className="border-border focus:border-brand focus:ring-brand"
                   disabled={isUpdating}
                 />
                 {errors.title && <p className="text-xs text-red-500">{errors.title.message}</p>}
@@ -658,14 +689,14 @@ export function EventDetailsModal({
               {/* Date Range */}
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-2">
-                  <Label htmlFor="startDate" className="text-sm font-bold text-[#2e2837]">
+                  <Label htmlFor="startDate" className="text-sm font-bold text-foreground">
                     Start Date *
                   </Label>
                   <Input
                     id="startDate"
                     type="date"
                     {...register('startDate', { required: 'Start date is required' })}
-                    className={`border-[#e1d5eb] focus:border-[#df1b8b] focus:ring-[#df1b8b] ${!watch('startDate') ? 'border-red-500 ring-1 ring-red-500 bg-red-50' : ''}`}
+                    className={`border-border focus:border-brand focus:ring-brand ${!watch('startDate') ? 'border-red-500 ring-1 ring-red-500 bg-red-50' : ''}`}
                     disabled={isUpdating}
                   />
                   {errors.startDate && (
@@ -676,14 +707,14 @@ export function EventDetailsModal({
                   )}
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="endDate" className="text-sm font-bold text-[#2e2837]">
+                  <Label htmlFor="endDate" className="text-sm font-bold text-foreground">
                     Event Date (End Date)
                   </Label>
                   <Input
                     id="endDate"
                     type="date"
                     {...register('endDate')}
-                    className="border-[#e1d5eb] focus:border-[#df1b8b] focus:ring-[#df1b8b]"
+                    className="border-border focus:border-brand focus:ring-brand"
                     disabled={isUpdating}
                   />
                 </div>
@@ -692,14 +723,14 @@ export function EventDetailsModal({
               {/* Event Day Time */}
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-2">
-                  <Label htmlFor="startTime" className="text-sm font-bold text-[#2e2837]">
+                  <Label htmlFor="startTime" className="text-sm font-bold text-foreground">
                     Event Day Start Time
                   </Label>
                   <Input
                     id="startTime"
                     type="time"
                     {...register('startTime')}
-                    className={`border-[#e1d5eb] focus:border-[#df1b8b] focus:ring-[#df1b8b] ${!watch('startTime') ? 'border-red-500 ring-1 ring-red-500 bg-red-50' : ''}`}
+                    className={`border-border focus:border-brand focus:ring-brand ${!watch('startTime') ? 'border-red-500 ring-1 ring-red-500 bg-red-50' : ''}`}
                     disabled={isUpdating}
                   />
                   {!watch('startTime') && (
@@ -707,14 +738,14 @@ export function EventDetailsModal({
                   )}
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="endTime" className="text-sm font-bold text-[#2e2837]">
+                  <Label htmlFor="endTime" className="text-sm font-bold text-foreground">
                     Event Day End Time
                   </Label>
                   <Input
                     id="endTime"
                     type="time"
                     {...register('endTime')}
-                    className={`border-[#e1d5eb] focus:border-[#df1b8b] focus:ring-[#df1b8b] ${!watch('endTime') ? 'border-red-500 ring-1 ring-red-500 bg-red-50' : ''}`}
+                    className={`border-border focus:border-brand focus:ring-brand ${!watch('endTime') ? 'border-red-500 ring-1 ring-red-500 bg-red-50' : ''}`}
                     disabled={isUpdating}
                   />
                   {!watch('endTime') && (
@@ -726,13 +757,13 @@ export function EventDetailsModal({
               {/* Type & Package */}
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-2">
-                  <Label htmlFor="eventType" className="text-sm font-bold text-[#2e2837]">
+                  <Label htmlFor="eventType" className="text-sm font-bold text-foreground">
                     Event Type *
                   </Label>
                   <Input
                     id="eventType"
                     {...register('eventType', { required: 'Event type is required' })}
-                    className="border-[#e1d5eb] focus:border-[#df1b8b] focus:ring-[#df1b8b]"
+                    className="border-border focus:border-brand focus:ring-brand"
                     placeholder="e.g., Wedding, Birthday"
                     disabled={isUpdating}
                   />
@@ -741,13 +772,13 @@ export function EventDetailsModal({
                   )}
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="eventPackage" className="text-sm font-bold text-[#2e2837]">
+                  <Label htmlFor="eventPackage" className="text-sm font-bold text-foreground">
                     Package
                   </Label>
                   <Input
                     id="eventPackage"
                     {...register('eventPackage')}
-                    className="border-[#e1d5eb] focus:border-[#df1b8b] focus:ring-[#df1b8b]"
+                    className="border-border focus:border-brand focus:ring-brand"
                     placeholder="e.g., Bloom, Grandezza"
                     disabled={isUpdating}
                   />
@@ -757,7 +788,7 @@ export function EventDetailsModal({
               {/* Pax & Venue */}
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-2">
-                  <Label htmlFor="eventPax" className="text-sm font-bold text-[#2e2837]">
+                  <Label htmlFor="eventPax" className="text-sm font-bold text-foreground">
                     Expected Guests (Pax)
                   </Label>
                   <Input
@@ -765,15 +796,15 @@ export function EventDetailsModal({
                     type="number"
                     min="0"
                     {...register('eventPax', { valueAsNumber: true })}
-                    className="border-[#e1d5eb] focus:border-[#df1b8b] focus:ring-[#df1b8b]"
+                    className="border-border focus:border-brand focus:ring-brand"
                     disabled={isUpdating}
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label className="text-sm font-bold text-[#2e2837]">
+                  <Label className="text-sm font-bold text-foreground">
                     Venue{' '}
                     {isSavingVenue && (
-                      <Loader2 className="inline ml-1 h-3 w-3 animate-spin text-[#df1b8b]" />
+                      <Loader2 className="inline ml-1 h-3 w-3 animate-spin text-brand" />
                     )}
                   </Label>
                   <Select
@@ -806,7 +837,7 @@ export function EventDetailsModal({
                     }}
                     disabled={isUpdating || isLoadingVenues}
                   >
-                    <SelectTrigger className="border-[#e1d5eb] focus:border-[#df1b8b] focus:ring-[#df1b8b]">
+                    <SelectTrigger className="border-border focus:border-brand focus:ring-brand">
                       <SelectValue
                         placeholder={isLoadingVenues ? 'Loading venues...' : 'Select venue...'}
                       />
@@ -819,7 +850,7 @@ export function EventDetailsModal({
                         </SelectItem>
                       ))}
                       {venueVendors.length === 0 && !isLoadingVenues && (
-                        <div className="px-3 py-2 text-xs text-[#8f879f] italic">
+                        <div className="px-3 py-2 text-xs text-muted-foreground italic">
                           No venue vendors found
                         </div>
                       )}
@@ -830,7 +861,7 @@ export function EventDetailsModal({
 
               {/* Status */}
               <div className="space-y-2">
-                <Label htmlFor="status" className="text-sm font-bold text-[#2e2837]">
+                <Label htmlFor="status" className="text-sm font-bold text-foreground">
                   Status *
                 </Label>
                 <Select
@@ -838,7 +869,7 @@ export function EventDetailsModal({
                   onValueChange={(value) => setValue('status', value)}
                   disabled={isUpdating}
                 >
-                  <SelectTrigger className="border-[#e1d5eb] focus:border-[#df1b8b] focus:ring-[#df1b8b]">
+                  <SelectTrigger className="border-border focus:border-brand focus:ring-brand">
                     <SelectValue placeholder="Select status" />
                   </SelectTrigger>
                   <SelectContent>
@@ -852,13 +883,13 @@ export function EventDetailsModal({
 
               {/* Notes */}
               <div className="space-y-2">
-                <Label htmlFor="notes" className="text-sm font-bold text-[#2e2837]">
+                <Label htmlFor="notes" className="text-sm font-bold text-foreground">
                   Notes
                 </Label>
                 <Textarea
                   id="notes"
                   {...register('notes')}
-                  className="border-[#e1d5eb] focus:border-[#df1b8b] focus:ring-[#df1b8b] min-h-[80px]"
+                  className="border-border focus:border-brand focus:ring-brand min-h-[80px]"
                   placeholder="Additional notes or special requirements..."
                   disabled={isUpdating}
                 />

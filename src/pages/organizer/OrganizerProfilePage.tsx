@@ -413,8 +413,8 @@ export function OrganizerProfilePage() {
           <div className="h-9 w-40 animate-pulse rounded-lg bg-gray-200" />
           <div className="mt-2 h-4 w-64 animate-pulse rounded bg-gray-100" />
         </div>
-        <div className="overflow-hidden rounded-xl border border-[#ece7f2] bg-white shadow-sm">
-          <div className="h-28 animate-pulse bg-gradient-to-r from-pink-200 to-purple-200" />
+        <div className="overflow-hidden rounded-xl border border-border bg-white shadow-sm">
+          <div className="h-28 animate-pulse bg-gradient-to-r from-pink-200 to-pink-300" />
           <div className="px-6 pt-14 pb-6 space-y-4">
             <div className="h-6 w-48 animate-pulse rounded bg-gray-200" />
             <div className="grid gap-5 sm:grid-cols-2 mt-6">
@@ -436,15 +436,15 @@ export function OrganizerProfilePage() {
     return (
       <div className="mx-auto max-w-2xl">
         <div className="mb-6">
-          <h1 className="text-3xl font-black tracking-tight text-[#2d2834] md:text-4xl">
+          <h1 className="text-3xl font-black tracking-tight text-foreground md:text-4xl">
             My Profile
           </h1>
         </div>
-        <div className="overflow-hidden rounded-xl border border-[#ece7f2] bg-white shadow-sm p-8 text-center">
-          <p className="text-[#696373] mb-4">{fetchError}</p>
+        <div className="overflow-hidden rounded-xl border border-border bg-white shadow-sm p-8 text-center">
+          <p className="text-muted-foreground mb-4">{fetchError}</p>
           <button
             onClick={handleRetry}
-            className="rounded-lg bg-[#df2b80] px-5 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-[#c41e6d]"
+            className="rounded-lg bg-brand px-5 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-[#c41e6d]"
           >
             Retry
           </button>
@@ -459,18 +459,18 @@ export function OrganizerProfilePage() {
       <div className="mx-auto max-w-2xl">
         {/* Header */}
         <div className="mb-6">
-          <h1 className="text-3xl font-black tracking-tight text-[#2d2834] md:text-4xl">
+          <h1 className="text-3xl font-black tracking-tight text-foreground md:text-4xl">
             My Profile
           </h1>
-          <p className="mt-1 text-sm font-medium text-[#696373]">
+          <p className="mt-1 text-sm font-medium text-muted-foreground">
             Manage your personal information and account details.
           </p>
         </div>
 
         {/* Profile card */}
-        <div className="overflow-hidden rounded-xl border border-[#ece7f2] bg-white shadow-sm">
+        <div className="overflow-hidden rounded-xl border border-border bg-white shadow-sm">
           {/* Banner */}
-          <div className="relative h-28 bg-gradient-to-r from-pink-400 to-purple-500">
+          <div className="relative h-28 bg-gradient-to-r from-pink-400 to-pink-600">
             {/* Avatar */}
             <div className="absolute -bottom-12 left-6">
               <div className="relative">
@@ -487,7 +487,7 @@ export function OrganizerProfilePage() {
                 >
                   {avatarLoading && (
                     <div className="absolute inset-0 flex items-center justify-center bg-gray-100 rounded-full">
-                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#df2b80]"></div>
+                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-brand"></div>
                     </div>
                   )}
                   <img
@@ -514,7 +514,7 @@ export function OrganizerProfilePage() {
                 {editing && (
                   <button
                     onClick={() => fileInputRef.current?.click()}
-                    className="absolute bottom-0 right-0 flex size-8 items-center justify-center rounded-full bg-[#df2b80] text-white shadow-md transition hover:bg-[#c41e6d]"
+                    className="absolute bottom-0 right-0 flex size-8 items-center justify-center rounded-full bg-brand text-white shadow-md transition hover:bg-[#c41e6d]"
                     aria-label="Change photo"
                   >
                     <Camera className="size-4" />
@@ -527,10 +527,10 @@ export function OrganizerProfilePage() {
           {/* Name + Edit */}
           <div className="flex items-end justify-between px-6 pt-14 pb-4">
             <div>
-              <h2 className="text-xl font-bold text-[#2d2834]">
+              <h2 className="text-xl font-bold text-foreground">
                 {profile.firstName} {profile.lastName}
               </h2>
-              <p className="text-sm text-[#696373]">Client Account</p>
+              <p className="text-sm text-muted-foreground">Client Account</p>
             </div>
             {!editing ? (
               <button
@@ -538,7 +538,7 @@ export function OrganizerProfilePage() {
                   setOriginalProfile(profile);
                   setEditing(true);
                 }}
-                className="rounded-lg bg-[#df2b80] px-5 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-[#c41e6d]"
+                className="rounded-lg bg-brand px-5 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-[#c41e6d]"
               >
                 Edit Profile
               </button>
@@ -574,11 +574,11 @@ export function OrganizerProfilePage() {
           )}
 
           {/* Fields */}
-          <div className="border-t border-[#ece7f2] px-6 py-6">
+          <div className="border-t border-border px-6 py-6">
             <div className="grid gap-5 sm:grid-cols-2">
               {/* First Name */}
               <div>
-                <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-[#696373]">
+                <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                   First Name
                 </label>
                 {editing ? (
@@ -586,16 +586,16 @@ export function OrganizerProfilePage() {
                     type="text"
                     value={profile.firstName}
                     onChange={(e) => handleChange('firstName', e.target.value)}
-                    className="w-full rounded-lg border border-[#ece7f2] px-3.5 py-2.5 text-sm text-[#2d2834] outline-none transition focus:border-[#df2b80] focus:ring-2 focus:ring-pink-100"
+                    className="w-full rounded-lg border border-border px-3.5 py-2.5 text-sm text-foreground outline-none transition focus:border-brand focus:ring-2 focus:ring-pink-100"
                   />
                 ) : (
-                  <p className="text-sm font-medium text-[#2d2834]">{profile.firstName}</p>
+                  <p className="text-sm font-medium text-foreground">{profile.firstName}</p>
                 )}
               </div>
 
               {/* Last Name */}
               <div>
-                <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-[#696373]">
+                <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                   Last Name
                 </label>
                 {editing ? (
@@ -603,16 +603,16 @@ export function OrganizerProfilePage() {
                     type="text"
                     value={profile.lastName}
                     onChange={(e) => handleChange('lastName', e.target.value)}
-                    className="w-full rounded-lg border border-[#ece7f2] px-3.5 py-2.5 text-sm text-[#2d2834] outline-none transition focus:border-[#df2b80] focus:ring-2 focus:ring-pink-100"
+                    className="w-full rounded-lg border border-border px-3.5 py-2.5 text-sm text-foreground outline-none transition focus:border-brand focus:ring-2 focus:ring-pink-100"
                   />
                 ) : (
-                  <p className="text-sm font-medium text-[#2d2834]">{profile.lastName}</p>
+                  <p className="text-sm font-medium text-foreground">{profile.lastName}</p>
                 )}
               </div>
 
               {/* Email */}
               <div>
-                <label className="mb-1.5 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-[#696373]">
+                <label className="mb-1.5 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                   <Mail className="size-3.5" /> Email
                 </label>
                 {editing ? (
@@ -621,22 +621,22 @@ export function OrganizerProfilePage() {
                       type="email"
                       value={profile.email}
                       onChange={(e) => handleEmailChange(e.target.value)}
-                      className={`w-full rounded-lg border px-3.5 py-2.5 text-sm text-[#2d2834] outline-none transition focus:ring-2 ${
+                      className={`w-full rounded-lg border px-3.5 py-2.5 text-sm text-foreground outline-none transition focus:ring-2 ${
                         emailError
                           ? 'border-red-500 focus:border-red-500 focus:ring-red-100'
-                          : 'border-[#ece7f2] focus:border-[#df2b80] focus:ring-pink-100'
+                          : 'border-border focus:border-brand focus:ring-pink-100'
                       }`}
                     />
                     {emailError && <p className="mt-1 text-xs text-red-500">{emailError}</p>}
                   </div>
                 ) : (
-                  <p className="text-sm font-medium text-[#2d2834]">{profile.email}</p>
+                  <p className="text-sm font-medium text-foreground">{profile.email}</p>
                 )}
               </div>
 
               {/* Phone */}
               <div>
-                <label className="mb-1.5 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-[#696373]">
+                <label className="mb-1.5 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                   <Phone className="size-3.5" /> Phone
                 </label>
                 {editing ? (
@@ -650,10 +650,10 @@ export function OrganizerProfilePage() {
                         value={profile.phone}
                         onChange={(e) => handlePhoneChange(e.target.value)}
                         placeholder="9123456789"
-                        className={`w-full rounded-lg border pl-12 px-3.5 py-2.5 text-sm text-[#2d2834] outline-none transition focus:ring-2 ${
+                        className={`w-full rounded-lg border pl-12 px-3.5 py-2.5 text-sm text-foreground outline-none transition focus:ring-2 ${
                           phoneError
                             ? 'border-red-500 focus:border-red-500 focus:ring-red-100'
-                            : 'border-[#ece7f2] focus:border-[#df2b80] focus:ring-pink-100'
+                            : 'border-border focus:border-brand focus:ring-pink-100'
                         }`}
                       />
                     </div>
@@ -663,7 +663,7 @@ export function OrganizerProfilePage() {
                     {phoneError && <p className="mt-1 text-xs text-red-500">{phoneError}</p>}
                   </div>
                 ) : (
-                  <p className="text-sm font-medium text-[#2d2834]">
+                  <p className="text-sm font-medium text-foreground">
                     {formatDisplayPhone(profile.phone)}
                   </p>
                 )}
@@ -671,7 +671,7 @@ export function OrganizerProfilePage() {
 
               {/* Address */}
               <div>
-                <label className="mb-1.5 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-[#696373]">
+                <label className="mb-1.5 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                   <MapPin className="size-3.5" /> Address
                 </label>
                 {editing ? (
@@ -679,16 +679,16 @@ export function OrganizerProfilePage() {
                     type="text"
                     value={profile.address}
                     onChange={(e) => handleChange('address', e.target.value)}
-                    className="w-full rounded-lg border border-[#ece7f2] px-3.5 py-2.5 text-sm text-[#2d2834] outline-none transition focus:border-[#df2b80] focus:ring-2 focus:ring-pink-100"
+                    className="w-full rounded-lg border border-border px-3.5 py-2.5 text-sm text-foreground outline-none transition focus:border-brand focus:ring-2 focus:ring-pink-100"
                   />
                 ) : (
-                  <p className="text-sm font-medium text-[#2d2834]">{profile.address}</p>
+                  <p className="text-sm font-medium text-foreground">{profile.address}</p>
                 )}
               </div>
 
               {/* Birthday */}
               <div>
-                <label className="mb-1.5 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-[#696373]">
+                <label className="mb-1.5 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                   <Calendar className="size-3.5" /> Birthday
                 </label>
                 {editing ? (
@@ -696,10 +696,10 @@ export function OrganizerProfilePage() {
                     type="date"
                     value={profile.birthday}
                     onChange={(e) => handleChange('birthday', e.target.value)}
-                    className="w-full rounded-lg border border-[#ece7f2] px-3.5 py-2.5 text-sm text-[#2d2834] outline-none transition focus:border-[#df2b80] focus:ring-2 focus:ring-pink-100"
+                    className="w-full rounded-lg border border-border px-3.5 py-2.5 text-sm text-foreground outline-none transition focus:border-brand focus:ring-2 focus:ring-pink-100"
                   />
                 ) : (
-                  <p className="text-sm font-medium text-[#2d2834]">
+                  <p className="text-sm font-medium text-foreground">
                     {profile.birthday
                       ? new Date(profile.birthday).toLocaleDateString('en-US', {
                           year: 'numeric',
@@ -726,7 +726,7 @@ export function OrganizerProfilePage() {
                   <div className="flex h-10 w-10 items-center justify-center rounded-full bg-amber-100">
                     <Save className="size-5 text-amber-600" />
                   </div>
-                  <h3 className="text-lg font-semibold text-[#2d2834]">Confirm Changes</h3>
+                  <h3 className="text-lg font-semibold text-foreground">Confirm Changes</h3>
                 </div>
                 <button
                   onClick={closeConfirmModal}
@@ -738,7 +738,7 @@ export function OrganizerProfilePage() {
 
               {/* Modal Body - Show Changes */}
               <div className="p-6">
-                <p className="mb-4 text-[#4f4a56]">
+                <p className="mb-4 text-foreground/80">
                   Are you sure you want to make these changes to your profile?
                 </p>
 
@@ -752,7 +752,7 @@ export function OrganizerProfilePage() {
                     <div className="divide-y divide-gray-100">
                       {changedFields.map((change, index) => (
                         <div key={index} className="px-4 py-3">
-                          <p className="text-sm font-semibold text-[#2d2834]">{change.field}</p>
+                          <p className="text-sm font-semibold text-foreground">{change.field}</p>
                           <div className="mt-1 flex items-center gap-2 text-sm">
                             <span className="text-gray-400 line-through">{change.oldValue}</span>
                             <span className="text-gray-400">→</span>
@@ -769,7 +769,7 @@ export function OrganizerProfilePage() {
               <div className="flex gap-3 border-t border-gray-100 p-4">
                 <button
                   onClick={closeConfirmModal}
-                  className="flex-1 rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm font-medium text-[#696373] transition hover:bg-gray-50"
+                  className="flex-1 rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm font-medium text-muted-foreground transition hover:bg-gray-50"
                 >
                   Cancel
                 </button>

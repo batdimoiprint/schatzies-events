@@ -39,11 +39,11 @@ export function GuestListModal({ onClose, guests = [], isLoading = false }: Prop
 
           {/* Guest rows */}
           {isLoading ? (
-            <div className="flex items-center justify-center py-10 text-sm text-[#696373]">
+            <div className="flex items-center justify-center py-10 text-sm text-muted-foreground">
               Loading guests...
             </div>
           ) : guests.length === 0 ? (
-            <div className="flex items-center justify-center py-10 text-sm text-[#696373]">
+            <div className="flex items-center justify-center py-10 text-sm text-muted-foreground">
               No guests found
             </div>
           ) : (
@@ -52,7 +52,7 @@ export function GuestListModal({ onClose, guests = [], isLoading = false }: Prop
                 key={`${guest.name}-${i}`}
                 className="flex items-center justify-between py-3 border-b border-gray-100 last:border-b-0"
               >
-                <span className="text-sm font-medium text-[#2d2834]">{guest.name}</span>
+                <span className="text-sm font-medium text-foreground">{guest.name}</span>
                 <span
                   className={`rounded-full px-3 py-1 text-xs font-semibold whitespace-nowrap ml-2 ${
                     guest.status === 'Confirmed'

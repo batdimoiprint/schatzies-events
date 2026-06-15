@@ -2,9 +2,19 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { User, Calendar, MapPin } from 'lucide-react';
 import ScrollReveal from '@/components/ui/ScrollReveal';
-import { ServiceRequirementsModal } from '@/components/client/ServiceRequirementsModal';
-import { AllocationResourcesModal } from '@/components/client/AllocationResourcesModal';
-import { ChecklistMeetingModal } from '@/components/client/ChecklistMeetingModal';
+import {
+  ServiceRequirementsModal,
+  type ServiceAllocation,
+} from '@/components/client/ServiceRequirementsModal';
+import {
+  AllocationResourcesModal,
+  type ResourceAllocation,
+} from '@/components/client/AllocationResourcesModal';
+import {
+  ChecklistMeetingModal,
+  type MeetingItem,
+  type ChecklistItem,
+} from '@/components/client/ChecklistMeetingModal';
 import { ProgramFlowModal } from '@/components/client/ProgramFlowModal';
 import { GuestListModal } from '@/components/client/GuestListModal';
 import { getRSVPList } from '@/api/rsvp';
@@ -20,8 +30,90 @@ import { getCalendarEntries } from '@/api/calendar';
 import { useAuth } from '@/hooks/useAuth';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 
-// ── Static mock data fallback ──────────────────────────────────────────────────
-// Removed unused EVENT mock data
+// ── Local shapes for loosely-typed backend payloads ────────────────────────────
+interface FullEventLike {
+  endDate?: string;
+  dateEnd?: string;
+  eventDate?: string;
+  eventPackageKey?: string;
+  eventPackage?: string;
+  package?: { name?: string; pax?: number };
+  eventType?: string;
+  eventPax?: number | null;
+  cost?: string;
+  packageInitialAmount?: number | null;
+  venue?: string;
+  eventLocation?: string;
+  title?: string;
+  status?: string;
+  organizer_id?: string;
+  organizerId?: string;
+}
+
+interface BaseEventLike {
+  id: string;
+  organizerId?: string;
+  organizer_id?: string;
+  organizerName?: string;
+  package?: string;
+  type?: string;
+  pax?: number;
+  venue?: string;
+  title?: string;
+}
+
+interface RsvpLike {
+  isVerified?: boolean | string | { BOOL: boolean };
+  status?: string;
+  guestfirstName?: string;
+  firstName?: string;
+  guestlastName?: string;
+  lastName?: string;
+}
+
+interface CalItemLike {
+  eventId?: string;
+  label?: string;
+  title?: string;
+  startTime?: string;
+  endTime?: string;
+  time?: string;
+}
+
+interface FlowSourceLike {
+  id?: string;
+  title?: string;
+  activity?: string;
+  startTime?: string;
+  start?: string;
+  endTime?: string;
+  end?: string;
+  description?: string;
+  startHour?: number | string;
+}
+
+interface FlowBlock {
+  id: string;
+  title: string;
+  from: string;
+  to: string;
+  description: string;
+  startHour: number;
+}
+
+interface DashboardEventData {
+  daysToGo: number;
+  organizer: string;
+  eventDate: string;
+  venue: string;
+  packageName: string;
+  eventType: string;
+  pax: number;
+  cost: string;
+  eventTitle: string;
+  completion: number;
+  eventStatus: string;
+}
 
 export function ClientDashboardPage() {
   const navigate = useNavigate();
@@ -37,11 +129,13 @@ export function ClientDashboardPage() {
   const [showGuestListModal, setShowGuestListModal] = useState(false);
   const [guests, setGuests] = useState<Array<{ name: string; status: string }>>([]);
   const [isLoadingGuests, setIsLoadingGuests] = useState(true);
-  const [eventData, setEventData] = useState<any>(null);
-  const [allocation, setAllocation] = useState<any>(null);
-  const [meetings, setMeetings] = useState<any[]>([]);
-  const [checklist, setChecklist] = useState<any[]>([]);
-  const [flow, setFlow] = useState<any[]>([]);
+  const [eventData, setEventData] = useState<DashboardEventData | null>(null);
+  const [allocation, setAllocation] = useState<(ResourceAllocation & ServiceAllocation) | null>(
+    null
+  );
+  const [meetings, setMeetings] = useState<MeetingItem[]>([]);
+  const [checklist, setChecklist] = useState<ChecklistItem[]>([]);
+  const [flow, setFlow] = useState<FlowBlock[]>([]);
   const [isLoadingEvent, setIsLoadingEvent] = useState(true);
 
   const handleCloseWelcome = () => {
@@ -89,11 +183,10 @@ export function ClientDashboardPage() {
           console.log('Full event details:', fullEvent);
 
           // Fetch Organizer if available (check all possible ID fields)
+          const fe = fullEvent as FullEventLike;
+          const base = userEventBase as BaseEventLike;
           const orgId =
-            (fullEvent as any).organizer_id ||
-            (fullEvent as any).organizerId ||
-            userEventBase.organizerId ||
-            (userEventBase as any).organizer_id;
+            fe.organizer_id || fe.organizerId || base.organizerId || base.organizer_id;
           let organizerName = userEventBase.organizerName || 'Assigned Organizer';
           if (orgId) {
             try {
@@ -140,20 +233,15 @@ export function ClientDashboardPage() {
           // If package is "Others", use eventType as the display name
           const displayPkgName = rawPkgName === 'Others' ? currentEventType : rawPkgName;
 
-          const paxCount =
-            fullEvent.eventPax ||
-            (userEventBase as any).pax ||
-            (fullEvent as any).package?.pax ||
-            0;
+          const paxCount = fe.eventPax || base.pax || fe.package?.pax || 0;
 
           // Cost logic: Use packageInitialAmount if available
-          let costValue = (fullEvent as any).cost || 'TBD';
-          if ((fullEvent as any).packageInitialAmount) {
-            costValue = `₱${Number((fullEvent as any).packageInitialAmount).toLocaleString()}`;
+          let costValue = fe.cost || 'TBD';
+          if (fe.packageInitialAmount) {
+            costValue = `₱${Number(fe.packageInitialAmount).toLocaleString()}`;
           }
 
-          const venueValue =
-            fullEvent.venue || (fullEvent as any).eventLocation || userEventBase.venue || 'Araneta';
+          const venueValue = fe.venue || fe.eventLocation || base.venue || 'Araneta';
 
           setEventData({
             daysToGo,
@@ -175,14 +263,14 @@ export function ClientDashboardPage() {
             try {
               const alt = await getRSVPList(`EVENT#${userEventBase.id}`);
               if (alt && alt.length > 0) rsvpList = alt;
-            } catch (e) {
+            } catch {
               /* ignore */
             }
           }
 
           // Map and Filter Guests (Show verified or Not Attending)
           const mappedGuests = (Array.isArray(rsvpList) ? rsvpList : [])
-            .filter((rsvp: any) => {
+            .filter((rsvp: RsvpLike) => {
               const isVerified =
                 rsvp.isVerified === true ||
                 (rsvp.isVerified &&
@@ -194,7 +282,7 @@ export function ClientDashboardPage() {
               // Show if verified OR if they are Not Attending (even if unverified)
               return isVerified || rawStatus === 'NOT_ATTENDING' || rawStatus === 'NOT ATTENDING';
             })
-            .map((rsvp: any) => {
+            .map((rsvp: RsvpLike) => {
               const rawStatus = (rsvp.status || '').toString().toUpperCase();
               const isAttending =
                 rawStatus === 'ATTENDING' || rawStatus === 'CONFIRMED' || rawStatus === 'TRUE';
@@ -224,7 +312,7 @@ export function ClientDashboardPage() {
 
             setAllocation(allocRes);
 
-            const formatDisplayTime = (val: any) => {
+            const formatDisplayTime = (val?: string) => {
               if (!val) return '00:00';
               if (typeof val === 'string' && val.includes(':')) {
                 const [h, m] = val.split(':');
@@ -238,24 +326,24 @@ export function ClientDashboardPage() {
 
             const mappedFlows = Array.isArray(flowRes)
               ? flowRes
-                  .map((item: any) => ({
+                  .map((item: FlowSourceLike) => ({
                     id: item.id || Math.random().toString(),
                     title: item.title || item.activity || 'Activity',
                     from: formatDisplayTime(item.startTime || item.start),
                     to: formatDisplayTime(item.endTime || item.end),
                     description: item.description || '',
-                    startHour: parseFloat(item.startHour) || 0,
+                    startHour: parseFloat(String(item.startHour ?? '')) || 0,
                   }))
-                  .sort((a: any, b: any) => a.startHour - b.startHour)
+                  .sort((a: FlowBlock, b: FlowBlock) => a.startHour - b.startHour)
               : [];
             setFlow(mappedFlows);
 
-            const eventMeetings = (calRes || []).filter(
-              (item: any) =>
+            const eventMeetings = ((calRes as CalItemLike[]) || []).filter(
+              (item: CalItemLike) =>
                 item.eventId === userEventBase.id && item.label?.toUpperCase() === 'MEETING'
             );
             setMeetings(eventMeetings);
-            setChecklist(checklistRes || []);
+            setChecklist((checklistRes as ChecklistItem[]) || []);
           } catch (e) {
             console.error('Error fetching dashboard extra details:', e);
           }
@@ -275,8 +363,8 @@ export function ClientDashboardPage() {
     return (
       <div className="flex h-96 items-center justify-center">
         <div className="flex flex-col items-center gap-4">
-          <LoadingSpinner size="lg" color="text-[#df2b80]" />
-          <p className="text-sm font-medium text-[#696373]">Fetching your event details...</p>
+          <LoadingSpinner size="lg" color="text-brand" />
+          <p className="text-sm font-medium text-muted-foreground">Fetching your event details...</p>
         </div>
       </div>
     );
@@ -301,10 +389,10 @@ export function ClientDashboardPage() {
       {/* ── Page heading ─────────────────────────────────────────────────── */}
       <div className="mb-6 flex items-start justify-between">
         <div>
-          <h1 className="text-2xl font-black tracking-tight text-[#2d2834] sm:text-3xl md:text-4xl">
+          <h1 className="text-2xl font-black tracking-tight text-foreground sm:text-3xl md:text-4xl">
             Overview
           </h1>
-          <p className="mt-1 text-xs font-medium text-[#696373] sm:text-sm">
+          <p className="mt-1 text-xs font-medium text-muted-foreground sm:text-sm">
             Here's a summary of the upcoming event you're planning.
           </p>
         </div>
@@ -323,7 +411,7 @@ export function ClientDashboardPage() {
                   <span
                     className="font-black leading-none sm:text-8xl lg:text-9xl text-[clamp(3rem,8vw,10rem)]"
                     style={{
-                      backgroundImage: 'linear-gradient(to right, #700F81 0%, #FF0066 100%)',
+                      backgroundImage: 'linear-gradient(to right, #FF0066 0%, #E6005C 100%)',
                       backgroundClip: 'text',
                       WebkitBackgroundClip: 'text',
                       WebkitTextFillColor: 'transparent',
@@ -336,7 +424,7 @@ export function ClientDashboardPage() {
                       className="font-black text-2xl sm:text-3xl lg:text-4xl leading-tight"
                       style={{
                         fontFamily: 'Libre Baskerville, serif',
-                        backgroundImage: 'linear-gradient(to right, #700F81 0%, #FF0066 100%)',
+                        backgroundImage: 'linear-gradient(to right, #FF0066 0%, #E6005C 100%)',
                         backgroundClip: 'text',
                         WebkitBackgroundClip: 'text',
                         WebkitTextFillColor: 'transparent',
@@ -344,7 +432,7 @@ export function ClientDashboardPage() {
                     >
                       Days To Go!
                     </p>
-                    <p className="text-xs text-[#4A1053]">
+                    <p className="text-xs text-brand-deep">
                       Your dream event is being crafted with precision and care.
                     </p>
                   </div>
@@ -353,33 +441,33 @@ export function ClientDashboardPage() {
                   <div className="bg-white border border-gray-200 shadow-sm rounded-md px-3 py-2 mb-2 flex justify-between items-center">
                     <div className="flex items-center gap-3">
                       <User className="size-5 shrink-0" style={{ color: '#FF0066' }} />
-                      <span className="truncate font-medium text-[#df2b80] text-sm sm:text-base">
+                      <span className="truncate font-medium text-brand text-sm sm:text-base">
                         {displayEvent.organizer}
                       </span>
                     </div>
-                    <span className="shrink-0 text-[10px] text-[#696373] sm:text-xs">
+                    <span className="shrink-0 text-[10px] text-muted-foreground sm:text-xs">
                       (Assigned Organizer)
                     </span>
                   </div>
                   <div className="bg-white border border-gray-200 shadow-sm rounded-md px-3 py-2 mb-2 flex justify-between items-center">
                     <div className="flex items-center gap-3">
-                      <Calendar className="size-5 shrink-0" style={{ color: '#700F81' }} />
-                      <span className="truncate font-medium text-[#df2b80] text-sm sm:text-base">
+                      <Calendar className="size-5 shrink-0" style={{ color: '#FF0066' }} />
+                      <span className="truncate font-medium text-brand text-sm sm:text-base">
                         {displayEvent.eventDate}
                       </span>
                     </div>
-                    <span className="shrink-0 text-[10px] text-[#696373] sm:text-xs">
+                    <span className="shrink-0 text-[10px] text-muted-foreground sm:text-xs">
                       (Event Date)
                     </span>
                   </div>
                   <div className="bg-white border border-gray-200 shadow-sm rounded-md px-3 py-2 mb-2 flex justify-between items-center">
                     <div className="flex items-center gap-3">
                       <MapPin className="size-5 shrink-0" style={{ color: '#FF0066' }} />
-                      <span className="truncate font-medium text-[#df2b80] text-sm sm:text-base">
+                      <span className="truncate font-medium text-brand text-sm sm:text-base">
                         {displayEvent.venue}
                       </span>
                     </div>
-                    <span className="shrink-0 text-[10px] text-[#696373] sm:text-xs">
+                    <span className="shrink-0 text-[10px] text-muted-foreground sm:text-xs">
                       (Event Venue)
                     </span>
                   </div>
@@ -403,7 +491,7 @@ export function ClientDashboardPage() {
                   <h2
                     className="text-xl sm:text-2xl lg:text-3xl font-bold leading-tight"
                     style={{
-                      backgroundImage: 'linear-gradient(to right, #FF0066 0%, #700F81 100%)',
+                      backgroundImage: 'linear-gradient(to right, #FF0066 0%, #E6005C 100%)',
                       backgroundClip: 'text',
                       WebkitBackgroundClip: 'text',
                       WebkitTextFillColor: 'transparent',
@@ -411,7 +499,7 @@ export function ClientDashboardPage() {
                   >
                     {displayEvent.eventTitle}
                   </h2>
-                  <p className="text-xs text-[#696373] mt-1">Event Title</p>
+                  <p className="text-xs text-muted-foreground mt-1">Event Title</p>
                 </div>
                 <div className="flex flex-col justify-end">
                   <button
@@ -428,11 +516,11 @@ export function ClientDashboardPage() {
                 {/* Service Requirements */}
                 <div className="rounded-lg border border-[#e8e4ee] bg-white p-4">
                   <div className="mb-2">
-                    <span className="text-sm font-semibold text-[#2d2834]">
+                    <span className="text-sm font-semibold text-foreground">
                       Service Requirements
                     </span>
                   </div>
-                  <ul className="space-y-0.5 text-xs text-[#696373]">
+                  <ul className="space-y-0.5 text-xs text-muted-foreground">
                     <li className="text-gray-400 italic">No service requirements specified yet.</li>
                   </ul>
                 </div>
@@ -440,7 +528,7 @@ export function ClientDashboardPage() {
                 {/* Allocation Resources */}
                 <div className="rounded-lg border border-[#e8e4ee] bg-white p-4 mb-8">
                   <div className="mb-2">
-                    <span className="text-sm font-semibold text-[#2d2834]">
+                    <span className="text-sm font-semibold text-foreground">
                       Allocation Resources
                     </span>
                   </div>
@@ -452,7 +540,7 @@ export function ClientDashboardPage() {
                 {/* Checklist & Meeting */}
                 <div className="rounded-lg border border-[#e8e4ee] bg-white p-4">
                   <div className="mb-2">
-                    <span className="text-sm font-semibold text-[#2d2834]">
+                    <span className="text-sm font-semibold text-foreground">
                       Checklist & Meeting
                     </span>
                   </div>
@@ -464,7 +552,7 @@ export function ClientDashboardPage() {
                 {/* Program Flow */}
                 <div className="rounded-lg border border-[#e8e4ee] bg-white p-5">
                   <div className="mb-4">
-                    <span className="text-sm font-semibold text-[#2d2834]">Program Flow</span>
+                    <span className="text-sm font-semibold text-foreground">Program Flow</span>
                   </div>
                   <div className="flex flex-col gap-3">
                     <p className="text-xs text-gray-400 italic">
@@ -481,7 +569,7 @@ export function ClientDashboardPage() {
             {/* De Luxe Package card — gradient, no white */}
             <div
               className="rounded-xl p-6 shadow-md"
-              style={{ backgroundImage: 'linear-gradient(to right, #700F81 0%, #FF589C 100%)' }}
+              style={{ backgroundImage: 'linear-gradient(to right, #FF0066 0%, #FF589C 100%)' }}
             >
               <h2
                 className="text-3xl font-bold text-white"
@@ -508,7 +596,7 @@ export function ClientDashboardPage() {
               style={{ fontFamily: 'Montserrat, sans-serif' }}
             >
               <div className="mb-3 flex items-center justify-between shrink-0">
-                <h2 className="text-xl font-bold text-[#2d2834]">Guest List</h2>
+                <h2 className="text-xl font-bold text-foreground">Guest List</h2>
                 <button
                   onClick={() => setShowGuestListModal(true)}
                   className="rounded-lg bg-pink-500 px-4 py-2 text-sm font-bold text-white hover:bg-pink-600 transition"
@@ -517,7 +605,7 @@ export function ClientDashboardPage() {
                 </button>
               </div>
               {/* Column headers */}
-              <div className="mb-3 flex items-center justify-between border-b border-[#e8e4ee] pb-2 text-sm font-semibold text-[#696373] shrink-0">
+              <div className="mb-3 flex items-center justify-between border-b border-[#e8e4ee] pb-2 text-sm font-semibold text-muted-foreground shrink-0">
                 <span>Guest Name</span>
                 <span>Status</span>
               </div>
@@ -525,11 +613,11 @@ export function ClientDashboardPage() {
               <div className="relative" style={{ minHeight: '200px', flex: 1 }}>
                 <ul className="absolute inset-0 space-y-3 overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent">
                   {isLoadingGuests ? (
-                    <li className="flex items-center justify-center text-sm text-[#696373]">
+                    <li className="flex items-center justify-center text-sm text-muted-foreground">
                       Loading guests...
                     </li>
                   ) : guests.length === 0 ? (
-                    <li className="flex items-center justify-center text-sm text-[#696373]">
+                    <li className="flex items-center justify-center text-sm text-muted-foreground">
                       No guests found
                     </li>
                   ) : (
@@ -538,7 +626,7 @@ export function ClientDashboardPage() {
                         key={`${guest.name}-${index}`}
                         className="flex items-center justify-between gap-2 text-base"
                       >
-                        <span className="min-w-0 truncate text-[#2d2834]">{guest.name}</span>
+                        <span className="min-w-0 truncate text-foreground">{guest.name}</span>
                         <span
                           className={`shrink-0 rounded-full px-2.5 py-0.5 text-sm font-semibold ${
                             guest.status === 'Confirmed'

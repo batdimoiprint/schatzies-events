@@ -52,7 +52,7 @@ export function TaskPreviewDialog({
         {selectedBoardTask ? (
           <article>
             <header className="flex items-center justify-between border-b border-[#eee9f2] px-4 py-2">
-              <p className="text-[12px] font-semibold text-[#6f687f]">
+              <p className="text-[12px] font-semibold text-muted-foreground">
                 {selectedBoardTask.title || 'Untitled Task'}
               </p>
               <button
@@ -83,25 +83,25 @@ export function TaskPreviewDialog({
             )}
             {selectedBoardTask?.lane === 'todo' ? (
               <div className="grid gap-4 px-6 py-5 sm:grid-cols-[220px_minmax(0,1fr)]">
-                <aside className="rounded-lg border border-[#ece8f0] bg-white p-3">
+                <aside className="rounded-lg border border-border bg-white p-3">
                   <img
                     src="/Pictures/organizerpics/event-package-illustration.png"
                     alt="Task preview art"
                     className="h-20 w-full object-contain"
                   />
-                  <p className="mt-2 text-[28px] font-black leading-none text-[#2f2b39]">
+                  <p className="mt-2 text-[28px] font-black leading-none text-foreground">
                     {(taskPreviewTitle || 'Untitled').split(' ')[0]}
                   </p>
                   <span className="mt-2 inline-flex rounded-sm bg-[#ffe7ef] px-2 py-0.5 text-[9px] font-bold text-[#cf3a79]">
                     1 Service
                   </span>
                 </aside>
-                <div className="space-y-3 rounded-lg border border-[#ece8f0] bg-white p-4">
+                <div className="space-y-3 rounded-lg border border-border bg-white p-4">
                   <div>
-                    <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[#8b84a0]">
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
                       Editing To Do
                     </p>
-                    <h4 className="mt-1 text-[22px] font-black leading-tight text-[#2f2b39]">
+                    <h4 className="mt-1 text-[22px] font-black leading-tight text-foreground">
                       {taskPreviewTitle || 'Untitled Task'}
                     </h4>
                   </div>
@@ -117,7 +117,7 @@ export function TaskPreviewDialog({
                       value={taskPreviewTitle}
                       onChange={(e) => setTaskPreviewTitle(e.target.value)}
                       placeholder="Enter task title"
-                      className="mt-1 h-10 border-[#ddd7e8] text-[13px] font-semibold text-[#302c39]"
+                      className="mt-1 h-10 border-[#ddd7e8] text-[13px] font-semibold text-foreground"
                     />
                   </div>
                   <div>
@@ -132,10 +132,10 @@ export function TaskPreviewDialog({
                       value={taskPreviewDetails}
                       onChange={(e) => setTaskPreviewDetails(e.target.value)}
                       placeholder="Enter a short description"
-                      className="mt-1 h-24 w-full rounded-lg border border-[#ddd7e8] bg-white px-3 py-2 text-[13px] text-[#302c39] outline-none placeholder:text-[#8a8495] focus:border-[#b29ace]"
+                      className="mt-1 h-24 w-full rounded-lg border border-[#ddd7e8] bg-white px-3 py-2 text-[13px] text-foreground outline-none placeholder:text-muted-foreground focus:border-[#b29ace]"
                     />
                   </div>
-                  <div className="rounded-md border border-[#ece8f0] bg-[#faf8fd] p-3">
+                  <div className="rounded-md border border-border bg-[#faf8fd] p-3">
                     <div className="flex items-center justify-between gap-2">
                       <Label className="text-[11px] font-semibold text-[#746e85]">
                         To Do Lists
@@ -143,7 +143,7 @@ export function TaskPreviewDialog({
                       <button
                         type="button"
                         onClick={handleAddTodoChecklistItem}
-                        className="inline-flex h-8 items-center gap-1 rounded-md border border-[#e1d8ef] bg-white px-2 text-[11px] font-semibold text-[#6f26b4] transition hover:bg-[#f8f3ff]"
+                        className="inline-flex h-8 items-center gap-1 rounded-md border border-border bg-white px-2 text-[11px] font-semibold text-[#6f26b4] transition hover:bg-[#f8f3ff]"
                       >
                         <Plus className="size-3.5" />
                         Add item
@@ -156,7 +156,7 @@ export function TaskPreviewDialog({
                             key={item.id || `preview-chk-${index}`}
                             className="flex items-start gap-2 rounded-md border border-[#e9e3f1] bg-white px-2.5 py-2"
                           >
-                            <span className="mt-2 inline-flex w-4 shrink-0 justify-center text-[14px] font-black leading-none text-[#8b84a0]">
+                            <span className="mt-2 inline-flex w-4 shrink-0 justify-center text-[14px] font-black leading-none text-muted-foreground">
                               -
                             </span>
                             <div className="min-w-0 flex-1">
@@ -167,13 +167,13 @@ export function TaskPreviewDialog({
                                   handleUpdateTodoChecklistItem(item.id, e.target.value)
                                 }
                                 placeholder="Enter list item"
-                                className="h-9 border-[#ddd7e8] text-[12px] text-[#302c39]"
+                                className="h-9 border-[#ddd7e8] text-[12px] text-foreground"
                               />
                             </div>
                             <button
                               type="button"
                               onClick={() => handleRemoveTodoChecklistItem(item.id)}
-                              className="inline-flex size-8 items-center justify-center rounded-md border border-[#e1d8ef] bg-white text-[#7b6f90] transition hover:border-[#f1589e] hover:text-[#f1589e]"
+                              className="inline-flex size-8 items-center justify-center rounded-md border border-border bg-white text-[#7b6f90] transition hover:border-brand hover:text-brand"
                               aria-label="Remove list item"
                             >
                               <Trash2 className="size-3.5" />
@@ -181,7 +181,7 @@ export function TaskPreviewDialog({
                           </div>
                         ))
                       ) : (
-                        <p className="rounded-md border border-dashed border-[#d8d2e2] bg-white px-3 py-4 text-[12px] italic text-[#8b84a0]">
+                        <p className="rounded-md border border-dashed border-[#d8d2e2] bg-white px-3 py-4 text-[12px] italic text-muted-foreground">
                           Add list items to build this task.
                         </p>
                       )}
@@ -191,7 +191,7 @@ export function TaskPreviewDialog({
                     <button
                       type="button"
                       onClick={handleSaveTaskPreview}
-                      className="inline-flex h-9 items-center justify-center rounded-md bg-[#8f1fd1] px-4 text-[11px] font-black uppercase tracking-[0.08em] text-white shadow-[0_8px_18px_rgba(143,31,209,0.3)]"
+                      className="inline-flex h-9 items-center justify-center rounded-md bg-brand-deep px-4 text-[11px] font-black uppercase tracking-[0.08em] text-white shadow-[0_8px_18px_rgba(143,31,209,0.3)]"
                     >
                       Save
                     </button>
@@ -200,15 +200,15 @@ export function TaskPreviewDialog({
               </div>
             ) : (
               <div className="px-6 py-5">
-                <div className="rounded-lg border border-[#ece8f0] bg-white p-4">
+                <div className="rounded-lg border border-border bg-white p-4">
                   <div className="flex flex-wrap items-start justify-between gap-3">
                     <div>
-                      <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[#8b84a0]">
+                      <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
                         {selectedBoardTask?.lane === 'completed'
                           ? 'Completed task'
                           : 'In progress task'}
                       </p>
-                      <h4 className="mt-1 text-[24px] font-black leading-tight text-[#2f2b39]">
+                      <h4 className="mt-1 text-[24px] font-black leading-tight text-foreground">
                         {taskPreviewTitle || 'Untitled Task'}
                       </h4>
                     </div>
@@ -222,16 +222,16 @@ export function TaskPreviewDialog({
                       </span>
                     )}
                   </div>
-                  <div className="mt-4 rounded-md border border-[#ece8f0] bg-[#faf8fd] p-3">
-                    <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[#8b84a0]">
+                  <div className="mt-4 rounded-md border border-border bg-[#faf8fd] p-3">
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
                       Details
                     </p>
                     <p className="mt-2 whitespace-pre-line text-[13px] leading-relaxed text-[#5f596c]">
                       {taskPreviewDetails || 'No details provided.'}
                     </p>
                   </div>
-                  <div className="mt-4 rounded-md border border-[#ece8f0] bg-white p-3">
-                    <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[#8b84a0]">
+                  <div className="mt-4 rounded-md border border-border bg-white p-3">
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
                       {selectedBoardTask?.lane === 'completed'
                         ? 'Checklist breakdown'
                         : 'Checklist'}
@@ -241,7 +241,7 @@ export function TaskPreviewDialog({
                         (selectedBoardTask?.checklist ?? []).map((item, index) => (
                           <div
                             key={item.id || `view-chk-${index}`}
-                            className="rounded-md border border-[#ece8f0] bg-[#faf8fd] px-3 py-2"
+                            className="rounded-md border border-border bg-[#faf8fd] px-3 py-2"
                           >
                             <div className="flex items-start gap-2">
                               <button
@@ -254,16 +254,16 @@ export function TaskPreviewDialog({
                                   'mt-1 inline-flex size-4 shrink-0 items-center justify-center rounded-full border text-[10px] font-black transition',
                                   item.done
                                     ? 'border-[#2ec24f] bg-[#2ec24f] text-white'
-                                    : 'border-[#d8d2e2] bg-white text-[#8b84a0] hover:border-[#b8b0c3]',
+                                    : 'border-[#d8d2e2] bg-white text-muted-foreground hover:border-[#b8b0c3]',
                                 ].join(' ')}
                               >
                                 {item.done ? '✓' : ''}
                               </button>
                               <div className="min-w-0 flex-1">
-                                <p className="text-[13px] font-semibold text-[#302c39]">
+                                <p className="text-[13px] font-semibold text-foreground">
                                   {item.label}
                                 </p>
-                                <p className="mt-1 text-[11px] text-[#7a728d]">
+                                <p className="mt-1 text-[11px] text-muted-foreground">
                                   {item.done
                                     ? `Done ${formatChecklistTimestamp(item.doneAt)}`
                                     : 'Pending'}
@@ -273,7 +273,7 @@ export function TaskPreviewDialog({
                           </div>
                         ))
                       ) : (
-                        <p className="text-[12px] italic text-[#8b84a0]">
+                        <p className="text-[12px] italic text-muted-foreground">
                           No checklist items available.
                         </p>
                       )}

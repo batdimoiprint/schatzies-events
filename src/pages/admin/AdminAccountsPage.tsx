@@ -59,8 +59,8 @@ export function AdminAccountsPage() {
     <div className="p-6 space-y-6">
       <div className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
         <div>
-          <h1 className="text-3xl font-black text-[#2e2837]">Accounts & Users</h1>
-          <p className="font-semibold text-[#8f879f]">
+          <h1 className="text-3xl font-black text-foreground">Accounts & Users</h1>
+          <p className="font-semibold text-muted-foreground">
             Manage system users, roles, and permissions
           </p>
         </div>

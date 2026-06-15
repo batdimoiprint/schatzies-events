@@ -7,6 +7,13 @@ import { getVendorEntitiesByEventId, type Vendor } from '@/api/vendors';
 import { getCostBreakdown, type CostBreakdownResponse } from '@/api/cost-breakdown';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
+import { useBusinessContact } from '@/hooks/useBusinessContact';
+
+/** jsPDF augmented by the autotable plugin (not in the base typings). */
+interface AutoTableDoc {
+  lastAutoTable: { finalY: number };
+  internal: { getNumberOfPages: () => number };
+}
 
 /** Consistent color palette for any service type — cycles if more types exist */
 const TYPE_PALETTE = [
@@ -70,9 +77,10 @@ interface CostBreakdownTabProps {
 }
 
 export function CostBreakdownTab({ selectedEventId }: CostBreakdownTabProps) {
-  const [apiEvents, setApiEvents] = useState<any[]>([]);
+  const [apiEvents, setApiEvents] = useState<Awaited<ReturnType<typeof getEvents>>>([]);
   const [eventVendors, setEventVendors] = useState<Vendor[]>([]);
   const [breakdown, setBreakdown] = useState<CostBreakdownResponse | null>(null);
+  const { data: bizContact } = useBusinessContact();
 
   const ev = useMemo(
     () => apiEvents.find((e) => String(e?.id) === selectedEventId) ?? null,
@@ -106,6 +114,7 @@ export function CostBreakdownTab({ selectedEventId }: CostBreakdownTabProps) {
         const sl = (pct / 100) * c,
           da = `${sl} ${Math.max(c - sl, 0)}`,
           doff = -((cum / 100) * c);
+        // eslint-disable-next-line react-hooks/immutability -- accumulator for donut segment offsets
         cum += pct;
         const st = v.serviceType || 'Unknown';
         return {
@@ -165,8 +174,17 @@ export function CostBreakdownTab({ selectedEventId }: CostBreakdownTabProps) {
     doc.setFontSize(10);
     doc.setFont('helvetica', 'normal');
     doc.setTextColor('#666666');
-    doc.text('27 Novaliches Mendoza Village Project 8, Quezon City', 14, 32);
-    doc.text('Phone: +63 933 380 7868 / 917 502 3538 | Email: schatziesevents@gmail.com', 14, 38);
+    const bizAddr = bizContact?.addresses?.[0];
+    const addrText = bizAddr
+      ? [bizAddr.street, bizAddr.barangay, bizAddr.city, bizAddr.province].filter(Boolean).join(', ')
+      : '';
+    const phoneText = (bizContact?.phones ?? []).map((p) => p.number).join(' / ');
+    const emailText = bizContact?.emails?.[0]?.email ?? '';
+    if (addrText) doc.text(addrText, 14, 32);
+    const contactLine = [phoneText && `Phone: ${phoneText}`, emailText && `Email: ${emailText}`]
+      .filter(Boolean)
+      .join(' | ');
+    if (contactLine) doc.text(contactLine, 14, 38);
 
     // Divider line
     doc.setDrawColor(220, 220, 220);
@@ -190,7 +208,7 @@ export function CostBreakdownTab({ selectedEventId }: CostBreakdownTabProps) {
     doc.text(`Generated on: ${currentDate}`, pageWidth - 14, 56, { align: 'right' });
 
     // Event Details box
-    doc.setFillColor(248, 241, 253); // Light purple background
+    doc.setFillColor(255, 240, 245); // Light pink background
     doc.roundedRect(14, 62, pageWidth - 28, 36, 3, 3, 'F');
 
     doc.setFontSize(11);
@@ -225,7 +243,7 @@ export function CostBreakdownTab({ selectedEventId }: CostBreakdownTabProps) {
       margin: { left: 14, right: 14 },
     });
 
-    currentY = (doc as any).lastAutoTable.finalY + 12;
+    currentY = (doc as unknown as AutoTableDoc).lastAutoTable.finalY + 12;
 
     // Vendors Breakdown
     doc.setFontSize(14);
@@ -251,7 +269,7 @@ export function CostBreakdownTab({ selectedEventId }: CostBreakdownTabProps) {
       margin: { left: 14, right: 14 },
     });
 
-    currentY = (doc as any).lastAutoTable.finalY + 12;
+    currentY = (doc as unknown as AutoTableDoc).lastAutoTable.finalY + 12;
 
     // Totals & Balances
     autoTable(doc, {
@@ -271,7 +289,7 @@ export function CostBreakdownTab({ selectedEventId }: CostBreakdownTabProps) {
     });
 
     // Add footer to every page
-    const pageCount = (doc as any).internal.getNumberOfPages();
+    const pageCount = (doc as unknown as AutoTableDoc).internal.getNumberOfPages();
     for (let i = 1; i <= pageCount; i++) {
       doc.setPage(i);
 
@@ -308,7 +326,7 @@ export function CostBreakdownTab({ selectedEventId }: CostBreakdownTabProps) {
 
   if (!selectedEventId) {
     return (
-      <section className="rounded-2xl border border-[#ddd8e8] bg-white px-4 py-10 text-center">
+      <section className="rounded-2xl border border-border bg-white px-4 py-10 text-center">
         <p className="text-sm font-semibold text-[#7c748f]">
           Select an event to view the cost breakdown.
         </p>
@@ -322,9 +340,9 @@ export function CostBreakdownTab({ selectedEventId }: CostBreakdownTabProps) {
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 rounded-3xl border border-[#eadfec] bg-white p-4 shadow-sm">
         <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
           <div>
-            <p className="text-lg font-black text-[#2d2834]">{evName}</p>
+            <p className="text-lg font-black text-foreground">{evName}</p>
             <div className="flex items-center gap-2 mt-1">
-              <span className="rounded-full border border-[#eadcf6] bg-[#f8f1fd] px-3 py-0.5 text-xs font-bold uppercase tracking-wide text-[#8f23cf]">
+              <span className="rounded-full border border-[#eadcf6] bg-brand/5 px-3 py-0.5 text-xs font-bold uppercase tracking-wide text-brand-deep">
                 {evType}
               </span>
             </div>
@@ -333,7 +351,7 @@ export function CostBreakdownTab({ selectedEventId }: CostBreakdownTabProps) {
         <div className="flex items-center gap-2">
           <Button
             onClick={handlePdf}
-            className="rounded-full bg-gradient-to-r from-[#f34da7] to-[#8f1fd1] px-6 text-white hover:opacity-95 font-bold shadow-[0_4px_14px_rgba(165,44,180,0.2)]"
+            className="rounded-full bg-gradient-to-r from-[#f34da7] to-brand-deep px-6 text-white hover:opacity-95 font-bold shadow-[0_4px_14px_rgba(165,44,180,0.2)]"
           >
             <FileText className="size-4 mr-2" /> Export PDF Report
           </Button>
@@ -341,7 +359,7 @@ export function CostBreakdownTab({ selectedEventId }: CostBreakdownTabProps) {
       </div>
 
       {/* Summary Cards */}
-      <div className="overflow-hidden rounded-2xl border border-[#e7dfef] bg-white shadow-sm">
+      <div className="overflow-hidden rounded-2xl border border-border bg-white shadow-sm">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-y-4 lg:gap-y-0 lg:divide-x divide-[#ece6f3]">
           {[
             { label: 'Package Price', value: packagePrice, color: '#8f23cf', sub: `${evPax} pax` },
@@ -359,7 +377,7 @@ export function CostBreakdownTab({ selectedEventId }: CostBreakdownTabProps) {
                 {c.label}
               </p>
               <p
-                className={`mt-4 text-3xl lg:text-4xl font-black tracking-tight ${c.highlight && c.value < 0 ? 'text-[#c03560]' : 'text-[#2d2834]'}`}
+                className={`mt-4 text-3xl lg:text-4xl font-black tracking-tight ${c.highlight && c.value < 0 ? 'text-[#c03560]' : 'text-foreground'}`}
               >
                 {peso(c.value)}
               </p>
@@ -375,7 +393,7 @@ export function CostBreakdownTab({ selectedEventId }: CostBreakdownTabProps) {
       </div>
 
       {/* Organizer Total Banner */}
-      <div className="flex items-center justify-between rounded-2xl bg-gradient-to-r from-[#8f1fd1] to-[#f34da7] px-6 py-4 text-white shadow-[0_10px_24px_rgba(165,44,180,0.25)]">
+      <div className="flex items-center justify-between rounded-2xl bg-gradient-to-r from-brand-deep to-[#f34da7] px-6 py-4 text-white shadow-[0_10px_24px_rgba(165,44,180,0.25)]">
         <div>
           <p className="text-sm font-semibold opacity-80">Organizer Total Earnings</p>
           <p className="text-xs opacity-60">20% cut + leftover vendor budget</p>
@@ -385,7 +403,7 @@ export function CostBreakdownTab({ selectedEventId }: CostBreakdownTabProps) {
 
       {/* Chart + Assigned Vendors */}
       <div className="grid grid-cols-1 xl:grid-cols-[320px_minmax(0,1fr)] gap-4">
-        <Card className="border-[#e7dfef] bg-white py-0 shadow-sm">
+        <Card className="border-border bg-white py-0 shadow-sm">
           <CardContent className="flex h-full flex-col px-5 py-5">
             <p className="text-sm font-black uppercase tracking-widest text-[#7a7186] mb-4">
               Cost Distribution
@@ -415,17 +433,17 @@ export function CostBreakdownTab({ selectedEventId }: CostBreakdownTabProps) {
                 <div className="pointer-events-none absolute inset-[40px] rounded-full bg-white ring-1 ring-[#eee5f6]" />
                 {hovSeg && (
                   <div className="pointer-events-none absolute -bottom-1 left-1/2 min-w-[200px] -translate-x-1/2 translate-y-full rounded-2xl border border-[#efe4f8] bg-white px-4 py-3 text-center shadow-lg z-10">
-                    <p className="text-sm font-bold text-[#2d2834]">{hovSeg.type}</p>
-                    <p className="text-xs text-[#6f6780]">{hovSeg.name}</p>
-                    <p className="mt-2 text-sm font-bold text-[#8f1fd1]">{peso(hovSeg.cost)}</p>
-                    <p className="text-xs text-[#6f6780]">{hovSeg.pct.toFixed(1)}%</p>
+                    <p className="text-sm font-bold text-foreground">{hovSeg.type}</p>
+                    <p className="text-xs text-muted-foreground">{hovSeg.name}</p>
+                    <p className="mt-2 text-sm font-bold text-brand-deep">{peso(hovSeg.cost)}</p>
+                    <p className="text-xs text-muted-foreground">{hovSeg.pct.toFixed(1)}%</p>
                   </div>
                 )}
               </div>
             </div>
             <div className="mt-4 space-y-1.5">
               {chartSegments.map((s) => (
-                <div key={s.id} className="flex items-center gap-2 text-xs text-[#70687e]">
+                <div key={s.id} className="flex items-center gap-2 text-xs text-muted-foreground">
                   <span className="size-2 rounded-full" style={{ backgroundColor: s.color }} />
                   <span className="flex-1 truncate">{s.name}</span>
                   <span className="font-semibold">{peso(s.cost)}</span>
@@ -440,7 +458,7 @@ export function CostBreakdownTab({ selectedEventId }: CostBreakdownTabProps) {
         </Card>
 
         {/* Assigned Vendors Table */}
-        <Card className="border-[#e7dfef] bg-white py-0 shadow-sm">
+        <Card className="border-border bg-white py-0 shadow-sm">
           <CardContent className="h-full px-0 py-0">
             <div className="overflow-hidden rounded-2xl">
               <div className="bg-gradient-to-r from-[#ff66a7] to-[#ff4b97] px-6 py-4 text-sm font-semibold text-white">
@@ -452,35 +470,35 @@ export function CostBreakdownTab({ selectedEventId }: CostBreakdownTabProps) {
               </div>
               <div className="max-h-[360px] overflow-y-auto">
                 {eventVendors.length === 0 ? (
-                  <div className="px-6 py-12 text-center text-sm font-semibold text-[#8b8199]">
+                  <div className="px-6 py-12 text-center text-sm font-semibold text-muted-foreground">
                     No vendors assigned to this event yet.
                   </div>
                 ) : (
                   eventVendors.map((v, i) => (
                     <div
                       key={v.id}
-                      className={`grid grid-cols-3 gap-4 px-6 py-3.5 text-sm border-b border-[#f3edf8] ${i % 2 === 0 ? 'bg-[#fff4f8]' : 'bg-white'} hover:bg-[#fcf9ff]`}
+                      className={`grid grid-cols-3 gap-4 px-6 py-3.5 text-sm border-b border-[#f3edf8] ${i % 2 === 0 ? 'bg-[#fff4f8]' : 'bg-white'} hover:bg-brand/5`}
                     >
-                      <span className="font-medium text-[#2f2939]">{v.serviceType || '-'}</span>
-                      <span className="text-[#2f2939]">{v.name}</span>
-                      <span className="text-right font-bold text-[#2f2939]">
+                      <span className="font-medium text-foreground">{v.serviceType || '-'}</span>
+                      <span className="text-foreground">{v.name}</span>
+                      <span className="text-right font-bold text-foreground">
                         {v.price != null ? peso(v.price) : '—'}
                       </span>
                     </div>
                   ))
                 )}
               </div>
-              <div className="border-t-2 border-[#ece6f3] bg-[#faf7fd] px-6 py-3 space-y-1.5">
+              <div className="border-t-2 border-border bg-[#faf7fd] px-6 py-3 space-y-1.5">
                 <div className="flex justify-between text-sm">
-                  <span className="font-semibold text-[#6f6780]">Vendor Budget (80%)</span>
-                  <span className="font-bold text-[#2d2834]">{peso(vendorBudget)}</span>
+                  <span className="font-semibold text-muted-foreground">Vendor Budget (80%)</span>
+                  <span className="font-bold text-foreground">{peso(vendorBudget)}</span>
                 </div>
                 <div className="flex justify-between text-sm">
-                  <span className="font-semibold text-[#6f6780]">Total Vendor Cost</span>
-                  <span className="font-bold text-[#2d2834]">{peso(totalVendorCost)}</span>
+                  <span className="font-semibold text-muted-foreground">Total Vendor Cost</span>
+                  <span className="font-bold text-foreground">{peso(totalVendorCost)}</span>
                 </div>
-                <div className="flex justify-between text-sm border-t border-[#ece6f3] pt-1.5">
-                  <span className="font-bold text-[#4a4157]">Remaining</span>
+                <div className="flex justify-between text-sm border-t border-border pt-1.5">
+                  <span className="font-bold text-foreground/80">Remaining</span>
                   <span
                     className={`font-black ${vendorBalance >= 0 ? 'text-[#29bf4c]' : 'text-[#c03560]'}`}
                   >

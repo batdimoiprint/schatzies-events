@@ -1,6 +1,7 @@
 import { useState, useEffect, type ChangeEvent, type DragEvent } from 'react';
 import { getEventNotes, createEventNote, updateEventNote, deleteEventNote } from '@/api/events';
 import type { PlannerQuickNote } from '@/types/planner';
+import type { ApiError } from '@/types/api-error';
 
 export function usePlannerNotes(selectedEventId: string) {
   const [plannerNotes, setPlannerNotes] = useState<PlannerQuickNote[]>([]);
@@ -109,19 +110,20 @@ export function usePlannerNotes(selectedEventId: string) {
         setPlannerNotes((prev) => [newNote, ...prev]);
       }
       closePlannerNoteModal();
-    } catch (error: any) {
+    } catch (error) {
       console.error('Failed to save planner note:', error);
+      const apiErr = error as ApiError;
       let userMessage = 'Failed to save note. Please try again.';
-      if (error?.response) {
-        const status = error.response.status;
-        const serverMsg = error.response.data?.message || error.response.data?.error;
+      if (apiErr?.response) {
+        const status = apiErr.response.status;
+        const serverMsg = apiErr.response.data?.message || apiErr.response.data?.error;
         if (status === 500) userMessage = 'Server error: Unable to save note at this time.';
         else if (status === 400)
           userMessage = serverMsg ? `Bad request: ${serverMsg}` : 'Invalid note data.';
         else if (status === 404) userMessage = 'Event not found. Please refresh and try again.';
         else if (serverMsg) userMessage = `Error (${status}): ${serverMsg}`;
-      } else if (error?.message) {
-        userMessage = `Network error: ${error.message}`;
+      } else if (apiErr?.message) {
+        userMessage = `Network error: ${apiErr.message}`;
       }
       setNoteDraftError(userMessage);
     }

@@ -1,8 +1,7 @@
-// Replace with your actual services hero photo placed in public/Pictures/
 const heroImage = '/Pictures/Services.png';
-const textureImage = '/Pictures/texture.jpg';
 
 import { useState } from 'react';
+import { ArrowUpRight } from '@phosphor-icons/react';
 import LoadingScreen from '@/components/ui/LoadingScreen';
 import ScrollReveal from '@/components/ui/ScrollReveal';
 import { GalleryModal } from '@/components/GalleryModal';
@@ -294,143 +293,76 @@ export default function ServicesPage() {
     <>
       <LoadingScreen />
 
-      {/* ── Section 1: Hero ── */}
-      <ScrollReveal variant="fade">
-        <section
-          className="relative -mt-[88px] flex min-h-[50vh] flex-col overflow-hidden bg-cover bg-center bg-no-repeat sm:-mt-[110px] md:min-h-[70vh] lg:-mt-[173px] lg:min-h-screen"
-          style={{ backgroundImage: `url(${heroImage})` }}
-        >
-          {/* Overall white overlay to lighten the whole image */}
-          <div className="absolute inset-0 bg-white/10" />
-
-          {/* Stronger white wash at the top behind navbar */}
-          <div className="absolute top-0 left-0 right-0 h-[300px] sm:h-[400px] lg:h-[500px] bg-gradient-to-b from-white via-white/70 via-white/30 to-transparent z-[5]" />
-
-          {/* Content centered in middle of section */}
-          <div className="relative z-10 flex h-full flex-col items-center justify-center px-4 py-[160px] sm:py-[260px] md:py-[360px] lg:py-[420px] text-center sm:px-6 animate-fade-in-up">
-            <h1
-              className="font-heading text-[clamp(2rem,8vw,5rem)] font-bold leading-tight bg-gradient-to-r text-transparent bg-clip-text animate-fade-in"
-              style={{
-                backgroundImage: 'linear-gradient(to right, #FF0066 0%, #FF0066 46%, #4A1053 100%)',
-              }}
-            >
-              Your Perfect Event
-              <br />
-              Starts Here
+      {/* ── Hero — full-bleed editorial ── */}
+      <section
+        className="relative -mt-20 flex min-h-[78vh] items-end overflow-hidden bg-ink bg-cover bg-center lg:min-h-screen"
+        style={{ backgroundImage: `url(${heroImage})` }}
+      >
+        <div className="absolute inset-0 bg-gradient-to-t from-ink/85 via-ink/45 to-ink/25" />
+        <div className="page-gutter relative z-10 mx-auto w-full max-w-[1400px] pb-20 pt-40 lg:pb-28">
+          <ScrollReveal variant="up">
+            <div className="flex items-center gap-4">
+              <span className="h-px w-12 bg-gold" />
+              <span className="eyebrow text-ivory/90">Schatzies Atelier — Services</span>
+            </div>
+            <h1 className="mt-6 max-w-3xl font-heading text-[clamp(2.5rem,7vw,5.5rem)] leading-[0.95] font-semibold text-ivory">
+              Your perfect event, <span className="italic text-gold">starts here.</span>
             </h1>
-
-            <p className="mt-3 max-w-[40rem] text-[clamp(0.9rem,1.8vw,1.3rem)] leading-[1.7] font-sans text-black font-medium sm:mt-4 sm:max-w-[45rem] lg:mt-6 lg:max-w-[50rem] lg:text-[1.4rem] animate-slide-in-left animation-delay-200">
+            <p className="mt-6 max-w-xl font-sans text-base leading-relaxed text-ivory/75 lg:text-lg">
               From planning to execution, we offer everything you need to bring your dream event to
               life.
             </p>
-          </div>
-        </section>
-      </ScrollReveal>
-
-      {/* ── Section 2: Services Offered (texture bg) ── */}
-      <ScrollReveal variant="up">
-        <div className="relative -mt-[60px] sm:-mt-[90px] lg:-mt-[120px] z-10">
-          {/* Textured SVG Wave at the top — sweeps into the hero */}
-          <div className="relative w-full overflow-hidden leading-[0] z-20">
-            <svg
-              className="relative block w-full h-[60px] sm:h-[90px] lg:h-[120px]"
-              viewBox="0 0 1440 120"
-              preserveAspectRatio="none"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <defs>
-                <pattern
-                  id="satin-wave-pattern"
-                  patternUnits="userSpaceOnUse"
-                  width="1440"
-                  height="120"
-                >
-                  <image
-                    href={textureImage}
-                    x="0"
-                    y="0"
-                    width="1440"
-                    height="120"
-                    preserveAspectRatio="none"
-                  />
-                </pattern>
-              </defs>
-              <path
-                d="M0,80 C360,130 720,20 1080,80 C1260,100 1380,95 1440,75 L1440,120 L0,120 Z"
-                fill="url(#satin-wave-pattern)"
-              />
-              <path
-                d="M0,80 C360,130 720,20 1080,80 C1260,100 1380,95 1440,75 L1440,120 L0,120 Z"
-                fill="black"
-                fillOpacity="0.4"
-              />
-            </svg>
-          </div>
-
-          <section
-            className="relative overflow-hidden bg-cover bg-center bg-no-repeat"
-            style={{ backgroundImage: `url(${textureImage})` }}
-          >
-            {/* Dark overlay for readability */}
-            <div className="absolute inset-0 bg-black/40 pointer-events-none" />
-
-            {/* Heading */}
-            <div className="relative z-10 px-4 pt-6 pb-8 text-center sm:px-6 sm:pt-10 sm:pb-12 lg:pt-12 lg:pb-16">
-              <h2
-                className="font-heading text-[clamp(1.8rem,6vw,4rem)] font-bold leading-[1.1] tracking-tight text-transparent bg-clip-text animate-fade-in"
-                style={{
-                  backgroundImage:
-                    'linear-gradient(to right, #FF0066 0%, #FF0066 46%, #FF0066 100%)',
-                }}
-              >
-                Services Offered
-              </h2>
-              <p className="mx-auto mt-3 max-w-[45rem] text-[clamp(0.9rem,1.6vw,1.2rem)] leading-[1.6] font-sans text-gray-300 sm:mt-4 lg:max-w-[50rem] lg:text-[1.3rem] animate-slide-in-left animation-delay-200">
-                Schatzies Events offers complete event packages that include all the essential
-                services for weddings and debut celebrations.
-              </p>
-            </div>
-
-            {/* White wave at the bottom — transition to cards */}
-            <div className="absolute bottom-0 left-0 w-full overflow-hidden leading-[0] transform translate-y-[1px] z-20">
-              <svg
-                className="relative block w-full h-[40px] sm:h-[60px] lg:h-[80px]"
-                viewBox="0 0 1440 120"
-                preserveAspectRatio="none"
-                xmlns="http://www.w3.org/2000/svg"
-              >
-                <path
-                  d="M0,80 C360,130 720,20 1080,80 C1260,100 1380,95 1440,75 L1440,120 L0,120 Z"
-                  fill="white"
-                />
-              </svg>
-            </div>
-          </section>
+          </ScrollReveal>
         </div>
-      </ScrollReveal>
+      </section>
 
-      {/* ── Section 3: Service Cards Grid ── */}
-      <section className="bg-white px-4 py-16 sm:px-6 sm:py-24 lg:px-20 lg:py-28">
-        <div className="mx-auto grid max-w-[80rem] grid-cols-1 gap-y-20 gap-x-8 sm:grid-cols-2 lg:grid-cols-3 lg:gap-x-12 lg:gap-y-24">
-          {services.map(({ Icon, id, title, description }, index) => (
-            <ScrollReveal key={id} variant="up" delay={index * 100}>
-              <div className="group relative flex flex-col items-center bg-white px-6 pb-32 pt-28 text-center shadow-[0_8px_35px_rgba(0,0,0,0.15)] transition-all duration-300 hover:-translate-y-2 hover:shadow-[0_15px_50px_rgba(0,0,0,0.2)] border border-gray-100 sm:px-8 sm:pb-36">
-                {/* Icon Circle overlapping the top */}
-                <div className="absolute -top-14 left-1/2 flex h-28 w-28 -translate-x-1/2 items-center justify-center rounded-full bg-white shadow-[0_8px_30px_rgba(0,0,0,0.2)] transition-transform duration-300">
-                  <div className="flex h-12 w-12 items-center justify-center text-[#FF0066] [&>svg]:!h-full [&>svg]:!w-full">
-                    <Icon />
+      {/* ── Services grid ── */}
+      <section className="bg-ivory py-24 lg:py-32">
+        <div className="page-gutter mx-auto max-w-[1400px]">
+          <ScrollReveal variant="up" className="mb-16 max-w-3xl">
+            <p className="eyebrow text-brand">What We Offer</p>
+            <h2 className="mt-6 font-heading text-[clamp(2.25rem,5.5vw,4rem)] leading-[1.05] text-ink">
+              Services <span className="italic text-brand">offered</span>.
+            </h2>
+            <div className="rule-gold mt-7 w-40" />
+            <p className="mt-7 font-sans text-base leading-relaxed text-ink/65 lg:text-lg">
+              Schatzies Events offers complete event packages that include all the essential
+              services for weddings and debut celebrations.
+            </p>
+          </ScrollReveal>
+
+          <div className="grid gap-px overflow-hidden rounded-sm border border-border bg-border sm:grid-cols-2 lg:grid-cols-3">
+            {services.map(({ Icon, id, title, description }, index) => (
+              <ScrollReveal key={id} variant="up" delay={(index % 3) * 100}>
+                <button
+                  type="button"
+                  onClick={() => setActiveGallery(id)}
+                  className="group flex h-full w-full flex-col items-start bg-card p-8 text-left transition-colors duration-300 hover:bg-secondary/40 lg:p-10"
+                >
+                  <div className="flex w-full items-start justify-between">
+                    <div className="flex h-14 w-14 items-center justify-center text-brand [&>svg]:!h-11 [&>svg]:!w-11">
+                      <Icon />
+                    </div>
+                    <span className="font-heading text-2xl italic text-gold/50">
+                      {String(index + 1).padStart(2, '0')}
+                    </span>
                   </div>
-                </div>
-
-                <h3 className="mt-2 text-[1.3rem] font-bold text-[#FF0066] sm:text-[1.5rem] lg:text-[1.6rem]">
-                  {title}
-                </h3>
-                <p className="mt-3 text-[0.95rem] leading-[1.7] text-gray-600 sm:text-[1.05rem] lg:text-[1.1rem]">
-                  {description}
-                </p>
-              </div>
-            </ScrollReveal>
-          ))}
+                  <h3 className="mt-8 font-heading text-2xl leading-tight text-ink">{title}</h3>
+                  <p className="mt-3 flex-1 font-sans text-[0.95rem] leading-relaxed text-ink/65">
+                    {description}
+                  </p>
+                  <span className="mt-6 inline-flex items-center gap-2 font-ui text-[0.7rem] font-semibold tracking-[0.18em] text-brand uppercase">
+                    View Gallery
+                    <ArrowUpRight
+                      size={14}
+                      weight="bold"
+                      className="transition-transform duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5"
+                    />
+                  </span>
+                </button>
+              </ScrollReveal>
+            ))}
+          </div>
         </div>
       </section>
 

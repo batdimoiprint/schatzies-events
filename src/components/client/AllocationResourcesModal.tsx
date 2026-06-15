@@ -1,8 +1,24 @@
 import { X } from 'lucide-react';
 
+interface AllocationVendor {
+  name?: string;
+  service?: string;
+}
+
+interface AllocationPerson {
+  name?: string;
+  role?: string;
+  time?: string;
+}
+
+export interface ResourceAllocation {
+  manpower?: AllocationPerson[];
+  vendors?: AllocationVendor[];
+}
+
 interface Props {
   onClose: () => void;
-  allocation?: any;
+  allocation?: ResourceAllocation | null;
 }
 
 export function AllocationResourcesModal({ onClose, allocation }: Props) {
@@ -41,7 +57,7 @@ export function AllocationResourcesModal({ onClose, allocation }: Props) {
                     <h3 className="text-base font-bold text-gray-800">Vendors</h3>
                   </div>
                   <div className="flex flex-col gap-3">
-                    {vendors.map((vendor: any, i: number) => (
+                    {vendors.map((vendor: AllocationVendor, i: number) => (
                       <div key={i} className="flex flex-col">
                         <p className="text-sm font-semibold text-gray-800">{vendor.name}</p>
                         {vendor.service && (
@@ -61,7 +77,7 @@ export function AllocationResourcesModal({ onClose, allocation }: Props) {
                     <h3 className="text-base font-bold text-gray-800">Manpower</h3>
                   </div>
                   <div className="flex flex-col gap-3">
-                    {manpower.map((person: any, i: number) => (
+                    {manpower.map((person: AllocationPerson, i: number) => (
                       <div key={i} className="flex flex-col">
                         <p className="text-sm font-semibold text-gray-800">
                           {person.name || person.role}

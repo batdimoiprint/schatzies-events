@@ -38,13 +38,13 @@ export function ChecklistDeleteDialog({
       >
         <DialogTitle className="sr-only">Delete Confirmation</DialogTitle>
         <form className="px-6 py-5" onSubmit={handleSubmit}>
-          <h3 className="text-[24px] font-black tracking-tight text-[#1f1f21]">
+          <h3 className="text-[24px] font-black tracking-tight text-foreground">
             Delete checklist item?
           </h3>
           <p className="mt-2 text-sm text-[#686176]">
             This action will permanently remove the selected checklist row.
           </p>
-          <div className="mt-4 rounded-lg border border-[#ece7f2] bg-[#faf8fc] px-3 py-2 text-sm font-semibold text-[#4f4a58]">
+          <div className="mt-4 rounded-lg border border-border bg-[#faf8fc] px-3 py-2 text-sm font-semibold text-[#4f4a58]">
             {checklistDeleteTarget?.label}
           </div>
           <Label
@@ -59,9 +59,9 @@ export function ChecklistDeleteDialog({
             value={checklistDeleteValidation}
             onChange={(e) => {
               setChecklistDeleteValidation(e.target.value);
-              checklistDeleteError && setChecklistDeleteValidation('');
+              if (checklistDeleteError) setChecklistDeleteValidation('');
             }}
-            className="mt-2 h-10 border-[#d5cede] text-sm font-semibold text-[#3f3a4e]"
+            className="mt-2 h-10 border-border text-sm font-semibold text-[#3f3a4e]"
             placeholder={checklistDeleteTarget?.label ?? ''}
           />
           {checklistDeleteError && (

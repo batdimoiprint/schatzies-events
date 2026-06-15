@@ -53,7 +53,7 @@ export function RSVPPage() {
             const orgData = orgResponse.data.user || orgResponse.data;
             organizerName =
               `${orgData.firstName || ''} ${orgData.lastName || ''}`.trim() || organizerName;
-          } catch (e) {
+          } catch {
             /* ignore */
           }
         }
@@ -139,7 +139,7 @@ export function RSVPPage() {
           setLoading(false);
           return;
         }
-      } catch (checkError) {
+      } catch {
         // If the endpoint doesn't exist, continue with submission
         console.log('Email check endpoint not available, proceeding with submission');
       }

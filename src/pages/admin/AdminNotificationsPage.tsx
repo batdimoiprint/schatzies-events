@@ -46,8 +46,8 @@ export function AdminNotificationsPage() {
     <div className="p-6 space-y-6">
       <div className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
         <div>
-          <h1 className="text-3xl font-black text-[#2e2837]">Notifications Center</h1>
-          <p className="font-semibold text-[#8f879f]">
+          <h1 className="text-3xl font-black text-foreground">Notifications Center</h1>
+          <p className="font-semibold text-muted-foreground">
             Stay updated with platform alerts and events
           </p>
         </div>
@@ -65,7 +65,7 @@ export function AdminNotificationsPage() {
                   <notif.icon className={`h-6 w-6 ${notif.color}`} />
                 </div>
                 <div className="flex flex-col gap-1">
-                  <p className="font-bold text-base text-[#2e2837]">{notif.message}</p>
+                  <p className="font-bold text-base text-foreground">{notif.message}</p>
                   <p className="text-xs font-semibold text-muted-foreground">{notif.time}</p>
                 </div>
               </div>

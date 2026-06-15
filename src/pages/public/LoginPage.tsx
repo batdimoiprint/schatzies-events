@@ -3,7 +3,6 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Eye, EyeOff, User, Lock } from 'lucide-react';
 import LoadingScreen from '@/components/ui/LoadingScreen';
@@ -68,125 +67,138 @@ export function LoginPage() {
     <>
       <LoadingScreen isLoading={isLoading} />
 
-      <div className="relative min-h-screen overflow-hidden">
-        {/* Background gradient overlay */}
-        <div className="absolute inset-0 bg-linear-to-br from-[#FF589C]/30 via-[#FD78AD]/20 to-transparent" />
+      <div className="grid min-h-screen lg:grid-cols-2">
+        {/* Brand panel */}
+        <div className="relative hidden overflow-hidden lg:block">
+          <img
+            src="/Pictures/hero-3.jpg"
+            alt=""
+            className="absolute inset-0 h-full w-full object-cover"
+          />
+          <div className="absolute inset-0 bg-gradient-to-br from-brand-deep/90 via-ink/70 to-brand/70" />
+          <div className="relative z-10 flex h-full flex-col justify-between p-12">
+            <img
+              src="/Pictures/business-logo.png"
+              alt="Schatzies Events"
+              className="h-16 w-auto object-contain brightness-0 invert"
+            />
+            <div className="space-y-4">
+              <h2 className="font-heading text-4xl leading-tight font-bold text-white">
+                Welcome back to <br />
+                Schatzies Events.
+              </h2>
+              <p className="max-w-md font-montserrat text-base leading-relaxed text-white/80">
+                Sign in to manage your celebrations — from planning to the final standing ovation.
+              </p>
+            </div>
+          </div>
+        </div>
 
-        {/* Main content - centered vertically */}
-        <div className="relative z-10 flex min-h-screen items-center justify-center px-4 py-12">
-          <Card className="w-full max-w-md border-0 bg-white/90 shadow-2xl backdrop-blur-sm">
-            <CardContent className="pt-10 pb-8">
-              {/* Logo/Brand Section */}
-              <div className="mb-6 flex flex-col items-center space-y-3">
-                <img
-                  src="/Pictures/business-logo.png"
-                  alt="Schatzies Events"
-                  className="h-16 w-auto sm:h-20 lg:h-24"
+        {/* Form panel */}
+        <div className="relative flex items-center justify-center bg-background px-4 py-12 sm:px-8">
+          <div className="bg-gradient-brand-soft pointer-events-none absolute inset-0 lg:hidden" />
+          <div className="relative z-10 w-full max-w-md">
+            <div className="mb-8 flex flex-col items-center space-y-3 text-center">
+              <img
+                src="/Pictures/business-logo.png"
+                alt="Schatzies Events"
+                className="h-16 w-auto sm:h-20"
+              />
+              <p className="font-montserrat text-sm font-medium text-foreground/70">
+                Your <span className="text-gradient-brand font-bold uppercase">MOST TRUSTED</span>{' '}
+                team!
+              </p>
+            </div>
+
+            <h1 className="mb-8 text-center font-heading text-3xl font-bold tracking-wide text-foreground">
+              LOGIN
+            </h1>
+
+            <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
+              <div className="relative">
+                <User
+                  size={18}
+                  className="absolute top-1/2 left-3 -translate-y-1/2 text-brand"
                 />
-
-                <p className="text-sm font-medium font-sans text-[#3d2052]">
-                  Your{' '}
-                  <span className="font-bold uppercase bg-linear-to-r from-[#FF0066] to-[#4A1053] bg-clip-text text-transparent">
-                    MOST TRUSTED
-                  </span>{' '}
-                  team!
-                </p>
-              </div>
-
-              {/* Login Heading */}
-              <h1 className="mb-8 text-center text-3xl font-bold font-heading text-black">LOGIN</h1>
-
-              {/* Form */}
-              <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
-                {/* Email Field */}
-                <div className="relative">
-                  <div className="absolute left-3 top-1/2 -translate-y-1/2 text-[#FF0066]">
-                    <User size={18} />
-                  </div>
-                  <Input
-                    id="email"
-                    type="email"
-                    placeholder="Username"
-                    autoComplete="email"
-                    className="h-11 w-full rounded-xl border-gray-200 bg-white/80 pl-10 text-sm font-sans placeholder:text-gray-400 focus:border-[#FF0066] focus:ring-[#FF0066]/20"
-                    {...register('email', {
-                      required: 'Email is required.',
-                    })}
-                  />
-                  {errors.email && (
-                    <p className="mt-1 text-xs text-red-600 font-sans">{errors.email.message}</p>
-                  )}
-                </div>
-
-                {/* Password Field */}
-                <div className="relative">
-                  <div className="absolute left-3 top-1/2 -translate-y-1/2 text-[#FF0066]">
-                    <Lock size={18} />
-                  </div>
-                  <Input
-                    id="password"
-                    type={showPassword ? 'text' : 'password'}
-                    placeholder="Password"
-                    autoComplete="current-password"
-                    className="h-11 w-full rounded-xl border-gray-200 bg-white/80 pl-10 pr-10 text-sm font-sans placeholder:text-gray-400 focus:border-[#FF0066] focus:ring-[#FF0066]/20"
-                    {...register('password', {
-                      required: 'Password is required.',
-                    })}
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword((current) => !current)}
-                    aria-label={showPassword ? 'Hide password' : 'Show password'}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-[#FF0066] transition-colors hover:text-[#4A1053]"
-                  >
-                    {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-                  </button>
-                  {errors.password && (
-                    <p className="mt-1 text-xs text-red-600 font-sans">{errors.password.message}</p>
-                  )}
-                </div>
-
-                {/* Forgot Password Link */}
-                <div className="text-right">
-                  <Link
-                    to="/forgot-password"
-                    className="text-xs font-medium font-sans text-[#FF0066] transition-colors hover:text-[#4A1053] hover:underline"
-                  >
-                    Forgot Password?
-                  </Link>
-                </div>
-
-                {/* Error Message */}
-                {error && (
-                  <p className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-600 font-sans">
-                    {error.includes('429')
-                      ? 'Too many authentication attempts. Please try again after an hour.'
-                      : error}
+                <Input
+                  id="email"
+                  type="email"
+                  placeholder="Username"
+                  autoComplete="email"
+                  className="h-11 rounded-xl pl-10"
+                  {...register('email', { required: 'Email is required.' })}
+                />
+                {errors.email && (
+                  <p className="mt-1 font-montserrat text-xs text-destructive">
+                    {errors.email.message}
                   </p>
                 )}
+              </div>
 
-                {/* Login Button */}
-                <Button
-                  type="submit"
-                  disabled={isLoading || isSubmitting}
-                  className="h-12 w-full rounded-full bg-linear-to-b from-[#FF0066] to-[#700F81] text-base font-bold uppercase tracking-wide text-white shadow-lg transition-all duration-300 hover:brightness-110 hover:shadow-xl disabled:opacity-50 font-sans"
+              <div className="relative">
+                <Lock
+                  size={18}
+                  className="absolute top-1/2 left-3 -translate-y-1/2 text-brand"
+                />
+                <Input
+                  id="password"
+                  type={showPassword ? 'text' : 'password'}
+                  placeholder="Password"
+                  autoComplete="current-password"
+                  className="h-11 rounded-xl px-10"
+                  {...register('password', { required: 'Password is required.' })}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword((current) => !current)}
+                  aria-label={showPassword ? 'Hide password' : 'Show password'}
+                  className="absolute top-1/2 right-3 -translate-y-1/2 text-brand transition-colors hover:text-brand-deep"
                 >
-                  {isLoading || isSubmitting ? 'Signing in...' : 'Login'}
-                </Button>
-              </form>
+                  {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                </button>
+                {errors.password && (
+                  <p className="mt-1 font-montserrat text-xs text-destructive">
+                    {errors.password.message}
+                  </p>
+                )}
+              </div>
 
-              {/* Back to Home */}
-              <p className="mt-6 text-center text-xs text-gray-600 font-sans">
-                Back to{' '}
+              <div className="text-right">
                 <Link
-                  to="/"
-                  className="font-semibold text-[#FF0066] transition-colors hover:text-[#4A1053] hover:underline"
+                  to="/forgot-password"
+                  className="font-montserrat text-xs font-medium text-brand transition-colors hover:text-brand-deep hover:underline"
                 >
-                  home
+                  Forgot Password?
                 </Link>
-              </p>
-            </CardContent>
-          </Card>
+              </div>
+
+              {error && (
+                <p className="rounded-lg border border-destructive/20 bg-destructive/5 px-3 py-2 font-montserrat text-xs text-destructive">
+                  {error.includes('429')
+                    ? 'Too many authentication attempts. Please try again after an hour.'
+                    : error}
+                </p>
+              )}
+
+              <Button
+                type="submit"
+                disabled={isLoading || isSubmitting}
+                className="bg-gradient-brand h-12 w-full rounded-full text-base font-bold tracking-wide text-white uppercase shadow-lg transition-all duration-300 hover:brightness-110 hover:shadow-xl disabled:opacity-50"
+              >
+                {isLoading || isSubmitting ? 'Signing in...' : 'Login'}
+              </Button>
+            </form>
+
+            <p className="mt-6 text-center font-montserrat text-xs text-muted-foreground">
+              Back to{' '}
+              <Link
+                to="/"
+                className="font-semibold text-brand transition-colors hover:text-brand-deep hover:underline"
+              >
+                home
+              </Link>
+            </p>
+          </div>
         </div>
       </div>
     </>

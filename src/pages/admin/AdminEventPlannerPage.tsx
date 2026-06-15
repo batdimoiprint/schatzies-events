@@ -42,7 +42,7 @@ export function AdminEventPlannerPage() {
   }, [selectedEventId]);
 
   return (
-    <div className="flex h-[calc(100vh-100px)] w-full max-w-full flex-col gap-4 overflow-hidden p-2 sm:p-4 lg:p-6 text-[#302c39]">
+    <div className="flex h-[calc(100vh-100px)] w-full max-w-full flex-col gap-4 overflow-hidden p-2 sm:p-4 lg:p-6 text-foreground">
       <div className="flex min-h-0 flex-1 flex-col gap-4">
         <section className="flex min-h-0 flex-1 flex-col space-y-3">
           <PlannerHeader selectedProject={selectedProject} />

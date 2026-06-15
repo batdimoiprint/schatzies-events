@@ -93,7 +93,7 @@ export function RSVPInvitationPage({
           />
         </div>
         <p className="mb-4 text-sm font-medium text-gray-600">
-          Your <span className="font-bold text-[#df2b80]">MOST TRUSTED</span> team!
+          Your <span className="font-bold text-brand">MOST TRUSTED</span> team!
         </p>
         <div className="mb-5 w-3/4 h-px bg-gradient-to-r from-transparent via-pink-300 to-transparent" />
         <p className="mb-3 text-xs sm:text-sm tracking-wide text-gray-600">

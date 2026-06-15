@@ -1,11 +1,43 @@
 import { formatDisplayTime } from '@/utils/planner-time';
+import type { ProjectSlot } from '@/types/planner';
+
+interface OverviewEventDetails {
+  package?: { name?: string; pax?: number };
+  eventPackage?: string;
+  eventPackageKey?: string;
+  eventPax?: number | null;
+  packageInitialAmount?: number | null;
+}
+
+interface OverviewVendor {
+  name?: string;
+}
+
+interface OverviewMeeting {
+  id?: string;
+  _id?: string;
+  title?: string;
+  startTime?: string;
+  endTime?: string;
+  time?: string;
+}
+
+interface OverviewFlow {
+  id?: string;
+  from: string;
+  to: string;
+  startHour: number;
+  endHour: number;
+  title?: string;
+  description?: string;
+}
 
 interface OverviewTabProps {
-  selectedProject: any;
-  selectedEventDetails: any;
-  eventAllocation: any;
-  eventMeetings: any[];
-  overviewFlows: any[];
+  selectedProject: ProjectSlot;
+  selectedEventDetails: OverviewEventDetails | null;
+  eventAllocation: { vendors?: OverviewVendor[] } | null;
+  eventMeetings: OverviewMeeting[];
+  overviewFlows: OverviewFlow[];
 }
 
 export function OverviewTab({
@@ -26,8 +58,8 @@ export function OverviewTab({
         selectedProject.eventPackage ||
         'N/A',
       imageSrc: '/Pictures/organizerpics/event-package-illustration.png',
-      accent: 'text-[#6b2aa5] bg-[#fbf6ff] border-[#eee3fb]',
-      valueClassName: 'text-[14px] font-semibold leading-[1.15] text-[#6d677b]',
+      accent: 'text-brand-deep bg-brand/5 border-[#eee3fb]',
+      valueClassName: 'text-[14px] font-semibold leading-[1.15] text-muted-foreground',
     },
     {
       id: 'overview-pax',
@@ -48,7 +80,7 @@ export function OverviewTab({
       value: selectedProject.eventType || 'N/A',
       imageSrc: '/Pictures/organizerpics/event-type-illustration.png',
       accent: 'text-[#1f6ea6] bg-[#f3f8ff] border-[#d7e7f7]',
-      valueClassName: 'text-[12px] font-semibold leading-[1.15] text-[#6d677b]',
+      valueClassName: 'text-[12px] font-semibold leading-[1.15] text-muted-foreground',
     },
     {
       id: 'overview-cost',
@@ -65,20 +97,20 @@ export function OverviewTab({
   ];
 
   return (
-    <section className="rounded-[16px] border border-[#d8d3df] bg-[#f7f5f9] p-2.5 shadow-[0_6px_14px_rgba(31,18,54,0.05)]">
+    <section className="rounded-[16px] border border-border bg-[#f7f5f9] p-2.5 shadow-[0_6px_14px_rgba(31,18,54,0.05)]">
       <div className="grid grid-cols-1 gap-2 md:grid-cols-2 xl:grid-cols-4">
         {dynamicOverviewCards.map((card) => (
           <article
             key={card.id}
             className={`min-h-[74px] rounded-lg border px-3 py-2 shadow-[0_2px_5px_rgba(31,18,54,0.06)] ${card.accent}`}
           >
-            <p className="truncate text-[11px] font-semibold text-[#6f687f]">{card.label}</p>
+            <p className="truncate text-[11px] font-semibold text-muted-foreground">{card.label}</p>
             <div className="mt-1.5 flex items-center justify-between gap-2">
               <p
                 className={[
                   'min-w-0 flex-1 whitespace-pre-line',
                   card.valueClassName ??
-                    'text-[24px] font-black leading-none tracking-tight text-[#2f2b39]',
+                    'text-[24px] font-black leading-none tracking-tight text-foreground',
                 ].join(' ')}
               >
                 {card.value}
@@ -94,47 +126,47 @@ export function OverviewTab({
         ))}
       </div>
       <div className="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-3">
-        <article className="min-h-[400px] flex flex-col rounded-lg border border-[#ded9e7] bg-white p-4 shadow-[0_2px_6px_rgba(31,18,54,0.05)]">
-          <p className="text-[14px] font-bold text-[#5e586d] border-b border-[#f0ecf4] pb-2 mb-3">
+        <article className="min-h-[400px] flex flex-col rounded-lg border border-border bg-white p-4 shadow-[0_2px_6px_rgba(31,18,54,0.05)]">
+          <p className="text-[14px] font-bold text-foreground/80 border-b border-border pb-2 mb-3">
             Assigned Vendors
           </p>
           <div className="flex-1 overflow-y-auto pr-2 [scrollbar-width:thin] space-y-2">
             {Array.isArray(eventAllocation?.vendors) && eventAllocation.vendors.length > 0 ? (
-              eventAllocation.vendors.map((v: any, index: number) => {
+              eventAllocation.vendors.map((v, index) => {
                 const vendorName = String(v?.name || v?.['name'] || '');
                 if (!vendorName) return null;
                 return (
                   <div
                     key={index}
-                    className="rounded-md border border-[#ece8f0] bg-[#fbf9fe] p-3 text-[12px] leading-snug text-[#6f687f] flex items-center gap-3"
+                    className="rounded-md border border-border bg-brand/5 p-3 text-[12px] leading-snug text-muted-foreground flex items-center gap-3"
                   >
-                    <span className="size-2 shrink-0 rounded-full bg-[#8f1fd1]"></span>
-                    <span className="font-bold text-[#3a3442]">{vendorName}</span>
+                    <span className="size-2 shrink-0 rounded-full bg-brand-deep"></span>
+                    <span className="font-bold text-foreground">{vendorName}</span>
                   </div>
                 );
               })
             ) : (
               <div className="h-full flex items-center justify-center">
-                <span className="italic text-[#8b84a0] text-[12px]">No vendors assigned yet.</span>
+                <span className="italic text-muted-foreground text-[12px]">No vendors assigned yet.</span>
               </div>
             )}
           </div>
         </article>
-        <article className="min-h-[400px] flex flex-col rounded-lg border border-[#ded9e7] bg-white p-4 shadow-[0_2px_6px_rgba(31,18,54,0.05)]">
-          <p className="text-[14px] font-bold text-[#5e586d] border-b border-[#f0ecf4] pb-2 mb-3">
+        <article className="min-h-[400px] flex flex-col rounded-lg border border-border bg-white p-4 shadow-[0_2px_6px_rgba(31,18,54,0.05)]">
+          <p className="text-[14px] font-bold text-foreground/80 border-b border-border pb-2 mb-3">
             Meetings
           </p>
-          <div className="flex-1 space-y-3 text-[12px] leading-snug text-[#6f687f] overflow-y-auto pr-1 [scrollbar-width:thin]">
-            <div className="min-h-[120px] rounded-md border border-[#ece8f0] bg-[#fbf9fe] p-3">
+          <div className="flex-1 space-y-3 text-[12px] leading-snug text-muted-foreground overflow-y-auto pr-1 [scrollbar-width:thin]">
+            <div className="min-h-[120px] rounded-md border border-border bg-brand/5 p-3">
               {eventMeetings.length > 0 ? (
                 <div className="space-y-2">
                   {eventMeetings.map((meeting, index) => (
                     <div
                       key={meeting.id || meeting._id || `meeting-${index}`}
-                      className="flex justify-between items-start border-b border-[#f0ecf4] pb-2 last:border-0 last:pb-0"
+                      className="flex justify-between items-start border-b border-border pb-2 last:border-0 last:pb-0"
                     >
-                      <p className="font-semibold text-[#5a546a]">{meeting.title}</p>
-                      <p className="text-[11px] font-bold text-[#8c8498] bg-white px-2 py-0.5 rounded border border-[#ece8f0]">
+                      <p className="font-semibold text-foreground/80">{meeting.title}</p>
+                      <p className="text-[11px] font-bold text-muted-foreground bg-white px-2 py-0.5 rounded border border-border">
                         {meeting.startTime || meeting.time || ''}{' '}
                         {meeting.endTime ? `- ${meeting.endTime}` : ''}
                       </p>
@@ -142,13 +174,13 @@ export function OverviewTab({
                   ))}
                 </div>
               ) : (
-                <p className="italic text-[#8b84a0]">No scheduled meetings yet.</p>
+                <p className="italic text-muted-foreground">No scheduled meetings yet.</p>
               )}
             </div>
           </div>
         </article>
-        <article className="min-h-[400px] flex flex-col rounded-lg border border-[#ded9e7] bg-white p-4 shadow-[0_2px_6px_rgba(31,18,54,0.05)]">
-          <p className="text-[14px] font-bold text-[#5e586d] border-b border-[#f0ecf4] pb-2 mb-3">
+        <article className="min-h-[400px] flex flex-col rounded-lg border border-border bg-white p-4 shadow-[0_2px_6px_rgba(31,18,54,0.05)]">
+          <p className="text-[14px] font-bold text-foreground/80 border-b border-border pb-2 mb-3">
             Program Flow
           </p>
           <div className="flex-1 space-y-3 overflow-y-auto pr-2 [scrollbar-width:thin]">
@@ -156,9 +188,9 @@ export function OverviewTab({
               overviewFlows.map((flow) => (
                 <div
                   key={flow.id}
-                  className="grid grid-cols-[90px_1fr] gap-3 text-[11px] leading-snug text-[#6f687f] bg-[#fbf9fe] p-3 rounded-md border border-[#ece8f0]"
+                  className="grid grid-cols-[90px_1fr] gap-3 text-[11px] leading-snug text-muted-foreground bg-brand/5 p-3 rounded-md border border-border"
                 >
-                  <p className="font-bold text-[#8a8495] pt-0.5">
+                  <p className="font-bold text-muted-foreground pt-0.5">
                     {formatDisplayTime(flow.from, flow.startHour)}
                     <br />
                     <span className="text-[9px] opacity-70">
@@ -166,8 +198,8 @@ export function OverviewTab({
                     </span>
                   </p>
                   <div className="border-l-2 border-[#e4dcea] pl-3">
-                    <p className="text-[13px] font-black text-[#3a3442]">{flow.title}</p>
-                    <p className="mt-1 text-[11.5px] italic text-[#70687e] leading-relaxed">
+                    <p className="text-[13px] font-black text-foreground">{flow.title}</p>
+                    <p className="mt-1 text-[11.5px] italic text-muted-foreground leading-relaxed">
                       {flow.description || 'No description provided.'}
                     </p>
                   </div>
@@ -175,7 +207,7 @@ export function OverviewTab({
               ))
             ) : (
               <div className="h-full flex items-center justify-center">
-                <p className="text-[12px] italic text-[#8b84a0]">No program flow scheduled yet.</p>
+                <p className="text-[12px] italic text-muted-foreground">No program flow scheduled yet.</p>
               </div>
             )}
           </div>

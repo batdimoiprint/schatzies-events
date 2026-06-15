@@ -28,12 +28,16 @@ import { Label } from '@/components/ui/label';
 import { getInquiries } from '@/api/inquiries';
 import { getOrganizerUsers } from '@/api/users';
 
-import { InquiryDetailsDialog } from '@/components/admin/InquiryDetailsDialog';
+import {
+  InquiryDetailsDialog,
+  type InquiryRecord,
+  type OrganizerRecord,
+} from '@/components/admin/InquiryDetailsDialog';
 import { ScheduleMeetingDialog } from '@/components/admin/ScheduleMeetingDialog';
 
 export function AdminInquiriesPage() {
   const queryClient = useQueryClient();
-  const { data: inquiries = [], isLoading: loading } = useQuery<any[]>({
+  const { data: inquiries = [], isLoading: loading } = useQuery<InquiryRecord[]>({
     queryKey: ['inquiries'],
     queryFn: getInquiries,
     refetchInterval: 10000, // polling every 10 seconds
@@ -44,10 +48,10 @@ export function AdminInquiriesPage() {
     'createdAt' | 'date' | 'status' | 'eventType' | 'sender' | 'email' | 'package' | 'guestCount'
   >('createdAt');
   const [sortOrder, setSortOrder] = useState<'desc' | 'asc'>('desc');
-  const [selectedInquiry, setSelectedInquiry] = useState<any | null>(null);
+  const [selectedInquiry, setSelectedInquiry] = useState<InquiryRecord | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isScheduleModalOpen, setIsScheduleModalOpen] = useState(false);
-  const [organizers, setOrganizers] = useState<any[]>([]);
+  const [organizers, setOrganizers] = useState<OrganizerRecord[]>([]);
   const [organizersLoading, setOrganizersLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
   const [rowsPerPage, setRowsPerPage] = useState(10);
@@ -91,7 +95,7 @@ export function AdminInquiriesPage() {
     }
 
     if (status === 'meeting scheduled') {
-      return 'bg-[#f7ebff] hover:bg-[#f7ebff] text-[#6f2ea8]';
+      return 'bg-brand/5 hover:bg-brand/5 text-muted-foreground';
     }
 
     if (status === 'resolved' || status === 'approved') {
@@ -184,8 +188,8 @@ export function AdminInquiriesPage() {
         const pkgCompare = pkgA.localeCompare(pkgB);
         if (pkgCompare !== 0) return sortOrder === 'asc' ? pkgCompare : -pkgCompare;
       } else if (sortBy === 'guestCount') {
-        const guestA = parseInt(a.eventPax || a.package?.pax || '0', 10);
-        const guestB = parseInt(b.eventPax || b.package?.pax || '0', 10);
+        const guestA = parseInt(String(a.eventPax || a.package?.pax || '0'), 10);
+        const guestB = parseInt(String(b.eventPax || b.package?.pax || '0'), 10);
         const guestCompare = guestA - guestB;
         if (guestCompare !== 0) return sortOrder === 'asc' ? guestCompare : -guestCompare;
       }
@@ -225,7 +229,7 @@ export function AdminInquiriesPage() {
     fetchOrganizers();
   }, []);
 
-  const handleViewDetails = (inquiry: any) => {
+  const handleViewDetails = (inquiry: InquiryRecord) => {
     setSelectedInquiry(inquiry);
     setIsDialogOpen(true);
   };
@@ -247,10 +251,10 @@ export function AdminInquiriesPage() {
     return organizer.email || organizerId;
   };
 
-  const handleInquiryUpdated = (updatedInquiry: any) => {
+  const handleInquiryUpdated = (updatedInquiry: InquiryRecord) => {
     const id = updatedInquiry.id || updatedInquiry._id;
     setSelectedInquiry(updatedInquiry);
-    queryClient.setQueryData(['inquiries'], (old: any[] | undefined) =>
+    queryClient.setQueryData(['inquiries'], (old: InquiryRecord[] | undefined) =>
       (old || []).map((inq) => ((inq.id || inq._id) === id ? { ...inq, ...updatedInquiry } : inq))
     );
   };
@@ -289,9 +293,9 @@ export function AdminInquiriesPage() {
   }) => {
     if (sortBy !== field) return <ArrowUpDown className="ml-2 h-4 w-4 opacity-50" />;
     return sortOrder === 'asc' ? (
-      <ArrowUp className="ml-2 h-4 w-4 text-[#8f1fd1]" />
+      <ArrowUp className="ml-2 h-4 w-4 text-brand-deep" />
     ) : (
-      <ArrowDown className="ml-2 h-4 w-4 text-[#8f1fd1]" />
+      <ArrowDown className="ml-2 h-4 w-4 text-brand-deep" />
     );
   };
 
@@ -299,55 +303,55 @@ export function AdminInquiriesPage() {
     <div className="space-y-4 p-4">
       {/* Compact Summary */}
       <section className="relative overflow-hidden rounded-2xl border border-[#efe6f6] bg-linear-to-r from-[#fff8fc] via-[#fef9ff] to-[#f4f7ff] px-5 py-4">
-        <div className="pointer-events-none absolute -right-10 -top-16 h-36 w-36 rounded-full bg-[#f347a5]/10 blur-3xl" />
-        <div className="pointer-events-none absolute -bottom-14 left-20 h-32 w-32 rounded-full bg-[#8f1fd1]/10 blur-3xl" />
+        <div className="pointer-events-none absolute -right-10 -top-16 h-36 w-36 rounded-full bg-brand/10 blur-3xl" />
+        <div className="pointer-events-none absolute -bottom-14 left-20 h-32 w-32 rounded-full bg-brand-deep/10 blur-3xl" />
 
         <div className="relative flex flex-wrap items-center justify-between gap-3">
           <div>
-            <h1 className="text-xl font-black text-[#2e2837] md:text-2xl">Client Inquiries</h1>
-            <p className="mt-0.5 text-sm font-semibold text-[#8f879f]">
+            <h1 className="text-xl font-black text-foreground md:text-2xl">Client Inquiries</h1>
+            <p className="mt-0.5 text-sm font-semibold text-muted-foreground">
               Manage requests, meetings &amp; bookings.
             </p>
           </div>
 
           <div className="flex items-center gap-2">
             <div className="flex items-center gap-1.5 rounded-lg border border-[#f1e8f7] bg-white/80 px-3 py-1.5">
-              <span className="text-[10px] font-bold uppercase tracking-wide text-[#8a7ca3]">
+              <span className="text-[10px] font-bold uppercase tracking-wide text-muted-foreground">
                 Total
               </span>
-              <span className="text-lg font-black text-[#2e2837]">{statusCounts.total}</span>
+              <span className="text-lg font-black text-foreground">{statusCounts.total}</span>
             </div>
             <div className="flex items-center gap-1.5 rounded-lg border border-[#f1e8f7] bg-white/80 px-3 py-1.5">
-              <Clock3 className="h-3 w-3 text-[#8a7ca3]" />
-              <span className="text-[10px] font-bold uppercase tracking-wide text-[#8a7ca3]">
+              <Clock3 className="h-3 w-3 text-muted-foreground" />
+              <span className="text-[10px] font-bold uppercase tracking-wide text-muted-foreground">
                 Pending
               </span>
-              <span className="text-lg font-black text-[#2e2837]">{statusCounts.pending}</span>
+              <span className="text-lg font-black text-foreground">{statusCounts.pending}</span>
             </div>
             <div className="flex items-center gap-1.5 rounded-lg border border-[#f1e8f7] bg-white/80 px-3 py-1.5">
-              <CalendarIcon className="h-3 w-3 text-[#8a7ca3]" />
-              <span className="text-[10px] font-bold uppercase tracking-wide text-[#8a7ca3]">
+              <CalendarIcon className="h-3 w-3 text-muted-foreground" />
+              <span className="text-[10px] font-bold uppercase tracking-wide text-muted-foreground">
                 Scheduled
               </span>
-              <span className="text-lg font-black text-[#2e2837]">{statusCounts.scheduled}</span>
+              <span className="text-lg font-black text-foreground">{statusCounts.scheduled}</span>
             </div>
             <div className="flex items-center gap-1.5 rounded-lg border border-[#f1e8f7] bg-white/80 px-3 py-1.5">
-              <CheckCircle2 className="h-3 w-3 text-[#8a7ca3]" />
-              <span className="text-[10px] font-bold uppercase tracking-wide text-[#8a7ca3]">
+              <CheckCircle2 className="h-3 w-3 text-muted-foreground" />
+              <span className="text-[10px] font-bold uppercase tracking-wide text-muted-foreground">
                 Approved
               </span>
-              <span className="text-lg font-black text-[#2e2837]">{statusCounts.approved}</span>
+              <span className="text-lg font-black text-foreground">{statusCounts.approved}</span>
             </div>
           </div>
         </div>
       </section>
       {/* Table */}
-      <div className="overflow-hidden rounded-2xl border border-[#eee7f4] bg-white shadow-[0_8px_30px_rgba(53,36,71,0.06)]">
-        <div className="flex flex-col gap-3 border-b border-[#f1eaf7] bg-[#fcf9ff] p-4 md:flex-row md:items-end md:justify-between">
+      <div className="overflow-hidden rounded-2xl border border-border bg-white shadow-[0_8px_30px_rgba(53,36,71,0.06)]">
+        <div className="flex flex-col gap-3 border-b border-border bg-brand/5 p-4 md:flex-row md:items-end md:justify-between">
           <div className="w-full">
             <Label
               htmlFor="inquiry-search"
-              className="mb-1 block text-[11px] font-black uppercase tracking-[0.08em] text-[#857a98]"
+              className="mb-1 block text-[11px] font-black uppercase tracking-[0.08em] text-muted-foreground"
             >
               Search
             </Label>
@@ -356,7 +360,7 @@ export function AdminInquiriesPage() {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search sender, email, event type, status"
-              className="h-9 border-[#e5ddee] bg-white w-full md:max-w-md"
+              className="h-9 border-border bg-white w-full md:max-w-md"
             />
           </div>
         </div>
@@ -380,7 +384,7 @@ export function AdminInquiriesPage() {
             <TableHeader className="bg-[#faf7fd]">
               <TableRow className="border-b border-[#efe7f6]">
                 <TableHead
-                  className="h-12 text-lg font-black uppercase tracking-[0.06em] text-[#7c7390] cursor-pointer hover:text-[#8f1fd1] transition-colors"
+                  className="h-12 text-lg font-black uppercase tracking-[0.06em] text-muted-foreground cursor-pointer hover:text-brand-deep transition-colors"
                   onClick={() => toggleSort('sender')}
                 >
                   <div className="flex items-center">
@@ -389,7 +393,7 @@ export function AdminInquiriesPage() {
                   </div>
                 </TableHead>
                 <TableHead
-                  className="h-12 text-lg font-black uppercase tracking-[0.06em] text-[#7c7390] cursor-pointer hover:text-[#8f1fd1] transition-colors"
+                  className="h-12 text-lg font-black uppercase tracking-[0.06em] text-muted-foreground cursor-pointer hover:text-brand-deep transition-colors"
                   onClick={() => toggleSort('email')}
                 >
                   <div className="flex items-center">
@@ -398,7 +402,7 @@ export function AdminInquiriesPage() {
                   </div>
                 </TableHead>
                 <TableHead
-                  className="h-12 text-lg font-black uppercase tracking-[0.06em] text-[#7c7390] cursor-pointer hover:text-[#8f1fd1] transition-colors"
+                  className="h-12 text-lg font-black uppercase tracking-[0.06em] text-muted-foreground cursor-pointer hover:text-brand-deep transition-colors"
                   onClick={() => toggleSort('eventType')}
                 >
                   <div className="flex items-center">
@@ -407,7 +411,7 @@ export function AdminInquiriesPage() {
                   </div>
                 </TableHead>
                 <TableHead
-                  className="h-12 text-lg font-black uppercase tracking-[0.06em] text-[#7c7390] cursor-pointer hover:text-[#8f1fd1] transition-colors"
+                  className="h-12 text-lg font-black uppercase tracking-[0.06em] text-muted-foreground cursor-pointer hover:text-brand-deep transition-colors"
                   onClick={() => toggleSort('createdAt')}
                 >
                   <div className="flex items-center">
@@ -416,7 +420,7 @@ export function AdminInquiriesPage() {
                   </div>
                 </TableHead>
                 <TableHead
-                  className="h-12 text-lg font-black uppercase tracking-[0.06em] text-[#7c7390] cursor-pointer hover:text-[#8f1fd1] transition-colors"
+                  className="h-12 text-lg font-black uppercase tracking-[0.06em] text-muted-foreground cursor-pointer hover:text-brand-deep transition-colors"
                   onClick={() => toggleSort('date')}
                 >
                   <div className="flex items-center">
@@ -425,7 +429,7 @@ export function AdminInquiriesPage() {
                   </div>
                 </TableHead>
                 <TableHead
-                  className="h-12 text-lg font-black uppercase tracking-[0.06em] text-[#7c7390] cursor-pointer hover:text-[#8f1fd1] transition-colors"
+                  className="h-12 text-lg font-black uppercase tracking-[0.06em] text-muted-foreground cursor-pointer hover:text-brand-deep transition-colors"
                   onClick={() => toggleSort('package')}
                 >
                   <div className="flex items-center">
@@ -434,7 +438,7 @@ export function AdminInquiriesPage() {
                   </div>
                 </TableHead>
                 <TableHead
-                  className="h-12 text-lg font-black uppercase tracking-[0.06em] text-[#7c7390] cursor-pointer hover:text-[#8f1fd1] transition-colors"
+                  className="h-12 text-lg font-black uppercase tracking-[0.06em] text-muted-foreground cursor-pointer hover:text-brand-deep transition-colors"
                   onClick={() => toggleSort('guestCount')}
                 >
                   <div className="flex items-center">
@@ -443,7 +447,7 @@ export function AdminInquiriesPage() {
                   </div>
                 </TableHead>
                 <TableHead
-                  className="h-12 text-lg font-black uppercase tracking-[0.06em] text-[#7c7390] cursor-pointer hover:text-[#8f1fd1] transition-colors"
+                  className="h-12 text-lg font-black uppercase tracking-[0.06em] text-muted-foreground cursor-pointer hover:text-brand-deep transition-colors"
                   onClick={() => toggleSort('status')}
                 >
                   <div className="flex items-center">
@@ -455,27 +459,31 @@ export function AdminInquiriesPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {paginatedInquiries.map((inquiry: any) => (
+              {paginatedInquiries.map((inquiry: InquiryRecord) => (
                 <TableRow
                   key={inquiry.id || inquiry._id}
-                  className="border-b border-[#f3edf8] hover:bg-[#fcf9ff]"
+                  className="border-b border-[#f3edf8] hover:bg-brand/5"
                 >
-                  <TableCell className="py-3.5 font-semibold text-lg text-[#2e2837]">
+                  <TableCell className="py-3.5 font-semibold text-lg text-foreground">
                     {inquiry.firstName} {inquiry.lastName}
                   </TableCell>
-                  <TableCell className="text-lg text-[#635a73]">{inquiry.email}</TableCell>
-                  <TableCell className="font-semibold text-lg text-[#4e4560]">
+                  <TableCell className="text-lg text-foreground/80">{inquiry.email}</TableCell>
+                  <TableCell className="font-semibold text-lg text-foreground/80">
                     {inquiry.eventType || inquiry.subject || 'Inquiry'}
                   </TableCell>
-                  <TableCell className="font-semibold text-lg text-[#4e4560]">
+                  <TableCell className="font-semibold text-lg text-foreground/80">
                     {inquiry.createdAt || inquiry.created_at
-                      ? new Date(inquiry.createdAt || inquiry.created_at).toLocaleDateString(
-                          'en-US',
-                          { timeZone: 'UTC', month: 'long', day: '2-digit', year: 'numeric' }
-                        )
+                      ? new Date(
+                          inquiry.createdAt || inquiry.created_at || ''
+                        ).toLocaleDateString('en-US', {
+                          timeZone: 'UTC',
+                          month: 'long',
+                          day: '2-digit',
+                          year: 'numeric',
+                        })
                       : 'N/A'}
                   </TableCell>
-                  <TableCell className="font-semibold text-lg text-[#4e4560]">
+                  <TableCell className="font-semibold text-lg text-foreground/80">
                     {inquiry.date
                       ? new Date(inquiry.date).toLocaleDateString('en-US', {
                           timeZone: 'UTC',
@@ -485,10 +493,10 @@ export function AdminInquiriesPage() {
                         })
                       : 'N/A'}
                   </TableCell>
-                  <TableCell className="font-semibold text-lg text-[#4e4560]">
+                  <TableCell className="font-semibold text-lg text-foreground/80">
                     {inquiry.eventPackage || inquiry.package?.name || 'N/A'}
                   </TableCell>
-                  <TableCell className="font-semibold text-lg text-[#4e4560]">
+                  <TableCell className="font-semibold text-lg text-foreground/80">
                     {inquiry.eventPax || inquiry.package?.pax || 'N/A'}
                   </TableCell>
                   <TableCell>
@@ -514,8 +522,8 @@ export function AdminInquiriesPage() {
 
         {/* Pagination Bar */}
         {!loading && filteredAndSortedInquiries.length > 0 && (
-          <div className="flex flex-col gap-3 border-t border-[#f1eaf7] bg-[#fcf9ff] px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
-            <div className="flex items-center gap-2 text-sm text-[#7c7390]">
+          <div className="flex flex-col gap-3 border-t border-border bg-brand/5 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
               <span className="font-semibold">Rows per page:</span>
               <select
                 value={rowsPerPage}
@@ -523,7 +531,7 @@ export function AdminInquiriesPage() {
                   setRowsPerPage(Number(e.target.value));
                   setCurrentPage(1);
                 }}
-                className="rounded-md border border-[#e5ddee] bg-white px-2 py-1 text-sm font-semibold text-[#2e2837] outline-none focus:ring-2 focus:ring-[#8f1fd1]/30"
+                className="rounded-md border border-border bg-white px-2 py-1 text-sm font-semibold text-foreground outline-none focus:ring-2 focus:ring-brand-deep/30"
               >
                 {[5, 10, 25, 50].map((n) => (
                   <option key={n} value={n}>
@@ -531,7 +539,7 @@ export function AdminInquiriesPage() {
                   </option>
                 ))}
               </select>
-              <span className="ml-2 text-[#8a7ca3]">
+              <span className="ml-2 text-muted-foreground">
                 {(currentPage - 1) * rowsPerPage + 1}–
                 {Math.min(currentPage * rowsPerPage, filteredAndSortedInquiries.length)} of{' '}
                 {filteredAndSortedInquiries.length}
@@ -542,7 +550,7 @@ export function AdminInquiriesPage() {
               <Button
                 variant="outline"
                 size="icon"
-                className="h-8 w-8 border-[#e5ddee] disabled:opacity-40"
+                className="h-8 w-8 border-border disabled:opacity-40"
                 onClick={() => setCurrentPage(1)}
                 disabled={currentPage === 1}
               >
@@ -551,19 +559,19 @@ export function AdminInquiriesPage() {
               <Button
                 variant="outline"
                 size="icon"
-                className="h-8 w-8 border-[#e5ddee] disabled:opacity-40"
+                className="h-8 w-8 border-border disabled:opacity-40"
                 onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
                 disabled={currentPage === 1}
               >
                 <ChevronLeft className="h-4 w-4" />
               </Button>
-              <span className="mx-2 text-sm font-bold text-[#2e2837]">
+              <span className="mx-2 text-sm font-bold text-foreground">
                 Page {currentPage} of {totalPages}
               </span>
               <Button
                 variant="outline"
                 size="icon"
-                className="h-8 w-8 border-[#e5ddee] disabled:opacity-40"
+                className="h-8 w-8 border-border disabled:opacity-40"
                 onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
                 disabled={currentPage === totalPages}
               >
@@ -572,7 +580,7 @@ export function AdminInquiriesPage() {
               <Button
                 variant="outline"
                 size="icon"
-                className="h-8 w-8 border-[#e5ddee] disabled:opacity-40"
+                className="h-8 w-8 border-border disabled:opacity-40"
                 onClick={() => setCurrentPage(totalPages)}
                 disabled={currentPage === totalPages}
               >

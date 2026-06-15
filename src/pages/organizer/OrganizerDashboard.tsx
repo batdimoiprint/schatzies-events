@@ -196,8 +196,8 @@ const calendarMonths = [
 
 const calendarLegend = [
   { label: 'Task', color: 'bg-[#e2c341]' },
-  { label: 'Meeting', color: 'bg-[#9740d0]' },
-  { label: 'Reminder', color: 'bg-[#e54e9d]' },
+  { label: 'Meeting', color: 'bg-brand-deep' },
+  { label: 'Reminder', color: 'bg-brand' },
   { label: 'Event Day', color: 'bg-[#3b28cc]' },
 ];
 
@@ -356,6 +356,12 @@ function ScheduleListCard({
   );
 }
 
+interface CalendarMarker {
+  startDateKey?: string;
+  label?: string;
+  [key: string]: unknown;
+}
+
 export function OrganizerDashboard() {
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -363,37 +369,45 @@ export function OrganizerDashboard() {
   const [monthlyStatusData, setMonthlyStatusData] = useState<StatusSlice[]>([]);
   const [upcomingEventsData, setUpcomingEventsData] = useState<ListEntry[]>([]);
   const [activeVendorsData, setActiveVendorsData] = useState<ListEntry[]>([]);
-  const [calendarMarkers, setCalendarMarkers] = useState<any[]>([]);
+  const [calendarMarkers, setCalendarMarkers] = useState<CalendarMarker[]>([]);
   const [kpiData, setKpiData] = useState<Record<string, KpiCardData[]>>(defaultKpiDataSets);
 
   useEffect(() => {
     const loadDashboardData = async () => {
       // Fetch calendar markers
       try {
-        const calendarData: any = await getCalendarEntries();
-        let rawArray = [];
-        if (Array.isArray(calendarData)) rawArray = calendarData;
-        else if (calendarData?.entries && Array.isArray(calendarData.entries))
-          rawArray = calendarData.entries;
-        else if (calendarData?.data && Array.isArray(calendarData.data))
-          rawArray = calendarData.data;
-        else if (calendarData?.data?.entries && Array.isArray(calendarData.data.entries))
-          rawArray = calendarData.data.entries;
+        const calendarData: unknown = await getCalendarEntries();
+        let rawArray: unknown[] = [];
+        if (Array.isArray(calendarData)) {
+          rawArray = calendarData;
+        } else if (calendarData && typeof calendarData === 'object') {
+          const obj = calendarData as Record<string, unknown>;
+          if (Array.isArray(obj.entries)) rawArray = obj.entries;
+          else if (Array.isArray(obj.data)) rawArray = obj.data;
+          else {
+            const dataObj = obj.data as Record<string, unknown> | undefined;
+            if (dataObj && Array.isArray(dataObj.entries)) rawArray = dataObj.entries;
+          }
+        }
 
         // Bulletproof extraction of nested backend arrays
-        const flattenedEvents = rawArray.reduce((acc: any[], item: any) => {
-          if (Array.isArray(item)) return acc.concat(item);
-          if (item && item.entries && Array.isArray(item.entries)) return acc.concat(item.entries);
-          if (item && item.events && Array.isArray(item.events)) return acc.concat(item.events);
+        const flattenedEvents = rawArray.reduce<Record<string, unknown>[]>((acc, raw) => {
+          if (Array.isArray(raw)) return acc.concat(raw as Record<string, unknown>[]);
+          const item = raw as Record<string, unknown>;
+          if (item && Array.isArray(item.entries))
+            return acc.concat(item.entries as Record<string, unknown>[]);
+          if (item && Array.isArray(item.events))
+            return acc.concat(item.events as Record<string, unknown>[]);
           acc.push(item);
           return acc;
         }, []);
 
         if (flattenedEvents.length > 0) {
-          const mappedMarkers = flattenedEvents.map((item: any) => {
-            let derivedStartDateKey = item.startDateKey;
+          const mappedMarkers: CalendarMarker[] = flattenedEvents.map((item) => {
+            const sk = item.startDateKey;
+            let derivedStartDateKey = typeof sk === 'string' ? sk : undefined;
             if (item.date && !derivedStartDateKey) {
-              const d = new Date(item.date);
+              const d = new Date(item.date as string);
               if (!isNaN(d.getTime())) {
                 derivedStartDateKey = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
               }
@@ -420,7 +434,7 @@ export function OrganizerDashboard() {
         const vendorCount = String(data.activeVendors?.count || 0);
 
         // Helper to pick the largest valid number between kpi and status
-        const getBestValue = (kpiVal: any, statusVal: any) => {
+        const getBestValue = (kpiVal: unknown, statusVal: unknown) => {
           const numKpi = Number(kpiVal) || 0;
           const numStatus = Number(statusVal) || 0;
           return Math.max(numKpi, numStatus, 0); // Always returns a non-negative number
@@ -560,10 +574,22 @@ export function OrganizerDashboard() {
 
         // 3. Map Upcoming Events List
         if (data.upcomingEvents && Array.isArray(data.upcomingEvents)) {
-          const badgeColors = ['bg-[#db37b4]', 'bg-[#bb2ec4]', 'bg-[#9b24cd]'];
-          const mappedEvents = data.upcomingEvents.map((event: any, index: number) => {
-            // Format date to MM/DD
-            const dateObj = new Date(event.date);
+          const badgeColors = ['bg-brand-deep', 'bg-brand-deep', 'bg-brand-deep'];
+          const mappedEvents = data.upcomingEvents.map(
+            (
+              event: {
+                date?: string;
+                time?: string;
+                startTime?: string;
+                title?: string;
+                eventType?: string;
+                clientName?: string;
+                status?: string;
+              },
+              index: number
+            ) => {
+              // Format date to MM/DD
+              const dateObj = new Date(event.date ?? '');
             const formattedDate = isNaN(dateObj.getTime())
               ? 'TBA'
               : `${dateObj.getMonth() + 1}/${dateObj.getDate()}`;
@@ -585,8 +611,9 @@ export function OrganizerDashboard() {
         // Map Active Vendors List (if provided by the summary API)
         if (data.activeVendors && Array.isArray(data.activeVendors.topVendors)) {
           const badgeColors = ['bg-[#29bf4c]', 'bg-[#1aa73a]', 'bg-[#158f31]'];
-          const mappedVendors = data.activeVendors.topVendors.map((vendor: any, index: number) => {
-            return {
+          const mappedVendors = data.activeVendors.topVendors.map(
+            (vendor: { vendorName?: string; name?: string }, index: number) => {
+              return {
               rank: index + 1,
               title: vendor.vendorName || vendor.name || 'Unknown Vendor',
               subtitle: 'Active Partner',
@@ -850,16 +877,16 @@ export function OrganizerDashboard() {
 
                   {hoveredDonut ? (
                     <div className="pointer-events-none absolute -top-2 left-1/2 min-w-[180px] -translate-x-1/2 -translate-y-full rounded-2xl border border-[#efe4f8] bg-white/95 backdrop-blur-sm px-4 py-3 text-center shadow-[0_16px_36px_rgba(42,23,60,0.16)] z-50">
-                      <p className="mt-1 text-sm font-bold text-[#2d2834]">{hoveredDonut.label}</p>
+                      <p className="mt-1 text-sm font-bold text-foreground">{hoveredDonut.label}</p>
                       <div className="mt-3 flex items-center justify-between gap-3 text-sm">
-                        <span className="font-semibold text-[#6f6780]">Total Events</span>
+                        <span className="font-semibold text-muted-foreground">Total Events</span>
                         <span className="font-black" style={{ color: hoveredDonut.color }}>
                           {hoveredDonut.eventCount}
                         </span>
                       </div>
                       <div className="mt-1 flex items-center justify-between gap-3 text-sm">
-                        <span className="font-semibold text-[#6f6780]">Share</span>
-                        <span className="font-bold text-[#2d2834]">{hoveredDonut.value}%</span>
+                        <span className="font-semibold text-muted-foreground">Share</span>
+                        <span className="font-bold text-foreground">{hoveredDonut.value}%</span>
                       </div>
                     </div>
                   ) : null}
@@ -915,7 +942,7 @@ export function OrganizerDashboard() {
                   />
                 </Button>
                 {isKpiDropdownOpen && (
-                  <div className="absolute right-0 top-full z-50 mt-1 w-32 overflow-hidden rounded-lg border border-[#e2deea] bg-white py-1 shadow-lg animate-in fade-in slide-in-from-top-1">
+                  <div className="absolute right-0 top-full z-50 mt-1 w-32 overflow-hidden rounded-lg border border-border bg-white py-1 shadow-lg animate-in fade-in slide-in-from-top-1">
                     {['Weekly', 'Monthly', 'Semi-Annually', 'Annually'].map((option) => (
                       <button
                         key={option}
@@ -924,7 +951,7 @@ export function OrganizerDashboard() {
                           setKpiFilter(option);
                           setIsKpiDropdownOpen(false);
                         }}
-                        className={`w-full px-4 py-2 text-left text-xs font-semibold transition-colors hover:bg-[#f6f5f8] ${kpiFilter === option ? 'text-[#df2b80]' : 'text-[#717171]'}`}
+                        className={`w-full px-4 py-2 text-left text-xs font-semibold transition-colors hover:bg-[#f6f5f8] ${kpiFilter === option ? 'text-brand' : 'text-[#717171]'}`}
                       >
                         {option}
                       </button>
@@ -1017,7 +1044,7 @@ export function OrganizerDashboard() {
                           className={[
                             'flex size-10 flex-col items-center justify-between rounded-md py-1 border text-xs font-sans cursor-default',
                             isToday
-                              ? 'bg-[#fdf8ff] text-[#8f1fd1] font-black border-2 border-[#8f1fd1]'
+                              ? 'bg-[#fdf8ff] text-brand-deep font-black border-2 border-brand-deep'
                               : 'text-[#9b8fa8] font-semibold border-transparent',
                           ].join(' ')}
                         >
@@ -1053,12 +1080,12 @@ export function OrganizerDashboard() {
                                     </span>
                                   )}
                                   {counts.Meeting > 0 && (
-                                    <span className="text-[8px] font-black text-[#9740d0]">
+                                    <span className="text-[8px] font-black text-brand-deep">
                                       {counts.Meeting}
                                     </span>
                                   )}
                                   {counts.Reminder > 0 && (
-                                    <span className="text-[8px] font-black text-[#e54e9d]">
+                                    <span className="text-[8px] font-black text-brand">
                                       {counts.Reminder}
                                     </span>
                                   )}
@@ -1094,7 +1121,7 @@ export function OrganizerDashboard() {
                         <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                       </svg>
                     </div>
-                    <span className="text-xs font-semibold text-[#4f4a56]">{item.label}</span>
+                    <span className="text-xs font-semibold text-foreground/80">{item.label}</span>
                   </div>
                 ))}
               </div>

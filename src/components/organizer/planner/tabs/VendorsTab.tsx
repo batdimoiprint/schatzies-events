@@ -107,12 +107,12 @@ export function VendorsTab({
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 rounded-2xl border border-[#eadfec] bg-white p-4 shadow-sm">
         <div>
-          <h3 className="text-lg font-black tracking-tight text-[#1f1f21]">Event Vendor Slots</h3>
+          <h3 className="text-lg font-black tracking-tight text-foreground">Event Vendor Slots</h3>
           <p className="text-xs font-semibold text-[#6e687d]">
             One vendor per service category — no duplicates on the same event date
           </p>
         </div>
-        <div className="text-xs font-semibold text-[#8b8199]">
+        <div className="text-xs font-semibold text-muted-foreground">
           {allServiceTypes.length} service type{allServiceTypes.length !== 1 ? 's' : ''} available
         </div>
       </div>
@@ -127,10 +127,10 @@ export function VendorsTab({
           const isFilled = !!assigned;
 
           return (
-            <Card key={type} className="border-[#e7dfef] bg-white py-0 shadow-sm overflow-hidden">
+            <Card key={type} className="border-border bg-white py-0 shadow-sm overflow-hidden">
               {/* Category Header */}
               <div
-                className="flex items-center justify-between px-5 py-4 border-b border-[#ece6f3]"
+                className="flex items-center justify-between px-5 py-4 border-b border-border"
                 style={{ borderLeftWidth: 4, borderLeftColor: color }}
               >
                 <div className="flex items-center gap-3">
@@ -144,7 +144,7 @@ export function VendorsTab({
                     <p className="text-sm font-black uppercase tracking-widest" style={{ color }}>
                       {type}
                     </p>
-                    <p className="text-[10px] font-semibold text-[#8b8199]">
+                    <p className="text-[10px] font-semibold text-muted-foreground">
                       {isFilled ? '1 vendor assigned' : 'No vendor assigned'}
                     </p>
                   </div>
@@ -162,8 +162,8 @@ export function VendorsTab({
                 {assigned ? (
                   <div className="flex items-center justify-between px-5 py-4 bg-[#f8fdf9]">
                     <div className="min-w-0 flex-1">
-                      <p className="text-[14px] font-black text-[#2f2b39]">{assigned.name}</p>
-                      <p className="text-[11px] font-semibold text-[#6f687f] mt-0.5">
+                      <p className="text-[14px] font-black text-foreground">{assigned.name}</p>
+                      <p className="text-[11px] font-semibold text-muted-foreground mt-0.5">
                         {assigned.service || 'Service not specified'}
                       </p>
                       <div className="flex items-center gap-3 mt-1 text-[10px] text-[#8c8598]">
@@ -175,7 +175,7 @@ export function VendorsTab({
                       <button
                         type="button"
                         onClick={() => setExpandedCategory(isExpanded ? null : type)}
-                        className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-[#e1d8ef] bg-white px-3 text-[10px] font-bold text-[#6f687f] transition hover:border-[#8f1fd1] hover:text-[#8f1fd1]"
+                        className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-border bg-white px-3 text-[10px] font-bold text-muted-foreground transition hover:border-brand-deep hover:text-brand-deep"
                       >
                         Replace{' '}
                         {isExpanded ? (
@@ -187,7 +187,7 @@ export function VendorsTab({
                       <button
                         type="button"
                         onClick={() => handleUnassignVendor(assigned.id)}
-                        className="inline-flex size-8 items-center justify-center rounded-md border border-[#e1d8ef] bg-white text-[#7b6f90] transition hover:border-[#f1589e] hover:text-[#f1589e]"
+                        className="inline-flex size-8 items-center justify-center rounded-md border border-border bg-white text-[#7b6f90] transition hover:border-brand hover:text-brand"
                         aria-label="Unassign vendor"
                       >
                         <Trash2 className="size-3.5" />
@@ -200,7 +200,7 @@ export function VendorsTab({
                     <div className="inline-flex size-10 items-center justify-center rounded-full border-2 border-dashed border-[#d8d2e2] bg-[#fbfafd] mb-2">
                       <Plus className="size-4 text-[#9f97ad]" />
                     </div>
-                    <p className="text-[11px] font-semibold text-[#8b84a0] mb-3">
+                    <p className="text-[11px] font-semibold text-muted-foreground mb-3">
                       No {type.toLowerCase()} vendor assigned
                     </p>
                     <button
@@ -209,7 +209,7 @@ export function VendorsTab({
                         setExpandedCategory(isExpanded ? null : type);
                       }}
                       disabled={isAssigningVendor}
-                      className="inline-flex h-8 items-center gap-1.5 rounded-lg bg-linear-to-r from-[#f1589e] via-[#d735b3] to-[#8a1fd0] px-4 text-[11px] font-black text-white shadow-[0_6px_14px_rgba(125,31,186,0.2)] transition hover:brightness-105 disabled:opacity-50"
+                      className="inline-flex h-8 items-center gap-1.5 rounded-lg bg-linear-to-r from-brand via-[#d735b3] to-brand-deep px-4 text-[11px] font-black text-white shadow-[0_6px_14px_rgba(125,31,186,0.2)] transition hover:brightness-105 disabled:opacity-50"
                     >
                       <Plus className="size-3.5" />
                       Assign {type} Vendor
@@ -219,18 +219,18 @@ export function VendorsTab({
 
                 {/* Expandable Available Vendors Pool */}
                 {isExpanded && (
-                  <div className="border-t border-[#ece6f3] bg-[#fbfafd]">
+                  <div className="border-t border-border bg-[#fbfafd]">
                     <div className="px-5 py-3 flex items-center justify-between">
                       <p className="text-[11px] font-bold uppercase tracking-widest text-[#7a7186]">
                         Available {type} Vendors
-                        <span className="ml-2 text-[10px] font-semibold normal-case text-[#8b8199]">
+                        <span className="ml-2 text-[10px] font-semibold normal-case text-muted-foreground">
                           ({pool.length})
                         </span>
                       </p>
                       <button
                         type="button"
                         onClick={() => setExpandedCategory(null)}
-                        className="text-[10px] font-bold text-[#8f1fd1] hover:underline"
+                        className="text-[10px] font-bold text-brand-deep hover:underline"
                       >
                         Collapse
                       </button>
@@ -249,7 +249,7 @@ export function VendorsTab({
                             } border border-[#eee9f3] hover:border-[#d4c9e4] hover:shadow-sm`}
                           >
                             <div className="min-w-0 flex-1">
-                              <p className="font-bold text-[#2f2939] truncate">{vendor.name}</p>
+                              <p className="font-bold text-foreground truncate">{vendor.name}</p>
                               <div className="flex items-center gap-2 mt-0.5">
                                 {vendor.contactPerson && (
                                   <span className="text-[10px] text-[#8c8598]">
@@ -257,7 +257,7 @@ export function VendorsTab({
                                   </span>
                                 )}
                                 {vendor.price != null && (
-                                  <span className="text-[10px] font-bold text-[#8f23cf]">
+                                  <span className="text-[10px] font-bold text-brand-deep">
                                     {peso(vendor.price)}
                                   </span>
                                 )}
@@ -289,7 +289,7 @@ export function VendorsTab({
 
       {allServiceTypes.length === 0 && (
         <div className="rounded-2xl border border-[#eadfec] bg-white px-6 py-12 text-center">
-          <p className="text-sm font-semibold text-[#8b8199]">
+          <p className="text-sm font-semibold text-muted-foreground">
             No vendors found in the pool. Add vendors first to assign them to events.
           </p>
         </div>

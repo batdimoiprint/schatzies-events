@@ -43,7 +43,7 @@ export function RSVPFormPage({
 
         {/* Tagline */}
         <p className="mb-6 text-sm font-medium text-gray-600 text-center">
-          Your <span className="font-bold text-[#df2b80]">MOST TRUSTED</span> team!
+          Your <span className="font-bold text-brand">MOST TRUSTED</span> team!
         </p>
 
         {/* White Card */}

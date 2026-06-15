@@ -240,9 +240,9 @@ export function AdminVendorPoolPage() {
   const SortIcon = ({ field }: { field: SortField }) => {
     if (sortBy !== field) return <ArrowUpDown className="ml-1.5 h-3.5 w-3.5 opacity-40" />;
     return sortOrder === 'asc' ? (
-      <ArrowUp className="ml-1.5 h-3.5 w-3.5 text-[#8f1fd1]" />
+      <ArrowUp className="ml-1.5 h-3.5 w-3.5 text-brand-deep" />
     ) : (
-      <ArrowDown className="ml-1.5 h-3.5 w-3.5 text-[#8f1fd1]" />
+      <ArrowDown className="ml-1.5 h-3.5 w-3.5 text-brand-deep" />
     );
   };
 
@@ -368,8 +368,8 @@ export function AdminVendorPoolPage() {
     <div className="space-y-6 p-6">
       <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
         <div>
-          <h1 className="text-3xl font-black text-[#2e2837]">Vendor Pool</h1>
-          <p className="font-semibold text-[#8f879f]">
+          <h1 className="text-3xl font-black text-foreground">Vendor Pool</h1>
+          <p className="font-semibold text-muted-foreground">
             Manage and track your outsourced event vendors
           </p>
         </div>
@@ -399,14 +399,14 @@ export function AdminVendorPoolPage() {
             </SelectContent>
           </Select>
 
-          <div className="flex items-center rounded-lg border border-[#e5ddee] bg-white p-0.5 shadow-sm">
+          <div className="flex items-center rounded-lg border border-border bg-white p-0.5 shadow-sm">
             <button
               type="button"
               onClick={() => setViewMode('cards')}
               className={`rounded-md px-2.5 py-1.5 transition-colors ${
                 viewMode === 'cards'
-                  ? 'bg-[#f3e8ff] text-[#8f1fd1]'
-                  : 'text-[#7c7390] hover:text-[#4e445e]'
+                  ? 'bg-[#f3e8ff] text-brand-deep'
+                  : 'text-muted-foreground hover:text-foreground/80'
               }`}
               title="Card view"
             >
@@ -417,8 +417,8 @@ export function AdminVendorPoolPage() {
               onClick={() => setViewMode('table')}
               className={`rounded-md px-2.5 py-1.5 transition-colors ${
                 viewMode === 'table'
-                  ? 'bg-[#f3e8ff] text-[#8f1fd1]'
-                  : 'text-[#7c7390] hover:text-[#4e445e]'
+                  ? 'bg-[#f3e8ff] text-brand-deep'
+                  : 'text-muted-foreground hover:text-foreground/80'
               }`}
               title="Table view"
             >
@@ -457,7 +457,7 @@ export function AdminVendorPoolPage() {
               </div>
 
               <div className="space-y-1">
-                <h2 className="text-2xl font-black tracking-tight text-[#2e2837]">
+                <h2 className="text-2xl font-black tracking-tight text-foreground">
                   {hasActiveFilters ? 'No matching vendors' : 'No vendors yet'}
                 </h2>
                 <p className="text-sm font-semibold text-[#7d728f]">
@@ -526,50 +526,50 @@ export function AdminVendorPoolPage() {
                     <CardContent className="mt-auto space-y-3 text-sm">
                       <div className="space-y-1 text-[#7a708a]">
                         <p>
-                          <span className="font-semibold text-[#4e445e]">Contact Person:</span>{' '}
+                          <span className="font-semibold text-foreground/80">Contact Person:</span>{' '}
                           {vendor.contactPerson || '-'}
                         </p>
                         <p>
-                          <span className="font-semibold text-[#4e445e]">Event:</span> {eventName}
+                          <span className="font-semibold text-foreground/80">Event:</span> {eventName}
                         </p>
                         <p>
-                          <span className="font-semibold text-[#4e445e]">Email:</span>{' '}
+                          <span className="font-semibold text-foreground/80">Email:</span>{' '}
                           {vendor.contactEmail || '-'}
                         </p>
                         <p>
-                          <span className="font-semibold text-[#4e445e]">Phone:</span>{' '}
+                          <span className="font-semibold text-foreground/80">Phone:</span>{' '}
                           {vendor.contactPhone || '-'}
                         </p>
                         <p>
-                          <span className="font-semibold text-[#4e445e]">Type of Supply:</span>{' '}
+                          <span className="font-semibold text-foreground/80">Type of Supply:</span>{' '}
                           {vendor.typeOfSupply || '-'}
                         </p>
                         <p>
-                          <span className="font-semibold text-[#4e445e]">Services Offered:</span>{' '}
+                          <span className="font-semibold text-foreground/80">Services Offered:</span>{' '}
                           {vendor.servicesOffered || '-'}
                         </p>
                         <p>
-                          <span className="font-semibold text-[#4e445e]">Pricing:</span>{' '}
+                          <span className="font-semibold text-foreground/80">Pricing:</span>{' '}
                           {vendor.pricing || '-'}
                         </p>
                         <p>
-                          <span className="font-semibold text-[#4e445e]">Price:</span>{' '}
+                          <span className="font-semibold text-foreground/80">Price:</span>{' '}
                           {vendor.price ?? '-'}
                         </p>
                         <p>
-                          <span className="font-semibold text-[#4e445e]">Last Event Handled:</span>{' '}
+                          <span className="font-semibold text-foreground/80">Last Event Handled:</span>{' '}
                           {vendor.lastEventHandled || '-'}
                         </p>
                         <p>
-                          <span className="font-semibold text-[#4e445e]">Notes:</span>{' '}
+                          <span className="font-semibold text-foreground/80">Notes:</span>{' '}
                           {vendor.notes || '-'}
                         </p>
                         <p>
-                          <span className="font-semibold text-[#4e445e]">Created:</span>{' '}
+                          <span className="font-semibold text-foreground/80">Created:</span>{' '}
                           {vendor.createdAt ? new Date(vendor.createdAt).toLocaleString() : '-'}
                         </p>
                         <p>
-                          <span className="font-semibold text-[#4e445e]">Updated:</span>{' '}
+                          <span className="font-semibold text-foreground/80">Updated:</span>{' '}
                           {vendor.updatedAt ? new Date(vendor.updatedAt).toLocaleString() : '-'}
                         </p>
                       </div>
@@ -607,12 +607,12 @@ export function AdminVendorPoolPage() {
 
           {/* ──── TABLE VIEW ──── */}
           {viewMode === 'table' && (
-            <div className="overflow-hidden rounded-2xl border border-[#eee7f4] bg-white shadow-[0_8px_30px_rgba(53,36,71,0.06)]">
+            <div className="overflow-hidden rounded-2xl border border-border bg-white shadow-[0_8px_30px_rgba(53,36,71,0.06)]">
               <Table>
                 <TableHeader className="bg-[#faf7fd]">
                   <TableRow className="border-b border-[#efe7f6]">
                     <TableHead
-                      className="h-11 cursor-pointer text-xs font-black uppercase tracking-[0.06em] text-[#7c7390] transition-colors hover:text-[#8f1fd1]"
+                      className="h-11 cursor-pointer text-xs font-black uppercase tracking-[0.06em] text-muted-foreground transition-colors hover:text-brand-deep"
                       onClick={() => toggleSort('name')}
                     >
                       <div className="flex items-center">
@@ -621,7 +621,7 @@ export function AdminVendorPoolPage() {
                       </div>
                     </TableHead>
                     <TableHead
-                      className="h-11 cursor-pointer text-xs font-black uppercase tracking-[0.06em] text-[#7c7390] transition-colors hover:text-[#8f1fd1]"
+                      className="h-11 cursor-pointer text-xs font-black uppercase tracking-[0.06em] text-muted-foreground transition-colors hover:text-brand-deep"
                       onClick={() => toggleSort('serviceType')}
                     >
                       <div className="flex items-center">
@@ -630,7 +630,7 @@ export function AdminVendorPoolPage() {
                       </div>
                     </TableHead>
                     <TableHead
-                      className="h-11 cursor-pointer text-xs font-black uppercase tracking-[0.06em] text-[#7c7390] transition-colors hover:text-[#8f1fd1]"
+                      className="h-11 cursor-pointer text-xs font-black uppercase tracking-[0.06em] text-muted-foreground transition-colors hover:text-brand-deep"
                       onClick={() => toggleSort('price')}
                     >
                       <div className="flex items-center">
@@ -639,7 +639,7 @@ export function AdminVendorPoolPage() {
                       </div>
                     </TableHead>
                     <TableHead
-                      className="h-11 cursor-pointer text-xs font-black uppercase tracking-[0.06em] text-[#7c7390] transition-colors hover:text-[#8f1fd1]"
+                      className="h-11 cursor-pointer text-xs font-black uppercase tracking-[0.06em] text-muted-foreground transition-colors hover:text-brand-deep"
                       onClick={() => toggleSort('email')}
                     >
                       <div className="flex items-center">
@@ -648,7 +648,7 @@ export function AdminVendorPoolPage() {
                       </div>
                     </TableHead>
                     <TableHead
-                      className="h-11 cursor-pointer text-xs font-black uppercase tracking-[0.06em] text-[#7c7390] transition-colors hover:text-[#8f1fd1]"
+                      className="h-11 cursor-pointer text-xs font-black uppercase tracking-[0.06em] text-muted-foreground transition-colors hover:text-brand-deep"
                       onClick={() => toggleSort('phone')}
                     >
                       <div className="flex items-center">
@@ -657,7 +657,7 @@ export function AdminVendorPoolPage() {
                       </div>
                     </TableHead>
                     <TableHead
-                      className="h-11 cursor-pointer text-xs font-black uppercase tracking-[0.06em] text-[#7c7390] transition-colors hover:text-[#8f1fd1]"
+                      className="h-11 cursor-pointer text-xs font-black uppercase tracking-[0.06em] text-muted-foreground transition-colors hover:text-brand-deep"
                       onClick={() => toggleSort('status')}
                     >
                       <div className="flex items-center">
@@ -665,7 +665,7 @@ export function AdminVendorPoolPage() {
                         <SortIcon field="status" />
                       </div>
                     </TableHead>
-                    <TableHead className="h-11 text-right text-xs font-black uppercase tracking-[0.06em] text-[#7c7390]">
+                    <TableHead className="h-11 text-right text-xs font-black uppercase tracking-[0.06em] text-muted-foreground">
                       Actions
                     </TableHead>
                   </TableRow>
@@ -677,29 +677,29 @@ export function AdminVendorPoolPage() {
                     return (
                       <TableRow
                         key={vendor.id}
-                        className="border-b border-[#f3edf8] hover:bg-[#fcf9ff]"
+                        className="border-b border-[#f3edf8] hover:bg-brand/5"
                       >
-                        <TableCell className="py-3 font-semibold text-[#2e2837]">
+                        <TableCell className="py-3 font-semibold text-foreground">
                           <div className="flex items-center gap-2">
                             <Briefcase className="h-3.5 w-3.5 text-[#ff7eb3]" />
                             {vendor.name}
                           </div>
                           {vendor.contactPerson && (
-                            <p className="mt-0.5 text-xs text-[#8a7ca3]">{vendor.contactPerson}</p>
+                            <p className="mt-0.5 text-xs text-muted-foreground">{vendor.contactPerson}</p>
                           )}
                         </TableCell>
-                        <TableCell className="text-sm text-[#4e4560]">
+                        <TableCell className="text-sm text-foreground/80">
                           {vendor.serviceType || '-'}
                         </TableCell>
-                        <TableCell className="text-sm font-semibold text-[#4e4560]">
+                        <TableCell className="text-sm font-semibold text-foreground/80">
                           {vendor.price != null
                             ? `₱${Number(vendor.price).toLocaleString('en-PH')}`
                             : '—'}
                         </TableCell>
-                        <TableCell className="text-sm text-[#635a73]">
+                        <TableCell className="text-sm text-foreground/80">
                           {vendor.contactEmail || '-'}
                         </TableCell>
-                        <TableCell className="text-sm text-[#635a73]">
+                        <TableCell className="text-sm text-foreground/80">
                           {vendor.contactPhone || '-'}
                         </TableCell>
                         <TableCell>
@@ -738,8 +738,8 @@ export function AdminVendorPoolPage() {
               </Table>
 
               {/* Pagination Bar */}
-              <div className="flex flex-col gap-3 border-t border-[#f1eaf7] bg-[#fcf9ff] px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
-                <div className="flex items-center gap-2 text-sm text-[#7c7390]">
+              <div className="flex flex-col gap-3 border-t border-border bg-brand/5 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
                   <span className="font-semibold">Rows per page:</span>
                   <select
                     value={rowsPerPage}
@@ -747,7 +747,7 @@ export function AdminVendorPoolPage() {
                       setRowsPerPage(Number(e.target.value));
                       setCurrentPage(1);
                     }}
-                    className="rounded-md border border-[#e5ddee] bg-white px-2 py-1 text-sm font-semibold text-[#2e2837] outline-none focus:ring-2 focus:ring-[#8f1fd1]/30"
+                    className="rounded-md border border-border bg-white px-2 py-1 text-sm font-semibold text-foreground outline-none focus:ring-2 focus:ring-brand-deep/30"
                   >
                     {[5, 10, 25, 50].map((n) => (
                       <option key={n} value={n}>
@@ -755,7 +755,7 @@ export function AdminVendorPoolPage() {
                       </option>
                     ))}
                   </select>
-                  <span className="ml-2 text-[#8a7ca3]">
+                  <span className="ml-2 text-muted-foreground">
                     {(currentPage - 1) * rowsPerPage + 1}–
                     {Math.min(currentPage * rowsPerPage, sortedVendors.length)} of{' '}
                     {sortedVendors.length}
@@ -766,7 +766,7 @@ export function AdminVendorPoolPage() {
                   <Button
                     variant="outline"
                     size="icon"
-                    className="h-8 w-8 border-[#e5ddee] disabled:opacity-40"
+                    className="h-8 w-8 border-border disabled:opacity-40"
                     onClick={() => setCurrentPage(1)}
                     disabled={currentPage === 1}
                   >
@@ -775,19 +775,19 @@ export function AdminVendorPoolPage() {
                   <Button
                     variant="outline"
                     size="icon"
-                    className="h-8 w-8 border-[#e5ddee] disabled:opacity-40"
+                    className="h-8 w-8 border-border disabled:opacity-40"
                     onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
                     disabled={currentPage === 1}
                   >
                     <ChevronLeft className="h-4 w-4" />
                   </Button>
-                  <span className="mx-2 text-sm font-bold text-[#2e2837]">
+                  <span className="mx-2 text-sm font-bold text-foreground">
                     Page {currentPage} of {totalPages}
                   </span>
                   <Button
                     variant="outline"
                     size="icon"
-                    className="h-8 w-8 border-[#e5ddee] disabled:opacity-40"
+                    className="h-8 w-8 border-border disabled:opacity-40"
                     onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
                     disabled={currentPage === totalPages}
                   >
@@ -796,7 +796,7 @@ export function AdminVendorPoolPage() {
                   <Button
                     variant="outline"
                     size="icon"
-                    className="h-8 w-8 border-[#e5ddee] disabled:opacity-40"
+                    className="h-8 w-8 border-border disabled:opacity-40"
                     onClick={() => setCurrentPage(totalPages)}
                     disabled={currentPage === totalPages}
                   >
@@ -812,12 +812,12 @@ export function AdminVendorPoolPage() {
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogContent className="max-w-7xl max-h-[90vh] overflow-y-auto p-0">
           {/* Dialog Header */}
-          <div className="bg-gradient-to-r from-[#fdfbff] to-[#f5f1ff] p-6 border-b border-[#eee7f4]">
+          <div className="bg-gradient-to-r from-[#fdfbff] to-[#f5f1ff] p-6 border-b border-border">
             <DialogHeader>
-              <DialogTitle className="text-2xl font-black text-[#2e2837]">
+              <DialogTitle className="text-2xl font-black text-foreground">
                 {dialogMode === 'create' ? 'Add New Vendor' : 'Edit Vendor'}
               </DialogTitle>
-              <DialogDescription className="text-sm font-semibold text-[#8f879f] mt-1">
+              <DialogDescription className="text-sm font-semibold text-muted-foreground mt-1">
                 {dialogMode === 'create'
                   ? 'Fill in the vendor details below. Fields marked with * are required.'
                   : 'Update vendor details, manage workers, and view event assignments.'}
@@ -833,15 +833,15 @@ export function AdminVendorPoolPage() {
               <div className="space-y-6">
                 {/* Basic Information */}
                 <section>
-                  <h3 className="text-xs font-black uppercase tracking-widest text-[#b0a4c5] flex items-center gap-2 mb-4">
+                  <h3 className="text-xs font-black uppercase tracking-widest text-muted-foreground/70 flex items-center gap-2 mb-4">
                     <span className="h-px w-4 bg-[#d5c9e4]" />
                     Basic Information
                   </h3>
                   <div className="space-y-4">
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div className="space-y-1.5">
-                        <label className="text-[10px] font-black uppercase tracking-wider text-[#857a98]">
-                          Vendor Name <span className="text-[#df1b8b]">*</span>
+                        <label className="text-[10px] font-black uppercase tracking-wider text-muted-foreground">
+                          Vendor Name <span className="text-brand">*</span>
                         </label>
                         <Input
                           placeholder="e.g. Bloom Studio"
@@ -852,12 +852,12 @@ export function AdminVendorPoolPage() {
                               vendorName: event.target.value,
                             }))
                           }
-                          className="h-10 bg-white border-[#ebe3f5] focus-visible:ring-[#8C6bB1] font-semibold text-[#2e2837]"
+                          className="h-10 bg-white border-border focus-visible:ring-[#8C6bB1] font-semibold text-foreground"
                         />
                       </div>
                       <div className="space-y-1.5">
-                        <label className="text-[10px] font-black uppercase tracking-wider text-[#857a98]">
-                          Service Type <span className="text-[#df1b8b]">*</span>
+                        <label className="text-[10px] font-black uppercase tracking-wider text-muted-foreground">
+                          Service Type <span className="text-brand">*</span>
                         </label>
                         <Input
                           placeholder="e.g. Photography, Catering"
@@ -868,12 +868,12 @@ export function AdminVendorPoolPage() {
                               serviceType: event.target.value,
                             }))
                           }
-                          className="h-10 bg-white border-[#ebe3f5] focus-visible:ring-[#8C6bB1] font-semibold text-[#2e2837]"
+                          className="h-10 bg-white border-border focus-visible:ring-[#8C6bB1] font-semibold text-foreground"
                         />
                       </div>
                     </div>
                     <div className="space-y-1.5">
-                      <label className="text-[10px] font-black uppercase tracking-wider text-[#857a98]">
+                      <label className="text-[10px] font-black uppercase tracking-wider text-muted-foreground">
                         Contact Person
                       </label>
                       <Input
@@ -885,7 +885,7 @@ export function AdminVendorPoolPage() {
                             contactPerson: event.target.value,
                           }))
                         }
-                        className="h-10 bg-white border-[#ebe3f5] focus-visible:ring-[#8C6bB1] font-semibold text-[#2e2837]"
+                        className="h-10 bg-white border-border focus-visible:ring-[#8C6bB1] font-semibold text-foreground"
                       />
                     </div>
                   </div>
@@ -893,13 +893,13 @@ export function AdminVendorPoolPage() {
 
                 {/* Contact Details */}
                 <section>
-                  <h3 className="text-xs font-black uppercase tracking-widest text-[#b0a4c5] flex items-center gap-2 mb-4">
+                  <h3 className="text-xs font-black uppercase tracking-widest text-muted-foreground/70 flex items-center gap-2 mb-4">
                     <span className="h-px w-4 bg-[#d5c9e4]" />
                     Contact Details
                   </h3>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="space-y-1.5">
-                      <label className="text-[10px] font-black uppercase tracking-wider text-[#857a98]">
+                      <label className="text-[10px] font-black uppercase tracking-wider text-muted-foreground">
                         Email Address
                       </label>
                       <Input
@@ -909,11 +909,11 @@ export function AdminVendorPoolPage() {
                         onChange={(event) =>
                           setVendorForm((current) => ({ ...current, email: event.target.value }))
                         }
-                        className="h-10 bg-white border-[#ebe3f5] focus-visible:ring-[#8C6bB1] font-semibold text-[#2e2837]"
+                        className="h-10 bg-white border-border focus-visible:ring-[#8C6bB1] font-semibold text-foreground"
                       />
                     </div>
                     <div className="space-y-1.5">
-                      <label className="text-[10px] font-black uppercase tracking-wider text-[#857a98]">
+                      <label className="text-[10px] font-black uppercase tracking-wider text-muted-foreground">
                         Phone Number
                       </label>
                       <Input
@@ -925,7 +925,7 @@ export function AdminVendorPoolPage() {
                             contactNumber: event.target.value,
                           }))
                         }
-                        className="h-10 bg-white border-[#ebe3f5] focus-visible:ring-[#8C6bB1] font-semibold text-[#2e2837]"
+                        className="h-10 bg-white border-border focus-visible:ring-[#8C6bB1] font-semibold text-foreground"
                       />
                     </div>
                   </div>
@@ -933,14 +933,14 @@ export function AdminVendorPoolPage() {
 
                 {/* Supply & Services */}
                 <section>
-                  <h3 className="text-xs font-black uppercase tracking-widest text-[#b0a4c5] flex items-center gap-2 mb-4">
+                  <h3 className="text-xs font-black uppercase tracking-widest text-muted-foreground/70 flex items-center gap-2 mb-4">
                     <span className="h-px w-4 bg-[#d5c9e4]" />
                     Supply & Services
                   </h3>
                   <div className="space-y-4">
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div className="space-y-1.5">
-                        <label className="text-[10px] font-black uppercase tracking-wider text-[#857a98]">
+                        <label className="text-[10px] font-black uppercase tracking-wider text-muted-foreground">
                           Type of Supply
                         </label>
                         <Input
@@ -952,11 +952,11 @@ export function AdminVendorPoolPage() {
                               typeOfSupply: event.target.value,
                             }))
                           }
-                          className="h-10 bg-white border-[#ebe3f5] focus-visible:ring-[#8C6bB1] font-semibold text-[#2e2837]"
+                          className="h-10 bg-white border-border focus-visible:ring-[#8C6bB1] font-semibold text-foreground"
                         />
                       </div>
                       <div className="space-y-1.5">
-                        <label className="text-[10px] font-black uppercase tracking-wider text-[#857a98]">
+                        <label className="text-[10px] font-black uppercase tracking-wider text-muted-foreground">
                           Services Offered
                         </label>
                         <Input
@@ -968,7 +968,7 @@ export function AdminVendorPoolPage() {
                               servicesOffered: event.target.value,
                             }))
                           }
-                          className="h-10 bg-white border-[#ebe3f5] focus-visible:ring-[#8C6bB1] font-semibold text-[#2e2837]"
+                          className="h-10 bg-white border-border focus-visible:ring-[#8C6bB1] font-semibold text-foreground"
                         />
                       </div>
                     </div>
@@ -977,14 +977,14 @@ export function AdminVendorPoolPage() {
 
                 {/* Pricing & Status */}
                 <section>
-                  <h3 className="text-xs font-black uppercase tracking-widest text-[#b0a4c5] flex items-center gap-2 mb-4">
+                  <h3 className="text-xs font-black uppercase tracking-widest text-muted-foreground/70 flex items-center gap-2 mb-4">
                     <span className="h-px w-4 bg-[#d5c9e4]" />
                     Pricing & Status
                   </h3>
                   <div className="space-y-4">
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div className="space-y-1.5">
-                        <label className="text-[10px] font-black uppercase tracking-wider text-[#857a98]">
+                        <label className="text-[10px] font-black uppercase tracking-wider text-muted-foreground">
                           Pricing Model
                         </label>
                         <Input
@@ -996,11 +996,11 @@ export function AdminVendorPoolPage() {
                               pricing: event.target.value,
                             }))
                           }
-                          className="h-10 bg-white border-[#ebe3f5] focus-visible:ring-[#8C6bB1] font-semibold text-[#2e2837]"
+                          className="h-10 bg-white border-border focus-visible:ring-[#8C6bB1] font-semibold text-foreground"
                         />
                       </div>
                       <div className="space-y-1.5">
-                        <label className="text-[10px] font-black uppercase tracking-wider text-[#857a98]">
+                        <label className="text-[10px] font-black uppercase tracking-wider text-muted-foreground">
                           Price (₱)
                         </label>
                         <Input
@@ -1016,13 +1016,13 @@ export function AdminVendorPoolPage() {
                               price: nextValue === '' ? null : Number(nextValue),
                             }));
                           }}
-                          className="h-10 bg-white border-[#ebe3f5] focus-visible:ring-[#8C6bB1] font-semibold text-[#2e2837]"
+                          className="h-10 bg-white border-border focus-visible:ring-[#8C6bB1] font-semibold text-foreground"
                         />
                       </div>
                     </div>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div className="space-y-1.5">
-                        <label className="text-[10px] font-black uppercase tracking-wider text-[#857a98]">
+                        <label className="text-[10px] font-black uppercase tracking-wider text-muted-foreground">
                           Availability Status
                         </label>
                         <Select
@@ -1034,7 +1034,7 @@ export function AdminVendorPoolPage() {
                             }))
                           }
                         >
-                          <SelectTrigger className="h-10 w-full bg-white border-[#ebe3f5] font-semibold text-[#2e2837]">
+                          <SelectTrigger className="h-10 w-full bg-white border-border font-semibold text-foreground">
                             <SelectValue placeholder="Select status" />
                           </SelectTrigger>
                           <SelectContent>
@@ -1054,7 +1054,7 @@ export function AdminVendorPoolPage() {
                         </Select>
                       </div>
                       <div className="space-y-1.5">
-                        <label className="text-[10px] font-black uppercase tracking-wider text-[#857a98]">
+                        <label className="text-[10px] font-black uppercase tracking-wider text-muted-foreground">
                           Last Event Handled
                         </label>
                         <Input
@@ -1066,7 +1066,7 @@ export function AdminVendorPoolPage() {
                               lastEventHandled: event.target.value,
                             }))
                           }
-                          className="h-10 bg-white border-[#ebe3f5] focus-visible:ring-[#8C6bB1] font-semibold text-[#2e2837]"
+                          className="h-10 bg-white border-border focus-visible:ring-[#8C6bB1] font-semibold text-foreground"
                         />
                       </div>
                     </div>
@@ -1075,13 +1075,13 @@ export function AdminVendorPoolPage() {
 
                 {/* Event Assignment (create mode) */}
                 <section>
-                  <h3 className="text-xs font-black uppercase tracking-widest text-[#b0a4c5] flex items-center gap-2 mb-4">
+                  <h3 className="text-xs font-black uppercase tracking-widest text-muted-foreground/70 flex items-center gap-2 mb-4">
                     <span className="h-px w-4 bg-[#d5c9e4]" />
                     Event Assignment
                   </h3>
                   <div className="space-y-1.5">
-                    <label className="text-[10px] font-black uppercase tracking-wider text-[#857a98]">
-                      Assign to Event <span className="text-[#8f879f]">(optional)</span>
+                    <label className="text-[10px] font-black uppercase tracking-wider text-muted-foreground">
+                      Assign to Event <span className="text-muted-foreground">(optional)</span>
                     </label>
                     <Select
                       value={vendorForm.eventId || 'none'}
@@ -1092,17 +1092,17 @@ export function AdminVendorPoolPage() {
                         }))
                       }
                     >
-                      <SelectTrigger className="h-10 w-full bg-white border-[#ebe3f5] font-semibold text-[#2e2837]">
+                      <SelectTrigger className="h-10 w-full bg-white border-border font-semibold text-foreground">
                         <SelectValue placeholder="Select an event..." />
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="none">
-                          <span className="text-[#8f879f]">No event for now</span>
+                          <span className="text-muted-foreground">No event for now</span>
                         </SelectItem>
                         {events.map((event) => (
                           <SelectItem key={event.id} value={event.id}>
                             <span className="flex items-center gap-2">
-                              <CalendarDays className="h-3.5 w-3.5 text-[#8f1fd1]" />
+                              <CalendarDays className="h-3.5 w-3.5 text-brand-deep" />
                               {event.title}
                             </span>
                           </SelectItem>
@@ -1114,12 +1114,12 @@ export function AdminVendorPoolPage() {
 
                 {/* Notes */}
                 <section>
-                  <h3 className="text-xs font-black uppercase tracking-widest text-[#b0a4c5] flex items-center gap-2 mb-4">
+                  <h3 className="text-xs font-black uppercase tracking-widest text-muted-foreground/70 flex items-center gap-2 mb-4">
                     <span className="h-px w-4 bg-[#d5c9e4]" />
                     Additional Notes
                   </h3>
                   <div className="space-y-1.5">
-                    <label className="text-[10px] font-black uppercase tracking-wider text-[#857a98]">
+                    <label className="text-[10px] font-black uppercase tracking-wider text-muted-foreground">
                       Notes
                     </label>
                     <textarea
@@ -1129,7 +1129,7 @@ export function AdminVendorPoolPage() {
                         setVendorForm((current) => ({ ...current, notes: event.target.value }))
                       }
                       rows={3}
-                      className="flex w-full rounded-md border border-[#ebe3f5] bg-white px-3 py-2 text-sm font-semibold text-[#2e2837] placeholder:text-[#b5aec3] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#8C6bB1] focus-visible:ring-offset-2 resize-none"
+                      className="flex w-full rounded-md border border-border bg-white px-3 py-2 text-sm font-semibold text-foreground placeholder:text-[#b5aec3] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#8C6bB1] focus-visible:ring-offset-2 resize-none"
                     />
                   </div>
                 </section>
@@ -1143,12 +1143,12 @@ export function AdminVendorPoolPage() {
           </div>
 
           {/* Dialog Footer */}
-          <div className="flex items-center justify-end gap-3 border-t border-[#eee7f4] bg-[#fdfbff] px-6 py-4">
+          <div className="flex items-center justify-end gap-3 border-t border-border bg-[#fdfbff] px-6 py-4">
             <Button
               type="button"
               variant="outline"
               onClick={() => setIsDialogOpen(false)}
-              className="h-10 px-5 border-[#e5ddee] text-[#5f5472] font-bold hover:bg-[#f8f2fd]"
+              className="h-10 px-5 border-border text-[#5f5472] font-bold hover:bg-[#f8f2fd]"
             >
               Cancel
             </Button>
@@ -1288,14 +1288,14 @@ function VendorSidepanel({
       {/* ──── Workers Section ──── */}
       <section>
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-xs font-black uppercase tracking-widest text-[#b0a4c5] flex items-center gap-2">
+          <h3 className="text-xs font-black uppercase tracking-widest text-muted-foreground/70 flex items-center gap-2">
             <span className="h-px w-4 bg-[#d5c9e4]" />
             Workers ({workers.length})
           </h3>
           <button
             type="button"
             onClick={() => setShowAddForm(!showAddForm)}
-            className="text-xs font-bold text-[#df1b8b] hover:text-[#c11776] transition-colors px-2 py-1 rounded-md hover:bg-[#fff0f6]"
+            className="text-xs font-bold text-brand hover:text-[#c11776] transition-colors px-2 py-1 rounded-md hover:bg-[#fff0f6]"
           >
             {showAddForm ? '✕ Cancel' : '+ Add Worker'}
           </button>
@@ -1303,56 +1303,56 @@ function VendorSidepanel({
 
         {/* Add Worker Form */}
         {showAddForm && (
-          <div className="mb-4 rounded-2xl border border-[#eadcf7] bg-gradient-to-b from-[#faf7ff] to-white p-4 space-y-3 shadow-sm">
+          <div className="mb-4 rounded-2xl border border-border bg-gradient-to-b from-[#faf7ff] to-white p-4 space-y-3 shadow-sm">
             <div className="space-y-1.5">
-              <label className="text-[10px] font-black uppercase tracking-wider text-[#857a98]">
-                Worker Name <span className="text-[#df1b8b]">*</span>
+              <label className="text-[10px] font-black uppercase tracking-wider text-muted-foreground">
+                Worker Name <span className="text-brand">*</span>
               </label>
               <Input
                 placeholder="e.g. Juan Dela Cruz"
                 value={newWorkerForm.workerName}
                 onChange={(e) => setNewWorkerForm((f) => ({ ...f, workerName: e.target.value }))}
-                className="h-9 text-sm bg-white border-[#ebe3f5] focus-visible:ring-[#8C6bB1] font-semibold"
+                className="h-9 text-sm bg-white border-border focus-visible:ring-[#8C6bB1] font-semibold"
               />
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
-                <label className="text-[10px] font-black uppercase tracking-wider text-[#857a98]">
+                <label className="text-[10px] font-black uppercase tracking-wider text-muted-foreground">
                   Role
                 </label>
                 <Input
                   placeholder="e.g. Lead"
                   value={newWorkerForm.role}
                   onChange={(e) => setNewWorkerForm((f) => ({ ...f, role: e.target.value }))}
-                  className="h-9 text-sm bg-white border-[#ebe3f5] focus-visible:ring-[#8C6bB1] font-semibold"
+                  className="h-9 text-sm bg-white border-border focus-visible:ring-[#8C6bB1] font-semibold"
                 />
               </div>
               <div className="space-y-1.5">
-                <label className="text-[10px] font-black uppercase tracking-wider text-[#857a98]">
+                <label className="text-[10px] font-black uppercase tracking-wider text-muted-foreground">
                   Job Title
                 </label>
                 <Input
                   placeholder="e.g. Photographer"
                   value={newWorkerForm.jobTitle}
                   onChange={(e) => setNewWorkerForm((f) => ({ ...f, jobTitle: e.target.value }))}
-                  className="h-9 text-sm bg-white border-[#ebe3f5] focus-visible:ring-[#8C6bB1] font-semibold"
+                  className="h-9 text-sm bg-white border-border focus-visible:ring-[#8C6bB1] font-semibold"
                 />
               </div>
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
-                <label className="text-[10px] font-black uppercase tracking-wider text-[#857a98]">
+                <label className="text-[10px] font-black uppercase tracking-wider text-muted-foreground">
                   Email
                 </label>
                 <Input
                   placeholder="worker@email.com"
                   value={newWorkerForm.email}
                   onChange={(e) => setNewWorkerForm((f) => ({ ...f, email: e.target.value }))}
-                  className="h-9 text-sm bg-white border-[#ebe3f5] focus-visible:ring-[#8C6bB1] font-semibold"
+                  className="h-9 text-sm bg-white border-border focus-visible:ring-[#8C6bB1] font-semibold"
                 />
               </div>
               <div className="space-y-1.5">
-                <label className="text-[10px] font-black uppercase tracking-wider text-[#857a98]">
+                <label className="text-[10px] font-black uppercase tracking-wider text-muted-foreground">
                   Phone
                 </label>
                 <Input
@@ -1361,7 +1361,7 @@ function VendorSidepanel({
                   onChange={(e) =>
                     setNewWorkerForm((f) => ({ ...f, contactNumber: e.target.value }))
                   }
-                  className="h-9 text-sm bg-white border-[#ebe3f5] focus-visible:ring-[#8C6bB1] font-semibold"
+                  className="h-9 text-sm bg-white border-border focus-visible:ring-[#8C6bB1] font-semibold"
                 />
               </div>
             </div>
@@ -1370,7 +1370,7 @@ function VendorSidepanel({
               size="sm"
               onClick={() => void handleAddWorker()}
               disabled={isAddingWorker || !newWorkerForm.workerName.trim()}
-              className="w-full h-9 bg-[#df1b8b] hover:bg-[#c11776] text-white text-xs font-bold rounded-lg shadow-sm transition-all"
+              className="w-full h-9 bg-brand hover:bg-[#c11776] text-white text-xs font-bold rounded-lg shadow-sm transition-all"
             >
               {isAddingWorker ? 'Adding...' : 'Add Worker'}
             </Button>
@@ -1380,13 +1380,13 @@ function VendorSidepanel({
         {/* Workers List */}
         <div className="max-h-52 overflow-y-auto space-y-2 pr-1 [scrollbar-width:thin]">
           {isLoadingWorkers ? (
-            <p className="text-xs font-semibold text-[#a49db4] text-center py-4">
+            <p className="text-xs font-semibold text-muted-foreground text-center py-4">
               Loading workers...
             </p>
           ) : workers.length === 0 ? (
-            <div className="rounded-2xl border border-dashed border-[#e1d5eb] bg-[#faf9fc] py-8 text-center">
+            <div className="rounded-2xl border border-dashed border-border bg-[#faf9fc] py-8 text-center">
               <Briefcase className="mx-auto mb-2 h-6 w-6 text-[#d4c5e3]" />
-              <p className="text-xs font-semibold text-[#8b839c]">No workers yet</p>
+              <p className="text-xs font-semibold text-muted-foreground">No workers yet</p>
               <p className="text-[10px] text-[#b5aec3] mt-0.5">
                 Click "+ Add Worker" to get started
               </p>
@@ -1395,18 +1395,18 @@ function VendorSidepanel({
             workers.map((worker) => (
               <div
                 key={worker.id}
-                className="flex items-center justify-between rounded-xl border border-[#f1eef5] bg-white px-3.5 py-3 transition-all hover:border-[#df1b8b]/25 hover:shadow-sm group"
+                className="flex items-center justify-between rounded-xl border border-border bg-white px-3.5 py-3 transition-all hover:border-brand/25 hover:shadow-sm group"
               >
                 <div className="min-w-0 flex-1">
-                  <p className="text-sm font-bold text-[#2e2837] truncate">{worker.workerName}</p>
+                  <p className="text-sm font-bold text-foreground truncate">{worker.workerName}</p>
                   <div className="flex items-center gap-2 mt-0.5 flex-wrap">
                     {worker.role && (
-                      <span className="text-[10px] font-semibold text-[#8b839c] bg-[#f5f1fa] px-1.5 py-0.5 rounded">
+                      <span className="text-[10px] font-semibold text-muted-foreground bg-[#f5f1fa] px-1.5 py-0.5 rounded">
                         {worker.role}
                       </span>
                     )}
                     {worker.email && (
-                      <span className="text-[10px] font-semibold text-[#a49db4] truncate">
+                      <span className="text-[10px] font-semibold text-muted-foreground truncate">
                         {worker.email}
                       </span>
                     )}
@@ -1417,7 +1417,7 @@ function VendorSidepanel({
                     className={`flex items-center gap-1 text-[9px] font-bold px-2 py-0.5 rounded-full ${
                       worker.status.toLowerCase() === 'active'
                         ? 'bg-[#e6f9ec] text-[#1e7e34]'
-                        : 'bg-[#f3f0f7] text-[#7c7390]'
+                        : 'bg-[#f3f0f7] text-muted-foreground'
                     }`}
                   >
                     <span
@@ -1431,7 +1431,7 @@ function VendorSidepanel({
                     type="button"
                     onClick={() => void handleDeleteWorker(worker.id)}
                     disabled={isDeletingWorkerId === worker.id}
-                    className="opacity-0 group-hover:opacity-100 transition-opacity text-[#c5221f] hover:text-[#a31b18] disabled:opacity-50 p-1 rounded hover:bg-red-50"
+                    className="opacity-0 group-hover:opacity-100 transition-opacity text-destructive hover:text-[#a31b18] disabled:opacity-50 p-1 rounded hover:bg-red-50"
                     title="Remove worker"
                   >
                     <Trash2 className="h-3.5 w-3.5" />
@@ -1445,26 +1445,26 @@ function VendorSidepanel({
 
       {/* ──── Event Assignment Section ──── */}
       <section>
-        <h3 className="text-xs font-black uppercase tracking-widest text-[#b0a4c5] flex items-center gap-2 mb-4">
+        <h3 className="text-xs font-black uppercase tracking-widest text-muted-foreground/70 flex items-center gap-2 mb-4">
           <span className="h-px w-4 bg-[#d5c9e4]" />
           Event Assignment
         </h3>
 
         {/* Assign to Event Card */}
-        <div className="rounded-2xl border border-[#eadcf7] bg-gradient-to-b from-[#faf7ff] to-white p-4 mb-4 shadow-sm">
-          <label className="text-[10px] font-black uppercase tracking-wider text-[#857a98] mb-2 block">
+        <div className="rounded-2xl border border-border bg-gradient-to-b from-[#faf7ff] to-white p-4 mb-4 shadow-sm">
+          <label className="text-[10px] font-black uppercase tracking-wider text-muted-foreground mb-2 block">
             Assign to Event
           </label>
           <div className="flex items-center gap-2">
             <Select value={selectedEventToAssign} onValueChange={setSelectedEventToAssign}>
-              <SelectTrigger className="h-9 flex-1 bg-white text-xs border-[#ebe3f5] font-semibold">
+              <SelectTrigger className="h-9 flex-1 bg-white text-xs border-border font-semibold">
                 <SelectValue placeholder="Select event to assign..." />
               </SelectTrigger>
               <SelectContent>
                 {availableEvents.map((evt) => (
                   <SelectItem key={evt.id} value={evt.id} className="text-xs">
                     <span className="flex items-center gap-2">
-                      <CalendarDays className="h-3 w-3 text-[#8f1fd1]" />
+                      <CalendarDays className="h-3 w-3 text-brand-deep" />
                       {evt.title}
                     </span>
                   </SelectItem>
@@ -1476,7 +1476,7 @@ function VendorSidepanel({
               size="sm"
               onClick={() => void handleAssignEvent()}
               disabled={!selectedEventToAssign || isAssigningEvent}
-              className="h-9 px-4 bg-[#8f1fd1] text-white hover:bg-[#7918b3] text-xs font-bold whitespace-nowrap rounded-lg shadow-sm transition-all disabled:opacity-50"
+              className="h-9 px-4 bg-brand-deep text-white hover:bg-[#7918b3] text-xs font-bold whitespace-nowrap rounded-lg shadow-sm transition-all disabled:opacity-50"
             >
               {isAssigningEvent ? 'Assigning...' : 'Assign'}
             </Button>
@@ -1485,19 +1485,19 @@ function VendorSidepanel({
 
         {/* Event History */}
         <div className="space-y-1.5 mb-2">
-          <label className="text-[10px] font-black uppercase tracking-wider text-[#857a98]">
+          <label className="text-[10px] font-black uppercase tracking-wider text-muted-foreground">
             Event History ({vendorEvents.length})
           </label>
         </div>
         <div className="max-h-44 overflow-y-auto space-y-2 pr-1 [scrollbar-width:thin]">
           {isLoadingEvents ? (
-            <p className="text-xs font-semibold text-[#a49db4] text-center py-4">
+            <p className="text-xs font-semibold text-muted-foreground text-center py-4">
               Loading events...
             </p>
           ) : vendorEvents.length === 0 ? (
-            <div className="rounded-2xl border border-dashed border-[#e1d5eb] bg-[#faf9fc] py-8 text-center">
+            <div className="rounded-2xl border border-dashed border-border bg-[#faf9fc] py-8 text-center">
               <CalendarDays className="mx-auto mb-2 h-6 w-6 text-[#d4c5e3]" />
-              <p className="text-xs font-semibold text-[#8b839c]">No events assigned yet</p>
+              <p className="text-xs font-semibold text-muted-foreground">No events assigned yet</p>
               <p className="text-[10px] text-[#b5aec3] mt-0.5">
                 Use the selector above to assign an event
               </p>
@@ -1523,35 +1523,35 @@ function VendorSidepanel({
                   key={evt.eventId}
                   className={`flex items-center justify-between rounded-xl border px-3.5 py-3 transition-all ${
                     isExecution
-                      ? 'border-[#df1b8b]/20 bg-[#fff8fb] shadow-sm'
+                      ? 'border-brand/20 bg-[#fff8fb] shadow-sm'
                       : isCompleted
-                        ? 'border-[#f1eef5] bg-[#faf9fc] opacity-70'
-                        : 'border-[#f1eef5] bg-white hover:border-[#df1b8b]/25 hover:shadow-sm'
+                        ? 'border-border bg-[#faf9fc] opacity-70'
+                        : 'border-border bg-white hover:border-brand/25 hover:shadow-sm'
                   }`}
                 >
                   <div className="min-w-0 flex-1">
-                    <p className="text-sm font-bold text-[#2e2837] truncate">{evt.title}</p>
+                    <p className="text-sm font-bold text-foreground truncate">{evt.title}</p>
                     <div className="flex items-center gap-2 mt-0.5">
                       <CalendarDays className="h-3 w-3 text-[#b5aec3]" />
-                      <p className="text-[10px] font-semibold text-[#a49db4]">{formattedDate}</p>
+                      <p className="text-[10px] font-semibold text-muted-foreground">{formattedDate}</p>
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
                     <span
                       className={`flex items-center gap-1 text-[9px] font-bold px-2 py-0.5 rounded-full ${
                         isExecution
-                          ? 'bg-[#ffe6f1] text-[#df1b8b]'
+                          ? 'bg-[#ffe6f1] text-brand'
                           : isCompleted
-                            ? 'bg-[#f4e6fc] text-[#8637c3]'
+                            ? 'bg-brand/5 text-brand-deep'
                             : 'bg-[#fff5d3] text-[#b68c17]'
                       }`}
                     >
                       <span
                         className={`h-1.5 w-1.5 rounded-full ${
                           isExecution
-                            ? 'bg-[#df1b8b]'
+                            ? 'bg-brand'
                             : isCompleted
-                              ? 'bg-[#8637c3]'
+                              ? 'bg-brand-deep'
                               : 'bg-[#b68c17]'
                         }`}
                       />
@@ -1560,7 +1560,7 @@ function VendorSidepanel({
                     <button
                       type="button"
                       onClick={() => void handleUnassignEvent()}
-                      className="text-[#c5221f] hover:text-[#a31b18] p-1 rounded hover:bg-red-50 opacity-60 hover:opacity-100 transition-all"
+                      className="text-destructive hover:text-[#a31b18] p-1 rounded hover:bg-red-50 opacity-60 hover:opacity-100 transition-all"
                       title="Unassign Event"
                     >
                       <Trash2 className="h-3.5 w-3.5" />

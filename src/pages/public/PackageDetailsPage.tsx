@@ -1,328 +1,271 @@
-import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import {
-  ChevronDown,
-  ChevronLeft,
-  ChevronRight,
-  User,
-  Utensils,
-  Scissors,
-  Video,
-} from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { ArrowLeft } from '@phosphor-icons/react';
 import LoadingScreen from '@/components/ui/LoadingScreen';
 import ScrollReveal from '@/components/ui/ScrollReveal';
 import { getPackageById, getPackages, type EventPackage, type EventType } from '@/api/packages';
-import {
-  buildPackageNote,
-  groupInclusions,
-  packageImage,
-  sortPackages,
-} from '@/utils/package-display';
+import { groupInclusions, sortPackages, toSlug } from '@/utils/package-display';
 
-const iconMap = {
-  user: User,
-  utensils: Utensils,
-  scissors: Scissors,
-  video: Video,
-} as const;
+const PLACEHOLDER = '/Pictures/packages-hero.jpg';
 
 export default function PackageDetailsPage() {
-  const { eventType, packageId } = useParams();
+  const { eventType, packageSlug } = useParams();
   const navigate = useNavigate();
-  const [expandedCategory, setExpandedCategory] = useState<string | null>(null);
 
   const apiEventType: EventType = eventType === 'debut' ? 'Debut' : 'Wedding';
 
-  // Full package (metadata + pax + inclusions) for the current id.
-  const { data: pkg, isLoading } = useQuery<EventPackage>({
-    queryKey: ['packages', 'detail', packageId],
-    queryFn: () => getPackageById(packageId!),
-    enabled: !!packageId,
-  });
-
-  // Sibling packages of the same type, for prev/next navigation.
-  const { data: siblingsData = [] } = useQuery<EventPackage[]>({
+  // List: resolve slug → id and get siblings for prev/next nav.
+  const { data: allPackages = [], isLoading: listLoading } = useQuery<EventPackage[]>({
     queryKey: ['packages', apiEventType],
     queryFn: () => getPackages(apiEventType),
   });
-  const siblings = sortPackages(siblingsData);
+
+  const siblings = sortPackages(allPackages);
+  const matched = siblings.find((p) => toSlug(p.packageName) === packageSlug) ?? null;
+
+  // Detail: includes inclusions + pax (not in list response).
+  const { data: pkg, isLoading: detailLoading } = useQuery<EventPackage>({
+    queryKey: ['packages', 'detail', matched?.id],
+    queryFn: () => getPackageById(matched!.id),
+    enabled: !!matched?.id,
+  });
+
+  const isLoading = listLoading || detailLoading;
+
+  const goToPackage = (target: EventPackage) =>
+    navigate(`/packages/${eventType}/${toSlug(target.packageName)}`);
 
   if (isLoading) {
     return (
       <>
         <LoadingScreen />
         <div className="flex min-h-screen items-center justify-center">
-          <p className="text-gray-500">Loading package…</p>
+          <p className="text-muted-foreground">Loading package…</p>
         </div>
       </>
     );
   }
 
-  if (!pkg) {
+  if (!matched) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
+      <div className="flex min-h-screen items-center justify-center">
         <div className="text-center">
-          <h1 className="text-2xl font-bold text-gray-800">Package not found</h1>
-          <Button
+          <h1 className="font-heading text-2xl text-ink">Package not found</h1>
+          <button
             onClick={() => navigate('/event-packages')}
-            className="mt-4 bg-[#FF0066] hover:bg-[#e60060] text-white"
+            className="mt-4 inline-flex items-center gap-2 font-ui text-sm font-semibold text-brand hover:underline"
           >
-            Back to Packages
-          </Button>
+            <ArrowLeft size={14} /> Back to Packages
+          </button>
         </div>
       </div>
     );
   }
 
-  const name = pkg.packageName;
-  const description = pkg.description ?? '';
-  const heroImage = packageImage(pkg, 0);
-  const sideImage = packageImage(pkg, 1);
-  const categories = groupInclusions(pkg.inclusions);
-  const note = buildPackageNote(pkg);
+  if (!pkg) return null;
 
-  // Prev/Next package navigation
-  const currentIndex = siblings.findIndex((p) => p.id === pkg.id);
+  const currentIndex = siblings.findIndex((p) => p.id === matched.id);
   const prevPkg = currentIndex > 0 ? siblings[currentIndex - 1] : null;
   const nextPkg =
-    currentIndex >= 0 && currentIndex < siblings.length - 1 ? siblings[currentIndex + 1] : null;
+    currentIndex >= 0 && currentIndex < siblings.length - 1
+      ? siblings[currentIndex + 1]
+      : null;
 
-  const goToPackage = (targetPkg: EventPackage) => {
-    setExpandedCategory(null);
-    navigate(`/packages/${eventType}/${targetPkg.id}`);
-  };
+  const images = pkg.images ?? [];
+  const coverImg = images[0]?.url ?? PLACEHOLDER;
+  const galleryImgs = images.slice(1);
+
+  const categories = groupInclusions(pkg.inclusions);
+  const paxTiers = [...(pkg.pax ?? [])].sort((a, b) => (a.pax ?? 0) - (b.pax ?? 0));
+  const label = eventType === 'debut' ? '02 — Debut' : '01 — Weddings';
 
   return (
     <>
       <LoadingScreen />
 
-      <ScrollReveal>
-        {/* ── Hero Section ── */}
-        <section className="relative z-20 -mt-[88px] flex min-h-[50vh] flex-col overflow-hidden sm:-mt-[110px] md:min-h-[70vh] lg:-mt-[173px] lg:min-h-screen">
-          {/* Full-bleed hero image */}
-          <div className="absolute inset-0">
-            <img src={heroImage} alt={name} className="w-full h-full object-cover" />
-          </div>
+      {/* ── Top bar ── */}
+      <div className="page-gutter mx-auto flex max-w-[1400px] items-center justify-between pb-6 pt-28 lg:pt-32">
+        <button
+          onClick={() => navigate('/event-packages')}
+          className="inline-flex items-center gap-2 font-ui text-xs font-semibold tracking-[0.15em] text-ink/50 uppercase transition hover:text-brand"
+        >
+          <ArrowLeft size={14} weight="bold" /> All Packages
+        </button>
 
-          {/* Dark overlay */}
-          <div className="absolute inset-0 bg-black/55" />
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => prevPkg && goToPackage(prevPkg)}
+            disabled={!prevPkg}
+            aria-label="Previous package"
+            className="flex h-8 w-8 items-center justify-center rounded-full border border-border text-ink/50 transition hover:border-brand hover:text-brand disabled:pointer-events-none disabled:opacity-30"
+          >
+            <ChevronLeft size={16} />
+          </button>
+          <span className="font-ui text-xs text-ink/40">
+            {currentIndex + 1} / {siblings.length}
+          </span>
+          <button
+            onClick={() => nextPkg && goToPackage(nextPkg)}
+            disabled={!nextPkg}
+            aria-label="Next package"
+            className="flex h-8 w-8 items-center justify-center rounded-full border border-border text-ink/50 transition hover:border-brand hover:text-brand disabled:pointer-events-none disabled:opacity-30"
+          >
+            <ChevronRight size={16} />
+          </button>
+        </div>
+      </div>
 
-          {/* Prev arrow */}
-          {prevPkg && (
-            <button
-              onClick={() => goToPackage(prevPkg)}
-              aria-label={`Previous: ${prevPkg.packageName}`}
-              className="absolute left-3 sm:left-5 lg:left-8 top-1/2 -translate-y-1/2 z-20 flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-white/10 backdrop-blur-sm border border-white/20 text-white/80 hover:bg-white/25 hover:text-white transition-all duration-300 group"
-            >
-              <ChevronLeft className="h-5 w-5 sm:h-6 sm:w-6 group-hover:-translate-x-0.5 transition-transform" />
-            </button>
-          )}
+      {/* ── Two-column layout ── */}
+      <ScrollReveal variant="up">
+        <div className="page-gutter mx-auto max-w-[1400px] pb-24">
+          <div className="grid grid-cols-1 gap-12 lg:grid-cols-[1fr_440px] lg:gap-16 xl:grid-cols-[1fr_480px]">
 
-          {/* Next arrow */}
-          {nextPkg && (
-            <button
-              onClick={() => goToPackage(nextPkg)}
-              aria-label={`Next: ${nextPkg.packageName}`}
-              className="absolute right-3 sm:right-5 lg:right-8 top-1/2 -translate-y-1/2 z-20 flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-white/10 backdrop-blur-sm border border-white/20 text-white/80 hover:bg-white/25 hover:text-white transition-all duration-300 group"
-            >
-              <ChevronRight className="h-5 w-5 sm:h-6 sm:w-6 group-hover:translate-x-0.5 transition-transform" />
-            </button>
-          )}
-
-          {/* Content centered */}
-          <div className="relative z-10 flex h-full flex-1 flex-col items-center justify-center px-4 pt-[160px] pb-[100px] sm:pt-[220px] sm:pb-[140px] md:pt-[310px] md:pb-[200px] lg:pt-[380px] lg:pb-[240px] text-center sm:px-6 animate-fade-in-up">
-            <h1
-              className="font-heading text-[clamp(2.5rem,8vw,5.5rem)] font-bold leading-[1.1] text-white"
-              style={{ textShadow: '0 4px 20px rgba(0,0,0,0.3)' }}
-            >
-              {name}
-            </h1>
-
-            <p className="mt-4 max-w-[42rem] text-[clamp(0.9rem,1.8vw,1.2rem)] leading-[1.8] font-sans text-white/85 sm:mt-5 lg:mt-6 animate-fade-in-up animation-delay-200">
-              {description}
-            </p>
-
-            <Button
-              onClick={() => navigate('/')}
-              className="mt-8 h-11 rounded-full bg-[#FF0066] hover:bg-[#e60060] text-white px-8 sm:px-10 text-[0.9rem] sm:text-[0.95rem] font-bold transition-all shadow-[0_6px_20px_rgba(255,0,102,0.35)] hover:shadow-[0_8px_28px_rgba(255,0,102,0.45)] animate-fade-in-up animation-delay-400"
-            >
-              Back to home
-            </Button>
-          </div>
-
-          {/* Bottom wave — curves downward into white section */}
-          <div className="absolute bottom-0 left-0 right-0 z-30">
-            <svg
-              className="block w-full h-[60px] sm:h-[80px] lg:h-[110px]"
-              viewBox="0 0 1440 120"
-              preserveAspectRatio="none"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <path
-                d="M0,40 C240,110 480,110 720,70 C960,30 1200,60 1440,40 L1440,120 L0,120 Z"
-                fill="white"
-              />
-            </svg>
-          </div>
-        </section>
-
-        {/* ── Package Inclusions Section ── */}
-        <section className="relative z-10 bg-white py-8 sm:py-12 lg:py-16 overflow-hidden">
-          <div className="flex flex-col lg:flex-row lg:items-start">
-            {/* LEFT: Image — flush to left edge of viewport, slides under hero wave */}
-            <div className="hidden lg:block flex-shrink-0 lg:w-[45%] mt-[-110px]">
-              <div className="relative overflow-hidden rounded-br-2xl shadow-[0_16px_48px_rgba(0,0,0,0.12)]">
-                <img src={sideImage} alt={name} className="w-full h-[600px] object-cover" />
-                {/* Wave overlay on top — uses full viewport width so curve matches hero exactly */}
-                <div className="absolute top-0 left-0 z-10" style={{ width: '100vw' }}>
-                  <svg
-                    className="block w-full h-[60px] sm:h-[80px] lg:h-[110px]"
-                    viewBox="0 0 1440 120"
-                    preserveAspectRatio="none"
-                    xmlns="http://www.w3.org/2000/svg"
-                  >
-                    <path
-                      d="M0,0 L1440,0 L1440,40 C1200,60 960,30 720,70 C480,110 240,110 0,40 Z"
-                      fill="white"
-                    />
-                  </svg>
-                </div>
-              </div>
-            </div>
-
-            {/* Mobile image — flush to left edge of viewport, slides under hero wave */}
-            <div className="lg:hidden w-full mt-[-60px] sm:mt-[-80px] pr-4 sm:pr-6">
-              <div className="relative overflow-hidden rounded-br-2xl shadow-lg">
+            {/* LEFT: cover + gallery */}
+            <div className="space-y-4">
+              <div className="overflow-hidden rounded-sm">
                 <img
-                  src={sideImage}
-                  alt={name}
-                  className="w-full h-[250px] sm:h-[300px] object-cover"
+                  src={coverImg}
+                  alt={pkg.packageName}
+                  className="h-[420px] w-full object-cover sm:h-[520px] lg:h-[620px]"
                 />
-                {/* Wave overlay on top — uses full viewport width so curve matches hero exactly */}
-                <div className="absolute top-0 left-0 z-10" style={{ width: '100vw' }}>
-                  <svg
-                    className="block w-full h-[60px] sm:h-[80px] lg:h-[110px]"
-                    viewBox="0 0 1440 120"
-                    preserveAspectRatio="none"
-                    xmlns="http://www.w3.org/2000/svg"
-                  >
-                    <path
-                      d="M0,0 L1440,0 L1440,40 C1200,60 960,30 720,70 C480,110 240,110 0,40 Z"
-                      fill="white"
-                    />
-                  </svg>
-                </div>
               </div>
+
+              {galleryImgs.length > 0 && (
+                <div
+                  className={`grid gap-3 ${
+                    galleryImgs.length === 1
+                      ? 'grid-cols-1'
+                      : galleryImgs.length === 2
+                        ? 'grid-cols-2'
+                        : 'grid-cols-2 sm:grid-cols-3'
+                  }`}
+                >
+                  {galleryImgs.map((img, i) => (
+                    <div key={img.key} className="overflow-hidden rounded-sm">
+                      <img
+                        src={img.url}
+                        alt={`${pkg.packageName} — photo ${i + 2}`}
+                        loading="lazy"
+                        className="h-48 w-full object-cover transition-transform duration-700 hover:scale-105 sm:h-56"
+                      />
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
 
-            {/* RIGHT: Content */}
-            <div className="w-full lg:w-[55%] flex flex-col px-4 sm:px-6 lg:px-10 lg:pr-[8%] mt-8 lg:mt-0">
-              <h2 className="font-heading text-[1.8rem] font-bold text-gray-900 sm:text-[2rem] lg:text-[2.3rem] mb-6 sm:mb-8">
-                Package Inclusions
-              </h2>
+            {/* RIGHT: info panel */}
+            <div className="lg:sticky lg:top-28 lg:max-h-[calc(100vh-8rem)] lg:overflow-y-auto lg:[scrollbar-width:thin]">
+              <div className="space-y-8">
 
-              {/* Scrollable Categories Container */}
-              <div
-                className="flex-1 overflow-y-auto pr-1 space-y-3 lg:max-h-[420px] package-inclusions-scroll"
-                style={{
-                  scrollbarWidth: 'thin',
-                  scrollbarColor: '#FF0066 #f3f4f6',
-                }}
-              >
-                {categories.length === 0 && (
-                  <p className="py-6 text-center text-[0.9rem] text-gray-500">
+                {/* Header */}
+                <div>
+                  <p className="eyebrow text-brand">{label}</p>
+                  <h1 className="mt-4 font-heading text-[clamp(2rem,5vw,3rem)] leading-[1.05] text-ink">
+                    {pkg.packageName}
+                    <span className="italic text-brand">.</span>
+                  </h1>
+                  <div className="rule-gold mt-5 w-20" />
+                  {pkg.description && (
+                    <p className="mt-5 font-sans text-sm leading-relaxed text-ink/65 lg:text-base">
+                      {pkg.description}
+                    </p>
+                  )}
+                </div>
+
+                {/* Inclusions */}
+                {categories.length > 0 ? (
+                  <div className="space-y-6">
+                    <h2 className="font-heading text-lg text-ink">What's Included</h2>
+                    {categories.map((cat) => (
+                      <div key={cat.title}>
+                        <div className="mb-3 flex items-center gap-3">
+                          <span className="h-px flex-1 bg-border" />
+                          <span className="font-ui text-[10px] font-bold tracking-[0.18em] uppercase text-ink/40">
+                            {cat.title}
+                          </span>
+                          <span className="h-px flex-1 bg-border" />
+                        </div>
+                        <ul className="space-y-2">
+                          {cat.items.map((item) => {
+                            const text = typeof item === 'object' ? item.text : item;
+                            const isHighlight = typeof item === 'object';
+                            return (
+                              <li key={text} className="flex items-start gap-2.5">
+                                <span className="mt-[5px] h-1.5 w-1.5 shrink-0 rounded-full bg-brand" />
+                                <span
+                                  className={`font-sans text-sm leading-relaxed ${
+                                    isHighlight ? 'font-semibold text-brand' : 'text-ink/70'
+                                  }`}
+                                >
+                                  {text}
+                                </span>
+                              </li>
+                            );
+                          })}
+                        </ul>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="font-sans text-sm text-ink/50">
                     Inclusions for this package are being finalized. Please inquire for details.
                   </p>
                 )}
-                {categories.map((cat) => {
-                  const Icon = iconMap[cat.iconName];
-                  const isExpanded = expandedCategory === cat.title;
 
-                  return (
-                    <div
-                      key={cat.title}
-                      className="rounded-lg overflow-hidden border border-gray-200"
-                    >
-                      {/* Header - Clickable */}
-                      <button
-                        onClick={() => setExpandedCategory(isExpanded ? null : cat.title)}
-                        className="w-full flex items-center justify-between gap-3 bg-gray-900 text-white px-5 sm:px-6 py-4 sm:py-[18px] hover:bg-gray-800 transition-colors duration-200"
-                      >
-                        <div className="flex items-center gap-3">
-                          <Icon className="h-5 w-5 flex-shrink-0 text-white/70" />
-                          <span className="font-bold text-[0.95rem] sm:text-[1.05rem] text-left">
-                            {cat.title}
-                          </span>
-                        </div>
-                        <ChevronDown
-                          className={`h-5 w-5 flex-shrink-0 transition-transform duration-300 text-white/50 ${
-                            isExpanded ? 'rotate-180' : ''
-                          }`}
-                        />
-                      </button>
+                {/* Pax pricing table */}
+                {paxTiers.length > 0 && (
+                  <div>
+                    <h2 className="mb-4 font-heading text-lg text-ink">Pricing</h2>
+                    <table className="w-full overflow-hidden rounded-sm border border-border text-sm">
+                      <thead>
+                        <tr className="bg-ink text-white">
+                          <th className="px-4 py-3 text-left font-ui text-[10px] font-bold tracking-[0.15em] uppercase">
+                            Guests
+                          </th>
+                          <th className="px-4 py-3 text-right font-ui text-[10px] font-bold tracking-[0.15em] uppercase">
+                            Price
+                          </th>
+                          <th className="px-4 py-3 text-left font-ui text-[10px] font-bold tracking-[0.15em] uppercase">
+                            Note
+                          </th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {paxTiers.map((tier, i) => (
+                          <tr
+                            key={tier.id}
+                            className={i % 2 === 0 ? 'bg-white' : 'bg-secondary/20'}
+                          >
+                            <td className="px-4 py-3 font-sans font-semibold text-ink">
+                              {tier.pax?.toLocaleString()} pax
+                            </td>
+                            <td className="px-4 py-3 text-right font-sans font-bold text-brand">
+                              ₱{tier.paxPrice?.toLocaleString()}
+                            </td>
+                            <td className="px-4 py-3 font-sans text-ink/50">
+                              {tier.note || '—'}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
 
-                      {/* Content - Expandable */}
-                      <div
-                        className={`grid transition-all duration-300 ease-in-out ${
-                          isExpanded ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]'
-                        }`}
-                      >
-                        <div className="overflow-hidden">
-                          <div className="bg-white px-5 sm:px-6 py-4 sm:py-5">
-                            <ul className="space-y-2.5">
-                              {cat.items.map((item) => {
-                                const isHighlight = typeof item === 'object';
-                                const text = typeof item === 'object' ? item.text : item;
-                                return (
-                                  <li
-                                    key={text}
-                                    className="flex items-start gap-3 text-[0.88rem] sm:text-[0.93rem]"
-                                  >
-                                    <span className="mt-[3px] flex h-[18px] w-[18px] flex-shrink-0 items-center justify-center rounded-full bg-[#FF0066]">
-                                      <svg
-                                        viewBox="0 0 10 10"
-                                        className="h-2.5 w-2.5 fill-none stroke-white stroke-[2]"
-                                      >
-                                        <polyline
-                                          points="1.5,5 4,7.5 8.5,2.5"
-                                          strokeLinecap="round"
-                                          strokeLinejoin="round"
-                                        />
-                                      </svg>
-                                    </span>
-                                    <span
-                                      className={`leading-relaxed ${
-                                        isHighlight
-                                          ? 'font-semibold text-[#FF0066]'
-                                          : 'text-gray-600'
-                                      }`}
-                                    >
-                                      {text}
-                                    </span>
-                                  </li>
-                                );
-                              })}
-                            </ul>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-
-              {/* Note */}
-              <div className="mt-6 pt-5 border-t border-gray-200">
-                <p className="text-[0.88rem] sm:text-[0.93rem] leading-relaxed text-gray-600">
-                  <span className="font-bold text-gray-800">NOTE: </span>
-                  {note}
-                </p>
+                {/* CTA */}
+                <a
+                  href="/contact"
+                  className="block w-full rounded-sm bg-brand py-3.5 text-center font-ui text-xs font-bold tracking-[0.18em] text-white uppercase transition hover:bg-brand/90"
+                >
+                  Inquire About This Package
+                </a>
               </div>
             </div>
+
           </div>
-        </section>
+        </div>
       </ScrollReveal>
     </>
   );

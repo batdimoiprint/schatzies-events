@@ -5,12 +5,21 @@ import { RSVPSuccessPage } from '../client/RSVPSuccessPage';
 import LoadingScreen from '@/components/ui/LoadingScreen';
 import { AlertCircle } from 'lucide-react';
 
+interface VerifiedGuest {
+  guestfirstName?: string;
+  status?: string;
+}
+
+interface VerifyError {
+  response?: { data?: { message?: string } };
+}
+
 export function RSVPVerifyPage() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [guestData, setGuestData] = useState<any>(null);
+  const [guestData, setGuestData] = useState<VerifiedGuest | null>(null);
   const [qrCode, setQrCode] = useState<string>('');
 
   const eventId = searchParams.get('eventId');
@@ -29,10 +38,10 @@ export function RSVPVerifyPage() {
         const data = await verifyRSVP(eventId, guestId, token);
         setGuestData(data.guest);
         setQrCode(data.qrCode || '');
-      } catch (err: any) {
+      } catch (err) {
         console.error('Verification error:', err);
         setError(
-          err.response?.data?.message ||
+          (err as VerifyError)?.response?.data?.message ||
             'Failed to verify RSVP. The link may be expired or invalid.'
         );
       } finally {
@@ -77,16 +86,16 @@ export function RSVPVerifyPage() {
 
   if (error) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-b from-pink-50 to-white px-6">
-        <div className="bg-white p-8 rounded-2xl shadow-xl border border-red-100 max-w-md w-full text-center">
-          <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
-            <AlertCircle className="w-8 h-8 text-red-500" />
+      <div className="bg-gradient-brand-soft flex min-h-screen flex-col items-center justify-center px-6">
+        <div className="w-full max-w-md rounded-2xl border border-destructive/20 bg-white p-8 text-center shadow-xl">
+          <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-destructive/10">
+            <AlertCircle className="h-8 w-8 text-destructive" />
           </div>
-          <h2 className="text-2xl font-bold text-gray-800 mb-2">Verification Failed</h2>
-          <p className="text-gray-600 mb-6">{error}</p>
+          <h2 className="mb-2 font-heading text-2xl font-bold text-foreground">Verification Failed</h2>
+          <p className="mb-6 font-montserrat text-muted-foreground">{error}</p>
           <button
             onClick={handleVisitHome}
-            className="w-full bg-gradient-to-r from-pink-500 to-purple-600 text-white font-bold py-3 rounded-xl shadow-lg hover:opacity-90 transition active:scale-95"
+            className="bg-gradient-brand w-full rounded-xl py-3 font-montserrat font-bold text-white shadow-lg transition hover:opacity-90 active:scale-95"
           >
             Back to Home
           </button>

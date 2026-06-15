@@ -14,6 +14,7 @@ import LoadingScreen from '@/components/ui/LoadingScreen';
 import { submitInquiry, getBookedDates } from '@/api/inquiries';
 import { checkOrSendVerification, checkEmailVerified } from '@/api/email-verification';
 import { getPackageById, getPackagesByType } from '@/data/packages';
+import type { ApiError } from '@/types/api-error';
 import {
   Select,
   SelectContent,
@@ -28,7 +29,7 @@ const defaultPaxOptions = ['100', '150', '200'];
 const bloomsPaxOptions = ['50', '100', '150', '200'];
 
 const fieldBase =
-  'h-11 w-full rounded-lg border-0 bg-[#e8e8e8] px-4 text-[0.85rem] text-gray-700 outline-none placeholder:text-gray-400 transition focus:ring-2 focus:ring-[#3d2052]/25 [color-scheme:light]';
+  'h-11 w-full rounded-lg border-0 bg-muted px-4 text-[0.85rem] text-foreground/80 outline-none placeholder:text-muted-foreground transition focus:ring-2 focus:ring-brand-deep/25 [color-scheme:light]';
 
 const errorText = 'text-[0.7rem] text-red-500 mt-1 ml-1 font-medium';
 const overlayPopupLayer = 'z-[10001]';
@@ -198,7 +199,10 @@ export function InquiryForm({ onClose, selectedPackageId, selectedEventType }: I
   }, [verificationCooldown]);
 
   // ── Send verification email handler (called automatically on submit) ──
-  const handleSendVerification = async (email: string, pendingInquiry?: any): Promise<boolean> => {
+  const handleSendVerification = async (
+    email: string,
+    pendingInquiry?: Record<string, unknown>
+  ): Promise<boolean> => {
     setVerificationSending(true);
     setVerificationError(null);
     try {
@@ -221,8 +225,9 @@ export function InquiryForm({ onClose, selectedPackageId, selectedEventType }: I
         setVerificationCooldown(30); // 30 second cooldown
         return false; // email sent, do not proceed
       }
-    } catch (err: any) {
-      const msg = err.response?.data?.error || err.response?.data?.message;
+    } catch (err) {
+      const apiErr = err as ApiError;
+      const msg = apiErr.response?.data?.error || apiErr.response?.data?.message;
       setVerificationError(msg || 'Failed to send verification email. Please try again.');
       return false;
     } finally {
@@ -304,8 +309,9 @@ export function InquiryForm({ onClose, selectedPackageId, selectedEventType }: I
     try {
       await submitInquiry(inquiryData);
       setSubmitted(true);
-    } catch (submitError: any) {
-      const apiMessage = submitError.response?.data?.error || submitError.response?.data?.message;
+    } catch (submitError) {
+      const apiErr = submitError as ApiError;
+      const apiMessage = apiErr.response?.data?.error || apiErr.response?.data?.message;
       setError(apiMessage || 'Failed to submit inquiry. Please try again.');
       console.error('Error submitting inquiry:', submitError);
     } finally {
@@ -322,15 +328,15 @@ export function InquiryForm({ onClose, selectedPackageId, selectedEventType }: I
       <Dialog open={showTerms} onOpenChange={setShowTerms}>
         <DialogContent className="max-w-[600px] max-h-[80vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle className="text-[1.3rem] font-bold text-[#1a1225]">
+            <DialogTitle className="text-[1.3rem] font-bold text-foreground">
               Terms and Conditions
             </DialogTitle>
           </DialogHeader>
 
           {/* Scrollable Content */}
-          <div className="text-[0.9rem] text-gray-700 space-y-4">
+          <div className="text-[0.9rem] text-foreground/80 space-y-4">
             <section>
-              <h4 className="font-bold text-[#1a1225] mb-2">1. Event Booking</h4>
+              <h4 className="font-bold text-foreground mb-2">1. Event Booking</h4>
               <p>
                 By submitting an inquiry through this form, you are requesting booking services from
                 Schatzies Events. All bookings are subject to our availability and confirmation.
@@ -338,7 +344,7 @@ export function InquiryForm({ onClose, selectedPackageId, selectedEventType }: I
             </section>
 
             <section>
-              <h4 className="font-bold text-[#1a1225] mb-2">2. Advance Booking Requirement</h4>
+              <h4 className="font-bold text-foreground mb-2">2. Advance Booking Requirement</h4>
               <p>
                 Events must be booked at least 1 month in advance. We cannot accommodate booking
                 requests for dates within 30 days from today. Event dates must be selected
@@ -347,7 +353,7 @@ export function InquiryForm({ onClose, selectedPackageId, selectedEventType }: I
             </section>
 
             <section>
-              <h4 className="font-bold text-[#1a1225] mb-2">3. Inquiry Process</h4>
+              <h4 className="font-bold text-foreground mb-2">3. Inquiry Process</h4>
               <p>
                 After submitting your inquiry, our team will review your request and contact you
                 within 2-3 business days with a personalized proposal and available options for your
@@ -356,7 +362,7 @@ export function InquiryForm({ onClose, selectedPackageId, selectedEventType }: I
             </section>
 
             <section>
-              <h4 className="font-bold text-[#1a1225] mb-2">4. Information Accuracy</h4>
+              <h4 className="font-bold text-foreground mb-2">4. Information Accuracy</h4>
               <p>
                 You agree to provide accurate and complete information in this form. Any false or
                 misleading information may result in cancellation of your booking or inquiry.
@@ -364,7 +370,7 @@ export function InquiryForm({ onClose, selectedPackageId, selectedEventType }: I
             </section>
 
             <section>
-              <h4 className="font-bold text-[#1a1225] mb-2">5. Confidentiality</h4>
+              <h4 className="font-bold text-foreground mb-2">5. Confidentiality</h4>
               <p>
                 We are committed to protecting your personal information. Your contact details and
                 inquiry information will be used solely for the purpose of processing your event
@@ -373,7 +379,7 @@ export function InquiryForm({ onClose, selectedPackageId, selectedEventType }: I
             </section>
 
             <section>
-              <h4 className="font-bold text-[#1a1225] mb-2">6. Cancellation Policy</h4>
+              <h4 className="font-bold text-foreground mb-2">6. Cancellation Policy</h4>
               <p>
                 Cancellation policies will be discussed during your booking confirmation. Different
                 packages may have different cancellation terms.
@@ -381,7 +387,7 @@ export function InquiryForm({ onClose, selectedPackageId, selectedEventType }: I
             </section>
 
             <section>
-              <h4 className="font-bold text-[#1a1225] mb-2">7. Liability</h4>
+              <h4 className="font-bold text-foreground mb-2">7. Liability</h4>
               <p>
                 Schatzies Events shall not be liable for any indirect, incidental, or consequential
                 damages arising from the use of this inquiry form or the services provided.
@@ -389,7 +395,7 @@ export function InquiryForm({ onClose, selectedPackageId, selectedEventType }: I
             </section>
 
             <section>
-              <h4 className="font-bold text-[#1a1225] mb-2">8. Agreement</h4>
+              <h4 className="font-bold text-foreground mb-2">8. Agreement</h4>
               <p>
                 By submitting this inquiry form, you acknowledge that you have read, understood, and
                 agree to comply with these Terms and Conditions.
@@ -411,7 +417,7 @@ export function InquiryForm({ onClose, selectedPackageId, selectedEventType }: I
                 setValue('termsAccepted', true, { shouldValidate: true });
                 setShowTerms(false);
               }}
-              className="flex-1 h-10 rounded-full bg-gradient-to-r from-[#FF0066] to-[#700F81] text-white font-bold hover:brightness-110"
+              className="flex-1 h-10 rounded-full bg-gradient-to-r from-brand to-brand-deep text-white font-bold hover:brightness-110"
             >
               Accept
             </Button>
@@ -447,7 +453,7 @@ export function InquiryForm({ onClose, selectedPackageId, selectedEventType }: I
                       style={{ backgroundImage: `url(${pkg.image})` }}
                     />
                     {/* Gradient overlay for readability */}
-                    <div className="absolute inset-0 bg-gradient-to-t from-[#1a1225]/80 via-transparent to-transparent" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-ink/80 via-transparent to-transparent" />
                     {/* Package name badge at bottom */}
                     <div className="absolute bottom-0 left-0 right-0 p-5">
                       <p className="text-[0.7rem] font-semibold uppercase tracking-widest text-pink-300">
@@ -468,17 +474,17 @@ export function InquiryForm({ onClose, selectedPackageId, selectedEventType }: I
                     <div className="flex items-start justify-between gap-3 border-b border-gray-100 px-5 py-4 sm:px-6">
                       <div>
                         {/* Mobile-only title (hidden on sm+) */}
-                        <p className="text-[0.65rem] font-semibold uppercase tracking-widest text-[#c2649b] sm:hidden">
+                        <p className="text-[0.65rem] font-semibold uppercase tracking-widest text-brand sm:hidden">
                           Package
                         </p>
-                        <h3 className="text-[1.1rem] font-bold text-[#1a1225] sm:text-[1.25rem]">
+                        <h3 className="text-[1.1rem] font-bold text-foreground sm:text-[1.25rem]">
                           {pkg.name} Inclusions
                         </h3>
                       </div>
                       <button
                         onClick={() => setShowPackageDetails(false)}
                         aria-label="Close"
-                        className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-gray-400 transition hover:bg-gray-100 hover:text-gray-700"
+                        className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-muted-foreground transition hover:bg-gray-100 hover:text-foreground/80"
                       >
                         <X className="h-4 w-4" />
                       </button>
@@ -487,8 +493,8 @@ export function InquiryForm({ onClose, selectedPackageId, selectedEventType }: I
                     {/* Scrollable body */}
                     <div className="flex-1 overflow-y-auto px-5 py-4 sm:px-6">
                       {/* Note */}
-                      <div className="mb-4 rounded-lg border-l-4 border-[#FF0066] bg-[#fff0f7] px-4 py-3">
-                        <p className="text-[0.82rem] leading-relaxed text-gray-700">
+                      <div className="mb-4 rounded-lg border-l-4 border-brand bg-secondary px-4 py-3">
+                        <p className="text-[0.82rem] leading-relaxed text-foreground/80">
                           {pkg.modal.note}
                         </p>
                       </div>
@@ -498,10 +504,10 @@ export function InquiryForm({ onClose, selectedPackageId, selectedEventType }: I
                         {pkg.modal.categories.map((cat) => {
                           const Icon = iconMap[cat.iconName as keyof typeof iconMap];
                           return (
-                            <div key={cat.title} className="rounded-xl bg-[#ede0f5] p-3 sm:p-4">
+                            <div key={cat.title} className="rounded-xl bg-secondary p-3 sm:p-4">
                               <div className="mb-2 flex items-center gap-2">
-                                <Icon className="h-4 w-4 text-[#c2649b]" />
-                                <span className="text-[0.82rem] font-bold text-[#3d1a5e]">
+                                <Icon className="h-4 w-4 text-brand" />
+                                <span className="text-[0.82rem] font-bold text-ink">
                                   {cat.title}
                                 </span>
                               </div>
@@ -511,7 +517,7 @@ export function InquiryForm({ onClose, selectedPackageId, selectedEventType }: I
                                   const text = typeof item === 'object' ? item.text : item;
                                   return (
                                     <li key={text} className="flex items-start gap-2">
-                                      <span className="mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-[#e61f83]">
+                                      <span className="mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-brand">
                                         <svg
                                           viewBox="0 0 10 10"
                                           className="h-2 w-2 fill-none stroke-white stroke-[2]"
@@ -526,8 +532,8 @@ export function InquiryForm({ onClose, selectedPackageId, selectedEventType }: I
                                       <span
                                         className={`text-[0.78rem] leading-snug ${
                                           isHighlight
-                                            ? 'font-semibold text-[#e61f83]'
-                                            : 'text-[#2d1a3d]'
+                                            ? 'font-semibold text-brand'
+                                            : 'text-foreground'
                                         }`}
                                       >
                                         {text}
@@ -573,7 +579,7 @@ export function InquiryForm({ onClose, selectedPackageId, selectedEventType }: I
               onClick={(e) => e.stopPropagation()}
             >
               {/* Mail icon */}
-              <div className="flex h-20 w-20 items-center justify-center rounded-full bg-gradient-to-br from-[#FF0066] to-[#700F81] shadow-lg shadow-[#700F81]/30">
+              <div className="flex h-20 w-20 items-center justify-center rounded-full bg-gradient-to-br from-brand to-brand-deep shadow-lg shadow-brand-deep/30">
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
                   viewBox="0 0 24 24"
@@ -588,13 +594,13 @@ export function InquiryForm({ onClose, selectedPackageId, selectedEventType }: I
                   <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" />
                 </svg>
               </div>
-              <h3 className="mt-5 text-[1.3rem] font-bold text-[#1a1225]">Check Your Email</h3>
+              <h3 className="mt-5 text-[1.3rem] font-bold text-foreground">Check Your Email</h3>
               <p className="mt-2 text-center text-[0.88rem] leading-[1.6] text-gray-500">
                 We've sent a confirmation link to your email address. Please open your email and
-                click <span className="font-semibold text-[#700F81]">"Confirm Inquiry"</span> to
+                click <span className="font-semibold text-brand-deep">"Confirm Inquiry"</span> to
                 complete your submission.
               </p>
-              <p className="mt-3 text-center text-[0.75rem] leading-[1.5] text-gray-400">
+              <p className="mt-3 text-center text-[0.75rem] leading-[1.5] text-muted-foreground">
                 The link will expire in 15 minutes. Check your spam folder if you don't see it.
               </p>
               <button
@@ -602,7 +608,7 @@ export function InquiryForm({ onClose, selectedPackageId, selectedEventType }: I
                   setVerificationSent(false);
                   setVerificationCooldown(0);
                 }}
-                className="mt-6 h-10 rounded-full bg-gradient-to-r from-[#FF0066] to-[#700F81] px-8 text-[0.88rem] font-bold text-white shadow-lg transition hover:brightness-110"
+                className="mt-6 h-10 rounded-full bg-gradient-to-r from-brand to-brand-deep px-8 text-[0.88rem] font-bold text-white shadow-lg transition hover:brightness-110"
               >
                 Got it
               </button>
@@ -638,14 +644,14 @@ export function InquiryForm({ onClose, selectedPackageId, selectedEventType }: I
                   <polyline points="20 6 9 17 4 12" />
                 </svg>
               </div>
-              <h3 className="mt-5 text-[1.3rem] font-bold text-[#1a1225]">Inquiry Sent!</h3>
+              <h3 className="mt-5 text-[1.3rem] font-bold text-foreground">Inquiry Sent!</h3>
               <p className="mt-2 text-center text-[0.88rem] leading-[1.6] text-gray-500">
                 Your inquiry has been submitted successfully! Please wait for our response as we
                 process your inquiry.
               </p>
               <button
                 onClick={onClose}
-                className="mt-6 h-10 rounded-full bg-gradient-to-r from-[#FF0066] to-[#700F81] px-8 text-[0.88rem] font-bold text-white shadow-lg transition hover:brightness-110"
+                className="mt-6 h-10 rounded-full bg-gradient-to-r from-brand to-brand-deep px-8 text-[0.88rem] font-bold text-white shadow-lg transition hover:brightness-110"
               >
                 Close
               </button>
@@ -657,17 +663,17 @@ export function InquiryForm({ onClose, selectedPackageId, selectedEventType }: I
             MAIN MODAL — gradient background wrapper
         ══════════════════════════════════════════ */}
         <div
-          className="relative flex w-full max-w-[1100px] overflow-visible rounded-2xl bg-gradient-to-br from-white via-[#fff0f7] to-[#f9a8d4] shadow-[0_32px_80px_rgba(0,0,0,0.25)] sm:rounded-3xl"
+          className="relative flex w-full max-w-[1100px] overflow-visible rounded-2xl bg-gradient-to-br from-card via-secondary to-brand/15 shadow-[0_32px_80px_rgba(0,0,0,0.25)] sm:rounded-3xl"
           style={{ maxHeight: '92vh' }}
           onClick={(e) => e.stopPropagation()}
         >
           {/* ── LEFT SIDE — text + image on gradient bg ── */}
           <div className="hidden w-[50%] shrink-0 flex-col px-8 py-8 lg:flex">
-            {/* Back button — transparent, dark purple border */}
+            {/* Back button — transparent, dark pink border */}
             <button
               onClick={onClose}
               aria-label="Close"
-              className="mb-6 flex h-10 w-10 shrink-0 items-center justify-center rounded-full border-[2.5px] border-[#3d2052] bg-transparent text-[#3d2052] transition hover:bg-[#3d2052]/10"
+              className="mb-6 flex h-10 w-10 shrink-0 items-center justify-center rounded-full border-[2.5px] border-brand-deep bg-transparent text-brand-deep transition hover:bg-brand-deep/10"
             >
               <svg
                 xmlns="http://www.w3.org/2000/svg"
@@ -684,17 +690,17 @@ export function InquiryForm({ onClose, selectedPackageId, selectedEventType }: I
             </button>
 
             {/* Heading */}
-            <h2 className="shrink-0 font-heading text-[2rem] font-bold leading-[1.18] text-[#1a1225]">
+            <h2 className="shrink-0 font-heading text-[2rem] font-bold leading-[1.18] text-foreground">
               Let&rsquo;s Plan
               <br />
               Your{' '}
-              <span className="bg-gradient-to-r from-[#FF0066] to-[#700F81] bg-clip-text text-transparent">
+              <span className="bg-gradient-to-r from-brand to-brand-deep bg-clip-text text-transparent">
                 Milestone
               </span>
             </h2>
 
             {/* Sub-copy */}
-            <p className="mt-3 text-[0.82rem] leading-[1.7] text-[#3d1a50]">
+            <p className="mt-3 text-[0.82rem] leading-[1.7] text-ink/70">
               Tell us a bit about your dream event, and our team will get back to you with a
               personalized proposal as soon as we can.
             </p>
@@ -714,13 +720,13 @@ export function InquiryForm({ onClose, selectedPackageId, selectedEventType }: I
             <div className="flex w-full flex-col rounded-xl bg-white shadow-[0_8px_40px_rgba(0,0,0,0.12)] sm:rounded-2xl">
               {/* Card header */}
               <div className="flex shrink-0 items-center justify-between px-4 pt-5 pb-3 sm:px-7 sm:pt-6 sm:pb-4">
-                <h2 className="w-full text-center font-heading text-[1.2rem] font-bold text-[#1a1225] sm:text-[1.5rem]">
+                <h2 className="w-full text-center font-heading text-[1.2rem] font-bold text-foreground sm:text-[1.5rem]">
                   Inquiry Form
                 </h2>
                 <button
                   onClick={onClose}
                   aria-label="Close"
-                  className="absolute right-7 flex h-7 w-7 items-center justify-center rounded-full text-gray-400 transition hover:text-gray-600"
+                  className="absolute right-7 flex h-7 w-7 items-center justify-center rounded-full text-muted-foreground transition hover:text-gray-600"
                 >
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
@@ -748,7 +754,7 @@ export function InquiryForm({ onClose, selectedPackageId, selectedEventType }: I
                 <form onSubmit={handleSubmit(onFormSubmit)} className="space-y-5">
                   {/* ── Personal Details ── */}
                   <section>
-                    <p className="mb-2.5 text-[0.9rem] font-bold text-[#1a1225]">
+                    <p className="mb-2.5 text-[0.9rem] font-bold text-foreground">
                       Personal Details
                     </p>
 
@@ -824,7 +830,7 @@ export function InquiryForm({ onClose, selectedPackageId, selectedEventType }: I
 
                         {/* ── Contact number ── */}
                         <Field required error={errors.contactNumber?.message}>
-                          <div className="flex items-stretch overflow-hidden rounded-lg bg-[#e8e8e8] focus-within:ring-2 focus-within:ring-[#3d2052]/25">
+                          <div className="flex items-stretch overflow-hidden rounded-lg bg-muted focus-within:ring-2 focus-within:ring-brand-deep/25">
                             <span className="flex items-center border-r border-gray-300 px-3 text-[0.85rem] font-medium text-gray-600">
                               +63
                             </span>
@@ -853,7 +859,7 @@ export function InquiryForm({ onClose, selectedPackageId, selectedEventType }: I
                                   }}
                                   onBlur={field.onBlur}
                                   maxLength={10}
-                                  className="h-11 w-full border-0 bg-transparent px-4 text-[0.85rem] text-gray-700 outline-none placeholder:text-gray-400 [color-scheme:light]"
+                                  className="h-11 w-full border-0 bg-transparent px-4 text-[0.85rem] text-foreground/80 outline-none placeholder:text-muted-foreground [color-scheme:light]"
                                 />
                               )}
                             />
@@ -865,7 +871,7 @@ export function InquiryForm({ onClose, selectedPackageId, selectedEventType }: I
 
                   {/* ── Event Specifications ── */}
                   <section>
-                    <p className="mb-2.5 text-[0.9rem] font-bold text-[#1a1225]">
+                    <p className="mb-2.5 text-[0.9rem] font-bold text-foreground">
                       Event Specifications <span className="text-red-500">✱</span>
                     </p>
 
@@ -882,8 +888,8 @@ export function InquiryForm({ onClose, selectedPackageId, selectedEventType }: I
                                   <Button
                                     variant="outline"
                                     className={cn(
-                                      'h-11 w-full justify-start rounded-lg border-0 bg-[#e8e8e8] px-4 text-left text-[0.85rem] font-normal text-gray-700 outline-none transition focus:ring-2 focus:ring-[#3d2052]/25',
-                                      !field.value && 'text-gray-400'
+                                      'h-11 w-full justify-start rounded-lg border-0 bg-muted px-4 text-left text-[0.85rem] font-normal text-foreground/80 outline-none transition focus:ring-2 focus:ring-brand-deep/25',
+                                      !field.value && 'text-muted-foreground'
                                     )}
                                   >
                                     <CalendarIcon className="mr-2 h-4 w-4" />
@@ -1084,13 +1090,13 @@ export function InquiryForm({ onClose, selectedPackageId, selectedEventType }: I
 
                       {/* Show selected package info if available */}
                       {(currentSelectedPackage || selectedPackage) && (
-                        <div className="mt-3 rounded-lg bg-gradient-to-r from-[#FF0066]/10 to-[#700F81]/10 p-3 border border-[#FF0066]/20">
+                        <div className="mt-3 rounded-lg bg-gradient-to-r from-brand/10 to-brand-deep/10 p-3 border border-brand/20">
                           <div className="flex items-start justify-between gap-2">
                             <div className="flex-1">
                               <p className="text-[0.8rem] font-semibold text-gray-600">
                                 Selected Package
                               </p>
-                              <p className="text-[1rem] font-bold text-[#3d2052]">
+                              <p className="text-[1rem] font-bold text-brand-deep">
                                 {(currentSelectedPackage || selectedPackage)?.name}
                               </p>
                               <p className="text-[0.8rem] text-gray-600 mt-1 line-clamp-2">
@@ -1100,7 +1106,7 @@ export function InquiryForm({ onClose, selectedPackageId, selectedEventType }: I
                             <button
                               type="button"
                               onClick={() => setShowPackageDetails(true)}
-                              className="shrink-0 mt-0 flex items-center justify-center h-9 w-9 rounded-full bg-gradient-to-r from-[#FF0066] to-[#700F81] text-white transition hover:brightness-110 hover:scale-110"
+                              className="shrink-0 mt-0 flex items-center justify-center h-9 w-9 rounded-full bg-gradient-to-r from-brand to-brand-deep text-white transition hover:brightness-110 hover:scale-110"
                               title="View package details"
                             >
                               <Eye className="h-4 w-4" />
@@ -1125,7 +1131,7 @@ export function InquiryForm({ onClose, selectedPackageId, selectedEventType }: I
 
                   {/* ── Message ── */}
                   <section>
-                    <p className="mb-2.5 text-[0.9rem] font-bold text-[#1a1225]">Message</p>
+                    <p className="mb-2.5 text-[0.9rem] font-bold text-foreground">Message</p>
                     <Field error={errors.message?.message}>
                       <Textarea
                         {...register('message', {
@@ -1133,7 +1139,7 @@ export function InquiryForm({ onClose, selectedPackageId, selectedEventType }: I
                         })}
                         rows={7}
                         placeholder="Write something..."
-                        className="w-full resize-none rounded-lg border-0 bg-[#e8e8e8] px-4 py-4 text-[0.85rem] text-gray-700 outline-none placeholder:text-gray-400 transition focus:ring-2 focus:ring-[#3d2052]/25"
+                        className="w-full resize-none rounded-lg border-0 bg-muted px-4 py-4 text-[0.85rem] text-foreground/80 outline-none placeholder:text-muted-foreground transition focus:ring-2 focus:ring-brand-deep/25"
                       />
                     </Field>
                   </section>
@@ -1152,7 +1158,7 @@ export function InquiryForm({ onClose, selectedPackageId, selectedEventType }: I
                               checked={field.value}
                               onCheckedChange={field.onChange}
                               onBlur={field.onBlur}
-                              className="mt-1 h-4 w-4 cursor-pointer accent-[#700F81]"
+                              className="mt-1 h-4 w-4 cursor-pointer accent-brand-deep"
                             />
                           )}
                         />
@@ -1164,7 +1170,7 @@ export function InquiryForm({ onClose, selectedPackageId, selectedEventType }: I
                           <button
                             type="button"
                             onClick={() => setShowTerms(true)}
-                            className="text-[#700F81] font-bold hover:underline"
+                            className="text-brand-deep font-bold hover:underline"
                           >
                             Terms and Conditions
                           </button>
@@ -1183,7 +1189,7 @@ export function InquiryForm({ onClose, selectedPackageId, selectedEventType }: I
                         !watchedTermsAccepted ||
                         verificationCooldown > 0
                       }
-                      className="h-10 rounded-full bg-gradient-to-r from-[#FF0066] to-[#700F81] px-12 text-[0.88rem] font-bold tracking-wide text-white shadow-[0_6px_20px_rgba(112,15,129,0.3)] transition hover:brightness-110 active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="h-10 rounded-full bg-gradient-to-r from-brand to-brand-deep px-12 text-[0.88rem] font-bold tracking-wide text-white shadow-[0_6px_20px_rgba(112,15,129,0.3)] transition hover:brightness-110 active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       {verificationSending ? (
                         <span className="flex items-center gap-2">

@@ -49,7 +49,7 @@ function SupportExtras({ extra }: { extra?: SupportExtra }) {
             href={url}
             target="_blank"
             rel="noreferrer"
-            className="block rounded-lg bg-white px-3 py-2 text-[#700F81] border border-pink-100 shadow-sm transition hover:bg-pink-50 hover:border-pink-200"
+            className="block rounded-lg bg-white px-3 py-2 text-brand-deep border border-pink-100 shadow-sm transition hover:bg-pink-50 hover:border-pink-200"
           >
             📍 {name}
           </a>
@@ -75,13 +75,13 @@ function SupportExtras({ extra }: { extra?: SupportExtra }) {
           href={extra.contact.facebook}
           target="_blank"
           rel="noreferrer"
-          className="block rounded-lg bg-white px-3 py-2 text-[#700F81] border border-pink-100 shadow-sm transition hover:bg-pink-50 hover:border-pink-200"
+          className="block rounded-lg bg-white px-3 py-2 text-brand-deep border border-pink-100 shadow-sm transition hover:bg-pink-50 hover:border-pink-200"
         >
           📘 Facebook Page
         </a>
         <a
           href={`mailto:${extra.contact.email}`}
-          className="block rounded-lg bg-white px-3 py-2 text-[#700F81] border border-pink-100 shadow-sm transition hover:bg-pink-50 hover:border-pink-200"
+          className="block rounded-lg bg-white px-3 py-2 text-brand-deep border border-pink-100 shadow-sm transition hover:bg-pink-50 hover:border-pink-200"
         >
           📧 {extra.contact.email}
         </a>
@@ -99,7 +99,7 @@ function SupportExtras({ extra }: { extra?: SupportExtra }) {
           >
             <div className="flex items-center justify-between gap-3">
               <span className="font-semibold text-gray-700">{packageItem.name}</span>
-              <span className="font-bold text-[#700F81]">
+              <span className="font-bold text-brand-deep">
                 ₱{formatPrice(packageItem.starting_price)}
               </span>
             </div>
@@ -135,7 +135,7 @@ function TextWithBold({ text }: { text: string }) {
       {parts.map((part, i) => {
         if (part.startsWith('**') && part.endsWith('**')) {
           return (
-            <strong key={i} className="font-bold text-[#700F81]">
+            <strong key={i} className="font-bold text-brand-deep">
               {part.slice(2, -2)}
             </strong>
           );
@@ -155,6 +155,7 @@ export function ChatWidget() {
   // Initial greeting
   useEffect(() => {
     if (messages.length === 0) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- seed the one-time greeting message
       setMessages([
         {
           id: 'greeting',
@@ -242,7 +243,7 @@ export function ChatWidget() {
       {chatOpen && (
         <div className="fixed bottom-14 left-3 right-3 z-[9999] flex max-h-[72vh] flex-col overflow-hidden rounded-2xl bg-white shadow-2xl sm:bottom-4 sm:left-auto sm:right-[120px] sm:w-[390px] sm:max-h-[68vh]">
           {/* Header */}
-          <div className="flex items-center gap-3 bg-gradient-to-r from-[#FF0066] to-[#700F81] px-5 py-4 shrink-0">
+          <div className="flex items-center gap-3 bg-gradient-to-r from-brand to-brand-deep px-5 py-4 shrink-0">
             <img
               src="/Pictures/business-logo.png"
               alt={supportContent.company}
@@ -299,7 +300,7 @@ export function ChatWidget() {
                   <div
                     className={`rounded-2xl px-4 py-2.5 text-sm shadow-sm ${
                       msg.role === 'user'
-                        ? 'bg-[#700F81] text-white rounded-tr-none'
+                        ? 'bg-brand-deep text-white rounded-tr-none'
                         : 'bg-white text-gray-700 ring-1 ring-gray-100 rounded-tl-none'
                     }`}
                   >
@@ -326,7 +327,7 @@ export function ChatWidget() {
             <button
               type="submit"
               disabled={!inputValue.trim()}
-              className="flex h-9 w-9 items-center justify-center rounded-full bg-[#700F81] text-white transition-all hover:scale-105 active:scale-95 disabled:opacity-50 disabled:grayscale"
+              className="flex h-9 w-9 items-center justify-center rounded-full bg-brand-deep text-white transition-all hover:scale-105 active:scale-95 disabled:opacity-50 disabled:grayscale"
             >
               <svg
                 xmlns="http://www.w3.org/2000/svg"
@@ -351,7 +352,7 @@ export function ChatWidget() {
       <button
         onClick={handleToggleChat}
         aria-label="Chat with our AI assistant"
-        className="fixed bottom-4 right-4 z-[9999] flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br from-[#FF0066] to-[#700F81] shadow-[0_8px_32px_rgba(112,15,129,0.5)] transition-transform hover:scale-110 active:scale-95 sm:bottom-7 sm:right-7 sm:h-20 sm:w-20"
+        className="fixed bottom-4 right-4 z-[9999] flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br from-brand to-brand-deep shadow-[0_8px_32px_rgba(112,15,129,0.5)] transition-transform hover:scale-110 active:scale-95 sm:bottom-7 sm:right-7 sm:h-20 sm:w-20"
       >
         {chatOpen ? (
           <svg

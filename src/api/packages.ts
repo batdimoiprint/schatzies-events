@@ -48,6 +48,7 @@ export interface PackagePayload {
   packageName: string;
   description?: string;
   images?: File[];
+  existingImages?: PackageImage[];
 }
 
 const multipartConfig = {
@@ -59,6 +60,9 @@ function toFormData(payload: Partial<PackagePayload>): FormData {
   if (payload.eventType) formData.append('eventType', payload.eventType);
   if (payload.packageName) formData.append('packageName', payload.packageName);
   if (payload.description !== undefined) formData.append('description', payload.description);
+  if (payload.existingImages !== undefined) {
+    formData.append('existingImages', JSON.stringify(payload.existingImages));
+  }
   payload.images?.forEach((file) => formData.append('images', file));
   return formData;
 }

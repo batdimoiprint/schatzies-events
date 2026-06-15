@@ -60,6 +60,15 @@ export function buildPackageNote(pkg: EventPackage): string {
   return 'Contact us for full pricing and to tailor this package to your celebration.';
 }
 
+/** Convert a package name to a URL-safe slug. */
+export function toSlug(name: string): string {
+  return name
+    .toLowerCase()
+    .replace(/[^a-z0-9\s-]/g, '')
+    .trim()
+    .replace(/\s+/g, '-');
+}
+
 /** Deterministic display order (oldest first) shared by the list and detail navigation. */
 export function sortPackages(pkgs: EventPackage[]): EventPackage[] {
   return [...pkgs].sort((a, b) => (a.createdAt ?? '').localeCompare(b.createdAt ?? ''));

@@ -12,6 +12,7 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 import {
   addAddress,
   addEmail,
@@ -24,6 +25,7 @@ import {
   deletePhone,
   getContacts,
   updateAddress,
+  updateContact,
   updateEmail,
   updateLink,
   updatePhone,
@@ -115,6 +117,9 @@ export function BusinessInfoSection() {
   const queryClient = useQueryClient();
   const [dialogState, setDialogState] = useState<DialogState | null>(null);
   const [saveError, setSaveError] = useState<string | null>(null);
+  const [editingContact, setEditingContact] = useState(false);
+  const [contactForm, setContactForm] = useState({ name: '', description: '' });
+  const [contactError, setContactError] = useState<string | null>(null);
 
   const { data: contacts = [], isLoading } = useQuery<BusinessContact[]>({
     queryKey: ['business-contacts'],
@@ -128,6 +133,17 @@ export function BusinessInfoSection() {
     mutationFn: () =>
       createContact({ name: 'Schatzies Events', description: 'Business contact information' }),
     onSuccess: invalidate,
+  });
+
+  const updateContactMutation = useMutation({
+    mutationFn: (payload: { name: string; description: string }) =>
+      updateContact(contact!.id, payload),
+    onSuccess: () => {
+      invalidate();
+      setEditingContact(false);
+      setContactError(null);
+    },
+    onError: (err) => setContactError(err instanceof Error ? err.message : 'Unable to save'),
   });
 
   const saveMutation = useMutation({
@@ -178,7 +194,7 @@ export function BusinessInfoSection() {
 
   if (isLoading) {
     return (
-      <div className="rounded-3xl bg-white p-8 text-center text-sm text-[#7f7889] shadow-[0_8px_30px_rgba(61,32,82,0.08)]">
+      <div className="rounded-3xl bg-white p-8 text-center text-sm text-muted-foreground shadow-[0_8px_30px_rgba(61,32,82,0.08)]">
         Loading business information...
       </div>
     );
@@ -188,18 +204,18 @@ export function BusinessInfoSection() {
     return (
       <div className="rounded-3xl bg-white p-8 shadow-[0_8px_30px_rgba(61,32,82,0.08)]">
         <div className="flex flex-col items-center justify-center py-12 text-center">
-          <div className="mb-4 flex size-16 items-center justify-center rounded-full bg-[#fdf2f8]">
-            <Building2 className="size-8 text-[#df2b80]" />
+          <div className="mb-4 flex size-16 items-center justify-center rounded-full bg-brand/5">
+            <Building2 className="size-8 text-brand" />
           </div>
-          <h2 className="font-heading text-xl font-bold text-[#1d1320]">No business profile yet</h2>
-          <p className="mt-2 max-w-md text-sm text-[#7f7889]">
+          <h2 className="font-heading text-xl font-bold text-foreground">No business profile yet</h2>
+          <p className="mt-2 max-w-md text-sm text-muted-foreground">
             Set up your business profile to manage contact numbers, emails, social links, and
             locations.
           </p>
           <Button
             onClick={() => setupMutation.mutate()}
             disabled={setupMutation.isPending}
-            className="mt-6 rounded-full bg-[#df2b80] px-6 text-xs font-bold text-white shadow-md hover:bg-[#c81e6f]"
+            className="mt-6 rounded-full bg-brand px-6 text-xs font-bold text-white shadow-md hover:bg-brand"
           >
             {setupMutation.isPending ? 'Setting up...' : 'Set Up Business Profile'}
           </Button>
@@ -218,7 +234,85 @@ export function BusinessInfoSection() {
   const config = dialogState ? SECTION_CONFIG[dialogState.section] : null;
 
   return (
-    <div className="grid gap-6 lg:grid-cols-2">
+    <div className="space-y-6">
+      {/* Contact identity */}
+      <div className="rounded-3xl bg-white p-6 shadow-[0_8px_30px_rgba(61,32,82,0.08)]">
+        {editingContact ? (
+          <form
+            className="space-y-4"
+            onSubmit={(e) => {
+              e.preventDefault();
+              updateContactMutation.mutate(contactForm);
+            }}
+          >
+            <div className="space-y-1.5">
+              <Label htmlFor="bc-name">Business Name <span className="text-brand">*</span></Label>
+              <Input
+                id="bc-name"
+                required
+                value={contactForm.name}
+                onChange={(e) => setContactForm((p) => ({ ...p, name: e.target.value }))}
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="bc-desc">Description</Label>
+              <Textarea
+                id="bc-desc"
+                rows={2}
+                value={contactForm.description}
+                onChange={(e) => setContactForm((p) => ({ ...p, description: e.target.value }))}
+              />
+            </div>
+            {contactError && <p className="text-sm text-red-600">{contactError}</p>}
+            <div className="flex gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setEditingContact(false)}
+                disabled={updateContactMutation.isPending}
+              >
+                Cancel
+              </Button>
+              <Button
+                type="submit"
+                disabled={updateContactMutation.isPending}
+                className="rounded-full bg-brand px-5 text-xs font-bold text-white shadow-md hover:bg-brand"
+              >
+                {updateContactMutation.isPending ? 'Saving...' : 'Save'}
+              </Button>
+            </div>
+          </form>
+        ) : (
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex items-center gap-3">
+              <div className="flex size-10 items-center justify-center rounded-xl bg-brand/5">
+                <Building2 className="size-5 text-brand" />
+              </div>
+              <div>
+                <p className="font-heading text-lg font-bold text-foreground">{contact.name}</p>
+                {contact.description && (
+                  <p className="text-sm text-muted-foreground">{contact.description}</p>
+                )}
+              </div>
+            </div>
+            <Button
+              variant="ghost"
+              size="icon"
+              aria-label="Edit business name"
+              onClick={() => {
+                setContactForm({ name: contact.name, description: contact.description ?? '' });
+                setContactError(null);
+                setEditingContact(true);
+              }}
+              className="size-8 text-brand-deep hover:bg-[#f0e8f5]"
+            >
+              <Pencil className="size-4" />
+            </Button>
+          </div>
+        )}
+      </div>
+
+      <div className="grid gap-6 lg:grid-cols-2">
       {(Object.keys(SECTION_CONFIG) as SectionKey[]).map((section) => {
         const { title, icon: Icon } = SECTION_CONFIG[section];
         const items = sectionItems[section];
@@ -229,15 +323,15 @@ export function BusinessInfoSection() {
           >
             <div className="mb-4 flex items-center justify-between">
               <div className="flex items-center gap-2.5">
-                <div className="flex size-8 items-center justify-center rounded-lg bg-[#fdf2f8]">
-                  <Icon className="size-4 text-[#df2b80]" />
+                <div className="flex size-8 items-center justify-center rounded-lg bg-brand/5">
+                  <Icon className="size-4 text-brand" />
                 </div>
-                <h2 className="font-heading text-lg font-bold text-[#1d1320]">{title}</h2>
+                <h2 className="font-heading text-lg font-bold text-foreground">{title}</h2>
               </div>
               <Button
                 size="sm"
                 onClick={() => openDialog(section)}
-                className="gap-1.5 rounded-full bg-[#df2b80] px-4 text-xs font-bold text-white shadow-md hover:bg-[#c81e6f]"
+                className="gap-1.5 rounded-full bg-brand px-4 text-xs font-bold text-white shadow-md hover:bg-brand"
               >
                 <Plus className="size-4" />
                 Add
@@ -245,7 +339,7 @@ export function BusinessInfoSection() {
             </div>
 
             {items.length === 0 ? (
-              <p className="py-6 text-center text-sm text-[#7f7889]">
+              <p className="py-6 text-center text-sm text-muted-foreground">
                 No {title.toLowerCase()} added yet.
               </p>
             ) : (
@@ -257,7 +351,7 @@ export function BusinessInfoSection() {
                   >
                     <div className="min-w-0">
                       <p className="truncate text-sm font-semibold text-[#2d1b3d]">{item.label}</p>
-                      <p className="truncate text-sm text-[#7f7889]">
+                      <p className="truncate text-sm text-muted-foreground">
                         {itemSummary(section, item)}
                       </p>
                     </div>
@@ -267,7 +361,7 @@ export function BusinessInfoSection() {
                         size="icon"
                         aria-label={`Edit ${item.label}`}
                         onClick={() => openDialog(section, item)}
-                        className="size-8 text-[#8f1fd1] hover:bg-[#f0e8f5]"
+                        className="size-8 text-brand-deep hover:bg-[#f0e8f5]"
                       >
                         <Pencil className="size-4" />
                       </Button>
@@ -277,7 +371,7 @@ export function BusinessInfoSection() {
                         aria-label={`Delete ${item.label}`}
                         onClick={() => deleteMutation.mutate({ section, itemId: item.id })}
                         disabled={deleteMutation.isPending}
-                        className="size-8 text-[#df2b80] hover:bg-[#fdf2f8]"
+                        className="size-8 text-brand hover:bg-brand/5"
                       >
                         <Trash2 className="size-4" />
                       </Button>
@@ -295,7 +389,7 @@ export function BusinessInfoSection() {
           {dialogState && config && (
             <>
               <DialogHeader>
-                <DialogTitle className="font-heading text-2xl font-bold text-[#1d1320]">
+                <DialogTitle className="font-heading text-2xl font-bold text-foreground">
                   {dialogState.itemId ? 'Edit' : 'Add'} {config.singular}
                 </DialogTitle>
                 <DialogDescription>
@@ -315,7 +409,7 @@ export function BusinessInfoSection() {
                   <div key={field.name} className="space-y-1.5">
                     <Label htmlFor={`bi-${field.name}`}>
                       {field.label}
-                      {field.required && <span className="text-[#df2b80]"> *</span>}
+                      {field.required && <span className="text-brand"> *</span>}
                     </Label>
                     <Input
                       id={`bi-${field.name}`}
@@ -345,7 +439,7 @@ export function BusinessInfoSection() {
                   <Button
                     type="submit"
                     disabled={saveMutation.isPending}
-                    className="rounded-full bg-[#df2b80] px-5 text-xs font-bold text-white shadow-md hover:bg-[#c81e6f]"
+                    className="rounded-full bg-brand px-5 text-xs font-bold text-white shadow-md hover:bg-brand"
                   >
                     {saveMutation.isPending ? 'Saving...' : 'Save'}
                   </Button>
@@ -356,5 +450,6 @@ export function BusinessInfoSection() {
         </DialogContent>
       </Dialog>
     </div>
+  </div>
   );
 }

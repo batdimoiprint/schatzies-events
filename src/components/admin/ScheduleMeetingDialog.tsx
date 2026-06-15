@@ -9,14 +9,15 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { CalendarIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { scheduleInquiryMeeting, type ScheduleInquiryMeetingPayload } from '@/api/inquiries';
+import type { InquiryRecord, OrganizerRecord } from '@/components/admin/InquiryDetailsDialog';
 
 interface ScheduleMeetingDialogProps {
   isScheduleModalOpen: boolean;
   setIsScheduleModalOpen: (open: boolean) => void;
   organizersLoading: boolean;
-  organizers: any[];
-  selectedInquiry: any;
-  onInquiryUpdated: (updatedInquiry: any) => void;
+  organizers: OrganizerRecord[];
+  selectedInquiry: InquiryRecord | null;
+  onInquiryUpdated: (updatedInquiry: InquiryRecord) => void;
 }
 
 type ScheduleMeetingFormValues = ScheduleInquiryMeetingPayload;
@@ -154,7 +155,7 @@ export function ScheduleMeetingDialog({
     }
 
     try {
-      const id = selectedInquiry.id || selectedInquiry._id;
+      const id = selectedInquiry.id || selectedInquiry._id || '';
       setScheduleError('');
 
       const payload: ScheduleInquiryMeetingPayload = {
@@ -177,7 +178,7 @@ export function ScheduleMeetingDialog({
     <Dialog open={isScheduleModalOpen} onOpenChange={setIsScheduleModalOpen}>
       <DialogContent className="sm:max-w-6xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="text-xl font-black text-[#2e2837]">Schedule Meeting</DialogTitle>
+          <DialogTitle className="text-xl font-black text-foreground">Schedule Meeting</DialogTitle>
         </DialogHeader>
         <p className="mt-1 text-xs font-semibold text-[#7e768f]">
           Plot tasks, meetings, and reminders in your calendar.
@@ -188,7 +189,7 @@ export function ScheduleMeetingDialog({
         >
           <div className="w-full space-y-3 md:w-1/2">
             <div className="space-y-1.5">
-              <Label htmlFor="calendar-title" className="text-sm font-bold text-[#6a627c]">
+              <Label htmlFor="calendar-title" className="text-sm font-bold text-muted-foreground">
                 Title
               </Label>
               <Input
@@ -196,16 +197,16 @@ export function ScheduleMeetingDialog({
                 required
                 {...register('title', { required: true })}
                 placeholder="Enter title"
-                className="h-11 rounded-lg border-[#ddd8e8] bg-white px-3 text-sm font-semibold text-[#4c455e] md:text-base"
+                className="h-11 rounded-lg border-border bg-white px-3 text-sm font-semibold text-foreground/80 md:text-base"
               />
             </div>
 
             <div className="space-y-1.5">
-              <Label className="text-sm font-bold text-[#6a627c]">Assign Organizer *</Label>
+              <Label className="text-sm font-bold text-muted-foreground">Assign Organizer *</Label>
               <select
                 required
                 {...register('organizerId', { required: true })}
-                className="h-11 w-full rounded-lg border border-[#ddd8e8] bg-white px-2 text-sm font-semibold text-[#4c455e] outline-none focus:border-[#be8de4]"
+                className="h-11 w-full rounded-lg border border-border bg-white px-2 text-sm font-semibold text-foreground/80 outline-none focus:border-brand/40"
               >
                 <option value="">
                   {organizersLoading ? 'Loading organizers...' : 'Select organizer'}
@@ -220,7 +221,7 @@ export function ScheduleMeetingDialog({
                 ))}
               </select>
               {!organizersLoading && organizers.length === 0 ? (
-                <p className="text-xs font-semibold text-[#c33274]">
+                <p className="text-xs font-semibold text-brand">
                   No organizer accounts available.
                 </p>
               ) : null}
@@ -228,7 +229,7 @@ export function ScheduleMeetingDialog({
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-1.5">
-                <Label className="text-sm font-bold text-[#6a627c]">Start Date</Label>
+                <Label className="text-sm font-bold text-muted-foreground">Start Date</Label>
                 <input type="hidden" {...register('startDateKey', { required: true })} />
                 <Popover>
                   <PopoverTrigger asChild>
@@ -236,11 +237,11 @@ export function ScheduleMeetingDialog({
                       type="button"
                       variant="outline"
                       className={cn(
-                        'h-11 w-full justify-start rounded-lg border-[#ddd8e8] px-3 text-left text-sm font-semibold text-[#4c455e] md:text-base',
-                        !startDateKey && 'text-[#a49cb3]'
+                        'h-11 w-full justify-start rounded-lg border-border px-3 text-left text-sm font-semibold text-foreground/80 md:text-base',
+                        !startDateKey && 'text-muted-foreground/70'
                       )}
                     >
-                      <CalendarIcon className="mr-2 h-4 w-4 text-[#8a7ca3]" />
+                      <CalendarIcon className="mr-2 h-4 w-4 text-muted-foreground" />
                       {formatDateLabel(keyToDate(startDateKey))}
                     </Button>
                   </PopoverTrigger>
@@ -262,16 +263,16 @@ export function ScheduleMeetingDialog({
                 </Popover>
               </div>
               <div className="space-y-1.5">
-                <Label className="text-sm font-bold text-[#6a627c]">Start Time</Label>
+                <Label className="text-sm font-bold text-muted-foreground">Start Time</Label>
                 <Input
                   type="time"
                   required
                   {...register('startTime', { required: true })}
-                  className="h-11 rounded-lg border-[#ddd8e8] text-sm font-semibold text-[#4c455e] md:text-base"
+                  className="h-11 rounded-lg border-border text-sm font-semibold text-foreground/80 md:text-base"
                 />
               </div>
               <div className="space-y-1.5">
-                <Label className="text-sm font-bold text-[#6a627c]">End Date</Label>
+                <Label className="text-sm font-bold text-muted-foreground">End Date</Label>
                 <input type="hidden" {...register('endDateKey', { required: true })} />
                 <Popover>
                   <PopoverTrigger asChild>
@@ -279,11 +280,11 @@ export function ScheduleMeetingDialog({
                       type="button"
                       variant="outline"
                       className={cn(
-                        'h-11 w-full justify-start rounded-lg border-[#ddd8e8] px-3 text-left text-sm font-semibold text-[#4c455e] md:text-base',
-                        !endDateKey && 'text-[#a49cb3]'
+                        'h-11 w-full justify-start rounded-lg border-border px-3 text-left text-sm font-semibold text-foreground/80 md:text-base',
+                        !endDateKey && 'text-muted-foreground/70'
                       )}
                     >
-                      <CalendarIcon className="mr-2 h-4 w-4 text-[#8a7ca3]" />
+                      <CalendarIcon className="mr-2 h-4 w-4 text-muted-foreground" />
                       {formatDateLabel(keyToDate(endDateKey))}
                     </Button>
                   </PopoverTrigger>
@@ -309,12 +310,12 @@ export function ScheduleMeetingDialog({
                 </Popover>
               </div>
               <div className="space-y-1.5">
-                <Label className="text-sm font-bold text-[#6a627c]">End Time</Label>
+                <Label className="text-sm font-bold text-muted-foreground">End Time</Label>
                 <Input
                   type="time"
                   required
                   {...register('endTime', { required: true })}
-                  className="h-11 rounded-lg border-[#ddd8e8] text-sm font-semibold text-[#4c455e] md:text-base"
+                  className="h-11 rounded-lg border-border text-sm font-semibold text-foreground/80 md:text-base"
                 />
               </div>
             </div>
@@ -323,10 +324,10 @@ export function ScheduleMeetingDialog({
           <div className="w-full space-y-3 md:w-1/2">
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-1.5">
-                <Label className="text-sm font-bold text-[#6a627c]">Label</Label>
+                <Label className="text-sm font-bold text-muted-foreground">Label</Label>
                 <select
                   {...register('label')}
-                  className="h-11 w-full rounded-lg border border-[#ddd8e8] bg-white px-2 text-sm font-semibold text-[#4c455e] outline-none focus:border-[#be8de4] md:text-base"
+                  className="h-11 w-full rounded-lg border border-border bg-white px-2 text-sm font-semibold text-foreground/80 outline-none focus:border-brand/40 md:text-base"
                 >
                   <option value="Meeting">Meeting</option>
                   <option value="Task">Task</option>
@@ -334,10 +335,10 @@ export function ScheduleMeetingDialog({
                 </select>
               </div>
               <div className="space-y-1.5">
-                <Label className="text-sm font-bold text-[#6a627c]">Event Type</Label>
+                <Label className="text-sm font-bold text-muted-foreground">Event Type</Label>
                 <select
                   {...register('eventType')}
-                  className="h-11 w-full rounded-lg border border-[#ddd8e8] bg-white px-2 text-sm font-semibold text-[#4c455e] outline-none focus:border-[#be8de4] md:text-base"
+                  className="h-11 w-full rounded-lg border border-border bg-white px-2 text-sm font-semibold text-foreground/80 outline-none focus:border-brand/40 md:text-base"
                 >
                   <option value="General">General</option>
                   <option value="Booking">Booking</option>
@@ -350,27 +351,27 @@ export function ScheduleMeetingDialog({
             </div>
 
             <div className="space-y-1.5">
-              <Label className="text-sm font-bold text-[#6a627c]">Meeting Location</Label>
+              <Label className="text-sm font-bold text-muted-foreground">Meeting Location</Label>
               <Input
                 {...register('location')}
                 placeholder="Location"
-                className="h-11 rounded-lg border-[#ddd8e8] px-3 text-sm font-semibold text-[#4c455e] md:text-base"
+                className="h-11 rounded-lg border-border px-3 text-sm font-semibold text-foreground/80 md:text-base"
               />
             </div>
 
             <div className="space-y-1.5">
-              <Label className="text-sm font-bold text-[#6a627c]">Description</Label>
+              <Label className="text-sm font-bold text-muted-foreground">Description</Label>
               <textarea
                 {...register('description')}
                 placeholder="Optional notes"
-                className="h-24 w-full resize-none rounded-lg border border-[#ddd8e8] bg-white px-3 py-3 text-sm font-semibold text-[#4c455e] outline-none placeholder:text-[#a49cb3] focus:border-[#be8de4] md:text-base"
+                className="h-24 w-full resize-none rounded-lg border border-border bg-white px-3 py-3 text-sm font-semibold text-foreground/80 outline-none placeholder:text-muted-foreground/70 focus:border-brand/40 md:text-base"
               />
             </div>
 
             <input type="hidden" {...register('inquiryUserId')} />
 
             {scheduleError ? (
-              <p className="text-xs font-semibold text-[#c33274]" role="alert">
+              <p className="text-xs font-semibold text-brand" role="alert">
                 {scheduleError}
               </p>
             ) : null}
@@ -382,7 +383,7 @@ export function ScheduleMeetingDialog({
               <Button
                 type="submit"
                 disabled={organizersLoading || organizers.length === 0 || isSubmitting}
-                className="bg-linear-to-r from-[#f347a5] to-[#8f1fd1] text-white hover:brightness-105"
+                className="bg-linear-to-r from-brand to-brand-deep text-white hover:brightness-105"
               >
                 Confirm Appointment
               </Button>
