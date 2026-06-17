@@ -21,6 +21,16 @@ body {
   overflow-x: hidden !important;
   background-color: #fdf8fc;
   overscroll-behavior-y: none;
+  -ms-overflow-style: none;
+  /* IE and Edge */
+  scrollbar-width: none;
+  /* Firefox */
+}
+
+html::-webkit-scrollbar,
+body::-webkit-scrollbar {
+  display: none;
+  /* Chrome, Safari and Opera */
 }
 
 /* FORCE OVERRIDE RADIX UI SCROLL LOCK (High Specificity) */
@@ -278,6 +288,7 @@ body {
 }
 
 @layer utilities {
+
   /* Signature brand gradient — pink → purple */
   .text-gradient-brand {
     background: linear-gradient(110deg, #ff0066 30%, #700f81 90%);
@@ -463,6 +474,7 @@ body {
 }
 
 @keyframes pulse {
+
   0%,
   100% {
     transform: scale(1);
@@ -474,6 +486,7 @@ body {
 }
 
 @keyframes bounce {
+
   0%,
   60%,
   100% {
@@ -711,7 +724,8 @@ body {
 .rdp-booked-date button,
 button[data-booked='true'] {
   background-color: transparent !important;
-  color: #b91c1c !important; /* Dark Red */
+  color: #b91c1c !important;
+  /* Dark Red */
   opacity: 0.6 !important;
   font-weight: 600 !important;
   text-decoration: line-through !important;
@@ -746,27 +760,36 @@ button[data-booked='true'] {
 
 /* Floating particle animations for the footer */
 @keyframes float-slow {
-  0%, 100% {
+
+  0%,
+  100% {
     transform: translateY(0) translateX(0);
   }
+
   50% {
     transform: translateY(-12px) translateX(6px);
   }
 }
 
 @keyframes float-medium {
-  0%, 100% {
+
+  0%,
+  100% {
     transform: translateY(0) translateX(0);
   }
+
   50% {
     transform: translateY(-20px) translateX(-10px);
   }
 }
 
 @keyframes float-fast {
-  0%, 100% {
+
+  0%,
+  100% {
     transform: translateY(0) translateX(0);
   }
+
   50% {
     transform: translateY(-8px) translateX(4px);
   }
