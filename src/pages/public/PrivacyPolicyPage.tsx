@@ -1,4 +1,4 @@
-import { Shield, Database, Share2, Lock, UserCheck, Mail, RefreshCw } from 'lucide-react';
+import { Shield, Eye, Globe, Lock, Mail, RefreshCw } from 'lucide-react';
 import LoadingScreen from '@/components/ui/LoadingScreen';
 import ScrollReveal from '@/components/ui/ScrollReveal';
 
@@ -12,19 +12,18 @@ export default function PrivacyPolicyPage() {
       {/* ── Hero Section ── */}
       <ScrollReveal variant="fade">
         <section
-          className="relative -mt-[88px] flex min-h-[50vh] flex-col overflow-hidden bg-cover bg-center bg-no-repeat sm:-mt-[110px] md:min-h-[60vh] lg:-mt-[173px] lg:min-h-[70vh]"
+          className="relative -mt-16 md:-mt-20 flex min-h-[40vh] md:min-h-[50vh] flex-col overflow-hidden bg-cover bg-center bg-no-repeat"
           style={{ backgroundImage: `url(${textureImage})` }}
         >
           <div className="absolute inset-0 bg-black/60" />
 
-          <div className="relative z-10 flex h-full flex-col items-center justify-center px-4 py-[140px] sm:py-[200px] md:py-[250px] lg:py-[300px] text-center sm:px-6 animate-fade-in-up">
+          <div className="relative z-10 flex h-full flex-col items-center justify-center px-4 pb-16 pt-32 sm:pb-20 sm:pt-40 md:pb-24 md:pt-48 text-center sm:px-6 animate-fade-in-up">
             <h1 className="font-heading text-[clamp(2.5rem,6vw,4rem)] font-bold leading-tight text-white">
               Privacy Policy
             </h1>
             <p className="mt-4 max-w-[45rem] text-[clamp(0.85rem,1.5vw,1.1rem)] leading-[1.7] text-gray-300">
-              At Schatzies Events Management, we are committed to protecting your privacy and
-              ensuring the security of your personal information. This Privacy Policy explains how
-              we collect, use, and safeguard your data when you use our services.
+              At Schatzies Events Management, your privacy matters to us. This policy explains how
+              our website operates and what you can expect when you visit.
             </p>
           </div>
 
@@ -49,22 +48,33 @@ export default function PrivacyPolicyPage() {
         <div className="mx-auto max-w-[800px] space-y-10">
           <ScrollReveal variant="up">
             <div className="flex items-start gap-4">
-              <Database className="h-6 w-6 text-brand mt-1 shrink-0" />
+              <Eye className="h-6 w-6 text-brand mt-1 shrink-0" />
               <div>
                 <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-3 font-heading">
-                  Information We Collect
+                  No Personal Data Collection
                 </h2>
-                <ul className="list-disc list-inside text-gray-700 text-[0.95rem] leading-[1.8] space-y-1">
-                  <li>
-                    Personal information such as name, email address, phone number, and contact
-                    details
-                  </li>
-                  <li>
-                    Event-related information including event type, date, venue, and guest details
-                  </li>
-                  <li>Payment information for processing transactions</li>
-                  <li>Communication records and preferences</li>
-                </ul>
+                <p className="text-gray-700 text-[0.95rem] leading-[1.8]">
+                  Our website is designed purely for browsing. We do not collect, store, or process
+                  any personal information from visitors. There are no sign-up forms, user accounts,
+                  newsletter subscriptions, or any other mechanisms that gather your personal data on
+                  this website.
+                </p>
+              </div>
+            </div>
+          </ScrollReveal>
+
+          <ScrollReveal variant="up" delay={100}>
+            <div className="flex items-start gap-4">
+              <Globe className="h-6 w-6 text-brand mt-1 shrink-0" />
+              <div>
+                <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-3 font-heading">
+                  How You Use Our Website
+                </h2>
+                <p className="text-gray-700 text-[0.95rem] leading-[1.8]">
+                  As a visitor, you can freely browse our services, event packages, gallery, and all
+                  other public pages without providing any personal information. Our website serves as
+                  an informational showcase of Schatzies Events Management&apos;s offerings.
+                </p>
               </div>
             </div>
           </ScrollReveal>
@@ -74,31 +84,13 @@ export default function PrivacyPolicyPage() {
               <Shield className="h-6 w-6 text-brand mt-1 shrink-0" />
               <div>
                 <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-3 font-heading">
-                  How We Use Your Information
-                </h2>
-                <ul className="list-disc list-inside text-gray-700 text-[0.95rem] leading-[1.8] space-y-1">
-                  <li>To provide and manage event planning services</li>
-                  <li>To communicate with you about your events and our services</li>
-                  <li>To process payments and maintain financial records</li>
-                  <li>To improve our services and customer experience</li>
-                  <li>To comply with legal obligations</li>
-                </ul>
-              </div>
-            </div>
-          </ScrollReveal>
-
-          <ScrollReveal variant="up" delay={100}>
-            <div className="flex items-start gap-4">
-              <Share2 className="h-6 w-6 text-brand mt-1 shrink-0" />
-              <div>
-                <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-3 font-heading">
-                  Information Sharing
+                  Cookies &amp; Local Storage
                 </h2>
                 <p className="text-gray-700 text-[0.95rem] leading-[1.8]">
-                  We do not sell, trade, or otherwise transfer your personal information to third
-                  parties without your consent, except as described in this policy or required by
-                  law. We may share information with trusted service providers who assist us in
-                  operating our business.
+                  Our website may use essential cookies or local storage tokens solely for the
+                  technical operation of the site (such as authentication tokens for internal
+                  administrative use). These are not used to track, profile, or identify public
+                  visitors in any way. For more details, please see our Cookie Policy.
                 </p>
               </div>
             </div>
@@ -109,28 +101,13 @@ export default function PrivacyPolicyPage() {
               <Lock className="h-6 w-6 text-brand mt-1 shrink-0" />
               <div>
                 <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-3 font-heading">
-                  Data Security
+                  Third-Party Services
                 </h2>
                 <p className="text-gray-700 text-[0.95rem] leading-[1.8]">
-                  We implement appropriate security measures to protect your personal information
-                  against unauthorized access, alteration, disclosure, or destruction. However, no
-                  method of transmission over the internet is 100% secure.
-                </p>
-              </div>
-            </div>
-          </ScrollReveal>
-
-          <ScrollReveal variant="up" delay={100}>
-            <div className="flex items-start gap-4">
-              <UserCheck className="h-6 w-6 text-brand mt-1 shrink-0" />
-              <div>
-                <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-3 font-heading">
-                  Your Rights
-                </h2>
-                <p className="text-gray-700 text-[0.95rem] leading-[1.8]">
-                  You have the right to access, update, or delete your personal information. You may
-                  also opt out of marketing communications at any time. To exercise these rights,
-                  please contact us using the information provided in our Contact page.
+                  Our website does not integrate third-party analytics, advertising networks, or
+                  social media tracking tools that collect visitor data. Any external links on our
+                  website will take you to third-party sites that have their own privacy policies,
+                  which we encourage you to review.
                 </p>
               </div>
             </div>
@@ -165,15 +142,15 @@ export default function PrivacyPolicyPage() {
                   Updates To This Policy
                 </h2>
                 <p className="text-gray-700 text-[0.95rem] leading-[1.8]">
-                  We may update this Privacy Policy from time to time. We will notify you of any
-                  changes by posting the new policy on this page and updating the effective date.
+                  We may update this Privacy Policy from time to time. Any changes will be posted on
+                  this page with an updated effective date.
                 </p>
               </div>
             </div>
           </ScrollReveal>
 
           <ScrollReveal variant="fade">
-            <p className="text-brand text-sm font-semibold pt-4">Last updated: 6/10/2026</p>
+            <p className="text-brand text-sm font-semibold pt-4">Last updated: 6/17/2026</p>
           </ScrollReveal>
         </div>
       </section>

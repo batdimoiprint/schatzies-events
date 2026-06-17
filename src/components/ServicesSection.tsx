@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import ScrollReveal from '@/components/ui/ScrollReveal';
+import { renderContentText } from '@/hooks/useContent';
 
 /* ─────────────────────────────────────────────────────────
  * ServicesSection — "A Love Story Told in Every Detail"
@@ -448,9 +449,69 @@ function FloatingDiamonds() {
 }
 
 /* ── Main Services Section ── */
-export default function ServicesSection() {
+/* ── Main Services Section ── */
+export default function ServicesSection({
+  weddingsContent,
+  debutsContent,
+}: {
+  weddingsContent?: { title: string; body: string };
+  debutsContent?: { title: string; body: string };
+}) {
   const sectionRef = useRef<HTMLElement>(null);
   const [isVisible, setIsVisible] = useState(false);
+
+  const weddingTitle = weddingsContent?.title ?? 'A *Love Story* Told in Every Detail';
+  const weddingBody = weddingsContent?.body ?? 'We don’t just plan weddings; we protect your peace. From intimate vows to grand ballrooms, we ensure the only thing you focus on is the person at the end of the aisle.';
+
+  const debutTitle = debutsContent?.title ?? "*Your 18th:* More Than a Birthday, It's a *Milestone*";
+  const debutBody = debutsContent?.body ?? 'Eighteen years in the making, designed in a single night. We transform your milestone into a cinematic celebration that captures exactly who you are and who you’re becoming.';
+
+  const renderWeddingTitle = (text: string) => {
+    const parts = text.split(/(\*[^*]+\*)/g);
+    return parts.map((part, i) => {
+      if (part.startsWith('*') && part.endsWith('*')) {
+        return (
+          <span
+            key={i}
+            className="italic"
+            style={{
+              background: 'linear-gradient(135deg, #ff0066, #ff3385)',
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+            }}
+          >
+            {part.slice(1, -1)}
+          </span>
+        );
+      }
+      return part;
+    });
+  };
+
+  const renderDebutTitle = (text: string) => {
+    const parts = text.split(/(\*[^*]+\*)/g);
+    let starCount = 0;
+    return parts.map((part, i) => {
+      if (part.startsWith('*') && part.endsWith('*')) {
+        const isSecond = starCount > 0;
+        starCount++;
+        return (
+          <span
+            key={i}
+            className={`italic ${isSecond ? 'underline decoration-[#ff0066]/30 underline-offset-4' : ''}`}
+            style={{
+              background: 'linear-gradient(135deg, #ff0066, #ff3385)',
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+            }}
+          >
+            {part.slice(1, -1)}
+          </span>
+        );
+      }
+      return part;
+    });
+  };
 
   useEffect(() => {
     const el = sectionRef.current;
@@ -476,7 +537,7 @@ export default function ServicesSection() {
       <section
         ref={sectionRef}
         id="weddings"
-        className="relative overflow-hidden bg-black min-h-screen max-h-screen flex items-center justify-center py-12 lg:py-0"
+        className="relative overflow-hidden bg-black min-h-screen lg:max-h-screen flex items-center justify-center py-12 lg:py-0"
       >
         {/* ── SVG animated backgrounds ── */}
         <SilkWaves />
@@ -492,20 +553,7 @@ export default function ServicesSection() {
             {/* Left — text */}
             <ScrollReveal variant="left" className="space-y-6 lg:order-1">
               <h3 className="font-heading text-[clamp(2.2rem,5vw,3.8rem)] leading-[1.02] text-white">
-                A{' '}
-                <span
-                  className="italic"
-                  style={{
-                    background: 'linear-gradient(135deg, #ff0066, #ff3385)',
-                    WebkitBackgroundClip: 'text',
-                    WebkitTextFillColor: 'transparent',
-                  }}
-                >
-                  Love Story
-                </span>{' '}
-                Told in
-                <br />
-                Every Detail
+                {renderWeddingTitle(weddingTitle)}
               </h3>
 
               {/* Animated heart + rule line */}
@@ -514,10 +562,8 @@ export default function ServicesSection() {
                 <div className="h-px flex-1 bg-gradient-to-r from-[#ff0066]/40 to-transparent" />
               </div>
 
-              <p className="max-w-md font-sans text-base leading-[1.7] text-white/65 lg:text-[1.05rem]">
-                We don&rsquo;t just plan weddings; we protect your peace. From
-                intimate vows to grand ballrooms, we ensure the only thing you
-                focus on is the person at the end of the aisle.
+              <p className="max-w-md font-sans text-base leading-[1.7] text-white/65 lg:text-[1.05rem] whitespace-pre-line">
+                {renderContentText(weddingBody, 'text-[#ff0066] font-semibold')}
               </p>
             </ScrollReveal>
 
@@ -537,7 +583,7 @@ export default function ServicesSection() {
       {/* ═══════════ DEBUT SECTION ═══════════ */}
       <section
         id="debuts"
-        className="relative overflow-hidden bg-black min-h-screen max-h-screen flex items-center justify-center py-12 lg:py-0"
+        className="relative overflow-hidden bg-black min-h-screen lg:max-h-screen flex items-center justify-center py-12 lg:py-0"
       >
         {/* ── SVG animated backgrounds ── */}
         <SilkWaves />
@@ -574,29 +620,7 @@ export default function ServicesSection() {
             {/* Right — text */}
             <ScrollReveal variant="right" className="space-y-6 lg:order-2">
               <h3 className="font-heading text-[clamp(2.2rem,5vw,3.8rem)] leading-[1.02] text-white">
-                <span
-                  className="italic"
-                  style={{
-                    background: 'linear-gradient(135deg, #ff0066, #ff3385)',
-                    WebkitBackgroundClip: 'text',
-                    WebkitTextFillColor: 'transparent',
-                  }}
-                >
-                  Your 18th:
-                </span>{' '}
-                More Than a
-                <br />
-                Birthday, It&rsquo;s a{' '}
-                <span
-                  className="italic underline decoration-[#ff0066]/30 underline-offset-4"
-                  style={{
-                    background: 'linear-gradient(135deg, #ff0066, #ff3385)',
-                    WebkitBackgroundClip: 'text',
-                    WebkitTextFillColor: 'transparent',
-                  }}
-                >
-                  Milestone
-                </span>
+                {renderDebutTitle(debutTitle)}
               </h3>
 
               {/* Animated rings + rule line */}
@@ -605,10 +629,8 @@ export default function ServicesSection() {
                 <div className="h-px flex-1 bg-gradient-to-r from-[#ff0066]/40 to-transparent" />
               </div>
 
-              <p className="max-w-md font-sans text-base leading-[1.7] text-white/65 lg:text-[1.05rem]">
-                Eighteen years in the making, designed in a single night. We
-                transform your milestone into a cinematic celebration that
-                captures exactly who you are and who you&rsquo;re becoming.
+              <p className="max-w-md font-sans text-base leading-[1.7] text-white/65 lg:text-[1.05rem] whitespace-pre-line">
+                {renderContentText(debutBody, 'text-[#ff0066] font-semibold')}
               </p>
             </ScrollReveal>
           </div>

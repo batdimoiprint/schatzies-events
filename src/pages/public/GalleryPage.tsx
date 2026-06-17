@@ -81,7 +81,7 @@ export default function GalleryPage() {
 
       {/* ── Hero ── */}
       <section
-        className="relative -mt-20 flex min-h-[60vh] items-end overflow-hidden bg-ink bg-cover bg-center lg:min-h-[72vh]"
+        className="relative -mt-16 md:-mt-20 flex min-h-[60vh] items-end overflow-hidden bg-ink bg-cover bg-center lg:min-h-[72vh]"
         style={{ backgroundImage: `url(${heroImage})` }}
       >
         <div className="absolute inset-0 bg-gradient-to-t from-ink/85 via-ink/45 to-ink/30" />
