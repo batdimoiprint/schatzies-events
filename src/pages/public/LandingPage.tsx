@@ -171,10 +171,7 @@ function HeroSection({ heroContent }: { heroContent?: { title: string; body: str
       <div className="page-gutter mx-auto grid min-h-screen max-w-[1500px] grid-cols-1 items-center gap-10 pt-28 pb-16 lg:grid-cols-[1.05fr_0.95fr] lg:gap-16 lg:pt-24 lg:pb-0">
         {/* Left — type */}
         <div className="relative z-10">
-          <div className="animate-fade-in-up flex items-center gap-4">
-            <span className="h-px w-12 bg-gold" />
-            <span className="eyebrow text-brand">Wedding &amp; Debut Atelier — Philippines</span>
-          </div>
+
 
           <h1 className="animate-fade-in-up animation-delay-200 mt-7 font-heading leading-[0.92] text-ink">
             <span className="block text-2xl font-normal italic text-ink/60 sm:text-3xl">
@@ -253,9 +250,8 @@ function HeroSection({ heroContent }: { heroContent?: { title: string; body: str
                 key={i}
                 onClick={() => setIndex(i)}
                 aria-label={`Go to image ${i + 1}`}
-                className={`h-[3px] rounded-full transition-all duration-500 ${
-                  i === index ? 'w-7 bg-gold' : 'w-2 bg-ivory/60 hover:bg-ivory'
-                }`}
+                className={`h-[3px] rounded-full transition-all duration-500 ${i === index ? 'w-7 bg-gold' : 'w-2 bg-ivory/60 hover:bg-ivory'
+                  }`}
               />
             ))}
           </div>

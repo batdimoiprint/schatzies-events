@@ -100,7 +100,7 @@ export default function AboutUsPage() {
           <ScrollReveal variant="up">
             <div className="flex items-center gap-4">
               <span className="h-px w-12 bg-gold" />
-              <span className="eyebrow text-ivory/90">Our Story — Est. 2011</span>
+
             </div>
             <h1 className="mt-6 max-w-4xl font-heading text-[clamp(2.5rem,6.5vw,5.25rem)] leading-[0.96] font-semibold text-ivory">
               {renderContentText(heroTitle, 'italic text-gold')}
