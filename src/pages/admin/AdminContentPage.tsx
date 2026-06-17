@@ -44,6 +44,30 @@ const PAGES_CONFIG: PageConfig[] = [
     ],
   },
   {
+    id: 'gallery',
+    name: 'Gallery',
+    description: 'Manage Gallery Hero banner copy.',
+    sections: [
+      { id: 'hero', name: 'Gallery Hero', isMultilineTitle: true },
+    ],
+  },
+  {
+    id: 'services',
+    name: 'Services',
+    description: 'Manage Services Hero banner copy.',
+    sections: [
+      { id: 'hero', name: 'Services Hero', isMultilineTitle: true },
+    ],
+  },
+  {
+    id: 'packages',
+    name: 'Collections',
+    description: 'Manage Collections / Packages Hero banner copy.',
+    sections: [
+      { id: 'hero', name: 'Collections Hero', isMultilineTitle: true },
+    ],
+  },
+  {
     id: 'footer',
     name: 'Footer',
     description: 'Manage brand name and main description statement at the bottom of all pages.',

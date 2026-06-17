@@ -64,6 +64,24 @@ export const DEFAULT_SITE_CONTENT: SiteContent = {
       body: 'Expertly managing the details so you can focus on the moment. We specialize in all-inclusive event solutions that are both affordable and adaptable.',
     },
   },
+  gallery: {
+    hero: {
+      title: 'The Portfolio\nGallery.',
+      body: 'A collection of timeless moments, unforgettable milestones, and dreams turned into reality.',
+    },
+  },
+  services: {
+    hero: {
+      title: 'Schatzies Atelier — Services\nYour perfect event, *starts here.*',
+      body: 'From planning to execution, we offer everything you need to bring your dream event to life.',
+    },
+  },
+  packages: {
+    hero: {
+      title: 'Our Collections\nYour dream celebration, *all-in-one.*',
+      body: '17 years of perfecting the hassle-free milestone. Explore our curated wedding and debut collections designed to handle every detail.',
+    },
+  },
   footer: {
     brand: {
       title: 'Schatzies *Events*',

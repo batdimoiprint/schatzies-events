@@ -7,6 +7,7 @@ import LoadingScreen from '@/components/ui/LoadingScreen';
 import ScrollReveal from '@/components/ui/ScrollReveal';
 import { getPackages, type EventPackage } from '@/api/packages';
 import { sortPackages, toCardItem, toSlug } from '@/utils/package-display';
+import { useContent, renderContentText } from '@/hooks/useContent';
 
 const heroImage = '/Pictures/packages-hero.jpg';
 
@@ -62,6 +63,14 @@ export default function EventPackagesPage() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
 
+  const { sections } = useContent('packages');
+  const heroTitle = sections.hero?.title ?? 'Our Collections\nYour dream celebration, *all-in-one.*';
+  const heroBody = sections.hero?.body ?? '17 years of perfecting the hassle-free milestone. Explore our curated wedding and debut collections designed to handle every detail.';
+
+  const titleLines = heroTitle.split('\n');
+  const eyebrow = titleLines[0] || 'Our Collections';
+  const heading = titleLines[1] || 'Your dream celebration, *all-in-one.*';
+
   const { data: weddingData = [], isLoading: weddingLoading } = useQuery<EventPackage[]>({
     queryKey: ['packages', 'Wedding'],
     queryFn: () => getPackages('Wedding'),
@@ -97,15 +106,13 @@ export default function EventPackagesPage() {
           <ScrollReveal variant="up">
             <div className="flex items-center gap-4">
               <span className="h-px w-12 bg-gold" />
-              <span className="eyebrow text-ivory/90">Our Collections</span>
+              <span className="eyebrow text-ivory/90">{renderContentText(eyebrow, 'italic text-gold')}</span>
             </div>
             <h1 className="mt-6 max-w-3xl font-heading text-[clamp(2.5rem,7vw,5.5rem)] font-semibold leading-[0.96] text-ivory">
-              Your dream celebration,{' '}
-              <span className="italic text-gold">all-in-one.</span>
+              {renderContentText(heading, 'italic text-gold')}
             </h1>
             <p className="mt-5 max-w-xl font-sans text-base leading-relaxed text-ivory/75 lg:text-lg">
-              17 years of perfecting the hassle-free milestone. Explore our curated wedding
-              and debut collections designed to handle every detail.
+              {renderContentText(heroBody, 'font-semibold text-gold')}
             </p>
           </ScrollReveal>
         </div>

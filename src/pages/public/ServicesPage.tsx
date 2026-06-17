@@ -5,6 +5,7 @@ import { ArrowUpRight } from '@phosphor-icons/react';
 import LoadingScreen from '@/components/ui/LoadingScreen';
 import ScrollReveal from '@/components/ui/ScrollReveal';
 import { GalleryModal } from '@/components/GalleryModal';
+import { useContent, renderContentText } from '@/hooks/useContent';
 
 /* ── Gallery Data ──────────────────────────────────────────── */
 const galleryData = [
@@ -284,6 +285,14 @@ const services = [
 export default function ServicesPage() {
   const [activeGallery, setActiveGallery] = useState<string | null>(null);
 
+  const { sections } = useContent('services');
+  const heroTitle = sections.hero?.title ?? 'Schatzies Atelier — Services\nYour perfect event, *starts here.*';
+  const heroBody = sections.hero?.body ?? 'From planning to execution, we offer everything you need to bring your dream event to life.';
+
+  const titleLines = heroTitle.split('\n');
+  const eyebrow = titleLines[0] || 'Schatzies Atelier — Services';
+  const heading = titleLines[1] || 'Your perfect event, *starts here.*';
+
   const gallery = galleryData.find((g) => g.id === activeGallery);
   const galleryImages = gallery
     ? gallery.images.map((img) => `/Pictures/${gallery.folder}/${img}`)
@@ -303,14 +312,13 @@ export default function ServicesPage() {
           <ScrollReveal variant="up">
             <div className="flex items-center gap-4">
               <span className="h-px w-12 bg-gold" />
-              <span className="eyebrow text-ivory/90">Schatzies Atelier — Services</span>
+              <span className="eyebrow text-ivory/90">{renderContentText(eyebrow, 'italic text-gold')}</span>
             </div>
             <h1 className="mt-6 max-w-3xl font-heading text-[clamp(2.5rem,7vw,5.5rem)] leading-[0.95] font-semibold text-ivory">
-              Your perfect event, <span className="italic text-gold">starts here.</span>
+              {renderContentText(heading, 'italic text-gold')}
             </h1>
             <p className="mt-6 max-w-xl font-sans text-base leading-relaxed text-ivory/75 lg:text-lg">
-              From planning to execution, we offer everything you need to bring your dream event to
-              life.
+              {renderContentText(heroBody, 'font-semibold text-gold')}
             </p>
           </ScrollReveal>
         </div>

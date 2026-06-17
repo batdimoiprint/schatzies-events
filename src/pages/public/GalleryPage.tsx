@@ -7,6 +7,7 @@ import LoadingScreen from '@/components/ui/LoadingScreen';
 import ScrollReveal from '@/components/ui/ScrollReveal';
 import { getPackages, type EventPackage } from '@/api/packages';
 import { toGalleryItems, type GalleryItem } from '@/utils/package-display';
+import { useContent, renderContentText } from '@/hooks/useContent';
 
 const heroImage = '/Pictures/packages-hero.jpg';
 
@@ -63,6 +64,14 @@ export default function GalleryPage() {
   const navigate = useNavigate();
   const [activePhoto, setActivePhoto] = useState<GalleryItem | null>(null);
 
+  const { sections } = useContent('gallery');
+  const heroTitle = sections.hero?.title ?? 'The Portfolio\nGallery.';
+  const heroBody = sections.hero?.body ?? 'A collection of timeless moments, unforgettable milestones, and dreams turned into reality.';
+
+  const titleLines = heroTitle.split('\n');
+  const eyebrow = titleLines[0] || 'The Portfolio';
+  const heading = titleLines[1] || 'Gallery.';
+
   const { data: weddingPackages = [], isLoading: weddingLoading } = useQuery<EventPackage[]>({
     queryKey: ['packages', 'Wedding'],
     queryFn: () => getPackages('Wedding'),
@@ -95,14 +104,13 @@ export default function GalleryPage() {
           <ScrollReveal variant="up">
             <div className="flex items-center gap-4">
               <span className="h-px w-12 bg-gold" />
-              <span className="eyebrow text-ivory/90">The Portfolio</span>
+              <span className="eyebrow text-ivory/90">{renderContentText(eyebrow, 'italic text-gold')}</span>
             </div>
             <h1 className="mt-6 font-heading text-[clamp(3rem,9vw,7rem)] leading-[0.9] font-semibold text-ivory">
-              Gallery<span className="text-gold">.</span>
+              {renderContentText(heading, 'italic text-gold')}
             </h1>
             <p className="mt-5 max-w-xl font-sans text-base leading-relaxed text-ivory/75 lg:text-lg">
-              A collection of timeless moments, unforgettable milestones, and dreams turned into
-              reality.
+              {renderContentText(heroBody, 'font-semibold text-gold')}
             </p>
           </ScrollReveal>
         </div>
