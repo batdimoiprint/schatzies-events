@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { List, X } from '@phosphor-icons/react';
+import { List } from '@phosphor-icons/react';
 import { cn } from '@/lib/utils';
+import { Sheet, SheetContent, SheetTrigger, SheetTitle, SheetHeader } from '@/components/ui/sheet';
 
 const navMenuItems = [
   { label: 'Home', href: '/' },
@@ -16,13 +17,6 @@ export function Navbar() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const location = useLocation();
-
-  useEffect(() => {
-    document.body.style.overflow = mobileOpen ? 'hidden' : '';
-    return () => {
-      document.body.style.overflow = '';
-    };
-  }, [mobileOpen]);
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 24);
@@ -45,7 +39,7 @@ export function Navbar() {
     >
       <div className="page-gutter mx-auto w-full max-w-[1400px]">
         {/* Desktop */}
-        <div className="hidden h-20 items-center justify-between lg:flex">
+        <div className="hidden h-20 items-center justify-between md:flex">
           <Link to="/" className="flex w-fit items-center gap-3">
             <img
               src="/Pictures/business-logo.png"
@@ -54,7 +48,7 @@ export function Navbar() {
             />
           </Link>
 
-          <div className="flex items-center gap-9">
+          <div className="flex items-center gap-4 lg:gap-9">
             {navMenuItems.map((item) => (
               <Link
                 key={item.href}
@@ -78,52 +72,52 @@ export function Navbar() {
         </div>
 
         {/* Mobile */}
-        <div className="flex h-16 items-center justify-between lg:hidden">
-          <Link to="/" onClick={() => setMobileOpen(false)}>
+        <div className="flex h-16 items-center justify-between md:hidden">
+          <Link to="/">
             <img
               src="/Pictures/business-logo.png"
               alt="Schatzies Events"
               className="h-11 w-auto object-contain"
             />
           </Link>
-          <button
-            onClick={() => setMobileOpen((v) => !v)}
-            aria-label={mobileOpen ? 'Close menu' : 'Open menu'}
-            aria-expanded={mobileOpen}
-            className="flex h-10 w-10 items-center justify-center text-ink transition hover:text-brand"
-          >
-            {mobileOpen ? <X size={24} /> : <List size={24} />}
-          </button>
-        </div>
-      </div>
-
-      {/* Mobile editorial drawer */}
-      <div
-        className={cn(
-          'grain relative overflow-hidden bg-ink text-ivory transition-all duration-500 lg:hidden',
-          mobileOpen ? 'max-h-[90vh] border-t border-gold/30' : 'max-h-0'
-        )}
-      >
-        <div className="page-gutter flex flex-col gap-1 py-8">
-          <p className="eyebrow mb-4 text-gold">The House of Schatzies</p>
-          {navMenuItems.map((item, i) => (
-            <Link
-              key={item.href}
-              to={item.href}
-              onClick={() => {
-                setMobileOpen(false);
-                window.scrollTo(0, 0);
-              }}
-              style={{ transitionDelay: mobileOpen ? `${i * 60 + 100}ms` : '0ms' }}
-              className={cn(
-                'border-b border-ivory/10 py-4 font-heading text-3xl transition-all duration-500',
-                mobileOpen ? 'translate-y-0 opacity-100' : 'translate-y-3 opacity-0',
-                isActive(item.href) ? 'text-gold italic' : 'text-ivory'
-              )}
+          
+          <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
+            <SheetTrigger asChild>
+              <button
+                aria-label="Open menu"
+                className="flex h-10 w-10 items-center justify-center text-ink transition hover:text-brand"
+              >
+                <List size={24} />
+              </button>
+            </SheetTrigger>
+            <SheetContent
+              side="right"
+              className="grain bg-ink text-ivory border-l border-gold/30 p-0 w-[280px] sm:w-[350px] z-[9999]"
             >
-              {item.label}
-            </Link>
-          ))}
+              <SheetHeader className="sr-only">
+                <SheetTitle>Navigation Menu</SheetTitle>
+              </SheetHeader>
+              <div className="flex flex-col gap-1 py-8 px-6 mt-12 overflow-y-auto h-full">
+                <p className="eyebrow mb-4 text-gold">The House of Schatzies</p>
+                {navMenuItems.map((item) => (
+                  <Link
+                    key={item.href}
+                    to={item.href}
+                    onClick={() => {
+                      setMobileOpen(false);
+                      window.scrollTo(0, 0);
+                    }}
+                    className={cn(
+                      'border-b border-ivory/10 py-4 font-heading text-3xl transition-all duration-300',
+                      isActive(item.href) ? 'text-gold italic' : 'text-ivory'
+                    )}
+                  >
+                    {item.label}
+                  </Link>
+                ))}
+              </div>
+            </SheetContent>
+          </Sheet>
         </div>
       </div>
     </nav>

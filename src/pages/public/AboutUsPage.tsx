@@ -1,5 +1,6 @@
 import LoadingScreen from '@/components/ui/LoadingScreen';
 import ScrollReveal from '@/components/ui/ScrollReveal';
+import { useContent, renderContentText } from '@/hooks/useContent';
 
 const heroImage = '/Pictures/about-hero.jpg';
 const aboutImage = '/Pictures/about-section.jpg';
@@ -50,37 +51,48 @@ function BudgetIcon() {
   );
 }
 
-const reasons = [
-  {
-    Icon: YearsIcon,
-    title: 'since 2011',
-    body: 'A decade and a half of helping many clients turn special occasions into perfectly managed, memorable events.',
-  },
-  {
-    Icon: LocalIcon,
-    title: "The Local's Choice",
-    body: 'Your trusted partner right here in the Philippines. We handle every detail of your local celebration so you can focus on enjoying your special day with loved ones.',
-  },
-  {
-    Icon: InclusiveIcon,
-    title: 'All-Inclusive Ease',
-    body: 'Complete event packages that handle everything—from elegant venue styling and buffet catering to professional photo and video coverage.',
-  },
-  {
-    Icon: BudgetIcon,
-    title: 'Budget-Friendly Luxury',
-    body: 'Expertly managing the details so you can focus on the moment. We specialize in all-inclusive event solutions that are both affordable and adaptable.',
-  },
-];
-
 export default function AboutUsPage() {
+  const { sections } = useContent('about-us');
+
+  const heroTitle = sections.hero?.title ?? 'Years of turning dreams into *milestones.*';
+  const heroBody = sections.hero?.body ?? 'At Schatzies Events PH, we believe you should be a guest at your own celebration. Since 2011, we&rsquo;ve been the trusted partner for families and couples across the Philippines and beyond.';
+
+  const aboutTitle = sections.aboutSplit?.title ?? 'About *us*.';
+  const aboutBody = sections.aboutSplit?.body ?? 'Known for our complete and affordable packages, our goal is simple: simplicity. From venue styling to full program coordination, we work closely with you to ensure your event runs flawlessly.';
+
+  const whyChooseTitle = sections.whyChoose?.title ?? 'Why choose *Schatzies?*';
+  const whyChooseBody = sections.whyChoose?.body ?? 'With years of expertise since 2011, we turn complex logistics into seamless celebrations. As your reliable on-the-ground partner, we handle the details so you can simply stay in the moment.';
+
+  const dynamicReasons = [
+    {
+      Icon: YearsIcon,
+      title: sections.reason1?.title ?? 'since 2011',
+      body: sections.reason1?.body ?? 'A decade and a half of helping many clients turn special occasions into perfectly managed, memorable events.',
+    },
+    {
+      Icon: LocalIcon,
+      title: sections.reason2?.title ?? "The Local's Choice",
+      body: sections.reason2?.body ?? 'Your trusted partner right here in the Philippines. We handle every detail of your local celebration so you can focus on enjoying your special day with loved ones.',
+    },
+    {
+      Icon: InclusiveIcon,
+      title: sections.reason3?.title ?? 'All-Inclusive Ease',
+      body: sections.reason3?.body ?? 'Complete event packages that handle everything—from elegant venue styling and buffet catering to professional photo and video coverage.',
+    },
+    {
+      Icon: BudgetIcon,
+      title: sections.reason4?.title ?? 'Budget-Friendly Luxury',
+      body: sections.reason4?.body ?? 'Expertly managing the details so you can focus on the moment. We specialize in all-inclusive event solutions that are both affordable and adaptable.',
+    },
+  ];
+
   return (
     <>
       <LoadingScreen />
 
       {/* ── Hero ── */}
       <section
-        className="relative -mt-20 flex min-h-[72vh] items-end overflow-hidden bg-ink bg-cover bg-center lg:min-h-[88vh]"
+        className="relative -mt-16 md:-mt-20 flex min-h-[72vh] items-end overflow-hidden bg-ink bg-cover bg-center lg:min-h-[88vh]"
         style={{ backgroundImage: `url(${heroImage})` }}
       >
         <div className="absolute inset-0 bg-gradient-to-t from-ink/85 via-ink/45 to-ink/25" />
@@ -88,16 +100,13 @@ export default function AboutUsPage() {
           <ScrollReveal variant="up">
             <div className="flex items-center gap-4">
               <span className="h-px w-12 bg-gold" />
-              <span className="eyebrow text-ivory/90">Our Story — Est. 2011</span>
+
             </div>
             <h1 className="mt-6 max-w-4xl font-heading text-[clamp(2.5rem,6.5vw,5.25rem)] leading-[0.96] font-semibold text-ivory">
-              Years of turning dreams into{' '}
-              <span className="italic text-gold">milestones.</span>
+              {renderContentText(heroTitle, 'italic text-gold')}
             </h1>
             <p className="mt-6 max-w-2xl font-sans text-base leading-relaxed text-ivory/75 lg:text-lg">
-              At Schatzies Events PH, we believe you should be a guest at your own celebration. Since
-              2011, we&rsquo;ve been the trusted partner for families and couples across the
-              Philippines and beyond.
+              {renderContentText(heroBody, 'font-semibold text-gold')}
             </p>
           </ScrollReveal>
         </div>
@@ -109,13 +118,11 @@ export default function AboutUsPage() {
           <ScrollReveal variant="left">
             <p className="eyebrow text-brand">Who We Are</p>
             <h2 className="mt-6 font-heading text-[clamp(2.25rem,5vw,3.75rem)] leading-[1.04] text-ink">
-              About <span className="italic text-brand">us</span>.
+              {renderContentText(aboutTitle, 'italic text-brand')}
             </h2>
             <div className="rule-gold mt-7 w-32" />
             <p className="mt-8 font-sans text-base leading-relaxed text-ink/70 lg:text-lg">
-              Known for our complete and affordable packages, our goal is simple: simplicity. From
-              venue styling to full program coordination, we work closely with you to ensure your
-              event runs flawlessly.
+              {aboutBody}
             </p>
           </ScrollReveal>
 
@@ -134,18 +141,16 @@ export default function AboutUsPage() {
           <ScrollReveal variant="up" className="mb-16 max-w-3xl">
             <p className="eyebrow text-gold">The Difference</p>
             <h2 className="mt-6 font-heading text-[clamp(2.25rem,5.5vw,4rem)] leading-[1.05] text-ivory">
-              Why choose <span className="italic text-gold">Schatzies?</span>
+              {renderContentText(whyChooseTitle, 'italic text-gold')}
             </h2>
             <div className="rule-gold mt-7 w-40" />
             <p className="mt-7 font-sans text-base leading-relaxed text-ivory/70 lg:text-lg">
-              With years of expertise since 2011, we turn complex logistics into seamless celebrations.
-              As your reliable on-the-ground partner, we handle the details so you can simply stay in
-              the moment.
+              {whyChooseBody}
             </p>
           </ScrollReveal>
 
           <div className="grid gap-px overflow-hidden rounded-sm border border-ink/[0.08] bg-ink/[0.08] sm:grid-cols-2 lg:grid-cols-4">
-            {reasons.map(({ Icon, title, body }, i) => (
+            {dynamicReasons.map(({ Icon, title, body }, i) => (
               <ScrollReveal
                 key={title}
                 variant="up"

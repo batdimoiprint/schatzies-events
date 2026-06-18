@@ -36,6 +36,7 @@ import { PackageManagementPage } from '@/pages/admin/PackageManagementPage';
 import { BusinessProfilePage } from '@/pages/admin/BusinessProfilePage';
 import { AdminGalleryPage } from '@/pages/admin/AdminGalleryPage';
 import { AdminPackageEditPage } from '@/pages/admin/AdminPackageEditPage';
+import { AdminContentPage } from '@/pages/admin/AdminContentPage';
 
 // Organizer Pages
 import { OrganizerDashboard } from '@/pages/organizer/OrganizerDashboard';
@@ -173,6 +174,10 @@ const router = createBrowserRouter(
         {
           path: 'event-packages/:eventType/:packageSlug',
           Component: AdminPackageEditPage,
+        },
+        {
+          path: 'content',
+          Component: AdminContentPage,
         },
         {
           path: 'profile',

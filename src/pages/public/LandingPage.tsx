@@ -11,6 +11,7 @@ import {
 import ScrollReveal from '@/components/ui/ScrollReveal';
 import ServicesSection from '@/components/ServicesSection';
 import { useBusinessContact } from '@/hooks/useBusinessContact';
+import { useContent, renderContentText } from '@/hooks/useContent';
 
 // Gallery images — equal count per row for balanced marquee
 const galleryRow1 = [
@@ -69,12 +70,13 @@ const testimonials = [
 ];
 
 export function LandingPage() {
+  const { sections } = useContent('homepage');
   return (
     <>
-      <HeroSection />
-      <SpotlightSection />
-      <ServicesSection />
-      <TestimonialsSection />
+      <HeroSection heroContent={sections.hero} />
+      <SpotlightSection spotlightContent={sections.spotlight} />
+      <ServicesSection weddingsContent={sections.weddings} debutsContent={sections.debuts} />
+      <TestimonialsSection testimonialsContent={sections.testimonials} />
     </>
   );
 }
@@ -124,10 +126,18 @@ function HeroHeartParticles() {
 }
 
 /* ── Hero — editorial split ── */
-function HeroSection() {
+function HeroSection({ heroContent }: { heroContent?: { title: string; body: string } }) {
   const navigate = useNavigate();
   const [index, setIndex] = useState(0);
   const { data: contact } = useBusinessContact();
+
+  const title = heroContent?.title ?? 'Welcome to\nSchatzies\n*Events.*';
+  const body = heroContent?.body ?? 'Premium wedding and debut planning for those who want to be a guest at their own celebration. We handle the stress; you handle the memories. Your most trusted team.';
+
+  const titleLines = title.split('\n');
+  const line1 = titleLines[0] || 'Welcome to';
+  const line2 = titleLines[1] || 'Schatzies';
+  const line3 = titleLines[2] || '*Events.*';
 
   useEffect(() => {
     const t = setInterval(() => setIndex((i) => (i + 1) % heroImages.length), 6000);
@@ -156,32 +166,27 @@ function HeroSection() {
   }
 
   return (
-    <section className="relative bg-ivory w-full min-h-screen lg:max-h-screen lg:overflow-hidden">
+    <section className="relative bg-ivory w-full min-h-screen">
       <HeroHeartParticles />
-      <div className="page-gutter mx-auto grid min-h-screen max-w-[1500px] grid-cols-1 items-center gap-10 pt-28 pb-16 lg:grid-cols-[1.05fr_0.95fr] lg:gap-16 lg:pt-24 lg:pb-0 lg:max-h-screen">
+      <div className="page-gutter mx-auto grid min-h-screen max-w-[1500px] grid-cols-1 items-center gap-10 pt-28 pb-16 lg:grid-cols-[1.05fr_0.95fr] lg:gap-16 lg:pt-24 lg:pb-0">
         {/* Left — type */}
         <div className="relative z-10">
-          <div className="animate-fade-in-up flex items-center gap-4">
-            <span className="h-px w-12 bg-gold" />
-            <span className="eyebrow text-brand">Wedding &amp; Debut Atelier — Philippines</span>
-          </div>
+
 
           <h1 className="animate-fade-in-up animation-delay-200 mt-7 font-heading leading-[0.92] text-ink">
             <span className="block text-2xl font-normal italic text-ink/60 sm:text-3xl">
-              Welcome to
+              {renderContentText(line1, 'italic text-brand')}
             </span>
             <span className="mt-2 block text-[clamp(3rem,9vw,7rem)] font-semibold tracking-[-0.02em]">
-              Schatzies
+              {renderContentText(line2, 'italic text-brand')}
             </span>
             <span className="block text-[clamp(3rem,9vw,7rem)] font-light italic tracking-[-0.02em] text-brand">
-              Events.
+              {renderContentText(line3, 'italic text-brand')}
             </span>
           </h1>
 
           <p className="animate-fade-in-up animation-delay-400 mt-8 max-w-md font-sans text-base leading-relaxed text-ink/70 sm:text-lg">
-            Premium wedding and debut planning for those who want to be a guest at their own
-            celebration. We handle the stress; you handle the memories. Your{' '}
-            <span className="font-semibold text-brand">most trusted</span> team.
+            {renderContentText(body, 'font-semibold text-brand')}
           </p>
 
           <div className="animate-fade-in-up animation-delay-600 mt-10 flex flex-wrap items-center gap-6">
@@ -245,9 +250,8 @@ function HeroSection() {
                 key={i}
                 onClick={() => setIndex(i)}
                 aria-label={`Go to image ${i + 1}`}
-                className={`h-[3px] rounded-full transition-all duration-500 ${
-                  i === index ? 'w-7 bg-gold' : 'w-2 bg-ivory/60 hover:bg-ivory'
-                }`}
+                className={`h-[3px] rounded-full transition-all duration-500 ${i === index ? 'w-7 bg-gold' : 'w-2 bg-ivory/60 hover:bg-ivory'
+                  }`}
               />
             ))}
           </div>
@@ -302,36 +306,35 @@ function SpotlightParticles() {
 }
 
 /* ── Spotlight — portfolio marquee as background, text centered ── */
-function SpotlightSection() {
+function SpotlightSection({ spotlightContent }: { spotlightContent?: { title: string; body: string } }) {
   // 4x duplication ensures seamless infinite scroll on ultra-wide screens
   const repeat = (arr: typeof galleryRow1) => [...arr, ...arr, ...arr, ...arr];
   const row1 = repeat(galleryRow1);
   const row2 = repeat(galleryRow2);
 
+  const title = spotlightContent?.title ?? "Step into the *spotlight*, we'll handle the *stage*.";
+  const body = spotlightContent?.body ?? "Your milestone is a masterpiece in the making. While you focus on making memories and greeting your guests, our team ensures every light, sound, and moment is executed to perfection.";
+
   return (
-    <section className="relative overflow-hidden bg-white min-h-screen max-h-screen flex flex-col justify-between items-center py-8">
+    <section className="relative overflow-hidden bg-white min-h-screen flex flex-col justify-between items-center py-8">
       {/* ── Animated Spotlight Particles ── */}
       <SpotlightParticles />
 
       {/* ── Centered text content (top 30%) ── */}
-      <div className="relative z-10 w-full max-w-3xl text-center px-6 flex flex-col justify-center h-[30vh]">
+      <div className="relative z-10 w-full max-w-3xl text-center px-6 flex flex-col justify-center py-8 lg:py-0 lg:h-[30vh]">
         <ScrollReveal variant="up" className="mx-auto text-center">
           <h2 className="font-heading text-[clamp(2rem,4vw,2.75rem)] leading-[1.1] text-ink">
-            Step into the <span className="italic text-brand">spotlight</span>,
-            <br />
-            we&rsquo;ll handle the <span className="italic text-brand">stage</span>.
+            {renderContentText(title, 'italic text-brand')}
           </h2>
           <div className="rule-gold mx-auto mt-4 w-32" />
           <p className="mx-auto mt-4 max-w-xl font-sans text-xs sm:text-sm leading-relaxed text-ink/75">
-            Your milestone is a masterpiece in the making. While you focus on making memories and
-            greeting your guests, our team ensures every light, sound, and moment is executed to
-            perfection.
+            {renderContentText(body, 'italic text-brand')}
           </p>
         </ScrollReveal>
       </div>
 
       {/* ── Marquee rows below (70%) ── */}
-      <div className="relative z-0 w-full flex flex-col justify-center gap-4 overflow-hidden h-[70vh]" aria-hidden="true">
+      <div className="relative z-0 w-full flex flex-col justify-center gap-4 overflow-hidden h-[40vh] sm:h-[45vh] lg:h-[65vh]" aria-hidden="true">
         {/* Row 1 — scrolls left */}
         <div className="mask-fade-x flex overflow-hidden">
           <div className="flex w-max gap-4 animate-marquee">
@@ -379,9 +382,12 @@ function SpotlightSection() {
 /* ── Services section — now imported from @/components/ServicesSection ── */
 
 /* ── Testimonials — premium editorial carousel ── */
-function TestimonialsSection() {
+function TestimonialsSection({ testimonialsContent }: { testimonialsContent?: { title: string; body: string } }) {
+  const title = testimonialsContent?.title ?? "The Schatzies *experience*.";
+  const body = testimonialsContent?.body ?? "Celebrating 15 years of flawless events through the words of those who experienced the magic firsthand.";
+
   return (
-    <section className="relative bg-ivory w-full py-16 lg:py-24">
+    <section className="relative bg-ivory w-full py-16 lg:py-24 overflow-hidden">
       {/* ── Subtle decorative gradient blobs ── */}
       <div className="pointer-events-none absolute inset-0" aria-hidden="true">
         <div
@@ -398,11 +404,10 @@ function TestimonialsSection() {
         {/* ── Header ── */}
         <ScrollReveal variant="up" className="mb-8 text-center lg:text-left">
           <h2 className="font-heading text-[clamp(2.25rem,5.5vw,4rem)] leading-[1.05] text-ink">
-            The Schatzies <span className="italic text-brand">experience</span>.
+            {renderContentText(title, 'italic text-brand')}
           </h2>
           <p className="mx-auto mt-5 max-w-2xl font-sans text-base leading-relaxed text-ink/60 lg:mx-0 lg:text-lg">
-            Celebrating 15 years of flawless events through the words of those who experienced the
-            magic firsthand.
+            {renderContentText(body, 'italic text-brand')}
           </p>
         </ScrollReveal>
 

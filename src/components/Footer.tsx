@@ -8,6 +8,7 @@ import {
   ArrowUpRight,
 } from '@phosphor-icons/react';
 import { useBusinessContact } from '@/hooks/useBusinessContact';
+import { useContent, renderContentText } from '@/hooks/useContent';
 
 const legalLinks = [
   { label: 'Privacy Policy', href: '/privacy-policy' },
@@ -18,6 +19,10 @@ const legalLinks = [
 export function Footer() {
   const currentYear = new Date().getFullYear();
   const { data: contact } = useBusinessContact();
+  const { sections } = useContent('footer');
+
+  const brandTitle = sections.brand?.title ?? 'Schatzies *Events*';
+  const brandBody = sections.brand?.body ?? 'Creating unforgettable moments and turning your dream events into reality with precision, passion, and perfection.';
 
   const firstAddress = contact?.addresses?.[0];
   const addressText = firstAddress
@@ -64,13 +69,11 @@ export function Footer() {
         <div className="grid gap-14 lg:grid-cols-[1.5fr_1fr_1fr_0.9fr] text-center lg:text-left">
           {/* Brand */}
           <div className="flex flex-col items-center lg:items-start">
-            <p className="eyebrow text-gold">Est. 2011 — Philippines</p>
             <h3 className="mt-4 font-heading text-4xl leading-none text-ivory">
-              Schatzies <span className="italic text-gold">Events</span>
+              {renderContentText(brandTitle, 'italic text-gold')}
             </h3>
             <p className="mt-5 max-w-xs font-sans text-sm leading-relaxed text-ivory/60 mx-auto lg:mx-0">
-              Creating unforgettable moments and turning your dream events into reality with
-              precision, passion, and perfection.
+              {brandBody}
             </p>
           </div>
 
