@@ -19,7 +19,7 @@ interface PageConfig {
 const PAGES_CONFIG: PageConfig[] = [
   {
     id: 'homepage',
-    name: 'Homepage',
+    name: 'Home',
     description: 'Manage Hero banner, Spotlight text, Weddings & Debuts intros, and Testimonials header.',
     sections: [
       { id: 'hero', name: 'Hero Banner', isMultilineTitle: true },
@@ -61,7 +61,7 @@ const PAGES_CONFIG: PageConfig[] = [
   },
   {
     id: 'packages',
-    name: 'Collections',
+    name: 'Event Packages',
     description: 'Manage Collections / Packages Hero banner copy.',
     sections: [
       { id: 'hero', name: 'Collections Hero', isMultilineTitle: true },
@@ -190,11 +190,10 @@ export function AdminContentPage() {
       {/* Toast */}
       {toast.show && (
         <div
-          className={`fixed right-6 top-6 z-50 flex max-w-md items-start gap-3 rounded-xl border p-4 shadow-xl backdrop-blur-md transition-all duration-300 ${
-            toast.type === 'success'
-              ? 'border-emerald-500/20 bg-emerald-50/90 text-emerald-950'
-              : 'border-rose-500/20 bg-rose-50/90 text-rose-950'
-          }`}
+          className={`fixed right-6 top-6 z-50 flex max-w-md items-start gap-3 rounded-xl border p-4 shadow-xl backdrop-blur-md transition-all duration-300 ${toast.type === 'success'
+            ? 'border-emerald-500/20 bg-emerald-50/90 text-emerald-950'
+            : 'border-rose-500/20 bg-rose-50/90 text-rose-950'
+            }`}
         >
           {toast.type === 'success' ? (
             <CheckCircle2 className="h-5 w-5 shrink-0 text-emerald-600" />
