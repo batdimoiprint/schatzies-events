@@ -1,34 +1,27 @@
-import { useState } from 'react';
-import { Phone, FacebookLogo, InstagramLogo, EnvelopeSimple, MapPin, Link } from '@phosphor-icons/react';
+import { Phone, EnvelopeSimple, MapPin, FacebookLogo, InstagramLogo, Link as LinkIcon } from '@phosphor-icons/react';
 import LoadingScreen from '@/components/ui/LoadingScreen';
 import ScrollReveal from '@/components/ui/ScrollReveal';
 import { useBusinessContact } from '@/hooks/useBusinessContact';
-import type { ContactLink, ContactPhone, ContactEmail, ContactAddress } from '@/api/contacts';
+import type { ContactAddress, ContactLink } from '@/api/contacts';
 
 const heroImage = '/Pictures/contact-hero.jpg';
 
-function getPlatformIcon(platform?: string) {
-  const p = (platform ?? '').toLowerCase();
-  if (p.includes('facebook')) return FacebookLogo;
-  if (p.includes('instagram')) return InstagramLogo;
-  return Link;
-}
-
+/** Build a single-line text from an address record */
 function buildAddressText(a: ContactAddress): string {
   return [a.street, a.barangay, a.city, a.province, a.country, a.zipCode]
     .filter(Boolean)
     .join(', ');
 }
 
-function buildMapsHref(text: string): string {
-  return `https://www.google.com/maps/search/${encodeURIComponent(text)}`;
+/** Return the correct Phosphor icon for a social platform */
+function getPlatformIcon(platform?: string) {
+  const p = (platform ?? '').toLowerCase();
+  if (p.includes('facebook')) return FacebookLogo;
+  if (p.includes('instagram')) return InstagramLogo;
+  return LinkIcon;
 }
 
-function buildMapsEmbedSrc(text: string): string {
-  return `https://maps.google.com/maps?q=${encodeURIComponent(text)}&t=&z=15&ie=UTF8&iwloc=&output=embed`;
-}
-
-/** Get a human-friendly display label for a social link */
+/** Get a human-friendly display name for a social link */
 function getSocialDisplayName(lnk: ContactLink): string {
   try {
     if (lnk.url.startsWith('http')) {
@@ -36,12 +29,10 @@ function getSocialDisplayName(lnk: ContactLink): string {
       const path = url.pathname.replace(/^\/+|\/+$/g, '');
       const host = url.hostname.replace(/^www\./, '');
 
-      // Show page/profile name for known platforms
       if (host.includes('facebook') && path) return `/${path}`;
       if (host.includes('instagram') && path) return `@${path}`;
       if (host.includes('tiktok') && path) return `@${path}`;
 
-      // Fallback: show hostname
       return host;
     }
   } catch {
@@ -51,69 +42,12 @@ function getSocialDisplayName(lnk: ContactLink): string {
 }
 
 export default function ContactPage() {
-  const { data: contact } = useBusinessContact();
+  const { data: contact, isLoading } = useBusinessContact();
 
-  const phones: ContactPhone[] = contact?.phones ?? [];
-  const emails: ContactEmail[] = contact?.emails ?? [];
-  const links: ContactLink[] = contact?.links ?? [];
-  const addresses: ContactAddress[] = contact?.addresses ?? [];
-
-  type Channel = {
-    Icon: React.ElementType;
-    label: string;
-    lines: { display: string; href: string; external?: boolean }[];
-  };
-
-  const channels: Channel[] = [];
-
-  if (phones.length > 0) {
-    channels.push({
-      Icon: Phone,
-      label: 'Phone',
-      lines: phones.map((p) => ({
-        display: p.number,
-        href: `tel:${p.number.replace(/\s/g, '')}`,
-      })),
-    });
-  }
-
-  if (emails.length > 0) {
-    channels.push({
-      Icon: EnvelopeSimple,
-      label: 'Email',
-      lines: emails.map((e) => ({
-        display: e.email,
-        href: `mailto:${e.email}`,
-      })),
-    });
-  }
-
-  for (const lnk of links) {
-    const Icon = getPlatformIcon(lnk.platform);
-    const label = lnk.platform || lnk.label;
-    const existing = channels.find((c) => c.label === label);
-    const item = {
-      display: getSocialDisplayName(lnk),
-      href: lnk.url,
-      external: true,
-    };
-    if (existing) {
-      existing.lines.push(item);
-    } else {
-      channels.push({ Icon, label, lines: [item] });
-    }
-  }
-
-  // Determine grid columns based on channel count so the last row is never orphaned
-  const count = channels.length;
-  const gridCols =
-    count === 1
-      ? 'grid-cols-1'
-      : count === 2
-        ? 'grid-cols-1 sm:grid-cols-2'
-        : count === 4
-          ? 'grid-cols-1 sm:grid-cols-2'
-          : 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3';
+  const addresses = contact?.addresses ?? [];
+  const phones = contact?.phones ?? [];
+  const emails = contact?.emails ?? [];
+  const links = contact?.links ?? [];
 
   return (
     <>
@@ -142,142 +76,179 @@ export default function ContactPage() {
         </div>
       </section>
 
-      {/* ── Channels ── */}
-      {channels.length > 0 && (
-        <section className="bg-ivory py-24 lg:py-32">
-          <div className="page-gutter mx-auto max-w-[1400px]">
-            <ScrollReveal variant="up" className="mb-14 max-w-2xl">
-              <p className="eyebrow text-brand">Reach Out</p>
-              <h2 className="mt-6 font-heading text-[clamp(2rem,5vw,3.5rem)] leading-[1.05] text-ink">
-                Start the <span className="italic text-brand">conversation</span>.
-              </h2>
-              <p className="mt-6 font-sans text-base leading-relaxed text-ink/65 lg:text-lg">
-                Reach out to us through any of these channels and let&rsquo;s start planning your
-                dream event.
-              </p>
-            </ScrollReveal>
-
-            <div className={`grid gap-6 ${gridCols}`}>
-              {channels.map(({ Icon, label, lines }) => (
-                <ScrollReveal
-                  key={label}
-                  variant="up"
-                  className="group flex flex-col rounded-2xl border border-brand/[0.08] bg-white p-8 lg:p-10 transition-all duration-300 hover:border-brand/20 hover:shadow-[0_15px_40px_-15px_rgba(255,0,102,0.12)]"
-                >
-                  <span className="flex h-14 w-14 items-center justify-center rounded-full bg-brand/10 text-brand transition-all duration-300 group-hover:scale-110 group-hover:bg-brand group-hover:text-white">
-                    <Icon size={26} weight="duotone" />
-                  </span>
-                  <h3 className="mt-7 font-heading text-2xl font-semibold text-ink">{label}</h3>
-                  <div className="mt-3 space-y-2">
-                    {lines.map((l) => (
-                      <a
-                        key={l.href}
-                        href={l.href}
-                        {...(l.external ? { target: '_blank', rel: 'noreferrer' } : {})}
-                        className="block break-all font-sans text-[0.95rem] font-medium text-ink/85 transition hover:text-brand"
-                        title={l.href}
-                      >
-                        {l.display}
-                      </a>
-                    ))}
-                  </div>
-                </ScrollReveal>
-              ))}
-            </div>
-          </div>
-        </section>
-      )}
-
-      {/* ── Visit our office ── */}
-      {addresses.length > 0 && <AddressSection addresses={addresses} />}
-    </>
-  );
-}
-
-/** Separate component for interactive address/map switching */
-function AddressSection({ addresses }: { addresses: ContactAddress[] }) {
-  const [activeIdx, setActiveIdx] = useState(0);
-  const activeAddr = addresses[activeIdx];
-  const activeText = buildAddressText(activeAddr);
-
-  return (
-    <section className="grain relative overflow-hidden bg-ink py-24 text-ivory lg:py-32">
-      <div className="page-gutter relative z-10 mx-auto max-w-[1400px]">
-        <ScrollReveal variant="up" className="mb-12 max-w-2xl">
-          <p className="eyebrow text-gold">Visit Us</p>
-          <h2 className="mt-6 font-heading text-[clamp(2rem,5vw,3.5rem)] leading-[1.05] text-ivory">
-            Visit our <span className="italic text-gold">office</span>.
-          </h2>
-          <p className="mt-6 font-sans text-base leading-relaxed text-ivory/70 lg:text-lg">
-            We have dedicated office spaces designed for comfortable consultation.
-          </p>
-        </ScrollReveal>
-
-        <div className="grid gap-8 lg:grid-cols-[1.2fr_1fr]">
-          {/* Map — updates based on selected address card */}
-          <ScrollReveal
-            variant="left"
-            className="relative min-h-[340px] h-full overflow-hidden rounded-2xl border border-ivory/15"
-          >
-            <iframe
-              key={activeAddr.id}
-              title="Office Location Map"
-              width="100%"
-              height="100%"
-              className="absolute inset-0 border-0 min-h-[340px]"
-              src={buildMapsEmbedSrc(activeText || `${activeAddr.label}, Philippines`)}
-              allowFullScreen
-              loading="lazy"
-            />
+      {/* ── Contact Cards Section ── */}
+      <section className="bg-gradient-to-b from-ivory via-[#fce4ef]/30 to-ivory py-16 sm:py-20 lg:py-28">
+        <div className="page-gutter mx-auto max-w-[1400px]">
+          <ScrollReveal variant="up" className="mb-12 max-w-2xl">
+            <p className="eyebrow text-brand">Reach Out</p>
+            <h2 className="mt-6 font-heading text-[clamp(2rem,5vw,3.5rem)] leading-[1.05] text-ink">
+              Start the <span className="italic text-brand">conversation</span>.
+            </h2>
+            <p className="mt-6 font-sans text-base leading-relaxed text-ink/65 lg:text-lg">
+              Reach out to us through any of these channels and let&rsquo;s start planning your
+              dream event.
+            </p>
           </ScrollReveal>
 
-          {/* Address cards — click to switch map */}
-          <div className="flex flex-col gap-4">
-            {addresses.map((addr, i) => {
-              const text = buildAddressText(addr);
-              const isActive = i === activeIdx;
-              return (
-                <ScrollReveal key={addr.id} variant="right" delay={i * 120}>
-                  <button
-                    type="button"
-                    onClick={() => setActiveIdx(i)}
-                    className={`w-full text-left rounded-2xl border p-7 transition-all duration-300 ${
-                      isActive
-                        ? 'border-gold/50 bg-ivory/[0.08] shadow-[0_0_30px_-10px_rgba(200,160,60,0.3)]'
-                        : 'border-ivory/12 bg-ivory/[0.04] hover:border-ivory/25 hover:bg-ivory/[0.07]'
-                    }`}
-                    aria-pressed={isActive}
-                  >
-                    <div className="flex items-start gap-4">
-                      <span
-                        className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full transition-colors duration-300 ${
-                          isActive ? 'bg-gold text-ink' : 'bg-brand text-ivory'
-                        }`}
-                      >
-                        <MapPin size={20} weight="fill" />
-                      </span>
-                      <div>
-                        <h3 className="font-heading text-xl text-ivory">{addr.label}</h3>
-                        {text && (
+          {isLoading ? (
+            <div className="flex justify-center py-16">
+              <div className="h-10 w-10 animate-spin rounded-full border-4 border-[#FF0066]/30 border-t-[#FF0066]" />
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:gap-10">
+              {/* ─── Business Location Card ─── */}
+              {addresses.length > 0 && (
+                <ScrollReveal variant="up">
+                  <div className="h-full rounded-2xl bg-white p-5 shadow-lg transition-all duration-300 hover:shadow-xl sm:p-8 lg:p-10">
+                    <h3 className="text-center font-heading text-[clamp(1.2rem,2.5vw,1.8rem)] font-bold text-[#FF0066]">
+                      Business Location
+                    </h3>
+                    <p className="mx-auto mt-3 max-w-[25rem] text-center text-[clamp(0.85rem,1.3vw,1rem)] leading-[1.6] font-sans text-[#4A1053] sm:mt-4">
+                      We have dedicated office spaces designed for comfortable consultation.
+                    </p>
+
+                    <div className="mt-6 flex flex-col gap-4 sm:mt-8 sm:gap-6 lg:mt-10">
+                      {addresses.map((addr) => {
+                        const text = buildAddressText(addr);
+                        const mapsHref = `https://www.google.com/maps/search/${encodeURIComponent(text)}`;
+
+                        return (
                           <a
-                            href={buildMapsHref(text)}
+                            key={addr.id}
+                            href={mapsHref}
                             target="_blank"
                             rel="noreferrer"
-                            onClick={(e) => e.stopPropagation()}
-                            className="mt-2 block font-sans text-sm leading-relaxed text-ivory/65 transition hover:text-gold"
+                            className="flex items-center gap-3 sm:gap-4 lg:gap-5 transition-all hover:opacity-75"
                           >
-                            {text}
+                            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-[#FF0066]/10 to-[#4A1053]/10 sm:h-12 sm:w-12 lg:h-14 lg:w-14">
+                              <MapPin
+                                size={24}
+                                weight="fill"
+                                className="text-[#FF0066] sm:text-[1.5rem] lg:text-[1.75rem]"
+                              />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className="text-[0.9rem] font-bold text-[#FF0066] sm:text-[1rem] lg:text-[1.1rem]">
+                                {addr.label || 'Office'}
+                              </p>
+                              <p className="mt-0.5 break-words text-[0.75rem] text-[#4A1053] sm:text-[0.85rem] lg:text-[0.9rem]">
+                                {text}
+                              </p>
+                            </div>
                           </a>
-                        )}
-                      </div>
+                        );
+                      })}
                     </div>
-                  </button>
+                  </div>
                 </ScrollReveal>
-              );
-            })}
-          </div>
+              )}
+
+              {/* ─── Contact Information Card ─── */}
+              {(phones.length > 0 || emails.length > 0 || links.length > 0) && (
+                <ScrollReveal variant="up" delay={150}>
+                  <div className="h-full rounded-2xl bg-white p-5 shadow-lg transition-all duration-300 hover:shadow-xl sm:p-8 lg:p-10">
+                    <h3 className="text-center font-heading text-[clamp(1.2rem,2.5vw,1.8rem)] font-bold text-[#FF0066]">
+                      Contact Information
+                    </h3>
+                    <p className="mx-auto mt-3 max-w-[25rem] text-center text-[clamp(0.85rem,1.3vw,1rem)] leading-[1.6] font-sans text-[#4A1053] sm:mt-4">
+                      Reach out to us through any of these channels and let&rsquo;s start planning
+                      your dream event.
+                    </p>
+
+                    <div className="mt-6 flex flex-col gap-4 sm:mt-8 sm:gap-6 lg:mt-10">
+                      {/* Phone Numbers */}
+                      {phones.length > 0 && (
+                        <div className="flex items-center gap-3 sm:gap-4 lg:gap-5">
+                          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-[#FF0066]/10 to-[#4A1053]/10 sm:h-12 sm:w-12 lg:h-14 lg:w-14">
+                            <Phone
+                              size={24}
+                              weight="fill"
+                              className="text-[#FF0066] sm:text-[1.5rem] lg:text-[1.75rem]"
+                            />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-[0.9rem] font-bold text-[#FF0066] sm:text-[1rem] lg:text-[1.1rem]">
+                              Phone Numbers
+                            </p>
+                            {phones.map((ph) => (
+                              <a
+                                key={ph.id}
+                                href={`tel:${ph.number.replace(/\s/g, '')}`}
+                                className="mt-0.5 block break-all text-[0.75rem] text-[#4A1053] sm:text-[0.85rem] lg:text-[0.9rem] hover:text-[#FF0066] transition-colors"
+                              >
+                                {ph.number}
+                              </a>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Emails */}
+                      {emails.length > 0 && (
+                        <div className="flex items-center gap-3 sm:gap-4 lg:gap-5">
+                          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-[#FF0066]/10 to-[#4A1053]/10 sm:h-12 sm:w-12 lg:h-14 lg:w-14">
+                            <EnvelopeSimple
+                              size={24}
+                              weight="fill"
+                              className="text-[#FF0066] sm:text-[1.5rem] lg:text-[1.75rem]"
+                            />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-[0.9rem] font-bold text-[#FF0066] sm:text-[1rem] lg:text-[1.1rem]">
+                              Email
+                            </p>
+                            {emails.map((em) => (
+                              <a
+                                key={em.id}
+                                href={`mailto:${em.email}`}
+                                className="mt-0.5 block break-all text-[0.75rem] text-[#4A1053] sm:text-[0.85rem] lg:text-[0.9rem] hover:text-[#FF0066] transition-colors"
+                              >
+                                {em.email}
+                              </a>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Social Links (Facebook, Instagram, etc.) */}
+                      {links.map((lnk) => {
+                        const Icon = getPlatformIcon(lnk.platform);
+                        const displayName = getSocialDisplayName(lnk);
+
+                        return (
+                          <a
+                            key={lnk.id}
+                            href={lnk.url}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="flex items-center gap-3 sm:gap-4 lg:gap-5 transition-all hover:opacity-75"
+                          >
+                            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-[#FF0066]/10 to-[#4A1053]/10 sm:h-12 sm:w-12 lg:h-14 lg:w-14">
+                              <Icon
+                                size={24}
+                                weight="fill"
+                                className="text-[#FF0066] sm:text-[1.5rem] lg:text-[1.75rem]"
+                              />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className="text-[0.9rem] font-bold text-[#FF0066] sm:text-[1rem] lg:text-[1.1rem]">
+                                {lnk.label || lnk.platform || 'Link'}
+                              </p>
+                              <p className="mt-0.5 break-words text-[0.75rem] text-[#4A1053] sm:text-[0.85rem] lg:text-[0.9rem]">
+                                {displayName}
+                              </p>
+                            </div>
+                          </a>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </ScrollReveal>
+              )}
+            </div>
+          )}
         </div>
-      </div>
-    </section>
+      </section>
+    </>
   );
 }
