@@ -6,6 +6,7 @@ import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/compone
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { compressImage } from '@/utils/image-compression';
 import {
   INCLUSION_TYPE_SUGGESTIONS,
   addPackageInclusion,
@@ -75,9 +76,10 @@ function PackageFormBody({
   const [paxPrice, setPaxPrice] = useState('');
   const [paxNote, setPaxNote] = useState('');
 
-  const handleAddFiles = (files: File[]) => {
+  const handleAddFiles = async (files: File[]) => {
+    const compressed = await Promise.all(files.map((f) => compressImage(f)));
     setNewImages((prev) => {
-      const combined = [...prev, ...files];
+      const combined = [...prev, ...compressed];
       if (combined.length > 25) {
         setError('A package can have at most 25 pictures.');
         return combined.slice(0, 25);

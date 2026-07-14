@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import LoadingScreen from '@/components/ui/LoadingScreen';
+import { compressImage } from '@/utils/image-compression';
 import {
   INCLUSION_TYPE_SUGGESTIONS,
   addPackageInclusion,
@@ -97,18 +98,20 @@ function PackageEditForm({ pkg, eventType, packageSlug, apiEventType, refetch }:
   const [paxPrice, setPaxPrice] = useState('');
   const [paxNote, setPaxNote] = useState('');
 
-  const handleAddFiles = (files: File[]) => {
+  const handleAddFiles = async (files: File[]) => {
     const totalCount = existingImages.length + newImages.length + files.length;
     if (totalCount > 25) {
       setError('A package can have at most 25 pictures.');
       const availableSlots = 25 - (existingImages.length + newImages.length);
       if (availableSlots > 0) {
-        setNewImages((prev) => [...prev, ...files.slice(0, availableSlots)]);
+        const compressed = await Promise.all(files.slice(0, availableSlots).map((f) => compressImage(f)));
+        setNewImages((prev) => [...prev, ...compressed]);
       }
       return;
     }
     setError(null);
-    setNewImages((prev) => [...prev, ...files]);
+    const compressed = await Promise.all(files.map((f) => compressImage(f)));
+    setNewImages((prev) => [...prev, ...compressed]);
   };
 
   const makeNewCover = (index: number) => {
