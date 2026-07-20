@@ -37,7 +37,14 @@ export function Footer() {
     : null;
 
   const allPhones = contact?.phones ?? [];
-  const phoneDisplay = allPhones.map((p) => p.number).join(' / ');
+  const phoneDisplay = allPhones
+    .map((p) => {
+      const raw = p.number.replace(/\D/g, '');
+      return raw.length === 11 && raw.startsWith('09')
+        ? `${raw.slice(0, 4)} ${raw.slice(4, 7)} ${raw.slice(7)}`
+        : p.number;
+    })
+    .join(' / ');
   const firstPhone = allPhones[0];
 
   const firstEmail = contact?.emails?.[0];

@@ -15,12 +15,17 @@ import {
   type EventType,
 } from '@/api/packages';
 import { formatPackageDate } from '@/components/admin/business-profile/format';
+import { ImageLightbox } from '@/components/ui/ImageLightbox';
 
 export function AdminGalleryPage() {
   const queryClient = useQueryClient();
   const [activeType, setActiveType] = useState<EventType>('Wedding');
   const [albumDialog, setAlbumDialog] = useState<{ pkg: EventPackage | null } | null>(null);
   const [viewingAlbum, setViewingAlbum] = useState<EventPackage | null>(null);
+
+  // Lightbox state for Admin Gallery
+  const [lightboxOpen, setLightboxOpen] = useState(false);
+  const [lightboxIndex, setLightboxIndex] = useState(0);
 
   const { data: packages = [], isLoading } = useQuery<EventPackage[]>({
     queryKey: ['packages', activeType],
@@ -47,8 +52,26 @@ export function AdminGalleryPage() {
     });
   }, [packages]);
 
+  const openAdminGalleryLightbox = (index: number) => {
+    setLightboxIndex(index);
+    setLightboxOpen(true);
+  };
+
   return (
     <div className="space-y-6">
+      {/* Lightbox for Admin Album Photos */}
+      {viewingAlbum && (
+        <ImageLightbox
+          images={viewingAlbum.images.map((img) => ({
+            url: img.url,
+            title: viewingAlbum.packageName,
+          }))}
+          initialIndex={lightboxIndex}
+          open={lightboxOpen}
+          onClose={() => setLightboxOpen(false)}
+        />
+      )}
+
       {/* Page Header */}
       <div>
         <h1 className="text-2xl font-bold text-foreground">Gallery</h1>
@@ -83,7 +106,7 @@ export function AdminGalleryPage() {
       </div>
 
       {/* Albums grouped by year */}
-      <div className="rounded-3xl bg-white p-5 shadow-[0_8px_30px_rgba(61,32,82,0.08)] sm:p-8 lg:p-10">
+      <div className="rounded-3xl bg-white p-4 shadow-[0_8px_30px_rgba(61,32,82,0.08)] sm:p-6 lg:p-6">
         {isLoading ? (
           <p className="py-12 text-center text-sm text-muted-foreground">Loading gallery...</p>
         ) : yearGroups.length === 0 ? (
@@ -197,21 +220,22 @@ export function AdminGalleryPage() {
                 </p>
               ) : (
                 <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-                  {viewingAlbum.images.map((image) => (
-                    <a
+                  {viewingAlbum.images.map((image, i) => (
+                    <div
                       key={image.key}
-                      href={image.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="block overflow-hidden rounded-xl border border-border"
+                      onClick={() => openAdminGalleryLightbox(i)}
+                      className="block overflow-hidden rounded-xl border border-border cursor-pointer group relative"
                     >
                       <img
                         src={image.url}
                         alt={viewingAlbum.packageName}
                         loading="lazy"
-                        className="aspect-square w-full object-cover transition-transform duration-200 hover:scale-105"
+                        className="aspect-square w-full object-cover transition-transform duration-200 group-hover:scale-105"
                       />
-                    </a>
+                      <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white text-xs font-bold">
+                        Expand
+                      </div>
+                    </div>
                   ))}
                 </div>
               )}
@@ -250,6 +274,7 @@ function AlbumDialog({ eventType, pkg, onClose }: AlbumDialogProps) {
       const payload = {
         packageName: albumName.trim(),
         images: photos.length > 0 ? photos : undefined,
+        existingImages: photos.length > 0 ? [] : undefined, // Clears old images so new ones replace them
       };
       return pkg ? updatePackage(pkg.id, payload) : createPackage({ ...payload, eventType });
     },

@@ -170,15 +170,22 @@ export default function ContactPage() {
                             <p className="text-[0.9rem] font-bold text-[#FF0066] sm:text-[1rem] lg:text-[1.1rem]">
                               Phone Numbers
                             </p>
-                            {phones.map((ph) => (
-                              <a
-                                key={ph.id}
-                                href={`tel:${ph.number.replace(/\s/g, '')}`}
-                                className="mt-0.5 block break-all text-[0.75rem] text-[#4A1053] sm:text-[0.85rem] lg:text-[0.9rem] hover:text-[#FF0066] transition-colors"
-                              >
-                                {ph.number}
-                              </a>
-                            ))}
+                            {phones.map((ph) => {
+                              const raw = ph.number.replace(/\D/g, '');
+                              const formatted =
+                                raw.length === 11 && raw.startsWith('09')
+                                  ? `${raw.slice(0, 4)} ${raw.slice(4, 7)} ${raw.slice(7)}`
+                                  : ph.number;
+                              return (
+                                <a
+                                  key={ph.id}
+                                  href={`tel:${raw}`}
+                                  className="mt-0.5 block break-all text-[0.75rem] text-[#4A1053] sm:text-[0.85rem] lg:text-[0.9rem] hover:text-[#FF0066] transition-colors"
+                                >
+                                  {formatted}
+                                </a>
+                              );
+                            })}
                           </div>
                         </div>
                       )}

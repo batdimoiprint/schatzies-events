@@ -2,9 +2,9 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { ArrowLeft } from '@phosphor-icons/react';
-import { X } from 'lucide-react';
 import LoadingScreen from '@/components/ui/LoadingScreen';
 import ScrollReveal from '@/components/ui/ScrollReveal';
+import { ImageLightbox } from '@/components/ui/ImageLightbox';
 import { getPackages, type EventPackage } from '@/api/packages';
 import { toGalleryItems, type GalleryItem } from '@/utils/package-display';
 import { useContent, renderContentText } from '@/hooks/useContent';
@@ -20,7 +20,7 @@ function GalleryGrid({
   items: GalleryItem[];
   isLoading: boolean;
   emptyLabel: string;
-  onImageClick: (item: GalleryItem) => void;
+  onImageClick: (index: number) => void;
 }) {
   if (isLoading) {
     return <p className="py-12 text-center font-sans text-sm text-ink/50">Loading photos…</p>;
@@ -38,7 +38,7 @@ function GalleryGrid({
           className="break-inside-avoid mb-6 block"
         >
           <figure
-            onClick={() => onImageClick(item)}
+            onClick={() => onImageClick(index)}
             className="group overflow-hidden rounded-sm border border-border bg-card cursor-zoom-in transition-all hover:border-brand/30"
           >
             <div className="relative overflow-hidden">
@@ -62,7 +62,9 @@ function GalleryGrid({
 
 export default function GalleryPage() {
   const navigate = useNavigate();
-  const [activePhoto, setActivePhoto] = useState<GalleryItem | null>(null);
+  const [lightboxOpen, setLightboxOpen] = useState(false);
+  const [lightboxIndex, setLightboxIndex] = useState(0);
+  const [currentGallerySet, setCurrentGallerySet] = useState<GalleryItem[]>([]);
 
   const { sections } = useContent('gallery');
   const heroTitle = sections.hero?.title ?? 'The Portfolio\nGallery.';
@@ -84,9 +86,32 @@ export default function GalleryPage() {
   const weddingItems = toGalleryItems(weddingPackages);
   const debutItems = toGalleryItems(debutPackages);
 
+  const openWeddingLightbox = (index: number) => {
+    setCurrentGallerySet(weddingItems);
+    setLightboxIndex(index);
+    setLightboxOpen(true);
+  };
+
+  const openDebutLightbox = (index: number) => {
+    setCurrentGallerySet(debutItems);
+    setLightboxIndex(index);
+    setLightboxOpen(true);
+  };
+
   return (
     <>
       <LoadingScreen />
+
+      {/* Image Preview Lightbox */}
+      <ImageLightbox
+        images={currentGallerySet.map((item) => ({
+          url: item.url,
+          title: item.title,
+        }))}
+        initialIndex={lightboxIndex}
+        open={lightboxOpen}
+        onClose={() => setLightboxOpen(false)}
+      />
 
       {/* ── Hero ── */}
       <section
@@ -134,7 +159,7 @@ export default function GalleryPage() {
             items={weddingItems}
             isLoading={weddingLoading}
             emptyLabel="Wedding photos are coming soon."
-            onImageClick={setActivePhoto}
+            onImageClick={openWeddingLightbox}
           />
         </div>
       </section>
@@ -157,38 +182,10 @@ export default function GalleryPage() {
             items={debutItems}
             isLoading={debutLoading}
             emptyLabel="Debut photos are coming soon."
-            onImageClick={setActivePhoto}
+            onImageClick={openDebutLightbox}
           />
         </div>
       </section>
-
-      {activePhoto && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 p-4 backdrop-blur-sm cursor-zoom-out animate-fade-in"
-          onClick={() => setActivePhoto(null)}
-        >
-          {/* Overlay Close Button */}
-          <button
-            onClick={() => setActivePhoto(null)}
-            aria-label="Close modal"
-            className="absolute right-6 top-6 z-50 rounded-full bg-white/10 p-2 text-white hover:bg-white/20 hover:text-gold transition-all duration-200 cursor-pointer"
-          >
-            <X className="size-6 sm:size-8" />
-          </button>
-
-          {/* Big Photo */}
-          <div className="relative max-h-[85vh] max-w-[90vw] overflow-hidden" onClick={(e) => e.stopPropagation()}>
-            <img
-              src={activePhoto.url}
-              alt={activePhoto.title}
-              className="max-h-[85vh] max-w-[90vw] object-contain rounded-md shadow-2xl select-none"
-            />
-            <p className="mt-3 text-center font-heading text-lg sm:text-xl text-white/90 drop-shadow">
-              {activePhoto.title}
-            </p>
-          </div>
-        </div>
-      )}
     </>
   );
 }

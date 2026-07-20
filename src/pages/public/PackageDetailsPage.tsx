@@ -1,9 +1,11 @@
+import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { ArrowLeft } from '@phosphor-icons/react';
 import LoadingScreen from '@/components/ui/LoadingScreen';
 import ScrollReveal from '@/components/ui/ScrollReveal';
+import { ImageLightbox } from '@/components/ui/ImageLightbox';
 import { getPackageById, getPackages, type EventPackage, type EventType } from '@/api/packages';
 import { groupInclusions, sortPackages, toSlug } from '@/utils/package-display';
 
@@ -12,6 +14,9 @@ const PLACEHOLDER = '/Pictures/packages-hero.jpg';
 export default function PackageDetailsPage() {
   const { eventType, packageSlug } = useParams();
   const navigate = useNavigate();
+
+  const [lightboxOpen, setLightboxOpen] = useState(false);
+  const [lightboxIndex, setLightboxIndex] = useState(0);
 
   const apiEventType: EventType = eventType === 'debut' ? 'Debut' : 'Wedding';
 
@@ -80,9 +85,25 @@ export default function PackageDetailsPage() {
   const paxTiers = [...(pkg.pax ?? [])].sort((a, b) => (a.pax ?? 0) - (b.pax ?? 0));
   const label = eventType === 'debut' ? '02 — Debut' : '01 — Weddings';
 
+  const openLightboxAt = (idx: number) => {
+    setLightboxIndex(idx);
+    setLightboxOpen(true);
+  };
+
   return (
     <>
       <LoadingScreen />
+
+      {/* Image Preview Lightbox */}
+      <ImageLightbox
+        images={images.map((img) => ({
+          url: img.url,
+          title: pkg.packageName,
+        }))}
+        initialIndex={lightboxIndex}
+        open={lightboxOpen}
+        onClose={() => setLightboxOpen(false)}
+      />
 
       {/* ── Top bar ── */}
       <div className="page-gutter mx-auto flex max-w-[1400px] items-center justify-between pb-6 pt-28 lg:pt-32">
@@ -123,12 +144,18 @@ export default function PackageDetailsPage() {
 
             {/* LEFT: cover + gallery */}
             <div className="space-y-4">
-              <div className="overflow-hidden rounded-sm">
+              <div
+                className="overflow-hidden rounded-sm cursor-pointer group relative"
+                onClick={() => openLightboxAt(0)}
+              >
                 <img
                   src={coverImg}
                   alt={pkg.packageName}
-                  className="h-[420px] w-full object-cover sm:h-[520px] lg:h-[620px]"
+                  className="h-[420px] w-full object-cover sm:h-[520px] lg:h-[620px] transition-transform duration-500 group-hover:scale-105"
                 />
+                <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white text-xs font-bold gap-2">
+                  Click to Expand Preview
+                </div>
               </div>
 
               {galleryImgs.length > 0 && (
@@ -142,13 +169,20 @@ export default function PackageDetailsPage() {
                   }`}
                 >
                   {galleryImgs.map((img, i) => (
-                    <div key={img.key} className="overflow-hidden rounded-sm">
+                    <div
+                      key={img.key}
+                      className="overflow-hidden rounded-sm cursor-pointer group relative"
+                      onClick={() => openLightboxAt(i + 1)}
+                    >
                       <img
                         src={img.url}
                         alt={`${pkg.packageName} — photo ${i + 2}`}
                         loading="lazy"
-                        className="h-48 w-full object-cover transition-transform duration-700 hover:scale-105 sm:h-56"
+                        className="h-48 w-full object-cover transition-transform duration-700 group-hover:scale-105 sm:h-56"
                       />
+                      <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white text-[11px] font-bold">
+                        Expand
+                      </div>
                     </div>
                   ))}
                 </div>
@@ -188,11 +222,11 @@ export default function PackageDetailsPage() {
                           <span className="h-px flex-1 bg-border" />
                         </div>
                         <ul className="space-y-2">
-                          {cat.items.map((item) => {
+                          {cat.items.map((item, i) => {
                             const text = typeof item === 'object' ? item.text : item;
                             const isHighlight = typeof item === 'object';
                             return (
-                              <li key={text} className="flex items-start gap-2.5">
+                              <li key={`${text}-${i}`} className="flex items-start gap-2.5">
                                 <span className="mt-[5px] h-1.5 w-1.5 shrink-0 rounded-full bg-brand" />
                                 <span
                                   className={`font-sans text-sm leading-relaxed ${

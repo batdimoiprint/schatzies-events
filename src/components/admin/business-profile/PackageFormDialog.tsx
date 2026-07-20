@@ -8,17 +8,14 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { compressImage } from '@/utils/image-compression';
 import {
-  INCLUSION_TYPE_SUGGESTIONS,
-  addPackageInclusion,
   addPackagePax,
   createPackage,
-  deletePackageInclusion,
   deletePackagePax,
   updatePackage,
   type EventPackage,
   type EventType,
-  type PackageInclusion,
 } from '@/api/packages';
+import { ReorderableInclusionsManager } from './ReorderableInclusionsManager';
 
 interface PackageFormDialogProps {
   open: boolean;
@@ -65,11 +62,6 @@ function PackageFormBody({
   const [newImages, setNewImages] = useState<File[]>([]);
   const [error, setError] = useState<string | null>(null);
 
-  // Inclusion draft row
-  const [showInclusionForm, setShowInclusionForm] = useState(false);
-  const [inclusionType, setInclusionType] = useState('');
-  const [inclusionText, setInclusionText] = useState('');
-
   // Pax tier draft row
   const [showPaxForm, setShowPaxForm] = useState(false);
   const [paxCount, setPaxCount] = useState('');
@@ -98,6 +90,7 @@ function PackageFormBody({
         packageName: packageName.trim(),
         description: description.trim(),
         images: newImages.length > 0 ? newImages : undefined,
+        existingImages: newImages.length > 0 ? [] : undefined, // Clears old images so new images replace them
       };
       return pkg ? updatePackage(pkg.id, payload) : createPackage(payload);
     },
@@ -112,24 +105,6 @@ function PackageFormBody({
       }
     },
     onError: (err) => setError(err instanceof Error ? err.message : 'Unable to save package'),
-  });
-
-  const addInclusionMutation = useMutation({
-    mutationFn: () =>
-      addPackageInclusion(pkg!.id, {
-        inclusionType: inclusionType.trim(),
-        inclusion: inclusionText.trim(),
-      }),
-    onSuccess: () => {
-      invalidate();
-      setInclusionText('');
-    },
-    onError: (err) => setError(err instanceof Error ? err.message : 'Unable to add inclusion'),
-  });
-
-  const deleteInclusionMutation = useMutation({
-    mutationFn: (inclusionId: string) => deletePackageInclusion(pkg!.id, inclusionId),
-    onSuccess: invalidate,
   });
 
   const addPaxMutation = useMutation({
@@ -152,22 +127,6 @@ function PackageFormBody({
     mutationFn: (paxId: string) => deletePackagePax(pkg!.id, paxId),
     onSuccess: invalidate,
   });
-
-  // Group inclusions by their free-form type, preserving first-seen order
-  const inclusionGroups: Array<{ type: string; items: PackageInclusion[] }> = [];
-  for (const item of pkg?.inclusions ?? []) {
-    const group = inclusionGroups.find((g) => g.type === item.inclusionType);
-    if (group) {
-      group.items.push(item);
-    } else {
-      inclusionGroups.push({ type: item.inclusionType, items: [item] });
-    }
-  }
-
-  // Datalist suggestions: defaults plus types already used in this package
-  const typeSuggestions = [
-    ...new Set([...INCLUSION_TYPE_SUGGESTIONS, ...inclusionGroups.map((g) => g.type)]),
-  ];
 
   return (
     <DialogContent className="max-h-[90vh] overflow-y-auto rounded-3xl p-6 sm:max-w-3xl sm:p-8">
@@ -233,97 +192,12 @@ function PackageFormBody({
         {pkg && (
           <>
             <hr className="border-[#e8e2ee]" />
-            <section className="space-y-3">
-              <div className="flex items-center justify-between gap-3">
-                <h3 className="text-lg font-semibold text-muted-foreground">Inclusions</h3>
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => setShowInclusionForm((v) => !v)}
-                  className="gap-1.5 rounded-full border-[#d9d3e0] px-4 text-xs font-bold text-[#3d3546] hover:bg-[#f7f4f9]"
-                >
-                  <PlusCircle className="size-4" />
-                  Add Inclusion
-                </Button>
-              </div>
-
-              {showInclusionForm && (
-                <div className="flex flex-wrap items-end gap-2 rounded-xl bg-[#f7f4f9] p-3">
-                  <div className="w-56 space-y-1">
-                    <Label htmlFor="pkg-inclusion-type" className="text-xs text-muted-foreground">
-                      Type
-                    </Label>
-                    <Input
-                      id="pkg-inclusion-type"
-                      list="inclusion-type-suggestions"
-                      value={inclusionType}
-                      onChange={(e) => setInclusionType(e.target.value)}
-                      placeholder="Reception Styling"
-                      className="bg-white"
-                    />
-                    <datalist id="inclusion-type-suggestions">
-                      {typeSuggestions.map((type) => (
-                        <option key={type} value={type} />
-                      ))}
-                    </datalist>
-                  </div>
-                  <div className="min-w-40 flex-1 space-y-1">
-                    <Label htmlFor="pkg-inclusion" className="text-xs text-muted-foreground">
-                      Inclusion
-                    </Label>
-                    <Input
-                      id="pkg-inclusion"
-                      value={inclusionText}
-                      onChange={(e) => setInclusionText(e.target.value)}
-                      placeholder="Entrance Tunnel, Elegant Backdrop..."
-                      className="bg-white"
-                    />
-                  </div>
-                  <Button
-                    type="button"
-                    size="sm"
-                    onClick={() => addInclusionMutation.mutate()}
-                    disabled={
-                      !inclusionType.trim() ||
-                      !inclusionText.trim() ||
-                      addInclusionMutation.isPending
-                    }
-                    className="gap-1 rounded-full bg-brand px-4 text-xs font-bold text-white hover:bg-brand"
-                  >
-                    <Plus className="size-4" />
-                    Add
-                  </Button>
-                </div>
-              )}
-
-              {inclusionGroups.length === 0 && !showInclusionForm && (
-                <p className="text-sm text-muted-foreground">No inclusions yet.</p>
-              )}
-
-              {inclusionGroups.map((group) => (
-                <div key={group.type} className="overflow-hidden rounded-lg">
-                  <div className="bg-[#171117] px-4 py-2.5 text-sm font-bold text-white">
-                    {group.type}
-                  </div>
-                  <ul className="space-y-1 bg-[#f3f0f5] px-4 py-3">
-                    {group.items.map((item) => (
-                      <li key={item.id} className="flex items-start justify-between gap-2 text-sm">
-                        <span className="text-[#2d2433]">• {item.inclusion}</span>
-                        <button
-                          type="button"
-                          aria-label="Remove inclusion"
-                          onClick={() => deleteInclusionMutation.mutate(item.id)}
-                          disabled={deleteInclusionMutation.isPending}
-                          className="shrink-0 text-[#9b93a5] transition-colors hover:text-brand"
-                        >
-                          <Trash2 className="size-4" />
-                        </button>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              ))}
-            </section>
+            <ReorderableInclusionsManager
+              packageId={pkg.id}
+              packageName={pkg.packageName}
+              inclusions={pkg.inclusions ?? []}
+              refetch={invalidate}
+            />
           </>
         )}
 

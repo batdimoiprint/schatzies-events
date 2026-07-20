@@ -29,6 +29,7 @@ export interface PackageInclusion {
   id: string;
   inclusionType: InclusionType;
   inclusion: string;
+  sortOrder?: number;
 }
 
 export interface EventPackage {
@@ -150,4 +151,26 @@ export async function deletePackageInclusion(
   inclusionId: string
 ): Promise<void> {
   await axiosInstance.delete(`/packages/${packageId}/inclusions/${inclusionId}`);
+}
+
+export async function copyPackageInclusions(
+  targetPackageId: string,
+  sourcePackageId: string,
+  inclusionIds?: string[]
+): Promise<PackageInclusion[]> {
+  const response = await axiosInstance.post(`/packages/${targetPackageId}/inclusions/copy`, {
+    sourcePackageId,
+    inclusionIds,
+  });
+  return response.data.inclusions;
+}
+
+export async function reorderPackageInclusions(
+  packageId: string,
+  inclusionIds: string[]
+): Promise<PackageInclusion[]> {
+  const response = await axiosInstance.put(`/packages/${packageId}/inclusions/reorder`, {
+    inclusionIds,
+  });
+  return response.data.inclusions;
 }

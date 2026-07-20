@@ -62,14 +62,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (result.user) {
         setUser(result.user);
 
-        // Subscribe to push notifications after successful login
-        try {
-          await subscribeToPushNotifications();
-          console.log('Push notifications enabled');
-        } catch (pushError) {
-          console.error('Failed to enable push notifications:', pushError);
-          // Don't fail login if push subscription fails
-        }
+        // Subscribe to push notifications asynchronously without blocking login flow
+        subscribeToPushNotifications()
+          .then(() => console.log('Push notifications enabled'))
+          .catch((pushError) => console.error('Failed to enable push notifications:', pushError));
 
         return result;
       }
